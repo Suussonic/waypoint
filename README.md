@@ -9,6 +9,17 @@
   <p><sub>Android 8.0+ · No ads or paywall · No Waypoint account · Every world included</sub></p>
 </div>
 
+## Waypoint 1.0.0 is here
+
+The first stable GitHub release makes it easier to get from opening the app to exploring real streets.
+
+- **Back to your map immediately.** After the first run, Waypoint opens your last selected world. You can switch among all 27 worlds from the map whenever you like.
+- **A more cohesive journey.** The rotating globe, world previews, artwork, labels and map blips have been refined while keeping roads and useful places readable.
+- **More reliable navigation.** Locate returns to street-level zoom, 2D/3D tilt works across styles, and shared destination links have a clearer confirmation and preview flow.
+- **Clearer updates.** The in-app updater shows the changelog before download, and existing users see a one-time What’s New screen after installing an update.
+
+Thanks to [u/cuberisk](https://www.reddit.com/user/cuberisk/) for suggesting that Waypoint open the map directly instead of showing world selection at every launch. Read the [complete 1.0.0 changelog](docs/releases/current.md).
+
 ## Your map, your world
 
 Pick a world during onboarding, then explore real geography through its roads, typography, markers and navigation controls. Switch styles without losing your destination. The globe, world gallery and map are designed as one journey; the map itself remains readable while you travel.
