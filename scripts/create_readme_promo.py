@@ -2,8 +2,8 @@
 """Build original README posters from local, sanitised demo captures.
 
 Requires Pillow. Run from the repository root. No game artwork or personal
-journey screenshots are used. Pass a private capture folder containing the six
-named JPGs; keep captions and the README alt text in sync.
+journey screenshots are used. Pass private phone and Desktop Head Unit capture
+folders; keep captions and the README alt text in sync.
 """
 import argparse
 from pathlib import Path
@@ -14,7 +14,11 @@ IMAGES = ROOT / "docs/images"
 parser = argparse.ArgumentParser()
 parser.add_argument("--captures", type=Path, required=True,
                     help="Local directory with sanitized los-santos.jpg, old-west.jpg, night-city.jpg, rivia.jpg, hyrule.jpg and pixel.jpg")
-CAPTURES = parser.parse_args().captures.resolve()
+parser.add_argument("--car-captures", type=Path, required=True,
+                    help="Local directory with the sanitized old-west-guidance.png Desktop Head Unit capture")
+ARGS = parser.parse_args()
+CAPTURES = ARGS.captures.resolve()
+CAR_CAPTURES = ARGS.car_captures.resolve()
 OUT = IMAGES / "promo"
 OUT.mkdir(exist_ok=True)
 FONTS = ROOT / "app/src/main/res/font"
@@ -68,6 +72,29 @@ def phone(canvas, name, x, y, width, angle=0):
     canvas.paste(device, (x - margin, y - margin), device)
 
 
+def car_screen(canvas, x, y, width):
+    shot = Image.open(CAR_CAPTURES / "old-west-guidance.png").convert("RGBA")
+    assert shot.width * 9 == shot.height * 16, "The car capture must be a 16:9 Desktop Head Unit screenshot"
+    height = round(width * 9 / 16)
+    shot = shot.resize((width, height), Image.Resampling.LANCZOS)
+    margin, bezel = 52, 12
+    device = Image.new("RGBA", (width + margin * 2, height + margin * 2))
+    shadow = Image.new("RGBA", device.size)
+    ImageDraw.Draw(shadow).rounded_rectangle(
+        (margin - 12, margin + 18, margin + width + 12, margin + height + 22),
+        28, fill=(0, 0, 0, 170),
+    )
+    device.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(20)))
+    ImageDraw.Draw(device).rounded_rectangle(
+        (margin - bezel, margin - bezel, margin + width + bezel, margin + height + bezel),
+        24, fill="#090C0A", outline="#434A43", width=4,
+    )
+    mask = Image.new("L", shot.size)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, width - 1, height - 1), 15, fill=255)
+    device.paste(shot, (margin, margin), mask)
+    canvas.paste(device, (x - margin, y - margin), device)
+
+
 def brand(canvas, x, y, size=62):
     mark = Image.open(IMAGES / "waypoint-icon.png").convert("RGBA")
     mark = mark.resize((size, size), Image.Resampling.LANCZOS)
@@ -82,25 +109,25 @@ def save(image, name):
 
 
 def hero(mobile=False):
-    canvas = map_surface((900, 1450) if mobile else (1600, 980), "los-santos")
+    canvas = map_surface((900, 1450) if mobile else (1600, 980), "old-west")
     brand(canvas, 58 if mobile else 70, 52, 66)
     if mobile:
-        lines(canvas, ["YOUR CITY.", "ANOTHER", "WORLD."], 58, 174, 137, 126)
-        text(canvas, "Real streets. Game-inspired navigation.", 62, 578, 32, display=False)
-        text(canvas, "27 worlds. Every one included.", 62, 634, 32, LIME, False)
-        phone(canvas, "old-west", 35, 840, 382, 5)
-        phone(canvas, "los-santos", 438, 739, 422, -5)
+        lines(canvas, ["YOUR WORLD.", "EVERY SCREEN."], 58, 181, 126, 132)
+        text(canvas, "Game-inspired maps on phone and Android Auto.", 62, 485, 31, display=False)
+        text(canvas, "27 worlds. Every one included.", 62, 545, 32, LIME, False)
+        car_screen(canvas, 42, 819, 816)
+        phone(canvas, "old-west", 584, 660, 250, -4)
         ImageDraw.Draw(canvas).rectangle((0, 1340, 900, 1450), fill=INK)
-        text(canvas, "ANDROID  /  OPEN SOURCE  /  NO PAYWALL", 62, 1383, 34, LIME)
+        text(canvas, "PHONE  +  ANDROID AUTO  /  27 WORLDS", 62, 1383, 31, LIME)
     else:
-        lines(canvas, ["YOUR CITY.", "ANOTHER", "WORLD."], 70, 204, 158, 145)
-        text(canvas, "Real streets. Game-inspired navigation.", 76, 711, 29, display=False)
+        lines(canvas, ["YOUR WORLD.", "EVERY", "SCREEN."], 70, 204, 154, 147)
+        text(canvas, "Game-inspired maps on phone and Android Auto.", 76, 711, 27, display=False)
         text(canvas, "27 worlds. Every one included.", 76, 764, 29, LIME, False)
-        phone(canvas, "old-west", 844, 251, 352, 6)
-        phone(canvas, "los-santos", 1175, 132, 365, -5)
+        car_screen(canvas, 810, 397, 730)
+        phone(canvas, "old-west", 1234, 209, 270, -4)
         ImageDraw.Draw(canvas).rectangle((0, 885, 1600, 980), fill=INK)
-        text(canvas, "ANDROID  /  OPEN SOURCE  /  NO PAYWALL", 76, 920, 29, LIME)
-        text(canvas, "CAR  ·  MOTORCYCLE  ·  WALK", 1125, 920, 29)
+        text(canvas, "PHONE  +  ANDROID AUTO", 76, 920, 31, LIME)
+        text(canvas, "REAL STREETS  ·  27 WORLDS", 1135, 920, 27)
     save(canvas, "hero-mobile.jpg" if mobile else "hero.jpg")
 
 

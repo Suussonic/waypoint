@@ -1,7 +1,7 @@
 <div align="center">
   <picture>
     <source media="(max-width: 640px)" srcset="docs/images/promo/hero-mobile.jpg" />
-    <img src="docs/images/promo/hero.jpg" width="100%" alt="Waypoint: real streets with game-inspired map styles, shown in two Android map views." />
+    <img src="docs/images/promo/hero.jpg" width="100%" alt="Waypoint's Old West map on a phone beside Android Auto guidance in the same world, using public London demonstration captures." />
   </picture>
   <p><strong>Real streets. Another world.</strong><br />27 game-inspired maps, live navigation and spoken directions on your phone and Android Auto.<br /><sub>Made in India · Open to the world</sub></p>
   <p>
