@@ -33,7 +33,8 @@ class LocateZoomTest {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val app = instrumentation.targetContext.applicationContext as WaypointApplication
         val controller = app.navigation
-        val actualFix = Coordinate(22.882285, 88.376179)
+        // Public city-center fixture; never commit coordinates from a tester's device.
+        val actualFix = Coordinate(22.5726, 88.3639)
         lateinit var flow: MutableStateFlow<NavState>
         instrumentation.runOnMainSync {
             controller.completeOnboarding(listOf(World.SKYRIM))
@@ -72,7 +73,7 @@ class LocateZoomTest {
                 assertEquals(actualFix.lon, camera.target!!.longitude, 0.0005)
             }
 
-            val destination = Coordinate(22.89, 88.39)
+            val destination = Coordinate(22.58, 88.37)
             scenario.onActivity {
                 val route = RoadRoute(listOf(actualFix, destination), listOf(
                     Maneuver(actualFix, "depart", "straight", "Test Road", 1800.0, 180.0),

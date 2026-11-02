@@ -60,6 +60,8 @@ for name in candidates:
     content = path.read_text(errors="replace")
     if any(pattern.search(content) for pattern in private_patterns):
         errors.append(f"Review possible private information in: {name}")
+    if name.startswith("app/src/androidTest/") and re.search(r"Coordinate\(\s*-?\d+\.\d{5,}", content):
+        errors.append(f"Review precise test coordinate for device-derived location: {name}")
 
 for image in readme_media:
     path = ROOT / image
