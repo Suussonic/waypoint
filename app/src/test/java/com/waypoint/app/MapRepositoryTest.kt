@@ -15,11 +15,11 @@ import org.junit.Assert.*
 class MapRepositoryTest {
     private lateinit var server:MockWebServer
     private lateinit var repository:MapRepository
-    @Before fun setup(){server=MockWebServer();server.start();repository=MapRepository(server.url("/").toString(),server.url("/").toString(),server.url("/").toString())}
+    @Before fun setup(){server=MockWebServer();server.start();repository=MapRepository(server.url("/").toString(),server.url("/").toString(),server.url("/").toString(),{_,_,_->null})}
     @After fun close(){server.shutdown()}
     private fun response(body:String,code:Int=200){server.enqueue(MockResponse().setResponseCode(code).setBody(body).addHeader("Content-Type","application/json"))}
     private val feature="""{"properties":{"osm_type":"N","osm_id":1,"name":"River Cafe","street":"Example Road","city":"Town"},"geometry":{"type":"Point","coordinates":[-0.12,51.5]}}"""
-    private val route="""{"code":"Ok","routes":[{"distance":111.0,"duration":60.0,"geometry":{"coordinates":[[0.0,0.0],[0.001,0.0]]},"legs":[{"steps":[{"name":"Main Street","distance":111.0,"duration":60.0,"maneuver":{"type":"depart","location":[0.0,0.0]}},{"name":"","distance":0.0,"duration":0.0,"maneuver":{"type":"arrive","location":[0.001,0.0]}}]}]}]}"""
+    private val route="""{"code":"Ok","routes":[{"distance":111.0,"duration":60.0,"geometry":"???o}@","legs":[{"steps":[{"name":"Main Street","distance":111.0,"duration":60.0,"maneuver":{"type":"depart","location":[0.0,0.0]}},{"name":"","distance":0.0,"duration":0.0,"maneuver":{"type":"arrive","location":[0.001,0.0]}}]}]}]}"""
     @Test fun searchEncodesQueryAndKeepsCoordinateOrder()=runBlocking {
         response("""{"features":[$feature]}""")
         val places=repository.search("Cafe & Park",Coordinate(51.5,-0.12))
@@ -36,6 +36,14 @@ class MapRepositoryTest {
     @Test fun reverseEmptyResponseHasUsefulFallback()=runBlocking {
         response("""{"features":[]}""");assertEquals("Your location",repository.reverse(Coordinate(0.0,0.0)))
     }
+    @Test fun reversePlaceNamesNearbyDestinationWithoutMovingThePin()=runBlocking {
+        response("""{"features":[{"properties":{"name":"Public Library","street":"Main Street","city":"Town","country":"UK"},"geometry":{"type":"Point","coordinates":[-0.1201,51.5001]}}]}""")
+        val destination=Coordinate(51.5,-0.12)
+        val place=repository.reversePlace(destination)!!
+        assertEquals("Public Library",place.name)
+        assertEquals("Main Street, Town, UK",place.address)
+        assertEquals(destination,place.point)
+    }
     @Test fun rateLimitIsActionable()=runBlocking {
         response("{}",429);val e=runCatching{repository.search("Cafe",Coordinate(0.0,0.0))}.exceptionOrNull()
         assertTrue(e?.message?.contains("busy")==true)
@@ -47,7 +55,20 @@ class MapRepositoryTest {
     @Test fun routeParsesGeometryAndManeuvers()=runBlocking {
         response(route);val r=repository.route(Coordinate(0.0,0.0),Coordinate(0.0,0.001))
         assertEquals(2,r.points.size);assertEquals(111.0,r.meters,0.1);assertEquals("arrive",r.steps.last().type)
-        assertEquals(Coordinate(0.0,0.001),r.points.last());assertTrue(server.takeRequest().path!!.contains("0.0,0.0;0.001,0.0"))
+        assertEquals(Coordinate(0.0,0.001),r.points.last());assertTrue(server.takeRequest().path!!.contains("geometries=polyline6"))
+    }
+    @Test fun ferrostarPayloadContainsRequiredBannerComponents()=runBlocking {
+        response(route)
+        val repo=MapRepository(server.url("/").toString(),server.url("/").toString(),server.url("/").toString(),
+            { json,_,_ ->
+                val first=json.getJSONArray("legs").getJSONObject(0).getJSONArray("steps").getJSONObject(0)
+                val primary=first.getJSONArray("bannerInstructions").getJSONObject(0).getJSONObject("primary")
+                assertEquals("text",primary.getJSONArray("components").getJSONObject(0).getString("type"))
+                assertTrue(first.getJSONArray("voiceInstructions").length()>0)
+                null
+            })
+        val result=repo.route(Coordinate(0.0,0.0),Coordinate(0.0,0.001))
+        assertEquals(2,result.steps.size)
     }
     @Test fun noRouteIsNotTreatedAsSuccess()=runBlocking {
         response("""{"code":"NoRoute"}""");val e=runCatching{repository.route(Coordinate(0.0,0.0),Coordinate(0.0,0.001))}.exceptionOrNull()
@@ -63,7 +84,7 @@ class MapRepositoryTest {
     @Test fun motorcycleUsesDedicatedCosting()=runBlocking {
         response(route);val r=repository.route(Coordinate(0.0,0.0),Coordinate(0.0,0.001),TravelMode.MOTORCYCLE)
         val payload=org.json.JSONObject(server.takeRequest().requestUrl!!.queryParameter("json")!!)
-        assertEquals("motorcycle",payload.getString("costing"));assertEquals("geojson",payload.getString("shape_format"));assertEquals(TravelMode.MOTORCYCLE,r.mode)
+        assertEquals("motorcycle",payload.getString("costing"));assertEquals("polyline6",payload.getString("shape_format"));assertEquals(TravelMode.MOTORCYCLE,r.mode)
     }
     @Test fun walkingUsesPedestrianCosting()=runBlocking {
         response(route);val r=repository.route(Coordinate(0.0,0.0),Coordinate(0.0,0.001),TravelMode.WALK)
@@ -89,7 +110,7 @@ class MapRepositoryTest {
         assertTrue(runCatching { repository.search("Park",Coordinate(0.0,0.0)) }.exceptionOrNull()?.message?.contains("too large")==true)
     }
     @Test fun rejectsRouteGeometryBeyondPointBudget()=runBlocking {
-        response(route.replace("[[0.0,0.0],[0.001,0.0]]","["+List(50_001){"[0.0,0.0]"}.joinToString(",")+"]"))
+        response(route.replace("???o}@","??".repeat(50_001)))
         assertTrue(runCatching { repository.route(Coordinate(0.0,0.0),Coordinate(0.0,0.001)) }.exceptionOrNull()?.message?.contains("too short or too complex")==true)
     }
     @Test fun rejectsInvalidProviderCoordinates()=runBlocking {

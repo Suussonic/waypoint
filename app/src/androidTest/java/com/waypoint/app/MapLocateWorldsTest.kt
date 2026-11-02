@@ -40,6 +40,9 @@ class MapLocateWorldsTest {
             lateinit var stateFlow:MutableStateFlow<NavState>
             scenario.onActivity { activity ->
                 controller=(activity.application as WaypointApplication).navigation
+                // This test drives the position explicitly; the device's live GPS would
+                // otherwise race the synthetic fix during the recenter assertion.
+                controller.setVisible(false)
                 val field=NavigationController::class.java.getDeclaredField("_state").apply{isAccessible=true}
                 @Suppress("UNCHECKED_CAST")
                 stateFlow=field.get(controller) as MutableStateFlow<NavState>

@@ -1,5 +1,23 @@
 # Security review and hardening
 
+## Current source audit and safeguards (3 November 2026)
+
+A standard full-source audit of the Android Auto and Ferrostar checkout mapped 44 security coverage units: 28 covered, five candidate units linked to four **needs-validation** leads, and 11 blocked by unavailable AndroidX/native runtime evidence. No exploit was confirmed. The frozen baseline report is outside the repository under `security-audit-skill/waypoint/run-3`. The local Docker daemon was unavailable, so this audit did not run target builds, emulator fixtures, or app tests.
+
+After freezing that baseline, the app began binding notification End actions to random trip IDs, rejecting stale car template/result callbacks, binding Ferrostar alternate routes to the current session and destination, bounding car virtual-display input, and limiting Android Geocoder callback copies. The release job also checks that a tagged commit reaches `main` before restoring signing material. These source changes are preventive safeguards; they do not retroactively confirm or refute the baseline runtime leads. Effective GitHub tag and environment rules, AndroidX Binder behavior, and MapLibre/Ferrostar native decoding still require separate validation.
+
+## Current Android Auto implementation (3 November 2026)
+
+Waypoint's car service is now enabled for signed Android Auto hosts. The service validates
+the host package and signing certificate; an on-device test accepts the installed Android
+Auto host and rejects a different UID. The projected UI uses AndroidX Car App templates,
+keeps map drawing behind the host controls, and requires confirmation before an incoming
+navigation destination is selected. Shared links cannot replace active guidance. The
+packaged manifest gates check the exported car service, its navigation category, and
+phone/car `geo:` handoff filters. These are functional and configuration checks, not a
+new adversarial security audit. The 0.2.1 findings below describe the earlier disabled
+component and remain historical evidence.
+
 ## Current source review (1.0.0 release, 2 November 2026)
 
 A second standard audit reviewed the current dirty checkout, including the new feedback flow, debug capture activity, map-tile input, update path and release workflow. Its 37 coverage units ended with 34 covered, two source-grounded leads needing validation and one blocked native-decoder unit. No vulnerability was confirmed by a bounded runtime test. The host lacked the required isolated execution environment, so this audit did not run app builds, Android fixtures or provider requests. The full report and frozen reviewed-source inventory are outside the repository under `security-audit-skill/waypoint/run-2`.
@@ -18,7 +36,7 @@ The completed review accounted for **31 coverage units** across five hunting wav
 
 Two baseline coverage gaps remain explicit: the original CI cache defaults/ref scoping and the complete packaged/runtime class inventory reachable by the car decoder. The release now disables signing-job caches and the car component. Neither change retroactively proves the baseline safe or exploited. Full traces stay in the local audit report; this public note records the fixes and limits.
 
-## Changes in this release
+## Changes in the earlier 0.2.1 release
 
 | Boundary | Source concern | Remediation |
 | --- | --- | --- |
@@ -30,7 +48,7 @@ Two baseline coverage gaps remain explicit: the original CI cache defaults/ref s
 | Build input → signed APK | Wrapper verification and cache policy relied on defaults. | Gradle 8.14.6, pinned distribution checksum, URL validation, explicit read-only cache policy outside main pushes and no Gradle cache in signing jobs. |
 | Generator input → committed assets | Regeneration could silently consume changed remote input. | Base-style and bundled glyph-generator hashes are verified before regeneration. CI builds committed styles instead of fetching a new base. |
 
-Disabling the Android Auto component contains the reviewed paths; it does **not** fix the underlying library or prove every possible car-host interaction safe. Re-enabling requires isolated cross-UID tests, caller/session ownership checks, malformed-input handling, lifecycle validation and actual head-unit testing. Updating the library alone is insufficient evidence.
+Disabling the Android Auto component contained the reviewed 0.2.1 paths at that time; it did **not** fix the underlying library or prove every possible car-host interaction safe. The current implementation uses AndroidX Car App Library host validation and has connected-device/DHU functional checks; malformed protocol fuzzing and a physical head-unit security assessment remain separate work. Updating the library alone is insufficient evidence.
 
 ## Controls already present
 
@@ -55,4 +73,4 @@ No single audit makes software “bulletproof.” Report new concerns through th
 
 Gradle's [release checksums](https://gradle.org/release-checksums/) and [wrapper verification guidance](https://docs.gradle.org/current/userguide/gradle_wrapper.html#sec:verification) support the distribution pin. Gradle 8.14.6 addresses the upstream [repository failover](https://github.com/gradle/gradle/security/advisories/GHSA-j5m7-59rp-24f5), [client/daemon](https://github.com/gradle/gradle/security/advisories/GHSA-xwqc-3h47-hg64) and [worker/daemon](https://github.com/gradle/gradle/security/advisories/GHSA-mvvg-497x-hmj8) advisories; this is dependency maintenance, not proof those issues were exploited here.
 
-The [AndroidX Car release notes](https://developer.android.com/jetpack/androidx/releases/car-app) document upstream security fixes. The source remains on 1.8.0-rc01 while the experimental component is disabled. Android's [deep-link security guidance](https://developer.android.com/privacy-and-security/risks/unsafe-use-of-deeplinks) describes the external-input boundary.
+The [AndroidX Car release notes](https://developer.android.com/jetpack/androidx/releases/car-app) document upstream security fixes. The current source uses 1.8.0-rc01 with the projected component enabled. Android's [deep-link security guidance](https://developer.android.com/privacy-and-security/risks/unsafe-use-of-deeplinks) describes the external-input boundary.

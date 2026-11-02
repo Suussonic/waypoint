@@ -25,17 +25,26 @@ distance, speed, spoken instructions, off-route recalculation, and arrival.
   off. Stop it in the app or from its ongoing Android notification.
 - Standard `geo:` and `google.navigation:` destination links are supported. Waypoint asks before using your location to look up a shared place or preview its route.
 
-## Android Auto (disabled)
+## Android Auto
 
-The experimental projected integration is disabled and not exported in 0.2.1. Its
-Binder caller identity and protocol-state handling need isolated cross-UID validation
-before this component can be enabled. The source remains available for that work.
-There is no user setting to bypass this restriction. Phone navigation continues to
-support Car, Motorcycle and Walk. See [the security review](security.md).
+Connect your phone to Android Auto, then open **Waypoint** from the car launcher. The car map
+follows the world selected on the phone. Search for a destination, choose a saved or recent
+place, preview the route, then start guidance. The map supports touch or rotary panning,
+recenter and zoom controls. Settings offers worlds, voice, units and map licences.
+The car map uses a live native MapLibre view capped at 60 frames per second. Position and
+camera movement interpolate between location fixes, while route and destination layers
+update directly as navigation progresses.
+Google Maps stays available separately in the launcher.
+
+Android Auto uses the last navigation app the driver opened as its default for Assistant and
+other navigation handoffs. Open Waypoint in the car to make it the current default; installing
+it alone cannot override the driver's choice. Waypoint accepts `geo:` navigation intents
+through a confirmation screen. It does not replace an active destination without consent.
+The host's Auto Drive test command simulates movement along a selected route.
 
 ## Build
 
-Requires JDK 17, Android SDK Platform 35 and Build Tools 35.0.0. Open the project
+Requires JDK 17, Android SDK Platform 36 and Build Tools 35.0.0. Open the project
 in Android Studio or point `local.properties` to your SDK:
 
 ```properties
@@ -62,6 +71,8 @@ No private signing material is included in the source.
   [OpenStreetMap](https://www.openstreetmap.org/copyright).
 - Search and reverse geocoding: [Photon public demo](https://github.com/komoot/photon). Search also uses [Android Geocoder](https://developer.android.com/reference/android/location/Geocoder) when available and Photon lacks a strong match, or when you explicitly submit a search. The device selects that backend; its data is not necessarily open source.
 - Driving routes and steps: [OSRM public demo](https://project-osrm.org/).
+- Motorcycle and walking routes: Valhalla public demo.
+- Guidance progress, maneuvers, rerouting and spoken cue selection: [Ferrostar](https://stadiamaps.github.io/ferrostar/) 0.59.0. Ferrostar consumes routes from the providers above; it does not provide the basemap, search or routing server.
 - Voice: Android's installed text-to-speech engine.
 
 The public endpoints are suitable for evaluation and can be throttled or unavailable.
@@ -109,9 +120,11 @@ You can clear those places in Settings. Location history is not recorded. The sm
 - `HeadingArbiter.kt`: confidence, freshness, hysteresis and compass/course selection.
 - `WorldMap.kt`: MapLibre lifecycle, themed vector map, markers and camera following.
 - `NavigationController.kt`: GPS, async search/routing, persisted places, voice and state.
-- `NavigationEngine.kt`: pure route projection, maneuver progress and arrival logic.
+- `FerrostarGuidance.kt`: Ferrostar navigation session and Android Auto test-drive simulation.
+- `NavigationEngine.kt`: retained pure route projection utilities and historical test fixtures.
 - `NavigationService.kt`: visible foreground service and background guidance lifecycle.
-- `WaypointCarService.kt`: projected Android Auto screens and themed map surface.
+- `WaypointCarService.kt`, `WaypointCarMenus.kt`: projected Android Auto templates and controls.
+- `WaypointCarLiveMap.kt`, `WaypointCarOverlay.kt`: live themed car map, route, markers and HUD.
 - `MapRepository.kt`: HTTPS search, reverse geocoding and OSRM routing.
 - `assets/styles/`: generated vector styles, with per-world road hierarchy, building treatment and relief.
 - `scripts/cartography_profiles.py`: explicit road, casing, label and building rules.

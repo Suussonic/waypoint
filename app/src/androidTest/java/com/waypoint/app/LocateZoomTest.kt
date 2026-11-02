@@ -52,6 +52,10 @@ class LocateZoomTest {
             val ready = CountDownLatch(1)
             var map: MapLibreMap? = null
             scenario.onActivity { activity ->
+                // Activity.onStart resumes real GPS; stop it before the synthetic
+                // fix so the device cannot replace this test's camera target.
+                controller.setVisible(false)
+                flow.value = flow.value.copy(fix = actualFix, gpsReady = true, accuracy = 4f)
                 val mapView = findMap(activity.window.decorView)
                 assertNotNull("Native map", mapView)
                 mapView!!.getMapAsync { map = it; ready.countDown() }

@@ -8,6 +8,11 @@ The public update channel is `the-geeky-couldron/waypoint` on GitHub Releases. A
 - A pushed `v*` tag: the same checks, followed by an optimized, signed APK. GitHub publishes `Waypoint.apk` and `SHA256SUMS` only after those jobs succeed.
 - The signing job disables Gradle caches. Verification caches are read-only outside pushes to `main`; the basic GitHub cache provider is explicit.
 - Pull requests never receive the release signing secrets. Actions are pinned to commit hashes. The release job alone receives repository-content write permission.
+- Before restoring the signing key, the release job checks that the tagged commit is already reachable from `main`. This catches accidental tags on unmerged commits.
+
+## Protect release authority
+
+The owner must verify the effective GitHub rules for `main` and `v*` tags before relying on the signed update channel: require review and passing checks before changes reach `main`, limit who can create release tags, prevent tag replacement or deletion, and require an independent release approval where available. A tag-push workflow is read from the tagged revision, so the ancestry check inside this workflow cannot by itself protect against an actor who can tag an arbitrary commit containing a changed workflow. Record who can change workflow files and who can access release signing secrets. These controls are configured on GitHub and are not established by this repository's source.
 
 ## Signing
 
@@ -28,7 +33,7 @@ Local release builds accept `WAYPOINT_KEYSTORE`, `WAYPOINT_STORE_PASSWORD`, `WAY
 
 ## Publish an update
 
-1. Change `version.properties`. Use a stable `major.minor.patch` version, with each part from 0–999. Set `VERSION_CODE = major × 1,000,000 + minor × 1,000 + patch`. This matches the updater in the published `0.2.3` app, which checks the APK code against the release tag. Always increase the code; the next stable update after `1.0.0` is `1.0.1`.
+1. Change `version.properties`. Use a stable `major.minor.patch` version, with each part from 0–999. Set `VERSION_CODE = major × 1,000,000 + minor × 1,000 + patch`. This matches the updater in the published app, which checks the APK code against the release tag. Always increase the code; `1.1.0` uses `1001000`.
 2. Update `docs/releases/current.md` and copy it to `app/src/main/assets/release-notes.md`. The bundled copy powers the post-update What’s New screen; GitHub’s release body powers the updater. `scripts/check_version.py` requires both copies to match. Update tests/screenshots when behavior or appearance changes.
 3. Run verification, commit, push, then tag the exact commit:
 
@@ -37,10 +42,10 @@ python3 scripts/check_version.py
 ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 # Example only: first change version.properties and both release-note files to match.
 git add version.properties docs/releases/current.md app/src/main/assets/release-notes.md
-git commit -m "Release 1.0.0"
+git commit -m "Release 1.1.0"
 git push origin main
-git tag -a v1.0.0 -m "Waypoint 1.0.0"
-git push origin v1.0.0
+git tag -a v1.1.0 -m "Waypoint 1.1.0"
+git push origin v1.1.0
 ```
 
 Watch the Android workflow. Its release job verifies that the tag and version file agree. After publication, verify the APK and checksum on the release page. Keep pushed tags immutable, including tags whose release workflow failed. Use a new patch version and an annotated tag for corrections; never overwrite an already-published APK.
@@ -48,6 +53,10 @@ Watch the Android workflow. Its release job verifies that the tag and version fi
 ## Updater behavior
 
 Waypoint checks GitHub's latest stable release API when the app enters the foreground. Drafts, prereleases and older/equal versions are ignored. An available update is offered over the idle map and returns on each launch until installed; choosing Later dismisses it only for the current foreground entry. The update prompt and Settings show GitHub's release notes before download. After installation, a one-time What’s New dialog shows the matching notes bundled in the APK. Downloads remain explicit, with no background polling, GitHub credentials or location information involved. Settings also offers a manual check.
+
+On a later foreground entry, Waypoint refreshes an earlier available offer so a newer release can supersede it. A temporary check failure keeps the earlier offer; an active download or verified APK remains available until the user acts on it.
+
+Pushing a commit to `main` only runs verification. Installed users see the update prompt after the newer signed `v*` GitHub release is published and they next open Waypoint on the phone. The app does not send a push notification while closed or interrupt navigation in the car.
 
 Before showing Install update, Waypoint checks:
 

@@ -90,7 +90,9 @@ class GlobalScenariosTest {
     private val places get()=globalPlaces.take(InstrumentationRegistry.getArguments().getString("scenario_limit")?.toIntOrNull()?.coerceIn(1,50) ?: 50)
     private fun findMap(view:View):MapView? {
         if(view is MapView)return view
-        if(view is ViewGroup)for(index in 0 until view.childCount)findMap(view.getChildAt(index))?.let{return it}
+        // Activity.setContent adds the test composition above the Activity's original
+        // composition. The last MapView is the one driven by this test's state.
+        if(view is ViewGroup)for(index in view.childCount-1 downTo 0)findMap(view.getChildAt(index))?.let{return it}
         return null
     }
     private fun onMain(test:()->Boolean):Boolean {
@@ -116,16 +118,20 @@ class GlobalScenariosTest {
         var mapError:String?=null
         var fullyRenderedAt=0L
         lateinit var decor:View
+        var originalMap:MapView?=null
         val failures=mutableListOf<String>()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 (activity.application as WaypointApplication).navigation.setVisible(false)
                 decor=activity.window.decorView
+                originalMap=findMap(decor)
                 activity.setContent {
                     WorldMap(model.value,{},{mapError=it},Modifier.fillMaxSize())
                 }
             }
-            assertTrue("MapView did not mount",await(10000){findMap(decor)!=null})
+            assertTrue("Test MapView did not replace the Activity map",await(10000){
+                findMap(decor)?.let { it!==originalMap }==true
+            })
             scenario.onActivity {
                 findMap(decor)!!.apply {
                     addOnDidFinishRenderingMapListener { complete ->
@@ -173,8 +179,8 @@ class GlobalScenariosTest {
                     }
                     failures+="${place.name}, ${place.country} (${world.name}): $detail; $mapError"
                 }
-                val complete=await(10000){fullyRenderedAt>sceneStarted}
-                if(!complete)failures+="${place.name}, ${place.country} (${world.name}): map never finished rendering; $mapError"
+                val complete=if(index==0)onMain { fullyRenderedAt>sceneStarted }
+                    else await(10000){fullyRenderedAt>sceneStarted}
                 // The position source can be ready before vector tiles. Check actual rendered features.
                 val tiles=await(8000) {
                     val native=map ?: return@await false
@@ -184,6 +190,10 @@ class GlobalScenariosTest {
                         "road_minor","road_secondary_tertiary","road_trunk_primary","road_motorway",
                         "road_service_track","building").isNotEmpty()
                 }
+                // The initial world can finish before the listener is registered. Rendered
+                // road features plus a ready camera/marker prove that frame was drawn.
+                if(!complete && !(index==0 && ready && tiles))
+                    failures+="${place.name}, ${place.country} (${world.name}): map never finished rendering; $mapError"
                 if(!tiles)failures+="${place.name}, ${place.country} (${world.name}): no rendered map features; $mapError"
                 SystemClock.sleep(250)
                 device.takeScreenshot(File(output,"%02d-%s.png".format(index+1,place.name.lowercase().replace(Regex("[^a-z0-9]+"),"-"))))

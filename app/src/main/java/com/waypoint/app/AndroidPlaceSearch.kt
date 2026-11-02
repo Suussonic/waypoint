@@ -21,7 +21,7 @@ class AndroidPlaceSearch(context:Context):PlaceSearchProvider {
         val addresses=if(Build.VERSION.SDK_INT>=33)suspendCancellableCoroutine { continuation ->
             geocoder.getFromLocationName(query,8,south,west,north,east,object:Geocoder.GeocodeListener {
                 override fun onGeocode(addresses:MutableList<Address>) {
-                    if(continuation.isActive)continuation.resumeWith(Result.success(addresses.toList()))
+                    if(continuation.isActive)continuation.resumeWith(Result.success(addresses.take(8)))
                 }
                 override fun onError(errorMessage:String?) {
                     if(continuation.isActive)continuation.resumeWith(Result.failure(IOException("Device search unavailable")))

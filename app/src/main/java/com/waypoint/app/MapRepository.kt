@@ -17,14 +17,54 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
+import uniffi.ferrostar.GeographicCoordinate
+import uniffi.ferrostar.Waypoint
+import uniffi.ferrostar.WaypointKind
+import uniffi.ferrostar.createRouteFromOsrmRoute
+import uniffi.ferrostar.Route
 
 interface NavigationRepository {
     suspend fun search(query: String, near: Coordinate): List<Place>
     suspend fun reverse(point: Coordinate): String
+    suspend fun reversePlace(point: Coordinate): Place? = null
     suspend fun route(from: Coordinate, to: Coordinate, mode: TravelMode = TravelMode.CAR): RoadRoute
 }
 
-class MapRepository(private val photonBase:String="https://photon.komoot.io", private val routingBase:String="https://router.project-osrm.org", private val valhallaBase:String="https://valhalla1.openstreetmap.de") : NavigationRepository {
+internal fun decodePolyline6(encoded: String): List<Coordinate> {
+    var cursor=0
+    var lat=0L
+    var lon=0L
+    fun value(): Long {
+        var result=0L
+        var shift=0
+        while(true) {
+            require(cursor<encoded.length && shift<=35) { "The route geometry is invalid. Try again." }
+            val chunk=encoded[cursor++].code-63
+            require(chunk in 0..63) { "The route geometry is invalid. Try again." }
+            result=result or ((chunk and 31).toLong() shl shift)
+            if(chunk<32)break
+            shift+=5
+        }
+        return if((result and 1L)==0L) result shr 1 else -(result shr 1)-1
+    }
+    return buildList {
+        while(cursor<encoded.length) {
+            require(size<50_000) { "This route is too short or too complex. Choose a closer destination." }
+            lat+=value();lon+=value()
+            add(Coordinate(lat/1_000_000.0,lon/1_000_000.0).also {
+                require(it.isValid()) { "The map service returned invalid coordinates. Try again." }
+            })
+        }
+    }
+}
+
+internal fun ferrostarRouteFromOsrm(route: JSONObject, from: Coordinate, to: Coordinate): Route =
+    createRouteFromOsrmRoute(route.toString().toByteArray(Charsets.UTF_8),listOf(
+        Waypoint(GeographicCoordinate(from.lat,from.lon),WaypointKind.BREAK,null),
+        Waypoint(GeographicCoordinate(to.lat,to.lon),WaypointKind.BREAK,null)),6u)
+
+class MapRepository(private val photonBase:String="https://photon.komoot.io", private val routingBase:String="https://router.project-osrm.org", private val valhallaBase:String="https://valhalla1.openstreetmap.de",
+    private val ferrostarParser:(JSONObject,Coordinate,Coordinate)->Route?=::ferrostarRouteFromOsrm) : NavigationRepository {
     private val routeMutex=Mutex()
     private var lastRouteCall=0L
     private val client = OkHttpClient.Builder().connectTimeout(12,TimeUnit.SECONDS).readTimeout(20,TimeUnit.SECONDS).callTimeout(25,TimeUnit.SECONDS)
@@ -88,23 +128,43 @@ class MapRepository(private val photonBase:String="https://photon.komoot.io", pr
         val p = json("${photonBase.trimEnd('/')}/reverse?lat=${point.lat}&lon=${point.lon}&limit=1&lang=en").getJSONArray("features").optJSONObject(0)?.optJSONObject("properties")
         text(p?.optString("city")?.ifBlank { p.optString("county") }?.ifBlank { "Your location" } ?: "Your location")
     }
+    override suspend fun reversePlace(point: Coordinate): Place? = withContext(Dispatchers.IO) {
+        require(point.isValid()) { "Choose a destination with valid coordinates." }
+        val features=json("${photonBase.trimEnd('/')}/reverse?lat=${point.lat}&lon=${point.lon}&limit=3&lang=en").getJSONArray("features")
+        require(features.length()<=3) { "The place response is too large. Try again." }
+        (0 until features.length()).mapNotNull { index ->
+            val feature=features.optJSONObject(index) ?: return@mapNotNull null
+            val properties=feature.optJSONObject("properties") ?: return@mapNotNull null
+            val coordinate=feature.optJSONObject("geometry")?.optJSONArray("coordinates")?.let { runCatching { it.point() }.getOrNull() }
+                ?: return@mapNotNull null
+            val nearby=distance(point,coordinate)
+            val landmark=text(properties.optString("name"),120).takeIf { nearby<=200 }
+            val street=text(properties.optString("street"),120).takeIf { nearby<=500 }
+            val area=text(properties.optString("district"),120).ifBlank { text(properties.optString("city"),120) }
+            val name=landmark?.takeIf { it.isNotBlank() } ?: street?.takeIf { it.isNotBlank() }
+                ?: area.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            val address=listOf(properties.optString("housenumber"),properties.optString("street"),
+                properties.optString("district"),properties.optString("city"),properties.optString("county"),
+                properties.optString("country")).map { text(it,120) }.filter { it.isNotBlank() }.distinct().joinToString(", ")
+            Place("reverse:${point.lat},${point.lon}",name,address,point,"place","OpenStreetMap · Photon")
+        }.firstOrNull()
+    }
     override suspend fun route(from: Coordinate, to: Coordinate,mode:TravelMode): RoadRoute = withContext(Dispatchers.IO) {
         require(from.isValid() && to.isValid()) { "Choose a destination with valid coordinates." }
-        val obj = if(mode==TravelMode.CAR) json("${routingBase.trimEnd('/')}/route/v1/driving/${from.lon},${from.lat};${to.lon},${to.lat}?overview=full&geometries=geojson&steps=true",8*1024*1024)
+        val obj = if(mode==TravelMode.CAR) json("${routingBase.trimEnd('/')}/route/v1/driving/${from.lon},${from.lat};${to.lon},${to.lat}?overview=full&geometries=polyline6&steps=true",8*1024*1024)
         else routeMutex.withLock {
             val elapsed=(System.nanoTime()-lastRouteCall)/1_000_000
             if(elapsed<1100)delay(1100-elapsed)
             lastRouteCall=System.nanoTime()
             val payload=JSONObject().put("locations",JSONArray().put(JSONObject().put("lat",from.lat).put("lon",from.lon)).put(JSONObject().put("lat",to.lat).put("lon",to.lon)))
-                .put("costing",mode.costing).put("format","osrm").put("shape_format","geojson")
+                .put("costing",mode.costing).put("format","osrm").put("shape_format","polyline6")
                 .put("units","kilometers").put("language","en-US")
             json("${valhallaBase.trimEnd('/')}/route?json=${URLEncoder.encode(payload.toString(),"UTF-8")}",8*1024*1024)
         }
         check(obj.optString("code") == "Ok") { "No ${mode.routeDescription} route found. Choose another destination." }
         val r = obj.getJSONArray("routes").getJSONObject(0)
-        val coords = r.getJSONObject("geometry").getJSONArray("coordinates")
-        require(coords.length() in 2..50_000) { "This route is too short or too complex. Choose a closer destination." }
-        val points = (0 until coords.length()).map { coords.getJSONArray(it).point() }
+        val points=decodePolyline6(r.getString("geometry"))
+        require(points.size in 2..50_000) { "This route is too short or too complex. Choose a closer destination." }
         val legs = r.getJSONArray("legs")
         require(legs.length() in 1..64) { "This route has too many sections. Choose a closer destination." }
         val steps = buildList {
@@ -120,7 +180,42 @@ class MapRepository(private val photonBase:String="https://photon.komoot.io", pr
         val meters=number(r.getDouble("distance"),40_000_000.0)
         val seconds=number(r.getDouble("duration"),31*86400.0)
         check(steps.isNotEmpty() && meters>0) { "That destination is too close. Choose another place." }
+        // The public routing endpoints omit voice and banner prompts. Add them to
+        // their OSRM response so Ferrostar owns instruction timing and de-duplication.
+        val sourceSteps=buildList<JSONObject> {
+            for(i in 0 until legs.length()) {
+                val items=legs.getJSONObject(i).getJSONArray("steps")
+                for(j in 0 until items.length())add(items.getJSONObject(j))
+            }
+        }
+        sourceSteps.forEachIndexed { index, source ->
+            val upcoming=steps.getOrNull(index+1) ?: return@forEachIndexed
+            val segment=steps[index].distance
+            if((source.optJSONArray("voiceInstructions")?.length() ?: 0) == 0) {
+                val prompts=JSONArray()
+                if(segment>210)prompts.put(JSONObject().put("announcement","In 180 meters, ${upcoming.instruction}").put("distanceAlongGeometry",180.0))
+                if(segment>45)prompts.put(JSONObject().put("announcement",upcoming.instruction).put("distanceAlongGeometry",35.0))
+                if(prompts.length()>0)source.put("voiceInstructions",prompts)
+            }
+            if((source.optJSONArray("bannerInstructions")?.length() ?: 0) == 0) {
+                source.put("bannerInstructions",JSONArray().put(JSONObject()
+                    .put("distanceAlongGeometry",segment.coerceAtMost(300.0))
+                    .put("primary",JSONObject().put("text",upcoming.instruction)
+                        .put("components",JSONArray().put(JSONObject().put("type","text").put("text",upcoming.instruction))))))
+            } else {
+                val banners=source.getJSONArray("bannerInstructions")
+                for(bannerIndex in 0 until banners.length()) {
+                    val banner=banners.getJSONObject(bannerIndex)
+                    for(key in listOf("primary","secondary","sub"))
+                        banner.optJSONObject(key)?.let { if(!it.has("components"))it.put("components",JSONArray()) }
+                }
+            }
+        }
         check(distance(from,points.first()) < 1500 && distance(to,points.last()) < 1500) { "No nearby road access found for this location." }
-        RoadRoute(points,steps,meters,seconds,mode)
+        val ferrostar=ferrostarParser(r,from,to)
+        if(ferrostar!=null)require(ferrostar.geometry.size==points.size && ferrostar.steps.size==steps.size) {
+            "The navigation route could not be matched to the map. Try again."
+        }
+        RoadRoute(points,steps,meters,seconds,mode,ferrostar)
     }
 }

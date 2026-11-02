@@ -3,32 +3,38 @@
     <source media="(max-width: 640px)" srcset="docs/images/promo/hero-mobile.jpg" />
     <img src="docs/images/promo/hero.jpg" width="100%" alt="Waypoint: real streets with game-inspired map styles, shown in two Android map views." />
   </picture>
-  <p><strong>Real streets. Another world.</strong><br />A free Android navigation app with 27 game-inspired map styles, live GPS and spoken directions.<br /><sub>Made in India · Open to the world</sub></p>
+  <p><strong>Real streets. Another world.</strong><br />27 game-inspired maps, live navigation and spoken directions on your phone and Android Auto.<br /><sub>Made in India · Open to the world</sub></p>
   <p>
     <a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="https://img.shields.io/github/v/release/the-geeky-couldron/waypoint?label=latest%20release&amp;color=497c6f" alt="Latest Waypoint release version" /></a>
-    <a href="https://github.com/the-geeky-couldron/waypoint/releases"><img src="https://img.shields.io/github/downloads/the-geeky-couldron/waypoint/total?label=all%20release%20downloads&amp;color=497c6f" alt="Total GitHub release downloads across every Waypoint version" /></a>
+    <a href="https://github.com/the-geeky-couldron/waypoint/releases"><img src="https://img.shields.io/github/downloads/the-geeky-couldron/waypoint/total?label=Downloads&amp;color=497c6f" alt="Waypoint Downloads" /></a>
     <a href="https://github.com/the-geeky-couldron/waypoint/stargazers"><img src="https://img.shields.io/github/stars/the-geeky-couldron/waypoint?label=GitHub%20stars&amp;color=497c6f" alt="Waypoint GitHub stars" /></a>
   </p>
-  <p><sub>Download count covers all GitHub release assets across all versions, including checksum files; it does not count unique installs.</sub></p>
+  <p><sub>GitHub release asset downloads; not unique installs.</sub></p>
   <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="docs/images/promo/download.jpg" width="340" alt="Download Waypoint for Android from GitHub Releases" /></a></p>
   <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><strong>Download the latest APK</strong></a> · <a href="#build-from-source">Build from source</a> · <a href="#privacy-and-services">Privacy and services</a></p>
   <p><sub>Android 8.0+ · No ads or paywall · No Waypoint account · Every world included</sub></p>
 </div>
 
-## Waypoint 1.0.0 is here
+## Your world, on the dashboard
 
-The first stable GitHub release makes it easier to get from opening the app to exploring real streets.
+Connect your phone to Android Auto and open Waypoint from the car launcher. The projected map follows the world selected on your phone, with a full route line, turn cues and a camera that follows travel. Search or pick a saved destination on the car screen; shared destinations ask before Waypoint previews a route.
 
-- **Back to your map immediately.** After the first run, Waypoint opens your last selected world. You can switch among all 27 worlds from the map whenever you like.
-- **A more cohesive journey.** The rotating globe, world previews, artwork, labels and map blips have been refined while keeping roads and useful places readable.
-- **More reliable navigation.** Locate returns to street-level zoom, 2D/3D tilt works across styles, and shared destination links have a clearer confirmation and preview flow.
-- **Clearer updates.** The in-app updater shows the changelog before download, and existing users see a one-time What’s New screen after installing an update.
+<picture>
+  <source media="(max-width: 640px)" srcset="docs/images/promo/android-auto-mobile.jpg" />
+  <img src="docs/images/promo/android-auto.jpg" width="100%" alt="Actual Android Auto Desktop Head Unit captures of Waypoint guidance on a simulated London route, first in Old West and then in Night City." />
+</picture>
 
-Thanks to [u/cuberisk](https://www.reddit.com/user/cuberisk/) for suggesting that Waypoint open the map directly instead of showing world selection at every launch. Read the [complete 1.0.0 changelog](docs/releases/current.md).
+<sub>Captured in the Android Auto Desktop Head Unit with a fixed public London demonstration route. The route and guidance state were simulated for the screenshots; no personal location was used. <a href="docs/images/promo/README.md">Capture and artwork notes</a>.</sub>
+
+**Waypoint 1.1.0** also brings Ferrostar guidance and rerouting, smoother phone and car map updates, better route-preview recovery, and refinements to Locate, tilt, search and the world gallery. [Read the full release notes](docs/releases/current.md).
+
+Android Auto keeps Google Maps available in the launcher. Open Waypoint there to use it as the current navigation app; installing it cannot change Android Auto's choice on its own. The car UI uses host-safe controls for search, saved destinations, voice, recenter and zoom. The phone remains the place to choose Car, Motorcycle or Walk.
 
 ## Your map, your world
 
 Pick a world during onboarding, then explore real geography through its roads, typography, markers and navigation controls. Switch styles without losing your destination. The globe, world gallery and map are designed as one journey; the map itself remains readable while you travel.
+
+After the first run, Waypoint opens your last selected world. Thanks to [u/cuberisk](https://www.reddit.com/user/cuberisk/) for suggesting that faster return to the map.
 
 <picture>
   <source media="(max-width: 640px)" srcset="docs/images/promo/worlds-1-mobile.jpg" />
@@ -45,7 +51,7 @@ Pick a world during onboarding, then explore real geography through its roads, t
   <img src="docs/images/promo/worlds-3.jpg" width="100%" alt="Waypoint's Sheikah Slate and Pixel World map styles, presented in phone mockups." />
 </picture>
 
-<sub>These compositions use sanitised native map captures at a fixed public London demonstration position. [Artwork notes](docs/images/promo/README.md).</sub>
+<sub>These compositions use sanitised native map captures at a fixed public London demonstration position. <a href="docs/images/promo/README.md">Artwork notes</a>.</sub>
 
 <details>
 <summary><strong>See all 27 worlds</strong></summary>
@@ -72,6 +78,7 @@ Pick a world during onboarding, then explore real geography through its roads, t
 ## Built for the journey
 
 - **Drive, ride or walk.** Choose a car, motorcycle or walking route, then follow spoken turns, remaining distance and ETA.
+- **Take the route into the car.** Android Auto shows Waypoint's selected world, moving map, route and next turn. Search, saved destinations and map controls stay within the car's template UI.
 - **Keep your bearings.** Locate recentres on your actual position; the map follows movement and can recalculate after a confirmed wrong turn. A 2D/3D control changes the camera tilt.
 - **Find useful places.** Search destinations, drop a pin, and see world-specific blips for food, pubs, shops, schools, hospitals and other mapped places. Icons appear progressively as you zoom so dense streets stay legible.
 - **Pick up where you left off.** Save places, revisit recent destinations and switch worlds during a trip. Shared `geo:` and `google.navigation:` links ask for confirmation before Waypoint looks up or previews the imported destination.
@@ -88,11 +95,11 @@ Pick a world during onboarding, then explore real geography through its roads, t
 3. Tap **Locate** and grant precise location. Search for a destination or hold the map to drop a pin.
 4. Choose **Car**, **Motorcycle** or **Walk**. Review the route, then tap **Start navigation**.
 
-Installed versions check for a newer stable GitHub release when the app enters the foreground. The updater shows the release notes before you download, verifies the package and signing identity, then hands installation to Android. After updating, Waypoint shows What’s New once. A compatible update keeps saved places and settings. This source tree is **Waypoint 1.0.0**; see the [full changelog](docs/releases/current.md).
+Installed versions check for a newer stable GitHub release when Waypoint opens on the phone. If an update is available, an in-app prompt appears when the idle map is visible. Review the release notes, choose **Download update**, and confirm installation in Android. The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 1.1.0**; see the [release notes](docs/releases/current.md).
 
 ## Build from source
 
-You need **JDK 17**, Android **SDK Platform 35** and **Build Tools 35.0.0**. Set `ANDROID_HOME` or put your SDK path in the ignored `local.properties` file.
+You need **JDK 17**, Android **SDK Platform 36** and **Build Tools 35.0.0**. Set `ANDROID_HOME` or put your SDK path in the ignored `local.properties` file.
 
 ```sh
 git clone https://github.com/the-geeky-couldron/waypoint.git
@@ -117,8 +124,9 @@ Waypoint has no app-owned account, analytics backend or recorded route history. 
 | Motorcycle and walking routes | Valhalla |
 | Terrain | Mapzen |
 | Voice | Your installed Android text-to-speech engine |
+| Guidance progress and rerouting | Ferrostar 0.59.0 using OSRM and Valhalla routes |
 
-The public map, search and routing endpoints require internet access and can be unavailable or rate-limited. Waypoint has **no live traffic, offline routing or lane guidance**. Android Auto remains disabled. GPS and place coverage vary by device and location; real-road and long-duration testing are still needed. Read the [service and privacy guide](docs/guide.md#location-and-privacy) and [validation record](docs/validation.md) for the practical limits.
+The public map, search and routing endpoints require internet access and can be unavailable or rate-limited. Waypoint has **no live traffic, offline routing or lane guidance**. On Android Auto, open Waypoint from the car launcher to use it as the current default navigation app; the last navigation app opened controls that default. The car screen follows the phone's selected world and offers search, saved destinations, guidance, map controls and settings. GPS and place coverage vary by device and location; real-road and long-duration testing are still needed. Read the [service and privacy guide](docs/guide.md#location-and-privacy) and [validation record](docs/validation.md) for the practical limits.
 
 ## Open project
 

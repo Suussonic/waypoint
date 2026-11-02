@@ -12,6 +12,12 @@ class NavigationImportTest {
         assertEquals(NavigationImport.Search("Central Park"),parse("google.navigation:q=Central+Park&mode=w"))
         assertEquals(NavigationImport.Search("Cafe & Park"),parse("geo:0,0?q=Cafe%20%26%20Park"))
     }
+    @Test fun assistantAndCarNavigationIntentsUseTheSameConsentGate() {
+        for (action in listOf("android.intent.action.NAVIGATE", "androidx.car.app.action.NAVIGATE")) {
+            assertEquals(NavigationImport.Search("Central Park"), parse("geo:0,0?q=Central+Park", action))
+            assertEquals(NavigationImport.Point(Coordinate(51.5,-0.12),"Location at 51.50000, -0.12000"), parse("geo:51.5,-0.12?mode=w", action))
+        }
+    }
     @Test fun decodesExactlyOnceAfterParameterSplitting() {
         assertEquals(NavigationImport.Search("Cafe%26Park"),parse("geo:0,0?q=Cafe%2526Park"))
     }

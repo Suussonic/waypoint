@@ -10,7 +10,7 @@ val releaseStore = providers.environmentVariable("WAYPOINT_KEYSTORE").orNull
 
 android {
     namespace = "com.waypoint.app"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.waypoint.app"
         minSdk = 26
@@ -38,11 +38,12 @@ android {
         }
     }
     testBuildType = providers.gradleProperty("testBuildType").getOrElse("debug")
-    compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
-    kotlinOptions { jvmTarget = "17" }
+    compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17; isCoreLibraryDesugaringEnabled = true }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
 }
+kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
     implementation(composeBom)
     implementation("androidx.activity:activity-compose:1.9.3")
@@ -53,6 +54,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     implementation("org.maplibre.gl:android-sdk:11.13.5")
+    implementation("com.stadiamaps.ferrostar:core:0.59.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("androidx.car.app:app:1.8.0-rc01")
@@ -63,5 +65,10 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
+    androidTestImplementation("androidx.car.app:app-testing:1.8.0-rc01") {
+        // Robolectric belongs to local JVM tests. On a device it causes
+        // ActivityScenario to select ShadowLooper without a sandbox.
+        exclude(group = "org.robolectric")
+    }
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

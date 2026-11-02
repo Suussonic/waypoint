@@ -1,5 +1,21 @@
 package com.waypoint.app
 
+import java.util.UUID
+
+/** A delegated action belongs to one trip, even if Android retains its PendingIntent. */
+internal class NavigationSessionGate {
+    private var active: String? = null
+    val current: String? get() = active
+    fun begin(): String = UUID.randomUUID().toString().also { active = it }
+    fun end() { active = null }
+    fun accepts(token: String?): Boolean = token != null && token == active
+}
+
+/** Keep projected display allocation within a generous but finite pixel budget. */
+internal fun validCarSurfaceSize(width: Int, height: Int, dpi: Int): Boolean =
+    width in 1..8192 && height in 1..4096 && dpi in 1..1600 &&
+        width.toLong() * height <= 8_847_360L
+
 /** Monotonic sample times prevent a batched callback from pretending to be sustained deviation. */
 class ReroutePolicy {
     private var since: Long? = null

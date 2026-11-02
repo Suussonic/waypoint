@@ -253,7 +253,7 @@ fun World.inspiration()=when(this) {
     val p=hudPalette(state.world)
     val guidance=routeGuidance(state.route,state.progress)
     val distanceText=when { !state.gpsReady -> "Finding GPS"; state.routing -> "Rerouting…"; state.offRoute -> "Off route"; else -> formatDistance(state.progress?.toTurn ?: 0.0,state.imperial) }
-    val instructionText=when { !state.gpsReady -> "Waiting for a fresh, accurate location"; state.routing -> "Updating the route from your position"; state.offRoute -> if(state.routeError!=null)"Route unavailable · retrying automatically" else "Checking your position for a new route"; else -> guidance.instruction }
+    val instructionText=when { !state.gpsReady -> "Waiting for a fresh, accurate location"; state.routing -> "Updating the route from your position"; state.offRoute -> if(state.routeError!=null)"Route unavailable · check connection and keep moving" else "Checking your position for a new route"; else -> guidance.instruction }
     Surface(onClick=onClick,color=p.panel,contentColor=p.foreground,shape=hudShape(state.world),border=hudBorder(state.world),
         modifier=Modifier.fillMaxWidth().semantics {
             contentDescription="$distanceText. $instructionText. Show route steps"

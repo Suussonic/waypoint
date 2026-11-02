@@ -43,7 +43,7 @@ class SearchAliasStorageTest {
         } finally {
             inst.runOnMainSync {
                 (field("scope") as CoroutineScope).cancel()
-                (field("tts") as android.speech.tts.TextToSpeech).shutdown()
+                (field("guidance") as FerrostarGuidance).shutdown()
             }
             prefs.edit().clear().commit()
         }

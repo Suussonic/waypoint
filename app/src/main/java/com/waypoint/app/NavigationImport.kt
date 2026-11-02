@@ -1,6 +1,7 @@
 package com.waypoint.app
 
 import java.net.URLDecoder
+import java.util.Locale
 
 /** External links propose destinations; they never authorize replacing active guidance. */
 internal sealed interface NavigationImport {
@@ -11,7 +12,7 @@ internal sealed interface NavigationImport {
         private val coordinate = Regex("^([+-]?[0-9]{1,3}(?:\\.[0-9]{1,12})?),\\s*([+-]?[0-9]{1,3}(?:\\.[0-9]{1,12})?)(?:\\s*\\(([^()]{1,120})\\))?$")
 
         fun parse(action: String?, value: String?): NavigationImport? = runCatching {
-            if (action != "android.intent.action.VIEW" || value == null || value.length > 4096) return null
+            if (action !in setOf("android.intent.action.VIEW", "android.intent.action.NAVIGATE", "androidx.car.app.action.NAVIGATE") || value == null || value.length > 4096) return null
             if (':' !in value) return null
             val scheme = value.substringBefore(':')
             if (scheme != "geo" && scheme != "google.navigation") return null
@@ -29,7 +30,7 @@ internal sealed interface NavigationImport {
             if (match != null) {
                 val point = Coordinate(match.groupValues[1].toDouble(), match.groupValues[2].toDouble())
                 if (!point.isValid()) return null
-                Point(point, match.groupValues[3].trim().ifBlank { "Shared destination" })
+                Point(point, match.groupValues[3].trim().ifBlank { coordinateLabel(point) })
             } else {
                 // A malformed coordinate pair must not silently become a different geocoding query.
                 if (Regex("^[+\\-0-9.]+\\s*,").containsMatchIn(text)) return null
@@ -38,6 +39,9 @@ internal sealed interface NavigationImport {
         }.getOrNull()
     }
 }
+
+internal fun coordinateLabel(point: Coordinate): String =
+    "Location at ${String.format(Locale.ROOT,"%.5f",point.lat)}, ${String.format(Locale.ROOT,"%.5f",point.lon)}"
 
 /** A result belongs only to the most recent import and the navigation state it started in. */
 internal class NavigationImportGate {

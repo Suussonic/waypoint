@@ -19,7 +19,6 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.os.SystemClock
-import android.speech.tts.TextToSpeech
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +26,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.Locale
+import uniffi.ferrostar.RouteDeviation
+import uniffi.ferrostar.TripState
+import com.stadiamaps.ferrostar.core.NavigationState
 
 val PreviewCenter = Coordinate(22.5726,88.3639)
 
@@ -69,12 +70,10 @@ data class NavState(
     val pendingSharedDestination: String? = null,
     val pendingSharedDestinationId: Long = 0L,
     val pendingSharedCoordinates: String? = null,
+    val resolvingSharedDestination: Boolean = false,
     val cameraRequest: Int = 0,
     val focusUserCameraRequest: Int = -1,
     val tilted: Boolean = true,
-    val carNight: Boolean = false,
-    val carDayWorld: World = World.HORIZON,
-    val carNightWorld: World = World.LOS_SANTOS,
 )
 
 class WaypointApplication : Application() {
@@ -111,10 +110,7 @@ class NavigationController(private val app: Application, private val repository:
         mode = TravelMode.entries.find{it.name==prefs.getString("mode",null)} ?: TravelMode.CAR,
         voice = prefs.getBoolean("voice",true), imperial = prefs.getBoolean("imperial",false),
         saved = readPlaces("saved"), recent = readPlaces("recent"),
-        tilted = prefs.getBoolean("tilted",initialWorld.mapArt().tilt>0.0),
-        carNight = prefs.getBoolean("carNight",false),
-        carDayWorld = World.entries.find{it.name==prefs.getString("carDayWorld",null)} ?: World.HORIZON,
-        carNightWorld = World.entries.find{it.name==prefs.getString("carNightWorld",null)} ?: World.LOS_SANTOS
+        tilted = prefs.getBoolean("tilted",initialWorld.mapArt().tilt>0.0)
     ))
     val state = _state.asStateFlow()
     private val manager = app.getSystemService(LocationManager::class.java)
@@ -155,24 +151,29 @@ class NavigationController(private val app: Application, private val repository:
     private var userFocusPending=false
     private var lastFixElapsed = 0L
     private var lastGpsElapsed = 0L
-    private val reroutePolicy = ReroutePolicy()
     private var trackingStarted = 0L
     private var platformListening = false
     private var lastPreciseFixElapsed = 0L
     private var routeGeneration = 0L
+    private val navigationSessions = NavigationSessionGate()
+    val navigationSessionId: String? get() = navigationSessions.current
+    fun acceptsNavigationSession(token: String?) = navigationSessions.accepts(token)
+    var destinationActionVersion = 0L
+        private set
     private var routeJob: Job? = null
     private var searchJob: Job? = null
     private var importJob: Job? = null
     private val importGate = NavigationImportGate()
     private val importConsent = NavigationImportConsent()
     private var routeOrigin: Coordinate? = null
-    private var engine: NavigationEngine? = null
-    private var spoken = mutableSetOf<String>()
+    private var lastAcceptedLocation: Location? = null
+    private val guidance=FerrostarGuidance(app,repository,::onFerrostarState,::onFerrostarAlternateRoute,::onFerrostarAlternateError)
     private var cityLookupPending = false
     private var lastCityAttempt = -60000L
     private var cityPoint: Coordinate? = null
-    private var ttsReady = false
-    private lateinit var tts: TextToSpeech
+    private var lastSimulationSampleAt = 0L
+    private var lastSimulationTraveled = 0.0
+    private var simulationSpeed = 0f
     private val locationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) = receiveLocation(location)
         override fun onProviderDisabled(provider: String) { if(provider == LocationManager.GPS_PROVIDER) _state.update{it.copy(gpsReady=false,gpsStatus="Turn on device location")} }
@@ -180,21 +181,13 @@ class NavigationController(private val app: Application, private val repository:
         @Deprecated("Deprecated in Android") override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) = Unit
     }
     init {
-        tts = TextToSpeech(app) { result ->
-            ttsReady = result == TextToSpeech.SUCCESS
-            if(ttsReady) {
-                val supported = tts.setLanguage(Locale.US)
-                ttsReady = supported != TextToSpeech.LANG_MISSING_DATA && supported != TextToSpeech.LANG_NOT_SUPPORTED
-                tts.setSpeechRate(0.95f)
-            }
-        }
         scope.launch {
             while(isActive) {
                 delay(1000)
                 if(listening)applyHeading(headingArbiter.current(SystemClock.elapsedRealtime()))
                 // Recover a silent/coarse-only fused stream instead of freezing forever.
                 if(listening && !platformListening && SystemClock.elapsedRealtime()-maxOf(trackingStarted,lastPreciseFixElapsed)>8000) startPlatformLocation()
-                if(listening && lastFixElapsed>0 && SystemClock.elapsedRealtime()-lastFixElapsed>15000) {
+                if(listening && !guidance.isAutoDriving() && lastFixElapsed>0 && SystemClock.elapsedRealtime()-lastFixElapsed>15000) {
                     _state.update{it.copy(gpsReady=false,gpsStatus="GPS signal lost · waiting for a fix",speed=0f,headingReliable=false)}
                 }
             }
@@ -203,8 +196,12 @@ class NavigationController(private val app: Application, private val repository:
     fun setDisplayRotation(rotation:Int) { heading.displayRotation=rotation }
     fun hasLocationPermission() = ContextCompat.checkSelfPermission(app,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED
     fun setCarVisible(value: Boolean) { carVisible=value; if(value) enabled=true; updateTracking() }
-    fun setCarNight(value: Boolean) { _state.update{it.copy(carNight=value)}; prefs.edit().putBoolean("carNight",value).apply() }
-    fun setCarWorld(world: World, night: Boolean) { _state.update{if(night)it.copy(carNightWorld=world) else it.copy(carDayWorld=world)}; prefs.edit().putString(if(night)"carNightWorld" else "carDayWorld",world.name).apply() }
+    fun enableAutoDrive() {
+        lastSimulationSampleAt=0L;lastSimulationTraveled=0.0;simulationSpeed=0f
+        guidance.enableAutoDrive(_state.value.route)
+        _state.update { it.copy(message="Android Auto test drive is simulating this route.") }
+    }
+    fun leaveCarSession() { guidance.leaveCarSession();lastSimulationSampleAt=0L;simulationSpeed=0f }
     fun handleNavigationIntent(intent: Intent?): Boolean {
         val proposal = NavigationImport.parse(intent?.action, intent?.dataString) ?: return false
         invalidateImport()
@@ -225,9 +222,28 @@ class NavigationController(private val app: Application, private val repository:
         if (_state.value.pendingSharedDestinationId != id) return
         if (_state.value.navigating) { invalidateImport(); return }
         val proposal = importConsent.accept(id, false) ?: return
-        _state.update { it.copy(pendingSharedDestination=null,pendingSharedDestinationId=0L,pendingSharedCoordinates=null) }
+        _state.update { it.copy(pendingSharedDestination=null,pendingSharedDestinationId=0L,pendingSharedCoordinates=null,
+            resolvingSharedDestination=proposal is NavigationImport.Point) }
         when (proposal) {
-            is NavigationImport.Point -> select(Place("shared:${proposal.coordinate.lat},${proposal.coordinate.lon}", proposal.label, "Shared location", proposal.coordinate))
+            is NavigationImport.Point -> {
+                val ticket=importGate.begin()
+                importJob=scope.launch {
+                    val resolved=try { withTimeoutOrNull(8000) { repository.reversePlace(proposal.coordinate) } }
+                    catch(error: CancellationException) { throw error }
+                    catch(_: Exception) { null }
+                    ensureActive()
+                    if(!importGate.canApply(ticket,_state.value.navigating))return@launch
+                    importJob=null
+                    val genericLabel=proposal.label==coordinateLabel(proposal.coordinate) ||
+                        proposal.label.equals("Shared destination",true) || proposal.label.equals("Dropped pin",true)
+                    val chosenName=if(genericLabel)
+                        resolved?.name ?: proposal.label else proposal.label
+                    select(Place("shared:${proposal.coordinate.lat},${proposal.coordinate.lon}",chosenName,
+                        resolved?.address?.ifBlank { "Coordinates: ${proposal.coordinate.lat}, ${proposal.coordinate.lon}" }
+                            ?: "Coordinates: ${proposal.coordinate.lat}, ${proposal.coordinate.lon}",proposal.coordinate,
+                        source=resolved?.source.orEmpty()))
+                }
+            }
             is NavigationImport.Search -> {
                 val ticket = importGate.begin()
                 importJob = scope.launch {
@@ -253,7 +269,8 @@ class NavigationController(private val app: Application, private val repository:
     }
     private fun invalidateImport() {
         importGate.invalidate(); importJob?.cancel(); importJob=null; importConsent.dismissAll()
-        if (_state.value.pendingSharedDestination != null) _state.update { it.copy(pendingSharedDestination=null,pendingSharedDestinationId=0L,pendingSharedCoordinates=null) }
+        if (_state.value.pendingSharedDestination != null || _state.value.resolvingSharedDestination)
+            _state.update { it.copy(pendingSharedDestination=null,pendingSharedDestinationId=0L,pendingSharedCoordinates=null,resolvingSharedDestination=false) }
     }
     fun clearHistory() { invalidateImport(); _state.update{it.copy(recent=emptyList(),saved=emptyList())}; prefs.edit().remove("recent").remove("saved").apply() }
     fun setVisible(value: Boolean) { visible=value; updateTracking() }
@@ -306,8 +323,80 @@ class NavigationController(private val app: Application, private val repository:
         heading.stop()
     }
     fun permissionDenied() { userFocusPending=false;_state.update{it.copy(gpsReady=false,gpsStatus="Precise location required",message="Allow precise location in Android settings to navigate.")} }
+    private fun onFerrostarState(state: NavigationState) {
+        val active=state.tripState
+        if(active is TripState.Complete && _state.value.navigating) {
+            navigationSessions.end()
+            _state.update { it.copy(navigating=false,arrived=true,offRoute=false,routing=false) }
+            guidance.stop()
+            app.stopService(Intent(app,NavigationService::class.java))
+            updateTracking()
+            return
+        }
+        if(active !is TripState.Navigating || !_state.value.navigating)return
+        val route=_state.value.route ?: return
+        val allSteps=route.ferrostarRoute?.steps ?: return
+        val currentIndex=(allSteps.size-active.remainingSteps.size).coerceIn(0,allSteps.lastIndex)
+        val nextIndex=(currentIndex+1).coerceAtMost(route.steps.lastIndex)
+        val snapped=Coordinate(active.snappedUserLocation.coordinates.lat,active.snappedUserLocation.coordinates.lng)
+        val remainingShape=buildList {
+            add(snapped)
+            active.remainingSteps.forEachIndexed { index,step ->
+                val first=if(index==0) (active.currentStepGeometryIndex?.toInt() ?: 0).coerceIn(0,step.geometry.lastIndex.coerceAtLeast(0)) else 0
+                step.geometry.drop(first).forEach { add(Coordinate(it.lat,it.lng)) }
+            }
+        }
+        val p=active.progress
+        val cue=active.visualInstruction?.primaryContent?.text?.takeIf { it.isNotBlank() }
+            ?: route.steps.getOrNull(nextIndex)?.instruction ?: "Continue on your route"
+        val guidanceText=if(route.steps.getOrNull(nextIndex)?.type=="arrive" && p.distanceToNextManeuver>150)
+            active.remainingSteps.firstOrNull()?.roadName?.takeIf { it.isNotBlank() }?.let { "Continue on $it" } ?: "Continue toward your destination"
+            else cue
+        val offRoute=active.deviation is RouteDeviation.Deviation
+        val progress=RouteProgress(
+            traveled=(route.meters-p.distanceRemaining).coerceAtLeast(0.0),
+            remaining=p.distanceRemaining.coerceAtLeast(0.0),
+            seconds=p.durationRemaining.coerceAtLeast(0.0),
+            offRoute=distance(_state.value.fix ?: snapped,snapped),
+            nextStep=nextIndex,
+            toTurn=p.distanceToNextManeuver.coerceAtLeast(0.0),
+            snapped=snapped,
+            remainingShape=remainingShape,
+            guidanceText=guidanceText,
+        )
+        if(guidance.isAutoDriving()) {
+            val now=SystemClock.elapsedRealtime()
+            val interval=now-lastSimulationSampleAt
+            if(lastSimulationSampleAt>0 && interval>=200) {
+                val measured=((progress.traveled-lastSimulationTraveled)/(interval/1000.0))
+                    .toFloat().takeIf { it.isFinite() && it>=0f }?.coerceAtMost(50f) ?: 0f
+                val reported=active.snappedUserLocation.speed?.value?.toFloat()?.takeIf { it.isFinite() && it>0.2f }
+                simulationSpeed=if(simulationSpeed==0f)reported ?: measured
+                    else simulationSpeed*.45f+(reported ?: measured)*.55f
+            }
+            if(interval>=200 || lastSimulationSampleAt==0L) {
+                lastSimulationSampleAt=now;lastSimulationTraveled=progress.traveled
+            }
+        }
+        _state.update { if(it.navigating)it.copy(progress=progress,offRoute=offRoute,routing=state.isCalculatingNewRoute,
+            fix=if(guidance.isAutoDriving()) snapped else it.fix,
+            gpsReady=if(guidance.isAutoDriving()) true else it.gpsReady,
+            gpsStatus=if(guidance.isAutoDriving()) "Simulated drive" else it.gpsStatus,
+            speed=if(guidance.isAutoDriving()) simulationSpeed else it.speed) else it }
+    }
+    private fun onFerrostarAlternateRoute(route: RoadRoute, destination: Coordinate) {
+        val current=_state.value
+        if(!current.navigating || current.selected==null || route.mode!=current.mode ||
+            distance(current.selected.point,destination)>5.0)return
+        routeOrigin=_state.value.fix
+        _state.update { it.copy(route=route,progress=null,offRoute=false,routing=false,routeError=null) }
+    }
+    private fun onFerrostarAlternateError(message: String) {
+        if(_state.value.navigating)_state.update { it.copy(routing=false,routeError=message) }
+    }
     private fun receiveLocation(location: Location) {
         if(!listening)return
+        if(guidance.isAutoDriving() && _state.value.navigating)return
         val now = SystemClock.elapsedRealtime()
         val fix = Coordinate(location.latitude,location.longitude)
         if (!fix.isValid() || !location.hasAccuracy() || !location.accuracy.isFinite() || location.accuracy < 0f) return
@@ -350,62 +439,49 @@ class NavigationController(private val app: Application, private val repository:
             }
         }
         if(!reliable) return
+        lastAcceptedLocation=Location(location)
+        guidance.acceptLocation(location)
         val s = _state.value
-        if(s.navigating) {
-            val progress = engine?.update(fix, maxOf(500.0,speed*20.0),maxOf(15.0,location.accuracy*2.0).coerceAtMost(40.0)) ?: return
-            val deviation = reroutePolicy.observe(progress,location.accuracy,speed,s.mode,location.elapsedRealtimeNanos/1_000_000,s.routing)
-            _state.update{it.copy(progress=progress,offRoute=deviation.offRoute)}
-            if(deviation.request) {
-                speak("Rerouting. Finding a new route."); requestRoute(true); return
-            }
-            if(!s.routing && !deviation.offRoute && engine?.hasArrived(fix,progress)==true) {
-                speak("You have arrived at your destination.")
-                _state.update{it.copy(navigating=false,arrived=true)}
-                app.stopService(Intent(app,NavigationService::class.java)); updateTracking(); return
-            }
-            if(!deviation.offRoute && progress.offRoute < 25 && !s.routing) {
-                val step=s.route?.steps?.getOrNull(progress.nextStep) ?: return
-                val threshold = if(progress.toTurn<=35) "now" else if(progress.toTurn<=180) "soon" else ""
-                val key="${progress.nextStep}:$threshold"
-                if(threshold.isNotEmpty() && spoken.add(key)) speak(if(threshold=="now") step.instruction else "In ${formatDistance(progress.toTurn,s.imperial)}, ${step.instruction}")
-            }
-        } else if(s.selected!=null && !s.routing && !s.arrived && s.routeError==null &&
+        if(!s.navigating && s.selected!=null && !s.routing && !s.arrived && s.routeError==null &&
             (s.route==null || (routeOrigin?.let{distance(it,fix)} ?: 0.0)>100.0)) requestRoute()
     }
     fun select(place: Place) {
         invalidateImport()
         if (!place.point.isValid()) { _state.update { it.copy(message="That destination has invalid coordinates. Choose another place.") }; return }
+        destinationActionVersion++
         stopNavigation(clear=false)
         _state.update{it.copy(selected=place,route=null,progress=null,routeError=null,arrived=false,cameraRequest=it.cameraRequest+1)}
         if(_state.value.gpsReady) requestRoute()
     }
-    fun clearDestination() { stopNavigation(); _state.update{it.copy(selected=null,route=null,progress=null,arrived=false,routeError=null)} }
+    fun clearDestination() { destinationActionVersion++;stopNavigation(); _state.update{it.copy(selected=null,route=null,progress=null,arrived=false,routeError=null)} }
     fun requestRoute(reroute: Boolean = false) {
         val s = _state.value; val origin = s.fix ?: return; val target = s.selected ?: return
         if(s.pendingSharedDestination!=null)return
         if(!s.gpsReady) { _state.update{it.copy(message="Waiting for an accurate GPS fix.")}; return }
         routeJob?.cancel()
         val generation=++routeGeneration
-        if(reroute)reroutePolicy.requested(SystemClock.elapsedRealtime())
-        _state.update{it.copy(routing=true,routeError=null)}
+        // A preview route belongs to the origin where it was calculated. If the
+        // phone moves and the replacement request fails, leaving the old line on
+        // screen implies that driving from the new location is still possible.
+        // Active guidance keeps its current line while Ferrostar reroutes.
+        _state.update{it.copy(routing=true,routeError=null,
+            route=if(it.navigating)it.route else null,
+            progress=if(it.navigating)it.progress else null)}
         routeJob = scope.launch {
             try {
                 val route = repository.route(origin,target.point,s.mode)
                 ensureActive()
-                val prepared = withContext(Dispatchers.Default) { NavigationEngine(route) }
-                ensureActive()
                 if(generation!=routeGeneration || _state.value.selected?.id!=target.id || _state.value.mode!=s.mode)return@launch
                 val latestFix=_state.value.fix ?: origin
-                val progress=prepared.update(latestFix)
                 // A slow response can already be obsolete at the current position.
-                if(distance(origin,latestFix)>75 && progress.offRoute>40) {
+                if(distance(origin,latestFix)>100) {
                     _state.update{it.copy(routing=false)}
                     requestRoute(reroute);return@launch
                 }
-                routeOrigin=origin; engine=prepared; spoken.clear(); reroutePolicy.succeeded()
-                _state.update{it.copy(route=route,progress=progress,routing=false,offRoute=false,routeError=null,cameraRequest=it.cameraRequest+if(reroute) 0 else 1)}
+                routeOrigin=origin
+                _state.update{it.copy(route=route,progress=null,routing=false,offRoute=false,routeError=null,cameraRequest=it.cameraRequest+if(reroute) 0 else 1)}
             } catch(e: CancellationException) { throw e }
-            catch(e: Exception) { ensureActive(); if(reroute)reroutePolicy.failed(SystemClock.elapsedRealtime()); _state.update{it.copy(routing=false,routeError=e.message ?: "Couldn't load the route. Check your connection.")} }
+            catch(e: Exception) { ensureActive(); _state.update{it.copy(routing=false,routeError=e.message ?: "Couldn't load the route. Check your connection.")} }
         }
     }
     fun startNavigation() {
@@ -415,26 +491,44 @@ class NavigationController(private val app: Application, private val repository:
         if(s.route==null || s.routing || s.route.mode!=s.mode) return
         if((routeOrigin?.let{distance(it,s.fix)} ?: 0.0)>100.0) { requestRoute(); _state.update{it.copy(message="Updating the route from your current position. Start when it's ready.")}; return }
         if(s.routeError!=null) { requestRoute(); return }
-        val prepared = engine?.takeIf { it.route === s.route } ?: run { requestRoute(); return }
-        prepared.reset(); spoken.clear(); reroutePolicy.reset()
-        _state.update{it.copy(navigating=true,arrived=false,offRoute=false,progress=prepared.update(s.fix),cameraRequest=it.cameraRequest+1)}
+        if(s.route.ferrostarRoute==null) { _state.update{it.copy(message="Ferrostar could not read this route. Try another destination.")};return }
+        val destination=s.selected?.point ?: return
+        navigationSessions.begin()
+        _state.update{it.copy(navigating=true,arrived=false,offRoute=false,progress=null,cameraRequest=it.cameraRequest+1)}
         try { ContextCompat.startForegroundService(app,Intent(app,NavigationService::class.java)) }
-        catch(_: Exception) { _state.update{it.copy(navigating=false,message="Android couldn't start navigation. Keep the app open and try again.")}; return }
-        s.selected?.let { place ->
+        catch(error: Exception) { navigationSessions.end();android.util.Log.e("WaypointNav","Foreground service failed",error);_state.update{it.copy(navigating=false,message="Android couldn't start navigation. Keep the app open and try again.")}; return }
+        try { guidance.start(s.route,lastAcceptedLocation,s.voice,destination) }
+        catch(error: Exception) {
+            navigationSessions.end()
+            runCatching { guidance.stop() }
+            android.util.Log.e("WaypointNav","Ferrostar guidance failed",error)
+            _state.update{it.copy(navigating=false,message="Couldn't start guidance. Try this route again.")}
+            app.stopService(Intent(app,NavigationService::class.java));return
+        }
+        s.selected.let { place ->
             val recent = (listOf(place)+s.recent.filter{it.id!=place.id}).take(12)
             _state.update{it.copy(recent=recent)}; writePlaces("recent",recent)
         }
-        speak("Starting navigation. ${s.route.steps.first().instruction}.")
-        if(s.voice && !ttsReady) _state.update{it.copy(message="Voice unavailable. Install an English text-to-speech voice in Android settings. Visual guidance is active.")}
+        if(s.voice && !guidance.voiceReady()) _state.update{it.copy(message="Voice unavailable. Install a text-to-speech voice in Android settings. Visual guidance is active.")}
     }
     fun stopNavigation(clear: Boolean = true) {
+        navigationSessions.end()
+        lastSimulationSampleAt=0L;simulationSpeed=0f
         invalidateImport()
-        routeGeneration++;reroutePolicy.reset()
-        routeJob?.cancel(); routeJob=null; tts.stop()
+        routeGeneration++
+        routeJob?.cancel(); routeJob=null; guidance.stop()
         _state.update{it.copy(navigating=false,routing=false,offRoute=false,arrived=if(clear) false else it.arrived)}
         app.stopService(Intent(app,NavigationService::class.java)); updateTracking()
     }
-    fun serviceStopped() { if(_state.value.navigating) { _state.update{it.copy(navigating=false,message="Navigation stopped.")}; tts.stop(); updateTracking() } }
+    fun serviceStopped(sessionId: String?) {
+        if(!navigationSessions.accepts(sessionId))return
+        navigationSessions.end()
+        if(_state.value.navigating) {
+            guidance.stop()
+            _state.update{it.copy(navigating=false,message="Navigation stopped.")}
+            updateTracking()
+        }
+    }
     fun search(query: String) = searchPlaces(query,false)
     fun submitSearch() = searchPlaces(_state.value.query,true)
     private fun searchPlaces(query:String,expanded:Boolean) {
@@ -482,7 +576,7 @@ class NavigationController(private val app: Application, private val repository:
         if (favorites.isNotEmpty()) edit.putString("favoriteWorlds", favorites.distinct().joinToString(",") { it.name })
         edit.apply()
     }
-    fun toggleVoice() { _state.update{it.copy(voice=!it.voice)}; prefs.edit().putBoolean("voice",_state.value.voice).apply(); if(!_state.value.voice) tts.stop() }
+    fun toggleVoice() { _state.update{it.copy(voice=!it.voice)}; prefs.edit().putBoolean("voice",_state.value.voice).apply(); guidance.mute(!_state.value.voice) }
     fun toggleUnits() { _state.update{it.copy(imperial=!it.imperial)}; prefs.edit().putBoolean("imperial",_state.value.imperial).apply() }
     fun toggleTilt() { _state.update{it.copy(tilted=!it.tilted,cameraRequest=it.cameraRequest+1)};prefs.edit().putBoolean("tilted",_state.value.tilted).apply() }
     fun recenter() {
@@ -496,7 +590,6 @@ class NavigationController(private val app: Application, private val repository:
         val next=if(existing.any{it.id==place.id}) existing.filter{it.id!=place.id} else existing+place
         _state.update{it.copy(saved=next)}; writePlaces("saved",next)
     }
-    private fun speak(text: String) { if(_state.value.voice && ttsReady) tts.speak(text,TextToSpeech.QUEUE_FLUSH,null,"guidance") }
     private fun readPlaces(key: String): List<Place> = runCatching {
         val a=JSONArray(prefs.getString(key,"[]")); (0 until a.length()).map {
             val p=a.getJSONObject(it); Place(p.getString("id"),p.getString("name"),p.getString("address"),Coordinate(p.getDouble("lat"),p.getDouble("lon")),p.optString("kind","place"),p.optString("source"))

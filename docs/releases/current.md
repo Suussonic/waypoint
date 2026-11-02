@@ -1,30 +1,23 @@
-# Waypoint 1.0.0
+# Waypoint 1.1.0
 
-Waypoint’s first stable release brings game-inspired cartography to real streets. All 27 worlds are free to explore, with navigation, place search and a redesigned introduction to the app.
+Your map now travels with you onto Android Auto. The selected game world, route and guidance move between the phone and car screen while Waypoint keeps the controls appropriate to each display.
 
-### A faster way back to your map
+### Android Auto
 
-- After onboarding, Waypoint opens directly to your last selected world. The world gallery remains one tap away whenever you want to switch styles.
-- Existing users see the refreshed introduction once after updating; saved places and map preferences remain on their device.
-- The rotating globe, world previews and onboarding artwork have been refined for a more cohesive first run.
+- Open Waypoint from the car launcher to see a live map in the world selected on your phone. Search places, open saved or recent destinations, preview a route, and use the car's recenter, zoom and pan controls.
+- Follow a visible route line, moving position marker, next-turn cue, remaining distance and ETA. The car map turns with travel and looks farther ahead between turns, then closer near a maneuver.
+- Shared destinations ask for confirmation before lookup or route preview. Google Maps remains available from the car launcher; Android Auto uses the navigation app you opened most recently.
 
-### Maps and navigation
+### Navigation and phone experience
 
-- Each world has its own map palette, typography, controls and place markers. Blips for food, drinks, shops, schools, hospitals and other useful places appear as you zoom in, with density tuned to keep the map readable.
-- Locate returns to your current position at a useful street-level zoom, even after you have zoomed far out. The 2D/3D tilt control works across map styles.
-- World selection remembers your scroll position. Gallery previews use real map locations, including Kolkata.
-- Car, motorcycle and walking routes offer spoken directions, distance and ETA. Shared `geo:` and Google navigation links open a destination preview after you confirm it, with clearer handling of coordinates and place names.
+- Ferrostar now drives turn progress, spoken cues and rerouting for car, motorcycle and walking journeys. OSRM and Valhalla still supply the roads and routes; MapLibre draws the themed maps.
+- Locate returns to a useful street-level view, and 2D/3D tilt works across all 27 worlds. The phone and car keep the selected world's palette when it changes during a trip.
+- Route previews clear an outdated line while a new route is requested. Search handles more spelling variations and shows the provider's actual place name and address when available.
+- The launch, world gallery and onboarding flow have received additional layout, motion and readability refinements.
 
-### Quality and privacy
+### Reliability and updates
 
-- Smoother globe and map motion, clearer labels, more consistent controls and fixes across the onboarding and world-selection flows.
-- Feedback in Settings prepares a GitHub issue with the current world and app version for you to review and submit.
-- No account, ads, subscriptions or paywall. Saved places stay on your device. The release also includes dependency, component and repository security checks.
+- Navigation actions and car callbacks are bound to the trip or destination that created them. Car display input and geocoder result counts are bounded, and signed releases check main-branch ancestry before publishing.
+- An older installed release checks for this stable update when Waypoint enters the foreground. Review these notes in the update prompt, choose **Download update**, then confirm installation in Android. Saved places and settings remain on your phone after a compatible update.
 
-### Thanks
-
-Thank you to [u/cuberisk](https://www.reddit.com/user/cuberisk/) for suggesting that Waypoint open the map directly instead of asking you to choose a world every time the app starts.
-
-### Install and updates
-
-Download **Waypoint.apk** from this release, or use **Settings → App updates** in an older installed version. Waypoint verifies the download before Android asks you to confirm installation. Maps, search and routes require an internet connection; live traffic, offline routing and Android Auto are not available in this release.
+Download **Waypoint.apk** from this release or open **Settings → App updates** in Waypoint. Maps, search and routes need internet access. Live traffic, offline routing and lane guidance are not included. A physical vehicle and long-duration driving remain to be tested.

@@ -24,6 +24,8 @@ readme_media = {
     "docs/images/promo/download.jpg",
     "docs/images/promo/hero.jpg",
     "docs/images/promo/hero-mobile.jpg",
+    "docs/images/promo/android-auto.jpg",
+    "docs/images/promo/android-auto-mobile.jpg",
     "docs/images/promo/identity.jpg",
     *(f"docs/images/promo/worlds-{index}{suffix}.jpg"
       for index in range(1, 4) for suffix in ("", "-mobile")),

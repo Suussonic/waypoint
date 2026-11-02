@@ -42,7 +42,7 @@ def map_surface(size, name, color=INK):
     surface = Image.new("RGB", size, color)
     shot = Image.open(CAPTURES / f"{name}.jpg").convert("RGB")
     # Only the unobstructed centre of the actual map becomes the backdrop.
-    crop = shot.crop((65, 280, 490, 810))
+    crop = shot.crop((100, 760, 650, 1350))
     crop = ImageOps.fit(crop, size, method=Image.Resampling.LANCZOS)
     return Image.blend(surface, crop, .09)
 

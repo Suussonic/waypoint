@@ -42,13 +42,13 @@ fun UpdatePromptDialog(
     AlertDialog(
         onDismissRequest = onLater,
         containerColor = Panel,
-        title = { Text("Waypoint ${release.version} is ready") },
+        title = { Text("Waypoint update available") },
         text = {
             Column(
                 Modifier.fillMaxWidth().heightIn(max = 360.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text("A new release is available. Download it here, then install it through Android.", style = MaterialTheme.typography.bodyMedium)
+                Text("Version ${release.version} is ready. Review what's new, then download it. Android will ask before installation.", style = MaterialTheme.typography.bodyMedium)
                 Text("$size MB · SHA-256 verified before installation", style = MaterialTheme.typography.bodySmall, color = Muted)
                 if (release.notes.isNotBlank()) ReleaseNotesContent(release.notes)
                 when (val current = status) {

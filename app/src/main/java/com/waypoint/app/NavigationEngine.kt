@@ -3,6 +3,8 @@ package com.waypoint.app
 import kotlin.math.*
 
 data class Coordinate(val lat: Double, val lon: Double)
+internal fun shortestLongitudeDelta(from: Double,to: Double): Double = ((to-from+540.0)%360.0)-180.0
+internal fun wrappedLongitude(value: Double): Double = ((value+540.0)%360.0)-180.0
 data class Place(val id: String, val name: String, val address: String, val point: Coordinate, val kind: String = "place", val source: String = "")
 data class Maneuver(val point: Coordinate, val type: String, val modifier: String, val road: String, val distance: Double, val duration: Double, val exit: Int = 0) {
     val instruction: String get() {
@@ -26,14 +28,17 @@ data class Maneuver(val point: Coordinate, val type: String, val modifier: Strin
         return if (road.isNotBlank() && type != "arrive") "$action onto $road" else action
     }
 }
-data class RoadRoute(val points: List<Coordinate>, val steps: List<Maneuver>, val meters: Double, val seconds: Double, val mode:TravelMode=TravelMode.CAR)
+data class RoadRoute(val points: List<Coordinate>, val steps: List<Maneuver>, val meters: Double, val seconds: Double, val mode:TravelMode=TravelMode.CAR,
+    val ferrostarRoute: uniffi.ferrostar.Route? = null)
 data class RouteProgress(val traveled: Double, val remaining: Double, val seconds: Double, val offRoute: Double, val nextStep: Int, val toTurn: Double, val snapped: Coordinate,
-    val segmentIndex: Int = 0, val projectedAlong: Double = traveled)
+    val segmentIndex: Int = 0, val projectedAlong: Double = traveled,
+    val remainingShape: List<Coordinate>? = null, val guidanceText: String? = null)
 
 data class RouteGuidance(val instruction:String,val maneuver:Maneuver?,val continuingToArrival:Boolean)
 
 /** Keep long final legs readable without announcing arrival hundreds of metres early. */
 fun routeGuidance(route:RoadRoute?,progress:RouteProgress?):RouteGuidance {
+    if(progress?.guidanceText!=null)return RouteGuidance(progress.guidanceText,route?.steps?.getOrNull(progress.nextStep),false)
     val step=route?.steps?.getOrNull(progress?.nextStep ?: 0)
         ?: return RouteGuidance("Finding your route",null,false)
     if(step.type=="arrive" && progress!=null && progress.toTurn>150.0) {
@@ -45,7 +50,7 @@ fun routeGuidance(route:RoadRoute?,progress:RouteProgress?):RouteGuidance {
 
 /** Trim at the accepted route projection, never at an off-road GPS coordinate. */
 fun RoadRoute.remainingPoints(progress: RouteProgress?): List<Coordinate> = if (progress == null) points else
-    listOf(progress.snapped) + points.drop((progress.segmentIndex + 1).coerceIn(1, points.lastIndex))
+    progress.remainingShape ?: (listOf(progress.snapped) + points.drop((progress.segmentIndex + 1).coerceIn(1, points.lastIndex)))
 
 fun distance(a: Coordinate, b: Coordinate): Double {
     val p = Math.toRadians(b.lat - a.lat); val q = Math.toRadians(b.lon - a.lon)

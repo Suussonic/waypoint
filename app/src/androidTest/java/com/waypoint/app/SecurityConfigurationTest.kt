@@ -13,13 +13,13 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class SecurityConfigurationTest {
     @Suppress("DEPRECATION")
-    @Test fun experimentalCarServiceIsDisabledAndPrivate() {
+    @Test fun carServiceIsDiscoverableButOtherServicesStayPrivate() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val service = context.packageManager.getServiceInfo(
             ComponentName(context.packageName,"com.waypoint.app.WaypointCarService"),
-            PackageManager.MATCH_DISABLED_COMPONENTS)
-        assertFalse("Experimental Android Auto must remain disabled", service.enabled)
-        assertFalse("Other apps must not bind to the experimental service", service.exported)
+            0)
+        assertTrue("Android Auto must be able to discover Waypoint", service.enabled)
+        assertTrue("Android Auto host must be able to bind", service.exported)
     }
 
     @Suppress("DEPRECATION")
@@ -29,7 +29,7 @@ class SecurityConfigurationTest {
         val provider = requireNotNull(info.providers).single { it.authority == "${context.packageName}.updates" }
         assertFalse(provider.exported)
         assertTrue(provider.grantUriPermissions)
-        assertTrue(requireNotNull(info.services).none { it.exported })
+        assertTrue(requireNotNull(info.services).filterNot { it.name == "com.waypoint.app.WaypointCarService" }.none { it.exported })
         assertEquals(0,context.applicationInfo.flags and ApplicationInfo.FLAG_ALLOW_BACKUP)
         assertEquals(0,context.applicationInfo.flags and ApplicationInfo.FLAG_USES_CLEARTEXT_TRAFFIC)
     }

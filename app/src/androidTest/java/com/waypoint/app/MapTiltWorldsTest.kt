@@ -30,7 +30,9 @@ class MapTiltWorldsTest {
             var map:MapLibreMap?=null
             var controller:NavigationController?=null
             scenario.onActivity { activity ->
-                controller=(activity.application as WaypointApplication).navigation
+                val navigation=(activity.application as WaypointApplication).navigation
+                controller=navigation
+                navigation.setVisible(false)
                 val mapView=findMapView(activity.window.decorView)
                 assertNotNull("MapView is missing",mapView)
                 mapView!!.getMapAsync { map=it }

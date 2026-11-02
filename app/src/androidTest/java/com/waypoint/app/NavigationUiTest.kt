@@ -24,9 +24,15 @@ class NavigationUiTest {
         val font=device.executeShellCommand("settings get system font_scale").trim()
         val rotation=device.executeShellCommand("settings get system user_rotation").trim()
         val auto=device.executeShellCommand("settings get system accelerometer_rotation").trim()
+        var addedTestPlace:Place?=null
         fun click(label:String) {
-            val item=device.wait(Until.findObject(By.desc(label)),1500) ?: device.wait(Until.findObject(By.text(label)),4000)
-            assertNotNull("Control: $label",item);item!!.click()
+            repeat(5) {
+                val item=device.wait(Until.findObject(By.desc(label)),700)
+                    ?: device.wait(Until.findObject(By.text(label)),700)
+                if(item!=null) try { item.click();return } catch(_:StaleObjectException) { }
+                SystemClock.sleep(200)
+            }
+            fail("Control: $label")
         }
         fun capture(name:String) {SystemClock.sleep(1500);assertEquals(context.packageName,device.currentPackageName);assertTrue(device.takeScreenshot(File(output,"$name.png")))}
         fun world(world:World) {
@@ -45,9 +51,17 @@ class NavigationUiTest {
             context.startActivity(context.packageManager.getLaunchIntentForPackage(context.packageName)!!.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK))
             assertTrue(device.wait(Until.hasObject(By.pkg(context.packageName)),10000))
             device.wait(Until.findObject(By.text("Open map")),3000)?.click()
-            val destination=controller.state.value.saved.firstOrNull()
-            assertNotNull("Saved nearby place required for device QA",destination)
-            click("Saved");click(destination!!.name);click("Car")
+            val deadline=SystemClock.elapsedRealtime()+15000
+            while(controller.state.value.fix==null && SystemClock.elapsedRealtime()<deadline)SystemClock.sleep(200)
+            val fix=controller.state.value.fix
+            assertNotNull("GPS fix required for device QA",fix)
+            val destination=controller.state.value.saved.firstOrNull { it.id=="waypoint-device-qa" }
+                ?: Place("waypoint-device-qa","Nearby test stop","",
+                    Coordinate(fix!!.lat+0.008,fix.lon+0.008)).also { place ->
+                    instrumentation.runOnMainSync { controller.toggleSaved(place) }
+                    addedTestPlace=place
+                }
+            click("Saved");click(destination.name);click("Car")
             assertTrue("Real GPS route ready",device.wait(Until.hasObject(By.text("Start navigation").enabled(true)),30000))
             val route=controller.state.value.route!!
             capture("route-preview")
@@ -94,6 +108,9 @@ class NavigationUiTest {
             throw error
         } finally {
             instrumentation.runOnMainSync {if(controller.state.value.navigating)controller.stopNavigation()}
+            addedTestPlace?.let { place -> instrumentation.runOnMainSync {
+                if(controller.state.value.saved.any { it.id==place.id })controller.toggleSaved(place)
+            } }
             device.executeShellCommand("settings put system font_scale $font")
             device.executeShellCommand("settings put system user_rotation $rotation")
             device.executeShellCommand("settings put system accelerometer_rotation $auto")

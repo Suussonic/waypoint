@@ -301,7 +301,8 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
         if(target!=null && from!=null && distance(from,target)<150) {
             positionAnimator[0]=ValueAnimator.ofFloat(0f,1f).apply {
                 duration=500;interpolator=LinearInterpolator()
-                addUpdateListener { val fraction=it.animatedValue as Float;render(Coordinate(from.lat+(target.lat-from.lat)*fraction,from.lon+(target.lon-from.lon)*fraction),fraction) }
+                addUpdateListener { val fraction=it.animatedValue as Float;render(Coordinate(from.lat+(target.lat-from.lat)*fraction,
+                    wrappedLongitude(from.lon+shortestLongitudeDelta(from.lon,target.lon)*fraction)),fraction) }
                 start()
             }
         } else render(target)
@@ -317,15 +318,17 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
         val m=map ?: return@LaunchedEffect
         val following=followPolicy.shouldFollow(state.navigating,state.selected!=null,SystemClock.elapsedRealtime())
         val desiredCameraBearing=if(state.navigating && state.headingSource==HeadingSource.COURSE)state.bearing else m.cameraPosition.bearing.toFloat()
+        val desiredTilt=mapCameraTilt(state.world,state.tilted,state.navigating,cameraTiltOverride)
         if(positionAnimator[0]?.isRunning==true)return@LaunchedEffect
         if(SystemClock.elapsedRealtime()>=focusCameraHoldUntil[0] && following && state.fix!=null &&
             (cameraFix==null || distance(cameraFix!!,state.fix)>1.5 ||
             distance(Coordinate(m.cameraPosition.target!!.latitude,m.cameraPosition.target!!.longitude),state.fix)>20 ||
-            kotlin.math.abs(headingDelta(cameraBearing,desiredCameraBearing))>3f)) {
+            kotlin.math.abs(headingDelta(cameraBearing,desiredCameraBearing))>3f ||
+            kotlin.math.abs(m.cameraPosition.tilt-desiredTilt)>1.0)) {
             cameraFix=state.fix;cameraBearing=desiredCameraBearing
             m.easeCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder(m.cameraPosition).target(state.fix.latLng())
                 .zoom(if(state.navigating)17.2 else m.cameraPosition.zoom).bearing(desiredCameraBearing.toDouble())
-                .tilt(mapCameraTilt(state.world,state.tilted,state.navigating,cameraTiltOverride)).build()),500)
+                .tilt(desiredTilt).build()),500)
         }
     }
     LaunchedEffect(active,state.cameraRequest,styleReady,routeInsets,cameraZoomOverride,cameraTiltOverride,cameraCenterOverride) {

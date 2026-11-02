@@ -47,13 +47,14 @@ class AppUpdater(private val context: Context) {
 
     fun checkOnLaunch() {
         when (mutable.value) {
-            is UpdateStatus.Available, is UpdateStatus.Downloading, is UpdateStatus.Ready -> return
+            is UpdateStatus.Downloading, is UpdateStatus.Ready -> return
             else -> check()
         }
     }
 
     fun check() {
         if (job?.isCompleted == false) return
+        val previousOffer = mutable.value as? UpdateStatus.Available
         mutable.value = UpdateStatus.Checking
         job = scope.launch {
             try {
@@ -83,7 +84,7 @@ class AppUpdater(private val context: Context) {
                 }
                 mutable.value = release?.let(UpdateStatus::Available) ?: UpdateStatus.Current
             } catch (e: CancellationException) { throw e }
-            catch (e: Exception) { currentCoroutineContext().ensureActive(); mutable.value = UpdateStatus.Failed(friendlyError(e)) }
+            catch (e: Exception) { currentCoroutineContext().ensureActive(); mutable.value = previousOffer ?: UpdateStatus.Failed(friendlyError(e)) }
             finally { call = null }
         }
     }

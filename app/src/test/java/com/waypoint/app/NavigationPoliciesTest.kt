@@ -4,6 +4,27 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class NavigationPoliciesTest {
+    @Test fun navigationActionExpiresWhenItsTripEnds() {
+        val gate = NavigationSessionGate()
+        val first = gate.begin()
+        assertTrue(gate.accepts(first))
+        gate.end()
+        assertFalse(gate.accepts(first))
+        val second = gate.begin()
+        assertNotEquals(first, second)
+        assertFalse(gate.accepts(first))
+        assertTrue(gate.accepts(second))
+        assertFalse(gate.accepts(null))
+    }
+    @Test fun carSurfaceBudgetRejectsMalformedAndOversizedDisplays() {
+        assertTrue(validCarSurfaceSize(1920, 720, 240))
+        assertTrue(validCarSurfaceSize(7680, 1080, 320))
+        assertFalse(validCarSurfaceSize(7680, 4320, 320))
+        assertFalse(validCarSurfaceSize(0, 480, 160))
+        assertFalse(validCarSurfaceSize(Int.MAX_VALUE, Int.MAX_VALUE, 160))
+        assertFalse(validCarSurfaceSize(8000, 8000, 320))
+        assertFalse(validCarSurfaceSize(800, 480, 0))
+    }
     private fun progress(away:Double=0.0,along:Double=100.0,projected:Double=along)=RouteProgress(along,1000.0,60.0,away,1,100.0,Coordinate(0.0,0.0),0,projected)
     @Test fun missedTurnTriggersAfterSustainedAccurateFixes() {
         val policy=ReroutePolicy()
