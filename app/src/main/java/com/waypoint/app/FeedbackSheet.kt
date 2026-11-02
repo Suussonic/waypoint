@@ -20,7 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.RateReview
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
@@ -145,7 +145,7 @@ internal fun FeedbackSheet(world: World, onBack: () -> Unit, onLeaveApp: () -> U
             enabled = draftUrl != null,
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
         ) {
-            Icon(Icons.Default.OpenInNew, null, Modifier.size(18.dp))
+            Icon(Icons.AutoMirrored.Filled.OpenInNew, null, Modifier.size(18.dp))
             Spacer(Modifier.size(8.dp))
             Text("Review issue on GitHub")
         }

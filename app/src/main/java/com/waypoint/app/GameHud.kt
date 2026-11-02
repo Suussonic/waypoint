@@ -17,6 +17,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
+import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -284,7 +287,7 @@ fun World.inspiration()=when(this) {
                     }
                     Text("${SimpleDateFormat("h:mm a",Locale.getDefault()).format(Date(System.currentTimeMillis()+(seconds*1000).toLong()))} arrival · ${if(state.gpsReady) (state.speed * if(state.imperial)2.23694 else 3.6).roundToInt().toString() else "—"} ${if(state.imperial)"mph" else "km/h"}",fontSize=12.sp,lineHeight=16.sp,color=p.muted)
                 }
-                TextButton(onClick=onSteps,contentPadding=PaddingValues(2.dp),modifier=Modifier.width(64.dp).heightIn(min=64.dp).semantics{contentDescription="Route steps"}) { Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(5.dp)){Icon(Icons.Default.FormatListBulleted,null,tint=p.foreground);Text("Steps",color=p.foreground,fontFamily=PipBoyFont,fontSize=12.sp,lineHeight=16.sp,letterSpacing=0.sp,maxLines=1,softWrap=false)} }
+                TextButton(onClick=onSteps,contentPadding=PaddingValues(2.dp),modifier=Modifier.width(64.dp).heightIn(min=64.dp).semantics{contentDescription="Route steps"}) { Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(5.dp)){Icon(Icons.AutoMirrored.Filled.FormatListBulleted,null,tint=p.foreground);Text("Steps",color=p.foreground,fontFamily=PipBoyFont,fontSize=12.sp,lineHeight=16.sp,letterSpacing=0.sp,maxLines=1,softWrap=false)} }
             }
             if(state.world in listOf(World.LOS_SANTOS,World.SAN_ANDREAS)) HudStatusBars(state)
         }
@@ -390,7 +393,7 @@ private object WorldPreviewBitmaps {
                             Modifier.align(Alignment.TopEnd).padding(11.dp).size(42.dp),
                             contentScale=ContentScale.Fit)
                         Row(Modifier.align(Alignment.BottomStart).padding(12.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-                            listOf(Icons.Default.Navigation,Icons.Default.VolumeUp,Icons.Default.MyLocation).forEach { icon ->
+                            listOf(Icons.Default.Navigation,Icons.AutoMirrored.Filled.VolumeUp,Icons.Default.MyLocation).forEach { icon ->
                                 Surface(color=p.panel,contentColor=p.foreground,shape=if(world==World.OLD_WEST)CircleShape else hudShape(world),border=if(world==World.OLD_WEST)BorderStroke(2.dp,p.foreground) else hudBorder(world)) { Icon(icon,null,Modifier.padding(8.dp).size(18.dp)) }
                             }
                         }
@@ -411,7 +414,7 @@ private object WorldPreviewBitmaps {
     }
 }
 
-fun modeIcon(mode:TravelMode)=when(mode){TravelMode.CAR->Icons.Default.DirectionsCar;TravelMode.MOTORCYCLE->Icons.Default.TwoWheeler;TravelMode.WALK->Icons.Default.DirectionsWalk}
+fun modeIcon(mode:TravelMode)=when(mode){TravelMode.CAR->Icons.Default.DirectionsCar;TravelMode.MOTORCYCLE->Icons.Default.TwoWheeler;TravelMode.WALK->Icons.AutoMirrored.Filled.DirectionsWalk}
 @Composable fun TransportModes(selected:TravelMode,onSelect:(TravelMode)->Unit,world:World) {
     val palette=hudPalette(world)
     Row(Modifier.fillMaxWidth().background(palette.panel).selectableGroup(),horizontalArrangement=Arrangement.spacedBy(3.dp)) {

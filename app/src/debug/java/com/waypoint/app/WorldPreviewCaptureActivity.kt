@@ -10,6 +10,7 @@ import android.util.Log
 import android.widget.TextView
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.Style
 import org.maplibre.android.snapshotter.MapSnapshotter
 import java.io.File
 import java.io.FileOutputStream
@@ -47,7 +48,7 @@ class WorldPreviewCaptureActivity : Activity() {
         val camera = CameraPosition.Builder()
             .target(LatLng(place.lat, place.lon)).zoom(place.zoom).tilt(0.0).bearing(0.0).build()
         val options = MapSnapshotter.Options(960, 520)
-            .withStyleJson(json).withCameraPosition(camera).withPixelRatio(1f).withLogo(false)
+            .withStyleBuilder(Style.Builder().fromJson(json)).withCameraPosition(camera).withPixelRatio(1f).withLogo(false)
         val renderer = MapSnapshotter(this, options)
         snapshotter = renderer
         renderer.setObserver(object : MapSnapshotter.Observer {

@@ -99,7 +99,13 @@ class MainActivity : ComponentActivity() {
     private val displayListener=object:DisplayManager.DisplayListener {
         override fun onDisplayAdded(displayId:Int)=Unit
         override fun onDisplayRemoved(displayId:Int)=Unit
-        override fun onDisplayChanged(displayId:Int){controller.setDisplayRotation(windowManager.defaultDisplay.rotation)}
+        override fun onDisplayChanged(displayId:Int){updateDisplayRotation()}
+    }
+    private fun updateDisplayRotation() {
+        val activeDisplay = window.decorView.display
+            ?: if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) display
+            else getSystemService(DisplayManager::class.java).getDisplay(android.view.Display.DEFAULT_DISPLAY)
+        activeDisplay?.rotation?.let(controller::setDisplayRotation)
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState); enableEdgeToEdge()
@@ -122,7 +128,7 @@ class MainActivity : ComponentActivity() {
         outState.putBoolean("waypoint.pendingSharedDestination",controller.hasPendingNavigationImport())
         super.onSaveInstanceState(outState)
     }
-    override fun onStart() { super.onStart();if(configurationRestartPending)configurationRestartPending=false else foregroundEntryCounter++;foregroundEntry=foregroundEntryCounter;getSystemService(DisplayManager::class.java).registerDisplayListener(displayListener,null); controller.setDisplayRotation(windowManager.defaultDisplay.rotation); controller.setVisible(true);(application as WaypointApplication).updater.checkOnLaunch() }
+    override fun onStart() { super.onStart();if(configurationRestartPending)configurationRestartPending=false else foregroundEntryCounter++;foregroundEntry=foregroundEntryCounter;getSystemService(DisplayManager::class.java).registerDisplayListener(displayListener,null); updateDisplayRotation(); controller.setVisible(true);(application as WaypointApplication).updater.checkOnLaunch() }
     override fun onStop() { configurationRestartPending=isChangingConfigurations;getSystemService(DisplayManager::class.java).unregisterDisplayListener(displayListener);controller.setVisible(false); super.onStop() }
 }
 

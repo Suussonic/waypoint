@@ -370,7 +370,7 @@ class NavigationController(private val app: Application, private val repository:
                 if(threshold.isNotEmpty() && spoken.add(key)) speak(if(threshold=="now") step.instruction else "In ${formatDistance(progress.toTurn,s.imperial)}, ${step.instruction}")
             }
         } else if(s.selected!=null && !s.routing && !s.arrived && s.routeError==null &&
-            ((s.route==null && s.routeError==null) || (s.route!=null && (routeOrigin?.let{distance(it,fix)} ?: 0.0)>100.0))) requestRoute()
+            (s.route==null || (routeOrigin?.let{distance(it,fix)} ?: 0.0)>100.0)) requestRoute()
     }
     fun select(place: Place) {
         invalidateImport()

@@ -21,6 +21,7 @@ import kotlinx.coroutines.*
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.Style
 import org.maplibre.android.snapshotter.MapSnapshot
 import org.maplibre.android.snapshotter.MapSnapshotter
 import java.util.TimeZone
@@ -72,9 +73,11 @@ private class WaypointCarScreen(context: CarContext): Screen(context), SurfaceCa
         snapshotter?.cancel();snapshotter=null;busy=false;render()
     }
     override fun onSurfaceDestroyed(container: SurfaceContainer) { snapshotter?.cancel();snapshotter=null;surface=null;busy=false }
+    private fun header(title: CharSequence): Header = Header.Builder()
+        .setTitle(title).setStartHeaderAction(Action.APP_ICON).build()
     override fun onGetTemplate(): Template {
         val s=controller.state.value
-        if(!controller.hasLocationPermission()) return MessageTemplate.Builder("Allow precise location in Waypoint on your phone before using navigation.").setTitle("Waypoint").setHeaderAction(Action.APP_ICON).build()
+        if(!controller.hasLocationPermission()) return MessageTemplate.Builder("Allow precise location in Waypoint on your phone before using navigation.").setHeader(header("Waypoint")).build()
         if(s.navigating) {
             val maneuver=s.route?.steps?.getOrNull(s.progress?.nextStep ?: 0)
             val cue=if(!s.gpsReady)s.gpsStatus else maneuver?.instruction ?: "Continue on your route"
@@ -87,16 +90,16 @@ private class WaypointCarScreen(context: CarContext): Screen(context), SurfaceCa
         }
         if(s.selected!=null) {
             val text=when { s.arrived->"You have arrived at ${s.selected.name}";s.routing->"Finding a ${s.mode.label.lowercase()} route…";s.routeError!=null->s.routeError;!s.gpsReady->s.gpsStatus;s.route!=null->"${kotlin.math.ceil(s.route.seconds/60).toInt()} min · ${formatDistance(s.route.meters,s.imperial)}";else->"Waiting for your route" }
-            val builder=MessageTemplate.Builder(text).setTitle(s.selected.name).setHeaderAction(Action.APP_ICON)
+            val builder=MessageTemplate.Builder(text).setHeader(header(s.selected.name))
             if(s.route!=null && s.gpsReady && !s.routing && !s.arrived) builder.addAction(Action.Builder().setTitle("Start navigation").setOnClickListener{controller.startNavigation()}.build())
             if(s.routeError!=null) builder.addAction(Action.Builder().setTitle("Retry").setOnClickListener{controller.requestRoute()}.build())
             return builder.addAction(Action.Builder().setTitle("Destinations").setOnClickListener{controller.clearDestination()}.build()).build()
         }
         val places=(s.saved+s.recent).distinctBy{it.id}.take(6)
-        if(places.isEmpty()) return MessageTemplate.Builder("Choose or save a destination on your phone while parked. It will appear here.").setTitle("Waypoint").setHeaderAction(Action.APP_ICON).build()
+        if(places.isEmpty()) return MessageTemplate.Builder("Choose or save a destination on your phone while parked. It will appear here.").setHeader(header("Waypoint")).build()
         val list=ItemList.Builder()
         places.forEach { p->list.addItem(Row.Builder().setTitle(p.name).addText(p.address.ifBlank{"Saved destination"}).setOnClickListener{controller.select(p)}.build()) }
-        return ListTemplate.Builder().setTitle("Your destinations").setHeaderAction(Action.APP_ICON).setSingleList(list.build()).build()
+        return ListTemplate.Builder().setHeader(header("Your destinations")).setSingleList(list.build()).build()
     }
     private fun render() {
         val target=surface ?: return
@@ -108,7 +111,7 @@ private class WaypointCarScreen(context: CarContext): Screen(context), SurfaceCa
         if(snapshotter==null || world!=snapshotWorld) {
             snapshotter?.cancel();snapshotWorld=world
             val json=carContext.assets.open("styles/${world.file}.json").bufferedReader().use{it.readText()}
-            snapshotter=MapSnapshotter(carContext,MapSnapshotter.Options(width,height).withStyleJson(json).withCameraPosition(camera).withLogo(false)).apply {
+            snapshotter=MapSnapshotter(carContext,MapSnapshotter.Options(width,height).withStyleBuilder(Style.Builder().fromJson(json)).withCameraPosition(camera).withLogo(false)).apply {
                 for((id,res) in listOf("pixel-grass" to R.drawable.pixel_grass,"pixel-stone" to R.drawable.pixel_stone,"pixel-water" to R.drawable.pixel_water,"paper-fibre" to R.drawable.paper_fibre))
                     addImage(id,android.graphics.BitmapFactory.decodeResource(carContext.resources,res),false)
             }

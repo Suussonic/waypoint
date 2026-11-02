@@ -31,11 +31,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.TwoWheeler
@@ -246,7 +246,7 @@ private fun TravelModePreview(world: World) {
         listOf(
             "Car" to Icons.Default.DirectionsCar,
             "Motorcycle" to Icons.Default.TwoWheeler,
-            "Walk" to Icons.Default.DirectionsWalk,
+            "Walk" to Icons.AutoMirrored.Filled.DirectionsWalk,
         ).forEach { (label, icon) ->
             Surface(
                 color = Panel,
