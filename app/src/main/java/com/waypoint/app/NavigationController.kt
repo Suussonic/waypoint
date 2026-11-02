@@ -66,6 +66,9 @@ data class NavState(
     val saved: List<Place> = emptyList(),
     val recent: List<Place> = emptyList(),
     val message: String? = null,
+    val pendingSharedDestination: String? = null,
+    val pendingSharedDestinationId: Long = 0L,
+    val pendingSharedCoordinates: String? = null,
     val cameraRequest: Int = 0,
     val focusUserCameraRequest: Int = -1,
     val tilted: Boolean = true,
@@ -76,7 +79,16 @@ data class NavState(
 
 class WaypointApplication : Application() {
     var updatePromptDismissedAtForegroundEntry: Int = -1
-    override fun onCreate() { super.onCreate();MapGlyphs.install(this) }
+    private val appPrefs by lazy { getSharedPreferences("waypoint", Context.MODE_PRIVATE) }
+    override fun onCreate() {
+        super.onCreate()
+        // An empty preference store means a fresh install; updates retain the previous store.
+        if (appPrefs.all.isEmpty()) appPrefs.edit().putInt("whatsNewShownVersion", BuildConfig.VERSION_CODE).apply()
+        MapGlyphs.install(this)
+    }
+    fun shouldShowWhatsNew(): Boolean = appPrefs.getInt("whatsNewShownVersion", 0) < BuildConfig.VERSION_CODE
+    fun markWhatsNewSeen() { appPrefs.edit().putInt("whatsNewShownVersion", BuildConfig.VERSION_CODE).apply() }
+    fun bundledReleaseNotes(): String = assets.open("release-notes.md").bufferedReader().use { it.readText() }
     val navigation by lazy { NavigationController(this) }
     val updater by lazy { AppUpdater(this) }
 }
@@ -93,12 +105,13 @@ class NavigationController(private val app: Application, private val repository:
         }.toMap()
     }.getOrDefault(emptyMap())
     private val scope = CoroutineScope(SupervisorJob()+Dispatchers.Main.immediate)
+    private val initialWorld=World.entries.find{it.name==prefs.getString("world",null)} ?: World.LOS_SANTOS
     private val _state = MutableStateFlow(NavState(
-        world = World.entries.find{it.name==prefs.getString("world",null)} ?: World.LOS_SANTOS,
+        world = initialWorld,
         mode = TravelMode.entries.find{it.name==prefs.getString("mode",null)} ?: TravelMode.CAR,
         voice = prefs.getBoolean("voice",true), imperial = prefs.getBoolean("imperial",false),
         saved = readPlaces("saved"), recent = readPlaces("recent"),
-        tilted = prefs.getBoolean("tilted",true),
+        tilted = prefs.getBoolean("tilted",initialWorld.mapArt().tilt>0.0),
         carNight = prefs.getBoolean("carNight",false),
         carDayWorld = World.entries.find{it.name==prefs.getString("carDayWorld",null)} ?: World.HORIZON,
         carNightWorld = World.entries.find{it.name==prefs.getString("carNightWorld",null)} ?: World.LOS_SANTOS
@@ -151,6 +164,7 @@ class NavigationController(private val app: Application, private val repository:
     private var searchJob: Job? = null
     private var importJob: Job? = null
     private val importGate = NavigationImportGate()
+    private val importConsent = NavigationImportConsent()
     private var routeOrigin: Coordinate? = null
     private var engine: NavigationEngine? = null
     private var spoken = mutableSetOf<String>()
@@ -194,10 +208,24 @@ class NavigationController(private val app: Application, private val repository:
     fun handleNavigationIntent(intent: Intent?): Boolean {
         val proposal = NavigationImport.parse(intent?.action, intent?.dataString) ?: return false
         invalidateImport()
-        if (_state.value.navigating) {
+        val id = importConsent.offer(proposal, _state.value.navigating)
+        if (id == null) {
             _state.update { it.copy(message="End your current navigation before opening a shared destination.") }
             return false
         }
+        _state.update { it.copy(pendingSharedDestination=when (proposal) {
+            is NavigationImport.Point -> proposal.label
+            is NavigationImport.Search -> proposal.query
+        },pendingSharedDestinationId=id,pendingSharedCoordinates=if (proposal is NavigationImport.Point)
+            "${proposal.coordinate.lat}, ${proposal.coordinate.lon}" else null) }
+        return true
+    }
+    fun hasPendingNavigationImport() = _state.value.pendingSharedDestination != null
+    fun acceptPendingNavigationImport(id: Long) {
+        if (_state.value.pendingSharedDestinationId != id) return
+        if (_state.value.navigating) { invalidateImport(); return }
+        val proposal = importConsent.accept(id, false) ?: return
+        _state.update { it.copy(pendingSharedDestination=null,pendingSharedDestinationId=0L,pendingSharedCoordinates=null) }
         when (proposal) {
             is NavigationImport.Point -> select(Place("shared:${proposal.coordinate.lat},${proposal.coordinate.lon}", proposal.label, "Shared location", proposal.coordinate))
             is NavigationImport.Search -> {
@@ -218,9 +246,15 @@ class NavigationController(private val app: Application, private val repository:
                 }
             }
         }
-        return true
     }
-    private fun invalidateImport() { importGate.invalidate(); importJob?.cancel(); importJob=null }
+    fun dismissPendingNavigationImport(id: Long) {
+        if (_state.value.pendingSharedDestinationId != id || !importConsent.dismiss(id)) return
+        invalidateImport()
+    }
+    private fun invalidateImport() {
+        importGate.invalidate(); importJob?.cancel(); importJob=null; importConsent.dismissAll()
+        if (_state.value.pendingSharedDestination != null) _state.update { it.copy(pendingSharedDestination=null,pendingSharedDestinationId=0L,pendingSharedCoordinates=null) }
+    }
     fun clearHistory() { invalidateImport(); _state.update{it.copy(recent=emptyList(),saved=emptyList())}; prefs.edit().remove("recent").remove("saved").apply() }
     fun setVisible(value: Boolean) { visible=value; updateTracking() }
     fun enableLocation() { enabled=true; prefs.edit().putBoolean("locationEnabled",true).apply(); _state.update{it.copy(gpsStatus="Finding GPS…",cameraRequest=it.cameraRequest+1)}; updateTracking() }
@@ -306,7 +340,7 @@ class NavigationController(private val app: Application, private val repository:
             bearingAccuracy=if(location.hasBearingAccuracy())location.bearingAccuracyDegrees else null,
             speedAccuracy=if(location.hasSpeedAccuracy())location.speedAccuracyMetersPerSecond else null,
             fixReliable=reliable,mode=_state.value.mode,now=now))
-        if(reliable && !cityLookupPending && now-lastCityAttempt>=60000 && (cityPoint==null || distance(cityPoint!!,fix)>5000)) {
+        if(reliable && _state.value.pendingSharedDestination==null && !cityLookupPending && now-lastCityAttempt>=60000 && (cityPoint==null || distance(cityPoint!!,fix)>5000)) {
             cityLookupPending=true;lastCityAttempt=now
             _state.update{it.copy(city="Current area")}
             scope.launch {
@@ -348,6 +382,7 @@ class NavigationController(private val app: Application, private val repository:
     fun clearDestination() { stopNavigation(); _state.update{it.copy(selected=null,route=null,progress=null,arrived=false,routeError=null)} }
     fun requestRoute(reroute: Boolean = false) {
         val s = _state.value; val origin = s.fix ?: return; val target = s.selected ?: return
+        if(s.pendingSharedDestination!=null)return
         if(!s.gpsReady) { _state.update{it.copy(message="Waiting for an accurate GPS fix.")}; return }
         routeJob?.cancel()
         val generation=++routeGeneration
@@ -423,14 +458,14 @@ class NavigationController(private val app: Application, private val repository:
         prefs.edit().putString("mode",mode.name).apply()
         if(_state.value.selected!=null && _state.value.gpsReady)requestRoute()
     }
-    fun changeWorld(world: World) { _state.update{it.copy(world=world)}; prefs.edit().putString("world",world.name).apply() }
+    fun changeWorld(world: World) { _state.update{it.copy(world=world,tilted=if(prefs.contains("tilted"))it.tilted else world.mapArt().tilt>0.0)}; prefs.edit().putString("world",world.name).apply() }
     fun hasCompletedOnboarding(): Boolean = prefs.getBoolean(
         "onboardingCompleted",
         prefs.getBoolean("mapOpened", prefs.contains("world"))
     )
-    // This release introduces the new landing journey to existing installs once.
+    // Greet existing users once per installed release, then open their last map on later launches.
     fun shouldShowLanding(): Boolean = !hasCompletedOnboarding() ||
-        prefs.getInt("welcomeShownVersion", 0) < 1_000_001
+        prefs.getInt("welcomeShownVersion", 0) < BuildConfig.VERSION_CODE
     fun markMapOpened() {
         prefs.edit().putBoolean("mapOpened", true).putBoolean("onboardingCompleted", true).apply()
     }
@@ -443,7 +478,7 @@ class NavigationController(private val app: Application, private val repository:
         ?: listOf(_state.value.world)
     fun completeOnboarding(favorites: List<World>) {
         val edit = prefs.edit().putBoolean("onboardingCompleted", true).putBoolean("mapOpened", true)
-            .putInt("welcomeShownVersion", 1_000_001)
+            .putInt("welcomeShownVersion", BuildConfig.VERSION_CODE)
         if (favorites.isNotEmpty()) edit.putString("favoriteWorlds", favorites.distinct().joinToString(",") { it.name })
         edit.apply()
     }

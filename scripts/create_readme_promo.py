@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
-"""Build original README posters from sanitised, native London demo captures.
+"""Build original README posters from local, sanitised demo captures.
 
 Requires Pillow. Run from the repository root. No game artwork or personal
-journey screenshots are used. Keep captions and the README alt text in sync.
+journey screenshots are used. Pass a private capture folder containing the six
+named JPGs; keep captions and the README alt text in sync.
 """
+import argparse
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
 
 ROOT = Path(__file__).resolve().parents[1]
 IMAGES = ROOT / "docs/images"
+parser = argparse.ArgumentParser()
+parser.add_argument("--captures", type=Path, required=True,
+                    help="Local directory with sanitized los-santos.jpg, old-west.jpg, night-city.jpg, rivia.jpg, hyrule.jpg and pixel.jpg")
+CAPTURES = parser.parse_args().captures.resolve()
 OUT = IMAGES / "promo"
 OUT.mkdir(exist_ok=True)
 FONTS = ROOT / "app/src/main/res/font"
@@ -34,7 +40,7 @@ def lines(im, values, x, y, size, leading, color=IVORY):
 
 def map_surface(size, name, color=INK):
     surface = Image.new("RGB", size, color)
-    shot = Image.open(IMAGES / f"{name}.jpg").convert("RGB")
+    shot = Image.open(CAPTURES / f"{name}.jpg").convert("RGB")
     # Only the unobstructed centre of the actual map becomes the backdrop.
     crop = shot.crop((65, 280, 490, 810))
     crop = ImageOps.fit(crop, size, method=Image.Resampling.LANCZOS)
@@ -42,7 +48,7 @@ def map_surface(size, name, color=INK):
 
 
 def phone(canvas, name, x, y, width, angle=0):
-    shot = Image.open(IMAGES / f"{name}.jpg").convert("RGBA")
+    shot = Image.open(CAPTURES / f"{name}.jpg").convert("RGBA")
     height = round(shot.height * width / shot.width)
     shot = shot.resize((width, height), Image.Resampling.LANCZOS)
     margin, bezel = 55, 12
@@ -115,7 +121,6 @@ def poster(spec):
     text(canvas, world, 52, 285, 42)
     text(canvas, game, 52, 342, 25, "#CFD6C7", False)
     phone(canvas, name, 130, 421, 460)
-    save(canvas, f"{name}.jpg")
     return canvas
 
 

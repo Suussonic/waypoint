@@ -1,6 +1,6 @@
 # Verification record — 30 October 2026
 
-Test device: connected Samsung SM-S948B, 1080 × 2340, density 450, Android 17 development build. Native Kotlin/Compose app, MapLibre Native. USB installation was performed alongside the reference app. Its package/data/purchases were not changed.
+Test device: connected Samsung SM-S948B, 1080 × 2340, density 450, Android 17 development build. Native Kotlin/Compose app, MapLibre Native. Installation and testing used USB debugging.
 
 ## Automated checks
 
@@ -43,9 +43,9 @@ Test device: connected Samsung SM-S948B, 1080 × 2340, density 450, Android 17 d
 
 No physical road test, tunnel/urban-canyon test, long drive, audible-speaker verification, battery benchmark, or Android Auto head-unit/DHU test was performed. Reroute/arrival logic is unit tested, not observed during a real journey. An actual tablet was not available. Landscape and text scaling use the connected phone. The integration is a personal prototype, not production navigation certification.
 
-The maps re-create visual design rules from game screenshots. Real-world geography and original assets mean they are not pixel-perfect replicas of proprietary, hand-authored game maps. Terrain shading uses real elevation data; no fictional relief is invented. Public routing/search services have availability and rate limits; there is no live traffic or offline routing.
+The maps re-create visual design rules from game screenshots. Real-world geography and original assets mean they are not pixel-perfect replicas of proprietary, hand-authored game atlases. Terrain shading uses real elevation data; no fictional relief is invented. Public routing/search services have availability and rate limits; there is no live traffic or offline routing.
 
-Native captures in `.impeccable/review/` contain the user's local geography and are ignored by Git and excluded from the source archive. Reference screenshots in `.tooling/` are likewise excluded.
+Native captures in `.impeccable/review/` contain the user's local geography and are ignored by Git and excluded from the source archive.
 
 ## UI and performance changes
 
@@ -135,3 +135,28 @@ Public release descriptions use neutral feature descriptions. The current source
 - A connected-device test on the previous signed release passed the live update flow: discovery, download cancellation, re-download, signature verification and handoff to Android's installer. The partial download file was absent after verification.
 - After installing the verified GitHub APK, a second device test confirmed the installed version and manual update check. The screen reported **Waypoint 0.2.3** and **You're up to date**.
 - The installed APK was read back and its hash matched the downloaded GitHub artifact. The test package was removed and normal device sleep restored. These two additional updater checks do not expand the real-road or endurance coverage described above.
+
+## Onboarding and frame-time pass (2 November 2026)
+
+- Connected Samsung phone, 1080 × 2340 at up to 120 Hz, debug build. Device test data/cache were cleared before each run.
+- The opening globe's hidden fallback stickers kept animating under the video. After the fallback stops when video is ready and sticker motion uses render translation, a warmed 10-second `dumpsys gfxinfo` sample changed from **447 missed frames / 605 rendered** to **0 / 304**. The video remained visible in a native screenshot.
+- The Worlds picker now decodes full preview artwork on a background dispatcher, keeps up to 32 MB of recent images, and preloads nearby cards. The same five-swipe check changed from **30 missed frames / 310 rendered** to **16 / 331** after the final placeholder pass. Original full-size artwork remains in the repository and cards were visually checked after scrolling.
+- Map marker images and style JSON are prepared off the UI thread. Native MapLibre image submission remains synchronous: its asynchronous variant caused a rapid world-switch tilt regression and was removed. A single 65–73 ms frame was still observed during a debug theme switch; this pass does not claim zero jank for that transition.
+- The separate voice-guidance onboarding page was removed. The horse animation page now explains turn-by-turn voice guidance and leads directly to the referral page; system Back returns to the horse page.
+- `HorseOnboardingTest`, `WorldsScrollPositionTest`, `MapTiltWorldsTest` and `MapLocateWorldsTest` passed on the phone. The latter two exercise all 27 worlds. Debug assembly, unit tests, lint and `git diff --check` passed. No changes were pushed.
+
+## Global real-place scenarios (2 November 2026)
+
+- Added `GlobalScenariosTest` with 50 approximate settlement centres across 25 countries, pairing large cities with towns or villages. The set includes Kolkata/Ziro, Tokyo/Shirakawa-go, New York/Marfa, London/Bibury, São Paulo/Paraty, Cairo/Siwa, Sydney/Coober Pedy and Dubai/Hatta. Ziro's initial test point was at its airfield; the fixture was corrected to the town before the final run.
+- On the connected Samsung, all **50/50** places loaded the requested world style and real road/building features after MapLibre reported a completed render. The camera and position marker stayed at the requested place. The test captures one screenshot per place; screenshots were reviewed as contact sheets, with individual checks for Tokyo and Ziro.
+- The production search flow returned a nearby result in **50/50** places. The production routing repository returned a usable driving route in **50/50** places, and the navigation engine progressed along each route to arrival. Walking and motorcycle profiles each returned usable routes in **16/16** geographically spread urban/rural places.
+- Six live routes rendered in the actual navigation screen across different worlds and modes. The Ziro walking case exposed premature “Arrive at your destination” guidance on a long final leg; the banner and navigation notification now say “Continue on NH13” until close to arrival. A unit test covers the distance transition, and the corrected screen was visually checked.
+- Existing `NavigationJourneyTest` (3 tests), `MapFollowingTest`, `MapLocateWorldsTest` (27 worlds) and `MapTiltWorldsTest` (27 worlds) passed after this change. Device test data/cache were cleared before each invocation.
+- This was a connected, stationary test using public location coordinates and live map/search/routing services; it did not involve travelling to 25 countries or verifying each road on the ground. Sparse rural detail is limited by available map tiles. The phone briefly lost DNS/TCP access to the public routing endpoint during one rerun; later device requests and the full routing suites succeeded.
+
+## Repository hygiene and release packaging (2 November 2026)
+
+- Removed unused Android stills and an obsolete globe-frame generator. All three retained MP4s are referenced by the welcome or onboarding UI. Remotion now stages its temporary images from the committed Android resources instead of tracking duplicate copies.
+- Moved source screenshots, render outputs, reference imagery, local APKs, review notes and logs out of the repository. A CI hygiene check rejects those artifacts, unreferenced `drawable-nodpi` images, runtime videos without a source reference, missing README images, and basic private-path, personal-email and secret patterns.
+- The cleaned source passed offline debug and release assembly, unit tests, Android lint, both packaged-manifest checks, version validation, 28 style JSON checks, Remotion ESLint/TypeScript checks, `git diff --check` and the new repository hygiene check. The local release APK was intentionally unsigned because no distribution credentials were supplied.
+- A current-tree text scan found no local account paths, personal email addresses or key-shaped strings. A scan of 162 current app and README images found no GPS or personal-path metadata markers. These automated scans do not establish that every visible place name or future screenshot is safe to publish; contributors still review public examples manually.

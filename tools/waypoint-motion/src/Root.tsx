@@ -42,7 +42,7 @@ export const RemotionRoot: React.FC = () => {
           fps={30}
           width={720}
           height={1200}
-          defaultProps={{art: 'pizza', x: 170, y: 200, size: 260, tilt: -12, phase: 0}}
+          defaultProps={{art: 'food', x: 170, y: 200, size: 260, tilt: -12, phase: 0}}
         />
         <Composition
           id="GameArtworkScene"

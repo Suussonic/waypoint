@@ -7,13 +7,27 @@ local.properties
 **/build/
 *.iml
 .DS_Store
-.impeccable/review/
+.impeccable/
+__pycache__/
+*.pyc
+*.log
+*.apk
+*.aab
+*.mov
+*.webm
+*.avi
+*.mp4
+!app/src/main/res/raw/*.mp4
 
 **/node_modules/
 
 dist/
 output/
 tmp/
+tools/waypoint-motion/public/
+tools/waypoint-motion/source-blips/
+tools/waypoint-motion/source-poi-sheets/
+docs/images/captures/
 
 # Never publish signing identities or local credentials.
 *.keystore

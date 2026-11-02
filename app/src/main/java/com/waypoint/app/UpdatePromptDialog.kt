@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.SystemUpdate
@@ -36,19 +38,19 @@ fun UpdatePromptDialog(
     val status by updater.state.collectAsState()
     var installMessage by remember(release.version) { mutableStateOf<String?>(null) }
     val size = String.format(Locale.getDefault(), "%.1f", release.size / 1048576.0)
-    val firstNote = release.notes.lineSequence().firstOrNull { it.isNotBlank() }
-        ?.replace(Regex("[#*_`]"), "")
-        ?.take(160)
 
     AlertDialog(
         onDismissRequest = onLater,
         containerColor = Panel,
         title = { Text("Waypoint ${release.version} is ready") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                Modifier.fillMaxWidth().heightIn(max = 360.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
                 Text("A new release is available. Download it here, then install it through Android.", style = MaterialTheme.typography.bodyMedium)
                 Text("$size MB · SHA-256 verified before installation", style = MaterialTheme.typography.bodySmall, color = Muted)
-                if (!firstNote.isNullOrBlank()) Text(firstNote, style = MaterialTheme.typography.bodySmall, color = Muted)
+                if (release.notes.isNotBlank()) ReleaseNotesContent(release.notes)
                 when (val current = status) {
                     is UpdateStatus.Downloading -> {
                         LinearProgressIndicator(progress = { current.percent / 100f }, modifier = Modifier.fillMaxWidth())

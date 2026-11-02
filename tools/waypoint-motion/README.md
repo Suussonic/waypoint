@@ -1,54 +1,16 @@
-# Remotion video
+# Waypoint motion source
 
-<p align="center">
-  <a href="https://github.com/remotion-dev/logo">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/remotion-dev/logo/raw/main/animated-logo-banner-dark.apng">
-      <img alt="Animated Remotion Logo" src="https://github.com/remotion-dev/logo/raw/main/animated-logo-banner-light.gif">
-    </picture>
-  </a>
-</p>
+The three MP4 files in `app/src/main/res/raw/` are used by the Android welcome and onboarding screens. This Remotion project contains their editable compositions. Its `public/` images are generated copies of Android resources and are ignored by Git.
 
-Welcome to your Remotion project!
+From the repository root:
 
-## Commands
-
-**Install Dependencies**
-
-```console
-npm i --loglevel=error
+```sh
+python3 tools/waypoint-motion/prepare_public_assets.py
+npm ci --prefix tools/waypoint-motion
+cd tools/waypoint-motion
+npx remotion render src/index.ts WaypointIntro ../../app/src/main/res/raw/waypoint_intro.mp4
+npx remotion render src/index.ts OnboardingGlobe ../../app/src/main/res/raw/onboarding_globe_motion.mp4
+npx remotion render src/index.ts IconCollageScene ../../app/src/main/res/raw/onboarding_icons_motion.mp4
 ```
 
-**Start Preview**
-
-```console
-npm run dev
-```
-
-**Render video**
-
-```console
-npx remotion render
-```
-
-**Upgrade Remotion**
-
-```console
-npx remotion upgrade
-```
-
-## Docs
-
-Get started with Remotion by reading the [fundamentals page](https://www.remotion.dev/docs/the-fundamentals).
-
-## Help
-
-We provide help on our [Discord server](https://discord.gg/6VzzNDwUwV).
-
-## Issues
-
-Found an issue with Remotion? [File an issue here](https://github.com/remotion-dev/remotion/issues/new).
-
-## License
-
-Note that for some entities a company license is needed. [Read the terms here](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md).
+Review each rendered clip in the app before replacing a shipped video. Render previews, temporary files and `node_modules/` stay local. The Android build uses the three checked-in runtime MP4s; it does not require Node or Remotion.

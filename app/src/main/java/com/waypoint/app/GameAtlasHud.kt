@@ -62,6 +62,10 @@ data class AtlasActions(val search:()->Unit,val huds:()->Unit,val saved:()->Unit
             World.JUST_CAUSE->MediciAtlas(state,actions)
             World.MAFIA->MafiaAtlas(state,actions)
         }
+        if(maxHeight<420.dp || state.world !in setOf(World.LOS_SANTOS,World.NIGHT_CITY,World.HORIZON,World.HOGWARTS,World.BRIDGES,World.FAR_CRY)) {
+            AtlasTool(state.world,Icons.Default.ViewInAr,"Toggle 2D and 3D",actions.tilt,
+                Modifier.align(Alignment.CenterEnd).padding(end=8.dp))
+        }
     }
 }
 
@@ -184,6 +188,7 @@ internal fun atlasToolCaption(label:String)=when(label) {
         listOf("Food" to Icons.Default.Restaurant,"Fuel" to Icons.Default.LocalGasStation,"Parking" to Icons.Default.LocalParking).forEach{(t,i)->
             Surface(onClick={a.nearby(t)},color=Color(0xDD111111),modifier=Modifier.heightIn(min=48.dp)) {Row(Modifier.padding(horizontal=10.dp),verticalAlignment=Alignment.CenterVertically){Text(t,color=Color.White,fontSize=12.sp);Icon(i,null,tint=Color.White,modifier=Modifier.padding(start=12.dp).size(18.dp))}}
         }
+        AtlasTool(s.world,Icons.Default.ViewInAr,"Toggle 2D and 3D",a.tilt,light=true)
     }
     Row(Modifier.align(Alignment.BottomCenter).padding(16.dp).fillMaxWidth(),verticalAlignment=Alignment.Bottom,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
         Column(Modifier.weight(1f).background(Color(0xDB111111)).padding(8.dp)) {FixLabel(s);HudStatusBars(s)}

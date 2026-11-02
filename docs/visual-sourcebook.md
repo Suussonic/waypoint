@@ -35,17 +35,17 @@ Research for the user's private Waypoint Android app, 30 October 2026. These sou
 | Elden Ring | [Database game 1371](https://www.gameuidatabase.com/gameData.php?id=1371) | Warm atlas material, circular gold markers, upper-left Map label, restrained edge ornament and bottom actions. |
 | Forza Horizon 5 | [World map portfolio](https://www.behance.net/gallery/131465877/Forza-Horizon-5-World-Map-UI) | White controls, magenta selected tab, colored event-like place symbols and blue GPS guidance. |
 | AC Origins | [Map](https://interfaceingame.com/screenshots/assassins-creed-origins-map/) | Ochre relief, thin gold active line, dark slim tabs and lower map controls. |
-| Far Cry 5 | Existing map sample in `.tooling/hud-references/farcry.jpg` | Green relief with building mass, yellow guidance, sparse right location filters. |
+| Far Cry 5 | Local study reference archived outside Git | Green relief with building mass, yellow guidance, sparse right location filters. |
 | Ghost of Tsushima | [Map](https://interfaceingame.com/screenshots/ghost-of-tsushima-map-2/) | Washed grayscale paper, dark tab strip, ink road detail, diamond locations and compact guiding-route action. |
 | Death Stranding | [Map / information](https://interfaceingame.com/screenshots/death-stranding-map-2/) | Cold relief, thin cyan frame, small left data rail, compact lower-right route controls. Cinematic world-map images excluded. |
 | Horizon Zero Dawn | [Map](https://interfaceingame.com/screenshots/horizon-zero-dawn-map/) | Dark forest relief, thin ivory navigation strip, sparse white symbols; corrected earlier copper-dominant terrain. |
 | Spider-Man | [Map legend](https://interfaceingame.com/screenshots/marvels-spider-man-map-legend/) and earlier real-map capture | Teal extruded city, cyan diamond markers, red upper selection strip, lower waypoint bar. |
-| Hogwarts Legacy | Existing map sample in `.tooling/hud-references/hogwarts.jpg` | Muted green relief, navy/gold framing, maroon region strip and ornate compass. |
+| Hogwarts Legacy | Local study reference archived outside Git | Muted green relief, navy/gold framing, maroon region strip and ornate compass. |
 | Starfield | [Surface map](https://interfaceingame.com/screenshots/starfield-map-3/) | Blue survey field, dot treatment, white diamond symbols, upper-left information and bottom controls. Retains streets for navigation. |
-| Kingdom Come II | Existing map sample in `.tooling/hud-references/kingdom.jpg` | Warm paper, inset ornament, ink buildings, gold guidance and compass cartouche. |
+| Kingdom Come II | Local study reference archived outside Git | Warm paper, inset ornament, ink buildings, gold guidance and compass cartouche. |
 | Saints Row III | [Database game 342](https://www.gameuidatabase.com/gameData.php?id=342) | Dark tablet framing, purple atlas route, left location pane; yellow player arrow and green dotted route in live guidance. |
-| Just Cause 3 | Existing map sample in `.tooling/hud-references/justcause.jpg` | Blue tactical relief, yellow selected tab, cyan location glyphs, lower-right waypoint controls. |
-| Mafia DE | Existing map sample in `.tooling/hud-references/mafia.jpg` | Printed pale atlas, yellow roads, muted blocks, black map header/footer and compact actions. |
+| Just Cause 3 | Local study reference archived outside Git | Blue tactical relief, yellow selected tab, cyan location glyphs, lower-right waypoint controls. |
+| Mafia DE | Local study reference archived outside Git | Printed pale atlas, yellow roads, muted blocks, black map header/footer and compact actions. |
 
 The retained additional-game source URLs follow below; the local files are private review evidence. Only the 27 game inspirations are offered; the plain Classic map was removed at the user’s request.
 

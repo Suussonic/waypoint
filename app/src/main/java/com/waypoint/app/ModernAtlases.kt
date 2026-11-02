@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.*
 
 @Composable internal fun BoxScope.FarCryAtlas(s:NavState,a:AtlasActions) {
     Column(Modifier.align(Alignment.TopCenter).background(Color(0xE416211A))) {AtlasTabs(s.world,a,activeColor=Color(0xFFE7E7DD));AtlasText(s.city,s.world,Modifier.padding(16.dp),24)}
-    Column(Modifier.align(Alignment.CenterEnd).padding(16.dp),verticalArrangement=Arrangement.spacedBy(4.dp)){AtlasTool(s.world,Icons.Default.LocalGasStation,"Find fuel",{a.nearby("Fuel")});AtlasTool(s.world,Icons.Default.Restaurant,"Find food",{a.nearby("Food")})}
+    Column(Modifier.align(Alignment.CenterEnd).padding(16.dp),verticalArrangement=Arrangement.spacedBy(4.dp)){AtlasTool(s.world,Icons.Default.LocalGasStation,"Find fuel",{a.nearby("Fuel")});AtlasTool(s.world,Icons.Default.Restaurant,"Find food",{a.nearby("Food")});AtlasTool(s.world,Icons.Default.ViewInAr,"Toggle 2D and 3D",a.tilt)}
     Row(Modifier.align(Alignment.BottomCenter).padding(16.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)){AtlasFind(s.world,a,Modifier.weight(1f));AtlasTool(s.world,Icons.Default.MyLocation,"Use my location",a.locate,light=true)}
 }
 @Composable internal fun BoxScope.BridgesAtlas(s:NavState,a:AtlasActions) {

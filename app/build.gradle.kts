@@ -32,8 +32,8 @@ android {
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
-            // CI receives the established signing identity through encrypted repository secrets.
-            signingConfig = signingConfigs.getByName(if (releaseStore != null) "distribution" else "debug")
+            // A release without distribution credentials stays unsigned.
+            signingConfig = if (releaseStore != null) signingConfigs.getByName("distribution") else null
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

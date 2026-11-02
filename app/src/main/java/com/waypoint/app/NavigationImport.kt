@@ -47,4 +47,28 @@ internal class NavigationImportGate {
     fun canApply(ticket: Long, navigating: Boolean): Boolean = ticket == generation && !navigating
 }
 
+/** A parsed external link is a proposal until the Waypoint user accepts it. */
+internal class NavigationImportConsent {
+    private var nextId = 0L
+    private var pending: Pair<Long, NavigationImport>? = null
+    fun offer(proposal: NavigationImport, navigating: Boolean): Long? {
+        if (navigating) { pending = null; return null }
+        val id = ++nextId
+        pending = id to proposal
+        return id
+    }
+    fun accept(id: Long, navigating: Boolean): NavigationImport? {
+        val current = pending ?: return null
+        if (current.first != id) return null
+        pending = null
+        return if (navigating) null else current.second
+    }
+    fun dismiss(id: Long): Boolean {
+        if (pending?.first != id) return false
+        pending = null
+        return true
+    }
+    fun dismissAll() { pending = null }
+}
+
 internal fun Coordinate.isValid() = lat.isFinite() && lon.isFinite() && lat in -90.0..90.0 && lon in -180.0..180.0

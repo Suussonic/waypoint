@@ -33,4 +33,21 @@ class SecurityConfigurationTest {
         assertEquals(0,context.applicationInfo.flags and ApplicationInfo.FLAG_ALLOW_BACKUP)
         assertEquals(0,context.applicationInfo.flags and ApplicationInfo.FLAG_USES_CLEARTEXT_TRAFFIC)
     }
+
+    @Suppress("DEPRECATION")
+    @Test fun debugWorldPreviewCannotBeStartedByOtherApps() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val component = ComponentName(context.packageName, "com.waypoint.app.WorldPreviewCaptureActivity")
+        val preview = try {
+            context.packageManager.getActivityInfo(component, 0)
+        } catch (_: PackageManager.NameNotFoundException) {
+            null
+        }
+        if (BuildConfig.DEBUG) {
+            assertNotNull("Debug preview should be packaged in debug builds", preview)
+            assertFalse("Preview capture must be private to Waypoint", preview!!.exported)
+        } else {
+            assertNull("Debug preview must be absent from release builds", preview)
+        }
+    }
 }

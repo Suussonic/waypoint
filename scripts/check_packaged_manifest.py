@@ -14,6 +14,14 @@ assert app.get(android + "allowBackup") == "false", "Backup must remain disabled
 assert app.get(android + "usesCleartextTraffic") == "false", "Cleartext traffic must remain disabled"
 if variant == "release":
     assert app.get(android + "debuggable", "false") == "false", "Release must not be debuggable"
+activities = app.findall("activity")
+main = next(a for a in activities if a.get(android + "name") == "com.waypoint.app.MainActivity")
+assert main.get(android + "exported") == "true", "Destination activity must remain available"
+preview = [a for a in activities if a.get(android + "name") == "com.waypoint.app.WorldPreviewCaptureActivity"]
+if variant == "debug":
+    assert len(preview) == 1 and preview[0].get(android + "exported") == "false", "Debug preview must stay private"
+else:
+    assert not preview, "Debug preview must not be packaged in the release"
 services = app.findall("service")
 assert all(s.get(android + "exported") == "false" for s in services), "A service became exported"
 car = next(s for s in services if s.get(android + "name") == "com.waypoint.app.WaypointCarService")

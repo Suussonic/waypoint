@@ -1,180 +1,125 @@
 <div align="center">
   <picture>
     <source media="(max-width: 640px)" srcset="docs/images/promo/hero-mobile.jpg" />
-    <img src="docs/images/promo/hero.jpg" width="100%" alt="Waypoint. Your city. Another world. Real streets, game-inspired navigation. 27 worlds, every one included. Android, open source, no paywall." />
+    <img src="docs/images/promo/hero.jpg" width="100%" alt="Waypoint: real streets with game-inspired map styles, shown in two Android map views." />
   </picture>
-  <p><strong>Your everyday journey, through the worlds you love.</strong><br />Native Android navigation. Real GPS. Spoken directions. A whole different atmosphere.<br /><sub>Made in India · Open to the world</sub></p>
-  <a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="docs/images/promo/download.jpg" width="340" alt="Download Waypoint for Android" /></a>
-  <p><sub>Android 8.0+ · Free APK · No account · No ads · Every world unlocked</sub></p>
-  <p>
-    <a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="https://img.shields.io/github/v/release/the-geeky-couldron/waypoint?label=release&color=d5f16c&labelColor=101511" alt="Latest release" /></a>
-    <a href="https://github.com/the-geeky-couldron/waypoint/releases"><img src="https://img.shields.io/github/downloads/the-geeky-couldron/waypoint/total?label=downloads&amp;color=d5f16c&amp;labelColor=101511" alt="Total GitHub release downloads" /></a>
-    <a href="https://github.com/the-geeky-couldron/waypoint/actions/workflows/android.yml"><img src="https://github.com/the-geeky-couldron/waypoint/actions/workflows/android.yml/badge.svg" alt="Android build status" /></a>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-d5f16c?labelColor=101511" alt="MIT license" /></a>
-  </p>
-  <p><a href="#choose-your-world">Explore the worlds</a> · <a href="#built-for-the-journey">Navigation</a> · <a href="#get-waypoint">Install</a> · <a href="#build-it-yourself">Build from source</a></p>
+  <p><strong>Real streets. Another world.</strong><br />A free Android navigation app with 27 game-inspired map styles, live GPS and spoken directions.<br /><sub>Made in India · Open to the world</sub></p>
+  <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="docs/images/promo/download.jpg" width="340" alt="Download Waypoint for Android from GitHub Releases" /></a></p>
+  <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><strong>Download the latest APK</strong></a> · <a href="#build-from-source">Build from source</a> · <a href="#privacy-and-services">Privacy and services</a></p>
+  <p><sub>Android 8.0+ · No ads or paywall · No Waypoint account · Every world included</sub></p>
 </div>
 
-## Choose your world
+## Your map, your world
 
-A charcoal city grid. A weathered frontier atlas. Neon streets after dark. **Waypoint puts 27 game-inspired map styles over the real world**, each with its own roads, lettering, pointer and controls. Switch worlds during a trip and keep your destination.
+Pick a world during onboarding, then explore real geography through its roads, typography, markers and navigation controls. Switch styles without losing your destination. The globe, world gallery and map are designed as one journey; the map itself remains readable while you travel.
 
 <picture>
   <source media="(max-width: 640px)" srcset="docs/images/promo/worlds-1-mobile.jpg" />
-  <img src="docs/images/promo/worlds-1.jpg" width="100%" alt="Own the streets with Los Santos, inspired by Grand Theft Auto V. Go a little more west with Old West, inspired by Red Dead Redemption 2. Actual Waypoint maps shown in phone mockups." />
+  <img src="docs/images/promo/worlds-1.jpg" width="100%" alt="Waypoint's Los Santos and Old West map styles, presented in phone mockups." />
 </picture>
 
 <picture>
   <source media="(max-width: 640px)" srcset="docs/images/promo/worlds-2-mobile.jpg" />
-  <img src="docs/images/promo/worlds-2.jpg" width="100%" alt="Take the neon route with Night City, inspired by Cyberpunk 2077. Every road, a new story with The Continent, inspired by The Witcher 3. Actual Waypoint maps shown in phone mockups." />
+  <img src="docs/images/promo/worlds-2.jpg" width="100%" alt="Waypoint's Night City and The Continent map styles, presented in phone mockups." />
 </picture>
 
 <picture>
   <source media="(max-width: 640px)" srcset="docs/images/promo/worlds-3-mobile.jpg" />
-  <img src="docs/images/promo/worlds-3.jpg" width="100%" alt="Follow your curiosity with Sheikah Slate, inspired by The Legend of Zelda: Breath of the Wild. Think outside the blocks with Pixel World, inspired by Minecraft. Actual Waypoint maps shown in phone mockups." />
+  <img src="docs/images/promo/worlds-3.jpg" width="100%" alt="Waypoint's Sheikah Slate and Pixel World map styles, presented in phone mockups." />
 </picture>
 
-<sub>Actual native app captures at a fixed London demonstration position, composed into original promotional artwork. The maps show real geography with game-inspired styling. Full captures: <a href="docs/images/los-santos.jpg">Los Santos</a> · <a href="docs/images/old-west.jpg">Old West</a> · <a href="docs/images/night-city.jpg">Night City</a> · <a href="docs/images/rivia.jpg">The Continent</a> · <a href="docs/images/hyrule.jpg">Sheikah Slate</a> · <a href="docs/images/pixel.jpg">Pixel World</a>.</sub>
+<sub>These compositions use sanitised native map captures at a fixed public London demonstration position. [Artwork notes](docs/images/promo/README.md).</sub>
 
 <details>
-<summary><strong>Six shown. Twenty-seven to explore. See the full world library →</strong></summary>
+<summary><strong>See all 27 worlds</strong></summary>
 
-| World | Inspiration |
-| :--- | :--- |
-| Los Santos | Grand Theft Auto V |
-| Old West | Red Dead Redemption 2 |
-| Night City | Cyberpunk 2077 |
-| Pixel World | Minecraft |
-| Green Terminal | Fallout |
-| San Andreas | Grand Theft Auto: San Andreas |
-| Midnight Run | Need for Speed Heat |
-| The Continent | The Witcher 3 |
-| Vice Coast | Grand Theft Auto: Vice City |
-| Liberty City | Grand Theft Auto IV |
-| Nudle Maps | Watch Dogs 2 |
-| Sheikah Slate | The Legend of Zelda: Breath of the Wild |
-| Skyrim | The Elder Scrolls V: Skyrim |
-| Lands Between | Elden Ring |
-| Horizon | Forza Horizon |
-| Animus | Assassin’s Creed Origins |
-| Hope County | Far Cry 5 |
-| Tsushima | Ghost of Tsushima |
-| Bridges | Death Stranding |
-| The Embrace | Horizon Zero Dawn |
-| Manhattan | Marvel’s Spider-Man |
-| Highlands | Hogwarts Legacy |
-| Surface Map | Starfield |
-| Bohemia | Kingdom Come: Deliverance II |
-| Steelport | Saints Row: The Third |
-| Medici | Just Cause 3 |
-| Lost Heaven | Mafia: Definitive Edition |
-
+| World | Inspiration | World | Inspiration |
+| --- | --- | --- | --- |
+| Los Santos | Grand Theft Auto V | Old West | Red Dead Redemption 2 |
+| Night City | Cyberpunk 2077 | Pixel World | Minecraft |
+| Green Terminal | Fallout | San Andreas | Grand Theft Auto: San Andreas |
+| Midnight Run | Need for Speed Heat | The Continent | The Witcher 3 |
+| Vice Coast | Grand Theft Auto: Vice City | Liberty City | Grand Theft Auto IV |
+| Nudle Maps | Watch Dogs 2 | Sheikah Slate | The Legend of Zelda: Breath of the Wild |
+| Skyrim | The Elder Scrolls V: Skyrim | Lands Between | Elden Ring |
+| Horizon | Forza Horizon | Animus | Assassin’s Creed Origins |
+| Hope County | Far Cry 5 | Tsushima | Ghost of Tsushima |
+| Bridges | Death Stranding | The Embrace | Horizon Zero Dawn |
+| Manhattan | Marvel’s Spider-Man | Highlands | Hogwarts Legacy |
+| Surface Map | Starfield | Bohemia | Kingdom Come: Deliverance II |
+| Steelport | Saints Row: The Third | Medici | Just Cause 3 |
+| Lost Heaven | Mafia: Definitive Edition | | |
 
 </details>
 
 ## Built for the journey
 
-**Drive. Ride. Walk.** Choose a car, motorcycle or walking route. Get spoken turns, remaining distance and arrival estimates, with controls that tell you what they do.
+- **Drive, ride or walk.** Choose a car, motorcycle or walking route, then follow spoken turns, remaining distance and ETA.
+- **Keep your bearings.** Locate recentres on your actual position; the map follows movement and can recalculate after a confirmed wrong turn. A 2D/3D control changes the camera tilt.
+- **Find useful places.** Search destinations, drop a pin, and see world-specific blips for food, pubs, shops, schools, hospitals and other mapped places. Icons appear progressively as you zoom so dense streets stay legible.
+- **Pick up where you left off.** Save places, revisit recent destinations and switch worlds during a trip. Shared `geo:` and `google.navigation:` links ask for confirmation before Waypoint looks up or previews the imported destination.
+- **Send feedback in context.** Settings opens a draft GitHub issue with the current world and app version. You review it in your browser before submitting; a GitHub account is needed to post the issue.
 
-**Stay at the centre.** Your pointer stays centred while the map follows your movement. The travelled route clears behind you. Take another road and Waypoint requests a new route once accurate GPS fixes confirm you are off course.
-
-**Find the place you meant.** Typo-tolerant matching and the Android geocoder supplement Photon search. Results show mapped names, addresses and providers, so you can check the destination before setting off.
-
-**Make it yours.** Save favourite places, choose miles or kilometres, mute guidance, and change worlds without ending the trip. Every map style is included from the start.
-
-<p align="center"><strong>Car · Motorcycle · Walk</strong><br /><sub>Live location · Sensor-assisted heading · Spoken turns · Automatic rerouting</sub></p>
-
-## At home on your home screen
-
-<img src="docs/images/promo/identity.jpg" width="100%" alt="Waypoint’s original ivory and lime navigation emblem, with a bent route and compass brackets over a dark street grid." />
-
-An original adaptive icon that fits your launcher’s shape. **Material You themed icons** match your wallpaper on Android 13+ with a compatible launcher and themed icons enabled. Inside the app, each game world keeps its own palette.
+<img src="docs/images/promo/identity.jpg" width="100%" alt="Waypoint's launcher emblem and compact navigation identity." />
 
 ## Get Waypoint
 
-**[Download the latest Waypoint.apk →](https://github.com/the-geeky-couldron/waypoint/releases/latest)**
+**[Download Waypoint.apk from GitHub Releases →](https://github.com/the-geeky-couldron/waypoint/releases/latest)**
 
-1. Download **Waypoint.apk** and open it. Follow Android’s installation prompts.
-2. Choose a world, tap **Open map**, then **Locate** and grant precise location.
-3. Search for a place or hold the map to drop a pin. Choose **Car**, **Motorcycle** or **Walk** and tap **Start navigation**.
+1. Open the APK and follow Android’s installation prompts.
+2. Complete onboarding, choose a world and open the map.
+3. Tap **Locate** and grant precise location. Search for a destination or hold the map to drop a pin.
+4. Choose **Car**, **Motorcycle** or **Walk**. Review the route, then tap **Start navigation**.
 
-**Already installed?** Waypoint checks for a stable release when you open the app. If one is available, it offers to download and verify it; the prompt returns on each launch until the update is installed. Downloads begin only when you tap **Download update**. Android still confirms installation, and compatible updates preserve your saved places and preferences. You can also check manually in **Settings → App updates**. End navigation before installing.
+Installed versions check for a newer stable GitHub release when the app enters the foreground. The updater shows the release notes before you download, verifies the package and signing identity, then hands installation to Android. After updating, Waypoint shows What’s New once. A compatible update keeps saved places and settings. This source tree is **Waypoint 1.0.0**; see the [full changelog](docs/releases/current.md).
 
-<details>
-<summary><strong>A look inside: welcome screen and world library</strong></summary>
+## Build from source
 
-<p align="center">
-  <img src="docs/images/welcome.jpg" width="46%" alt="Waypoint’s native welcome screen with a selected game world and Open map action." />
-  <img src="docs/images/library.jpg" width="46%" alt="The searchable world library with large map-style names and smaller game names." />
-</p>
-
-</details>
-
-## Open source, from map to APK
-
-Built with **Kotlin · Jetpack Compose · MapLibre Native**. The code is MIT licensed, the releases are built with GitHub Actions, and the app downloads updates directly from public GitHub Releases. No GitHub account or token is needed in the app.
-
-### Build it yourself
-
-Use **JDK 17**, Android **SDK 35** and **Build Tools 35.0.0**. The Gradle wrapper is included.
+You need **JDK 17**, Android **SDK Platform 35** and **Build Tools 35.0.0**. Set `ANDROID_HOME` or put your SDK path in the ignored `local.properties` file.
 
 ```sh
 git clone https://github.com/the-geeky-couldron/waypoint.git
 cd waypoint
-# Set ANDROID_HOME, or add sdk.dir=/your/android-sdk to local.properties.
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-No map API key is required for the included evaluation services. Local debug builds use your own signing key and may not install over a downloaded release. Keep a consistent signing identity for upgrades.
+The Android build uses Kotlin, Jetpack Compose and MapLibre Native. No map API key, Node installation or Pillow (PIL) installation is needed to build the checked-in app. Pillow is used only by optional artwork-generation scripts. The three MP4s in `app/src/main/res/raw/` are runtime onboarding assets; their editable Remotion compositions and staging instructions are under [`tools/waypoint-motion`](tools/waypoint-motion/README.md). Local release builds stay unsigned unless you supply distribution signing credentials; see [releasing](docs/releasing.md).
 
-<details>
-<summary><strong>Build pipeline, releases and artwork</strong></summary>
+Run `python3 scripts/check_repo_hygiene.py` before committing. CI checks that generated videos, source screenshots, private QA material, APKs and logs do not enter the repository. Runtime Android videos and the finished images used by this README are intentionally retained.
 
-GitHub Actions builds the app, runs unit tests and lint, and validates all 27 map styles on pushes and pull requests. Debug APKs and reports are saved as workflow artifacts.
+## Privacy and services
 
-A version tag such as `v1.0.0-r1` runs the checks again, builds a signed release and publishes **Waypoint.apk** and **SHA256SUMS**. The in-app updater reads that release. Versions live in [`version.properties`](version.properties); signing and publishing are covered in the [release guide](docs/releasing.md).
+Waypoint has no app-owned account, analytics backend or recorded route history. Saved places stay on your device. Location and destinations are sent to providers when a map, search or route needs them; the app’s update check contacts GitHub without location data.
 
-The promotional posters are reproducible with `python3 scripts/create_readme_promo.py` using Pillow, the repository’s licensed fonts, and sanitised app screenshots. The posters contain no original game artwork. See [the artwork notes](docs/images/promo/README.md).
+| Feature | Service |
+| --- | --- |
+| Map tiles and labels | OpenFreeMap using OpenStreetMap data |
+| Search and reverse geocoding | Photon; Android Geocoder when available |
+| Car routes | OSRM |
+| Motorcycle and walking routes | Valhalla |
+| Terrain | Mapzen |
+| Voice | Your installed Android text-to-speech engine |
 
-</details>
+The public map, search and routing endpoints require internet access and can be unavailable or rate-limited. Waypoint has **no live traffic, offline routing or lane guidance**. Android Auto remains disabled. GPS and place coverage vary by device and location; real-road and long-duration testing are still needed. Read the [service and privacy guide](docs/guide.md#location-and-privacy) and [validation record](docs/validation.md) for the practical limits.
 
-## Know before you go
+## Open project
 
-Waypoint is an independent hobby project. Maps and routes need an internet connection; public services can be rate-limited. There is **no live traffic, lane guidance or offline routing**. Android Auto is disabled in this release. Controlled device tests cover location movement, route replacement and camera following; real-road and battery-endurance validation remain outstanding. See [what has been tested](docs/validation.md).
+| Guide | What it covers |
+| --- | --- |
+| [App guide](docs/guide.md) | Setup, navigation and service behavior |
+| [Release guide](docs/releasing.md) | Signing, GitHub releases and updates |
+| [Map typography](docs/map-fonts.md) | Fonts and map glyphs |
+| [Visual sourcebook](docs/visual-sourcebook.md) | Cartography decisions and references |
+| [Security review](docs/security.md) | Reviewed boundaries, source fixes and remaining validation |
+| [Contributing](CONTRIBUTING.md) | Tests, public examples and repository hygiene |
 
-Search coverage depends on the available providers and does not match Google Maps’ full place database. An address match is labelled as an address match, so it is distinguishable from a named landmark.
-
-<details>
-<summary><strong>Privacy, map providers and security</strong></summary>
-
-Maps use OpenStreetMap data through OpenFreeMap. Search combines Photon with Android’s device geocoder when available. Car routing uses OSRM; motorcycle and walking use Valhalla. Terrain uses Mapzen data. Provider credits remain accessible through **Map info**.
-
-Location and destinations are sent to mapping, search and routing providers when needed. Android’s geocoder provider and coverage vary by device. Saved places stay on the device. There is no app-owned account system, analytics server or recorded location history. Update checks contact GitHub without location data; downloads run only when requested and can be cancelled. Read the [privacy and service notes](docs/guide.md#location-and-privacy).
-
-The hardening work includes strict destination-link parsing, cancellation of obsolete requests, bounded responses, validated route geometry and verified update packages. A security review cannot guarantee invulnerability. See the [security review](docs/security.md) or [report a concern](SECURITY.md).
-
-</details>
-
-## Explore the project
-
-| Start here | What you’ll find |
-| :--- | :--- |
-| [App & development guide](docs/guide.md) | Setup, architecture, services and transport profiles |
-| [Release guide](docs/releasing.md) | Actions, signing and in-app updates |
-| [Visual sourcebook](docs/visual-sourcebook.md) | Game references and cartography decisions |
-| [Map typography](docs/map-fonts.md) | Fonts, glyphs and fidelity limits |
-| [Sensors](docs/sensors.md) | Compass, GPS course and accuracy handling |
-| [Validation](docs/validation.md) | Completed checks and remaining hardware work |
-| [Security](docs/security.md) | Boundaries, fixes and validation limits |
-
-Contributions are welcome. Read the [contribution and privacy guidelines](CONTRIBUTING.md), include relevant tests, and keep real roads and guidance legible when adding a world.
+Waypoint is independent and is not affiliated with the games or their publishers. The **code is MIT licensed**. Fonts, map data and sourced game markers have separate licenses or rights; review the [font notices](docs/licenses/), [marker sources](docs/poi-icon-sources.md) and [artwork notes](docs/game-artwork-sources.md) before redistributing assets. Report security concerns through [SECURITY.md](SECURITY.md).
 
 ---
 
 <div align="center">
-  <img src="docs/images/waypoint-icon.png" width="64" alt="Waypoint icon" />
-  <h3>Every world included. Every journey your own.</h3>
-  <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><strong>Get Waypoint →</strong></a></p>
-  <sub>Independent, game-inspired navigation. Not affiliated with any game or publisher.<br />Original graphics and licensed open fonts. Code: <a href="LICENSE">MIT</a> · <a href="docs/licenses">Third-party licenses</a></sub>
+  <img src="docs/images/waypoint-icon.png" width="64" alt="Waypoint launcher icon" />
+  <p><strong>Every world included. Every journey your own.</strong></p>
+  <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest">Get Waypoint on GitHub →</a></p>
 </div>

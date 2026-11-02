@@ -15,4 +15,4 @@ Keep real roads, location confidence and guidance readable when changing a game 
 
 Run the relevant Android unit tests and lint. Validate cartography after map-style edits with `node scripts/validate_styles.cjs`. See [the release guide](docs/releasing.md) for signed builds and [validation notes](docs/validation.md) for the distinction between controlled tests and real-road evidence.
 
-README artwork can be reproduced using [the promotional art generator](scripts/create_readme_promo.py). Keep its native demonstration screenshots separate from private device testing.
+README artwork can be reproduced using [the promotional art generator](scripts/create_readme_promo.py) and local sanitised demonstration captures. Keep source captures, render outputs, logs, APKs and reference imagery out of Git. Run `python3 scripts/check_repo_hygiene.py` before committing; CI runs the same file, media and basic PII/secret-pattern checks. Review examples manually as well: automated checks cannot recognize every personal place or identifier.

@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -101,13 +102,26 @@ class MainActivity : ComponentActivity() {
         override fun onDisplayChanged(displayId:Int){controller.setDisplayRotation(windowManager.defaultDisplay.rotation)}
     }
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState); enableEdgeToEdge(); if(savedInstanceState==null && controller.handleNavigationIntent(intent)) destinationLaunch++
+        super.onCreate(savedInstanceState); enableEdgeToEdge()
+        val restorePending = savedInstanceState?.getBoolean("waypoint.pendingSharedDestination") == true
+        if((savedInstanceState==null || restorePending && !controller.hasPendingNavigationImport()) && controller.handleNavigationIntent(intent)) destinationLaunch++
         setContent { val state by controller.state.collectAsStateWithLifecycle()
             LaunchedEffect(state.navigating) { if(state.navigating) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
             WaypointApp(controller,state,destinationLaunch,foregroundEntry)
         }
     }
-    override fun onNewIntent(intent: Intent) { super.onNewIntent(intent);setIntent(intent);if(controller.handleNavigationIntent(intent))destinationLaunch++ }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (controller.handleNavigationIntent(intent)) {
+            // Keep the last validated proposal as the restore source while its dialog is open.
+            setIntent(intent)
+            destinationLaunch++
+        }
+    }
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("waypoint.pendingSharedDestination",controller.hasPendingNavigationImport())
+        super.onSaveInstanceState(outState)
+    }
     override fun onStart() { super.onStart();if(configurationRestartPending)configurationRestartPending=false else foregroundEntryCounter++;foregroundEntry=foregroundEntryCounter;getSystemService(DisplayManager::class.java).registerDisplayListener(displayListener,null); controller.setDisplayRotation(windowManager.defaultDisplay.rotation); controller.setVisible(true);(application as WaypointApplication).updater.checkOnLaunch() }
     override fun onStop() { configurationRestartPending=isChangingConfigurations;getSystemService(DisplayManager::class.java).unregisterDisplayListener(displayListener);controller.setVisible(false); super.onStop() }
 }
@@ -119,11 +133,15 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
     val application=context.applicationContext as WaypointApplication
     val updater=application.updater
     var tab by rememberSaveable { mutableIntStateOf(0) }
+    val worldsStateHolder=rememberSaveableStateHolder()
     var landing by rememberSaveable { mutableStateOf(controller.shouldShowLanding()) }
     val welcomeVisible=landing && !state.navigating
+    var whatsNewVisible by rememberSaveable { mutableStateOf(application.shouldShowWhatsNew()) }
+    val bundledReleaseNotes=remember { application.bundledReleaseNotes() }
     LaunchedEffect(destinationLaunch){if(destinationLaunch>0 && !controller.shouldShowLanding()){controller.markMapOpened();landing=false}}
     var search by rememberSaveable { mutableStateOf(false) }
     var settings by rememberSaveable { mutableStateOf(false) }
+    var feedbackOpen by rememberSaveable { mutableStateOf(false) }
     var clearConfirm by remember { mutableStateOf(false) }
     var steps by rememberSaveable { mutableStateOf(false) }
     var mapError by remember { mutableStateOf<String?>(null) }
@@ -166,12 +184,14 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
         }
     }
     fun choose(place: Place) { controller.markMapOpened();controller.select(place); search=false;tab=0;landing=false }
-    val showUpdatePrompt=pendingRelease!=null && !updatePromptDismissed && !welcomeVisible && !state.navigating && state.selected==null &&
+    val showWhatsNew=whatsNewVisible && !welcomeVisible && !state.navigating && state.selected==null && state.pendingSharedDestination==null &&
+        tab==0 && !search && !settings && !steps
+    val showUpdatePrompt=pendingRelease!=null && !updatePromptDismissed && !whatsNewVisible && !welcomeVisible && !state.navigating && state.selected==null && state.pendingSharedDestination==null &&
         tab==0 && !search && !settings && !steps
     MaterialTheme(colorScheme=darkColorScheme(primary=state.world.accent,onPrimary=Ink,primaryContainer=state.world.accent.copy(alpha=0.18f),onPrimaryContainer=state.world.accent,
         background=Ink,surface=Ink,surfaceVariant=Panel,onSurface=Cream,onSurfaceVariant=Muted,outline=Color(0xFF51594B),secondary=state.world.accent),typography=AppTypography) {
         BackHandler(search || settings || steps || tab!=0 || (!welcomeVisible && state.selected!=null)) {
-            when { search->search=false; settings->settings=false; steps->steps=false; tab!=0->tab=0; state.selected!=null->controller.clearDestination() }
+            when { search->search=false; feedbackOpen->feedbackOpen=false; settings->settings=false; steps->steps=false; tab!=0->tab=0; state.selected!=null->controller.clearDestination() }
         }
         LaunchedEffect(state.message) { state.message?.let{snackbar.showSnackbar(it);controller.dismissMessage()} }
         BoxWithConstraints(Modifier.fillMaxSize().background(Ink)) {
@@ -259,21 +279,26 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                             },
                             onOpenAppSettings={context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))}
                         )
-                        if(tab==1) WorldsScreen(state.world,{controller.changeWorld(it);tab=0},{tab=0})
+                        if(tab==1) worldsStateHolder.SaveableStateProvider("worlds") {
+                            WorldsScreen(state.world,{controller.changeWorld(it);tab=0},{tab=0})
+                        }
                         if(tab==2 && !state.navigating) SavedScreen(state,::choose,{controller.toggleSaved(it)},{search=true})
                         if(search) SearchScreen(state,controller::search,::choose,{search=false},controller::changeMode,controller::submitSearch)
                     }
                 }
             }
         }
-        if(settings) ModalBottomSheet(onDismissRequest={settings=false},containerColor=Ink) {
+        if(settings) ModalBottomSheet(onDismissRequest={feedbackOpen=false;settings=false},containerColor=Ink) {
+            if(feedbackOpen) {
+                FeedbackSheet(state.world,onBack={feedbackOpen=false},onLeaveApp={feedbackOpen=false;settings=false})
+            } else {
             Column(Modifier.padding(horizontal=24.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(16.dp)) {
                 Text("Make it your own",style=MaterialTheme.typography.headlineLarge)
                 UpdatePanel((context.applicationContext as WaypointApplication).updater, state.navigating)
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 SettingRow("Voice guidance","Spoken turn instructions",state.voice,controller::toggleVoice)
                 SettingRow("Miles & feet","Use imperial distances",state.imperial,controller::toggleUnits)
-                SettingRow("3D perspective","Tilt the map while navigating",state.tilted,controller::toggleTilt)
+                SettingRow("3D perspective","Tilt the map in every world",state.tilted,controller::toggleTilt)
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 Text("Android Auto",style=MaterialTheme.typography.titleLarge)
                 Text("Unavailable in this build",style=MaterialTheme.typography.bodyMedium)
@@ -289,6 +314,8 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 TextButton(onClick={context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))}) { Text("Open device location settings") }
                 TextButton(onClick={context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))}) { Text("Manage location permissions") }
                 TextButton(onClick={clearConfirm=true}) { Text("Clear saved places and history",color=MaterialTheme.colorScheme.error) }
+                HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
+                FeedbackSettingsRow(onClick={feedbackOpen=true})
                 Text("WAYPOINT",style=MaterialTheme.typography.headlineMedium,color=state.world.accent)
                 Text("Made in India · Open to the world",style=MaterialTheme.typography.bodySmall,color=Muted)
                 Text("Open source. Every world included. No ads or subscriptions.",style=MaterialTheme.typography.bodyMedium)
@@ -296,12 +323,27 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 Text("Original map styles inspired by games. Not affiliated with their publishers.",style=MaterialTheme.typography.bodySmall,color=Muted)
                 Spacer(Modifier.height(24.dp))
             }
+            }
         }
+        if(showWhatsNew) WhatsNewDialog(bundledReleaseNotes) { application.markWhatsNewSeen();whatsNewVisible=false }
         if(showUpdatePrompt) UpdatePromptDialog(
             release=requireNotNull(pendingRelease),
             updater=updater,
             navigating=state.navigating,
                             onLater={updatePromptDismissed=true;application.updatePromptDismissedAtForegroundEntry=foregroundEntry},
+        )
+        val sharedDestination = state.pendingSharedDestination
+        val sharedDestinationId = state.pendingSharedDestinationId
+        if(sharedDestination!=null && !welcomeVisible && !state.navigating) AlertDialog(
+            onDismissRequest={controller.dismissPendingNavigationImport(sharedDestinationId)},
+            title={Text("Open shared destination?")},
+            text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                Text(sharedDestination.take(100),maxLines=2,overflow=TextOverflow.Ellipsis)
+                state.pendingSharedCoordinates?.let { Text("Coordinates: $it",style=MaterialTheme.typography.bodySmall,color=Muted) }
+                Text("Waypoint will use your location to look up this place and preview a route. Continue?",style=MaterialTheme.typography.bodyMedium)
+            }},
+            confirmButton={TextButton(onClick={controller.acceptPendingNavigationImport(sharedDestinationId)}){Text("Open destination")}},
+            dismissButton={TextButton(onClick={controller.dismissPendingNavigationImport(sharedDestinationId)}){Text("Cancel")}},
         )
         if(clearConfirm) AlertDialog(onDismissRequest={clearConfirm=false},title={Text("Clear your places?")},text={Text("This removes your saved destinations and recent navigation history from this phone.")},confirmButton={TextButton(onClick={controller.clearHistory();clearConfirm=false}){Text("Clear places")}},dismissButton={TextButton(onClick={clearConfirm=false}){Text("Cancel")}})
         if(steps) ModalBottomSheet(onDismissRequest={steps=false},containerColor=Ink) {

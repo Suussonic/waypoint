@@ -36,12 +36,12 @@ const MapStickerInner: React.FC<MapStickerProps> = ({art, x, y, size, tilt, phas
       }}
     >
       <Img
-        src={staticFile(`stickers/onboarding_sticker_${art}.webp`)}
+        src={staticFile(`map-icons/onboarding_marker_${art}.webp`)}
         style={{
           width: '100%',
           height: '100%',
           objectFit: 'contain',
-          filter: 'drop-shadow(-4px 3px #ff3151) drop-shadow(4px -3px #44e9f2)',
+          filter: 'drop-shadow(0 10px 12px rgba(0, 9, 35, 0.58))',
         }}
       />
     </Interactive.Div>
@@ -63,22 +63,20 @@ export const MapSticker = Interactive.withSchema({
   wrapInSequence: true,
 });
 
-/** Editable Waypoint-owned icon art for the second Android onboarding page. */
+/** World-specific map symbols for the second Android onboarding page. */
 export const IconCollageScene: React.FC = () => (
   <AbsoluteFill style={{overflow: 'hidden', background: 'linear-gradient(#3266c6 0%, #2454ae 33%, #061d50 69%, #02040e 100%)'}}>
-    <MapSticker art="pizza" x={-86} y={15} size={275} tilt={-13} phase={0} />
-    <MapSticker art="beer" x={266} y={-22} size={255} tilt={11} phase={1.7} />
-    <MapSticker art="diamond" x={569} y={29} size={238} tilt={17} phase={2.6} />
-    <MapSticker art="boot" x={-72} y={203} size={238} tilt={-21} phase={1.1} />
-    <MapSticker art="car" x={173} y={207} size={289} tilt={-7} phase={3.6} />
-    <MapSticker art="martini" x={554} y={225} size={247} tilt={14} phase={4.1} />
-    <MapSticker art="compass" x={-72} y={425} size={242} tilt={-17} phase={2.3} />
-    <MapSticker art="house" x={209} y={436} size={262} tilt={9} phase={5.1} />
-    <MapSticker art="sword" x={554} y={456} size={251} tilt={26} phase={0.8} />
-    <MapSticker art="pin" x={-86} y={621} size={236} tilt={-10} phase={4.4} />
-    <MapSticker art="chest" x={173} y={628} size={244} tilt={12} phase={1.9} />
-    <MapSticker art="controller" x={482} y={635} size={275} tilt={-8} phase={3.1} />
-    <MapSticker art="coffee" x={14} y={793} size={229} tilt={8} phase={5.6} />
-    <MapSticker art="fire" x={324} y={812} size={234} tilt={-12} phase={2.8} />
+    <MapSticker art="food" x={34} y={45} size={170} tilt={-11} phase={0} />
+    <MapSticker art="pub" x={270} y={28} size={170} tilt={9} phase={1.7} />
+    <MapSticker art="sights" x={512} y={52} size={170} tilt={13} phase={2.6} />
+    <MapSticker art="stay" x={32} y={255} size={170} tilt={-15} phase={1.1} />
+    <MapSticker art="parking" x={270} y={245} size={170} tilt={-6} phase={3.6} />
+    <MapSticker art="cafe" x={510} y={262} size={170} tilt={12} phase={4.1} />
+    <MapSticker art="place" x={32} y={465} size={170} tilt={-12} phase={2.3} />
+    <MapSticker art="shop" x={270} y={452} size={170} tilt={8} phase={5.1} />
+    <MapSticker art="nature" x={510} y={470} size={170} tilt={14} phase={0.8} />
+    <MapSticker art="health" x={32} y={675} size={170} tilt={-9} phase={4.4} />
+    <MapSticker art="fuel" x={270} y={666} size={170} tilt={8} phase={1.9} />
+    <MapSticker art="cash" x={510} y={678} size={170} tilt={-7} phase={3.1} />
   </AbsoluteFill>
 );

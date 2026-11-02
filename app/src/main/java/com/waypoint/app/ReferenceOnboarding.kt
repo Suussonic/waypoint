@@ -1,11 +1,9 @@
 package com.waypoint.app
 
 import android.app.Activity
-import android.graphics.Bitmap
 import android.graphics.SurfaceTexture
 import android.media.MediaPlayer
 import android.net.Uri
-import android.speech.tts.TextToSpeech
 import android.view.Surface
 import android.view.TextureView
 import androidx.activity.compose.BackHandler
@@ -58,8 +56,6 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -105,7 +101,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import kotlin.math.abs
-import java.util.Locale
 
 private val introFont = FontFamily(Font(R.font.nunito))
 private val introBlue = Color(0xFF3266C6)
@@ -169,8 +164,6 @@ fun ReferenceOnboarding(
     var source by rememberSaveable { mutableStateOf("") }
     var favoriteNames by rememberSaveable { mutableStateOf(initialFavorites.distinct().joinToString(",") { it.name }) }
     var selectedWorldName by rememberSaveable { mutableStateOf(initialWorld.name) }
-    var rating by rememberSaveable { mutableIntStateOf(4) }
-    var ratingTouched by rememberSaveable { mutableStateOf(false) }
     val favoriteWorlds = remember(favoriteNames) {
         favoriteNames.split(',').mapNotNull { name -> World.entries.find { it.name == name } }.distinct()
     }
@@ -199,14 +192,13 @@ fun ReferenceOnboarding(
         label = "Onboarding page",
     ) { page ->
         when (page) {
-            in 0..4 -> IntroStoryPage(page, rating, ratingTouched,
-                { rating = it; ratingTouched = true }) { step = page + 1 }
-            5 -> ReferralPage(source, { source = it }) { step = 6 }
-            6 -> FavoriteGamesPage(favorites, ::toggle) {
+            in 0..2 -> IntroStoryPage(page) { step = page + 1 }
+            3 -> ReferralPage(source, { source = it }) { step = 4 }
+            4 -> FavoriteGamesPage(favorites, ::toggle) {
                 selectedWorldName = favoriteWorlds.first().name
-                step = 7
+                step = 5
             }
-            7 -> OnboardingMapCarousel(selectedWorld, selectedIndex, carouselWorlds.size, ::move) { step = 8 }
+            5 -> OnboardingMapCarousel(selectedWorld, selectedIndex, carouselWorlds.size, ::move) { step = 6 }
             else -> OnboardingLocationPage(
                 world = selectedWorld,
                 hasPermission = hasLocationPermission,
@@ -227,13 +219,15 @@ private fun introBackground(): Brush = Brush.verticalGradient(
 @Composable
 private fun IntroStoryPage(
     page: Int,
-    rating: Int,
-    ratingTouched: Boolean,
-    onRatingChange: (Int) -> Unit,
     onContinue: () -> Unit,
 ) {
     BoxWithConstraints(Modifier.fillMaxSize().background(introBackground())) {
         val heroHeight = maxHeight * .75f
+        val titleScale = when {
+            maxWidth < 350.dp -> .82f
+            maxWidth < 390.dp -> .92f
+            else -> 1f
+        }
         when (page) {
             0 -> AnimatedGlobeHero(Modifier.fillMaxWidth().height(heroHeight))
             1 -> LoopingOnboardingVideo(R.raw.onboarding_icons_motion,
@@ -241,8 +235,6 @@ private fun IntroStoryPage(
                 IconsHero(Modifier.fillMaxSize())
             }
             2 -> PhoneHero(Modifier.fillMaxWidth().height(heroHeight))
-            3 -> VoiceHero(Modifier.fillMaxWidth().height(heroHeight))
-            else -> RatingHero(Modifier.fillMaxWidth().height(heroHeight), rating, onRatingChange)
         }
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
             0f to Color.Transparent, .50f to Color.Transparent,
@@ -256,34 +248,24 @@ private fun IntroStoryPage(
         ) {
             when (page) {
                 0 -> {
-                    IntroHeading("Favorite", 34)
-                    IntroHeading("Game Maps", 49)
-                    IntroHeading("in real life", 36)
+                    IntroHeading("Waypoint", (49 * titleScale).toInt())
+                    IntroHeading("Real streets", (42 * titleScale).toInt())
+                    IntroHeading("new worlds", (36 * titleScale).toInt())
                 }
                 1 -> {
-                    IntroHeading("Map Icons of your", 34)
-                    IntroHeading("Favorite Game", 47)
+                    IntroHeading("Map Icons of your", (34 * titleScale).toInt())
+                    IntroHeading("Favorite Game", (47 * titleScale).toInt())
                 }
                 2 -> {
-                    IntroHeading("Navigate with", 34)
-                    IntroHeading("Your phone", 49)
-                }
-                3 -> {
-                    IntroHeading("Navigate with", 34)
-                    IntroHeading("Voice guidance", 43)
-                }
-                else -> {
-                    IntroHeading("Leave a", 34)
-                    IntroHeading("Rating", 49)
+                    IntroHeading("Navigate with", (34 * titleScale).toInt())
+                    IntroHeading("your phone", (49 * titleScale).toInt())
                 }
             }
             Spacer(Modifier.height(18.dp))
             val description = when (page) {
                 0 -> "Find your favorite game and quickly apply its style to your real life map!"
                 1 -> "Make real streets feel like the maps from your favorite games."
-                2 -> "Follow real routes on your phone with a game inspired map."
-                3 -> "Hear clear turn by turn directions while you travel."
-                else -> if (ratingTouched) "Thanks for your $rating star rating!" else "Tap a star to rate Waypoint. Your support means so much!"
+                else -> "Follow real routes on a game-inspired map with clear turn-by-turn voice guidance."
             }
             Text(description, color = introMuted, fontFamily = introFont, fontSize = 16.sp,
                 lineHeight = 20.sp, textAlign = TextAlign.Center, maxLines = 3)
@@ -347,11 +329,11 @@ private fun GlobeHero(modifier: Modifier) {
                 fontFamily = DisplayFont, fontWeight = FontWeight.Bold, fontSize = 51.sp,
                 letterSpacing = 1.sp)
         }
-        Sticker(R.drawable.onboarding_sticker_pizza, 88.dp, maxWidth * .02f, 94.dp, -16f)
-        Sticker(R.drawable.onboarding_sticker_sword, 84.dp, maxWidth * .72f, 102.dp, 18f)
-        Sticker(R.drawable.onboarding_sticker_car, 96.dp, maxWidth * .08f, 345.dp, -12f)
-        Sticker(R.drawable.onboarding_sticker_diamond, 88.dp, maxWidth * .70f, 352.dp, 12f)
-        Sticker(R.drawable.onboarding_sticker_house, 82.dp, maxWidth * .39f, 26.dp, -8f)
+        Sticker(R.drawable.onboarding_marker_food, 78.dp, maxWidth * .02f, 94.dp, -16f)
+        Sticker(R.drawable.onboarding_marker_sights, 76.dp, maxWidth * .75f, 102.dp, 18f)
+        Sticker(R.drawable.onboarding_marker_cash, 78.dp, maxWidth * .08f, 345.dp, -12f)
+        Sticker(R.drawable.onboarding_marker_nature, 78.dp, maxWidth * .72f, 352.dp, 12f)
+        Sticker(R.drawable.onboarding_marker_place, 72.dp, maxWidth * .41f, 26.dp, -8f)
     }
 }
 
@@ -369,7 +351,7 @@ private fun LoopingOnboardingVideo(rawId: Int, modifier: Modifier, startAtMs: In
     var textureView by remember { mutableStateOf<TextureView?>(null) }
     var videoReady by remember { mutableStateOf(false) }
     Box(modifier) {
-        fallback()
+        if (!videoReady) fallback()
         if (android.animation.ValueAnimator.areAnimatorsEnabled()) {
             AndroidView(
                 factory = { TextureView(it).also { view -> textureView = view } },
@@ -440,20 +422,18 @@ private fun IconsHero(modifier: Modifier) {
         infiniteRepeatable(tween(7600), RepeatMode.Restart), label = "Sticker drift")
     val stickers = remember {
         listOf(
-            IntroSticker(R.drawable.onboarding_sticker_pizza, -.12f, 8.dp, 150.dp, -13f, 0f),
-            IntroSticker(R.drawable.onboarding_sticker_beer, .37f, -12.dp, 139.dp, 11f, 1.7f),
-            IntroSticker(R.drawable.onboarding_sticker_diamond, .79f, 16.dp, 130.dp, 17f, 2.6f),
-            IntroSticker(R.drawable.onboarding_sticker_boot, -.10f, 111.dp, 130.dp, -21f, 1.1f),
-            IntroSticker(R.drawable.onboarding_sticker_car, .24f, 113.dp, 158.dp, -7f, 3.6f),
-            IntroSticker(R.drawable.onboarding_sticker_martini, .77f, 123.dp, 135.dp, 14f, 4.1f),
-            IntroSticker(R.drawable.onboarding_sticker_compass, -.10f, 232.dp, 132.dp, -17f, 2.3f),
-            IntroSticker(R.drawable.onboarding_sticker_house, .29f, 238.dp, 143.dp, 9f, 5.1f),
-            IntroSticker(R.drawable.onboarding_sticker_sword, .77f, 249.dp, 137.dp, 26f, .8f),
-            IntroSticker(R.drawable.onboarding_sticker_pin, -.12f, 339.dp, 129.dp, -10f, 4.4f),
-            IntroSticker(R.drawable.onboarding_sticker_chest, .24f, 343.dp, 133.dp, 12f, 1.9f),
-            IntroSticker(R.drawable.onboarding_sticker_controller, .67f, 347.dp, 150.dp, -8f, 3.1f),
-            IntroSticker(R.drawable.onboarding_sticker_coffee, .02f, 433.dp, 125.dp, 8f, 5.6f),
-            IntroSticker(R.drawable.onboarding_sticker_fire, .45f, 443.dp, 128.dp, -12f, 2.8f),
+            IntroSticker(R.drawable.onboarding_marker_food, -.05f, 12.dp, 110.dp, -13f, 0f),
+            IntroSticker(R.drawable.onboarding_marker_pub, .38f, -8.dp, 105.dp, 11f, 1.7f),
+            IntroSticker(R.drawable.onboarding_marker_sights, .78f, 16.dp, 104.dp, 17f, 2.6f),
+            IntroSticker(R.drawable.onboarding_marker_stay, -.04f, 123.dp, 104.dp, -21f, 1.1f),
+            IntroSticker(R.drawable.onboarding_marker_parking, .38f, 120.dp, 108.dp, -7f, 3.6f),
+            IntroSticker(R.drawable.onboarding_marker_cafe, .78f, 124.dp, 104.dp, 14f, 4.1f),
+            IntroSticker(R.drawable.onboarding_marker_place, -.04f, 240.dp, 104.dp, -17f, 2.3f),
+            IntroSticker(R.drawable.onboarding_marker_shop, .38f, 238.dp, 108.dp, 9f, 5.1f),
+            IntroSticker(R.drawable.onboarding_marker_nature, .78f, 244.dp, 104.dp, 26f, .8f),
+            IntroSticker(R.drawable.onboarding_marker_health, -.04f, 354.dp, 104.dp, -10f, 4.4f),
+            IntroSticker(R.drawable.onboarding_marker_fuel, .38f, 354.dp, 108.dp, 12f, 1.9f),
+            IntroSticker(R.drawable.onboarding_marker_cash, .78f, 354.dp, 104.dp, -8f, 3.1f),
         )
     }
     BoxWithConstraints(modifier.clipToBounds()) {
@@ -489,85 +469,18 @@ private fun Sticker(image: Int, size: Dp, x: Dp, y: Dp, tilt: Float) {
     val bob by motion.animateFloat(-3f, 3f,
         infiniteRepeatable(tween(2800), RepeatMode.Reverse), label = "Sticker float")
     Image(painterResource(image), null,
-        Modifier.offset(x, y + (if (android.animation.ValueAnimator.areAnimatorsEnabled()) bob.dp else 0.dp))
-            .size(size).graphicsLayer { rotationZ = tilt }, contentScale = ContentScale.Fit)
+        Modifier.offset(x, y).size(size).graphicsLayer {
+            rotationZ = tilt
+            translationY = if (android.animation.ValueAnimator.areAnimatorsEnabled()) bob.dp.toPx() else 0f
+        }, contentScale = ContentScale.Fit)
 }
 
 @Composable
 private fun PhoneHero(modifier: Modifier) {
-    Box(modifier) {
-        Image(painterResource(R.drawable.onboarding_phone_horse), null,
-            Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-    }
-}
-
-@Composable
-private fun VoiceHero(modifier: Modifier) {
-    val context = LocalContext.current
-    var voiceReady by remember { mutableStateOf(false) }
-    val speaker = remember(context) {
-        TextToSpeech(context) { status -> voiceReady = status == TextToSpeech.SUCCESS }
-    }
-    DisposableEffect(speaker) { onDispose { speaker.stop(); speaker.shutdown() } }
-    Box(modifier) {
-        Row(Modifier.align(Alignment.TopCenter).fillMaxWidth().padding(top = 64.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            listOf(
-                Triple(Icons.Default.Games, Color(0xFF689A45), 64.dp),
-                Triple(Icons.Default.Explore, Color(0xFFBD784A), 64.dp),
-                Triple(Icons.Default.DirectionsCar, Color(0xFF516FAC), 86.dp),
-                Triple(Icons.Default.Star, Color(0xFF614B94), 64.dp),
-            ).forEach { (icon, color, size) ->
-                Box(Modifier.size(size).border(2.dp, Color.White.copy(alpha = .50f), CircleShape)
-                    .background(color, CircleShape), contentAlignment = Alignment.Center) {
-                    Icon(icon, null, Modifier.size(size * .55f), tint = Color.White)
-                }
-            }
-        }
-        Box(Modifier.align(Alignment.TopCenter).padding(top = 170.dp)
-            .fillMaxWidth().padding(horizontal = 39.dp).height(47.dp)
-            .background(Color(0x80223568), CircleShape).border(1.dp, Color.White.copy(alpha = .22f), CircleShape),
-            contentAlignment = Alignment.Center) {
-            Text("Take a left up ahead!", color = Color.White, fontFamily = introFont,
-                fontWeight = FontWeight.Bold, fontSize = 16.sp)
-        }
-        Box(Modifier.align(Alignment.TopCenter).padding(top = 250.dp)
-            .fillMaxWidth().padding(horizontal = 17.dp).height(195.dp)
-            .background(Color(0xFF171A1C), RoundedCornerShape(22.dp)).padding(11.dp)
-            .clip(RoundedCornerShape(12.dp))) {
-            Image(painterResource(R.drawable.onboarding_map), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        }
-        Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 100.dp)
-            .background(Color.White, CircleShape)
-            .clickable(enabled = voiceReady, role = Role.Button) {
-                speaker.language = Locale.US
-                speaker.speak("Take a left up ahead!", TextToSpeech.QUEUE_FLUSH, null, "waypoint_voice_preview")
-            }
-            .padding(horizontal = 22.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.PlayArrow, null, Modifier.size(20.dp), tint = Color.Black)
-            Spacer(Modifier.size(8.dp))
-            Text("Listen Voice", color = Color.Black, fontFamily = introFont,
-                fontWeight = FontWeight.Bold, fontSize = 16.sp)
-        }
-    }
-}
-
-@Composable
-private fun RatingHero(modifier: Modifier, rating: Int, onRatingChange: (Int) -> Unit) {
-    Box(modifier) {
-        Image(painterResource(R.drawable.onboarding_globe), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(
-            Color(0x442E6CCC), Color.Transparent, Color.Black.copy(alpha = .12f), introBlack,
-        ))))
-        Row(Modifier.align(Alignment.TopCenter).padding(top = 110.dp),
-            horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-            repeat(5) { index ->
-                Icon(Icons.Default.Star, "Rate ${index + 1} stars",
-                    Modifier.size(58.dp).clickable(role = Role.RadioButton) { onRatingChange(index + 1) },
-                    tint = if (index < rating) Color(0xFFFFD536) else Color.White)
-            }
-        }
+    BoxWithConstraints(modifier) {
+        HorsePhoneHero(Modifier.fillMaxSize())
+        Sticker(R.drawable.onboarding_marker_parking, 66.dp, maxWidth * .02f, 70.dp, -10f)
+        Sticker(R.drawable.onboarding_marker_sights, 68.dp, maxWidth * .78f, 162.dp, 9f)
     }
 }
 
@@ -624,9 +537,14 @@ private fun FavoriteGamesPage(selected: Set<String>, onToggle: (World) -> Unit, 
                             .background(Color(0x17FFFFFF), CircleShape)
                             .border(2.dp, if (chosen) Color.White else Color.White.copy(alpha = .09f), CircleShape)
                             .clickable(role = Role.Checkbox) { onToggle(choice.world) }
-                            .padding(horizontal = 22.dp, vertical = 13.dp), contentAlignment = Alignment.Center) {
-                            Text(choice.title, color = introWhite, fontFamily = introFont,
-                                fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 2)
+                            .padding(horizontal = 18.dp, vertical = 11.dp), contentAlignment = Alignment.Center) {
+                            Row(verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Image(painterResource(worldEmblemFor(choice.world)), null,
+                                    Modifier.size(28.dp), contentScale = ContentScale.Fit)
+                                Text(choice.title, color = introWhite, fontFamily = introFont,
+                                    fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 2)
+                            }
                         }
                     }
                 }
@@ -638,12 +556,12 @@ private fun FavoriteGamesPage(selected: Set<String>, onToggle: (World) -> Unit, 
 }
 
 private fun carouselName(world: World): String = when (world) {
-    World.LOS_SANTOS -> "Los Santas"
+    World.LOS_SANTOS -> "Los Santos"
     World.OLD_WEST -> "Saint Denis II"
     World.GREEN_TERMINAL -> "PipBoy"
     World.PIXEL -> "Pixel Map"
     World.NIGHT_CITY -> "Night City"
-    World.SAN_ANDREAS -> "San Andrias"
+    World.SAN_ANDREAS -> "San Andreas"
     World.HEAT -> "Heat Racing"
     World.RIVIA -> "The Rivia III"
     else -> world.title
@@ -696,13 +614,12 @@ private fun OnboardingMapCarousel(
         }
         Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 104.dp)
             .semantics { contentDescription = "Map ${index + 1} of $worldCount" },
-            verticalAlignment = Alignment.CenterVertically) {
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             repeat(worldCount) { dot ->
-                Box(Modifier.size(14.dp, 6.dp), contentAlignment = Alignment.Center) {
-                    Box(Modifier.size(if (dot == index) 20.dp else 6.dp, 6.dp)
-                        .clip(CircleShape)
-                        .background(if (dot == index) Color.White else Color.White.copy(alpha = .38f)))
-                }
+                Box(Modifier.size(if (dot == index) 20.dp else 8.dp, 6.dp)
+                    .clip(CircleShape)
+                    .background(if (dot == index) Color.White else Color.White.copy(alpha = .38f)))
             }
         }
         OnboardingAction("Continue", false, onContinue)

@@ -24,30 +24,30 @@ Keep an encrypted, offline backup of the keystore. Never commit it, paste it int
 
 The initial project installation used a local development signing identity. Its existing identity is retained for this personal release channel so installed copies can update without losing saved places. Forks should create and retain their own release key before distributing their first APK; a fork's APK cannot replace the official release. Do not generate a fresh key on each workflow run.
 
-Local release builds accept `WAYPOINT_KEYSTORE`, `WAYPOINT_STORE_PASSWORD`, `WAYPOINT_KEY_ALIAS` and `WAYPOINT_KEY_PASSWORD` environment variables. Without them, local builds use Android's debug signing configuration. GitHub's release workflow always requires the explicit signing secrets.
+Local release builds accept `WAYPOINT_KEYSTORE`, `WAYPOINT_STORE_PASSWORD`, `WAYPOINT_KEY_ALIAS` and `WAYPOINT_KEY_PASSWORD` environment variables. Without them, the release APK is unsigned and cannot be installed. GitHub's release workflow always requires the explicit signing secrets.
 
 ## Publish an update
 
-1. Change `version.properties`. Use `major.minor.patch` with an optional `-rN` revision suffix. Major may be 0–999; minor and patch may be 0–99; revision may be 1–99. Set `VERSION_CODE = major × 1,000,000 + minor × 10,000 + patch × 100 + revision` (revision is zero without a suffix). Always increase it. After `1.0.0-r1`, use `1.0.0-r2` for a debut revision or `1.0.1` for the next patch update.
-2. Update `docs/releases/current.md` with the new release notes. Update tests/screenshots when behavior or appearance changes.
+1. Change `version.properties`. Use a stable `major.minor.patch` version, with each part from 0–999. Set `VERSION_CODE = major × 1,000,000 + minor × 1,000 + patch`. This matches the updater in the published `0.2.3` app, which checks the APK code against the release tag. Always increase the code; the next stable update after `1.0.0` is `1.0.1`.
+2. Update `docs/releases/current.md` and copy it to `app/src/main/assets/release-notes.md`. The bundled copy powers the post-update What’s New screen; GitHub’s release body powers the updater. `scripts/check_version.py` requires both copies to match. Update tests/screenshots when behavior or appearance changes.
 3. Run verification, commit, push, then tag the exact commit:
 
 ```sh
 python3 scripts/check_version.py
 ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
-# Example only: first change version.properties and release notes to match.
-git add version.properties docs/releases/current.md
-git commit -m "Release 1.0.0-r1"
+# Example only: first change version.properties and both release-note files to match.
+git add version.properties docs/releases/current.md app/src/main/assets/release-notes.md
+git commit -m "Release 1.0.0"
 git push origin main
-git tag -a v1.0.0-r1 -m "Waypoint 1.0.0-r1"
-git push origin v1.0.0-r1
+git tag -a v1.0.0 -m "Waypoint 1.0.0"
+git push origin v1.0.0
 ```
 
 Watch the Android workflow. Its release job verifies that the tag and version file agree. After publication, verify the APK and checksum on the release page. Keep pushed tags immutable, including tags whose release workflow failed. Use a new patch version and an annotated tag for corrections; never overwrite an already-published APK.
 
 ## Updater behavior
 
-Waypoint checks GitHub's latest stable release API when the app enters the foreground. Drafts, prereleases and older/equal versions are ignored. An available update is offered over the idle map and returns on each launch until installed; choosing Later dismisses it only for the current foreground entry. Downloads remain explicit, with no background polling, GitHub credentials or location information involved. Settings also offers a manual check.
+Waypoint checks GitHub's latest stable release API when the app enters the foreground. Drafts, prereleases and older/equal versions are ignored. An available update is offered over the idle map and returns on each launch until installed; choosing Later dismisses it only for the current foreground entry. The update prompt and Settings show GitHub's release notes before download. After installation, a one-time What’s New dialog shows the matching notes bundled in the APK. Downloads remain explicit, with no background polling, GitHub credentials or location information involved. Settings also offers a manual check.
 
 Before showing Install update, Waypoint checks:
 

@@ -46,4 +46,15 @@ class NavigationEngineTest {
         assertEquals("Turn left onto Broadway",Maneuver(a,"turn","left","Broadway",10.0,1.0).instruction)
         assertTrue(Maneuver(a,"roundabout","right","Road",10.0,1.0,3).instruction.contains("exit 3"))
     }
+    @Test fun `long final leg shows continuation until arrival is near`() {
+        val straight=RoadRoute(listOf(a,b),listOf(
+            Maneuver(a,"depart","straight","Village Road",500.0,90.0),
+            Maneuver(b,"arrive","","",0.0,0.0)),500.0,90.0)
+        val far=NavigationEngine(straight).update(a)
+        assertEquals("Continue on Village Road",routeGuidance(straight,far).instruction)
+        assertTrue(routeGuidance(straight,far).continuingToArrival)
+        val near=NavigationEngine(straight).update(Coordinate(0.0,0.009))
+        assertEquals("Arrive at your destination",routeGuidance(straight,near).instruction)
+        assertFalse(routeGuidance(straight,near).continuingToArrival)
+    }
 }

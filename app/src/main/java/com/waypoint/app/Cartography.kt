@@ -36,8 +36,28 @@ fun World.mapArt()=when(this) {
     World.JUST_CAUSE->MapArt(0.0,15.6,3f,.55f,MarkerArt.DIAMOND,PlayerArt.POINTER,true)
     World.MAFIA->MapArt(0.0,16.0,4f,.6f,MarkerArt.INK,PlayerArt.ARROW,false)
 }
+internal fun mapCameraTilt(world:World,enabled:Boolean,navigating:Boolean=false,previewTilt:Double?=null):Double =
+    previewTilt ?: if(!enabled) 0.0 else if(navigating) 50.0 else world.mapArt().tilt.takeIf { it>0.0 } ?: 45.0
 private fun color(hex:String)=Color.parseColor(hex)
 private fun World.markerInk()=when(mapArt().marker){MarkerArt.PHOSPHOR->color("#A4F780");MarkerArt.TECH,MarkerArt.SHEIKAH->color("#7DDDEC");MarkerArt.GOLD->color("#ECD797");else->Color.WHITE}
+private object PoiAtlas {
+    private val kinds=listOf("place","food","cafe","pub","stay","fuel","parking","shop","sights","health","nature","cash")
+    private var loadedWorld:String?=null
+    private var loaded:Bitmap?=null
+
+    @Synchronized fun icon(context:Context,kind:String,world:World):Bitmap? {
+        val index=kinds.indexOf(kind)
+        if(index<0)return null
+        if(loadedWorld!=world.file) {
+            loadedWorld=world.file
+            loaded=runCatching {context.assets.open("poi/${world.file}.webp").use(BitmapFactory::decodeStream)}.getOrNull()
+        }
+        val atlas=loaded ?: return null
+        if(atlas.width!=512 || atlas.height!=384)return null
+        val tile=Bitmap.createBitmap(atlas,(index%4)*128,(index/4)*128,128,128)
+        return Bitmap.createScaledBitmap(tile,64,64,world!=World.PIXEL && world!=World.SAN_ANDREAS)
+    }
+}
 internal fun mapPlayer(world:World):Bitmap {
     val b=Bitmap.createBitmap(96,104,Bitmap.Config.ARGB_8888);val c=Canvas(b);val p=Paint(Paint.ANTI_ALIAS_FLAG);val ink=if(world==World.SAINTS)color("#FFDA45") else world.markerInk()
     when(world.mapArt().player) {
@@ -49,6 +69,12 @@ internal fun mapPlayer(world:World):Bitmap {
     return b
 }
 internal fun mapPoi(context:Context,kind:String,world:World):Bitmap {
+    if(kind=="education") {
+        if(world==World.SAN_ANDREAS) {
+            runCatching {context.assets.open("poi/san_andreas_education.webp").use(BitmapFactory::decodeStream)}.getOrNull()?.let {return it}
+        }
+    }
+    PoiAtlas.icon(context,kind,world)?.let { return it }
     if(world.mapArt().marker==MarkerArt.PIXEL && kind in setOf("food","stay"))
         return BitmapFactory.decodeResource(context.resources,if(kind=="food")R.drawable.pixel_food else R.drawable.pixel_stay)
     val b=Bitmap.createBitmap(64,64,Bitmap.Config.ARGB_8888);val c=Canvas(b);val p=Paint(Paint.ANTI_ALIAS_FLAG);val art=world.mapArt().marker
@@ -72,6 +98,7 @@ internal fun mapPoi(context:Context,kind:String,world:World):Bitmap {
         "parking"->{glyph.moveTo(24f,47f);glyph.lineTo(24f,17f);glyph.lineTo(42f,17f);glyph.lineTo(42f,33f);glyph.lineTo(24f,33f)}
         "pub"->{glyph.moveTo(18f,20f);glyph.lineTo(43f,20f);glyph.lineTo(39f,47f);glyph.lineTo(23f,47f);glyph.close();glyph.moveTo(19f,25f);glyph.lineTo(42f,25f);glyph.moveTo(44f,23f);glyph.lineTo(50f,23f);glyph.lineTo(48f,38f);glyph.lineTo(41f,38f)}
         "shop"->{glyph.addRect(18f,26f,46f,48f,Path.Direction.CW);glyph.moveTo(24f,27f);glyph.lineTo(24f,21f);glyph.lineTo(28f,16f);glyph.lineTo(36f,16f);glyph.lineTo(40f,21f);glyph.lineTo(40f,27f)}
+        "education"->{glyph.moveTo(13f,25f);glyph.lineTo(32f,16f);glyph.lineTo(51f,25f);glyph.lineTo(32f,34f);glyph.close();glyph.moveTo(21f,30f);glyph.lineTo(21f,41f);glyph.quadTo(32f,49f,43f,41f);glyph.lineTo(43f,30f);glyph.moveTo(51f,25f);glyph.lineTo(51f,43f)}
         "sights"->{for(i in 0 until 10){val a=i*Math.PI/5;val radius=if(i%2==0)19f else 9f;val x=32f+radius*kotlin.math.sin(a).toFloat();val y=32f-radius*kotlin.math.cos(a).toFloat();if(i==0)glyph.moveTo(x,y) else glyph.lineTo(x,y)};glyph.close()}
         "health"->{glyph.moveTo(26f,15f);glyph.lineTo(38f,15f);glyph.lineTo(38f,26f);glyph.lineTo(49f,26f);glyph.lineTo(49f,38f);glyph.lineTo(38f,38f);glyph.lineTo(38f,49f);glyph.lineTo(26f,49f);glyph.lineTo(26f,38f);glyph.lineTo(15f,38f);glyph.lineTo(15f,26f);glyph.lineTo(26f,26f);glyph.close()}
         "nature"->{glyph.moveTo(32f,15f);glyph.lineTo(47f,38f);glyph.lineTo(17f,38f);glyph.close();glyph.moveTo(32f,38f);glyph.lineTo(32f,49f)}
@@ -92,7 +119,16 @@ internal fun mapDestination(world:World):Bitmap {
 }
 
 internal fun mapUnknownPosition(world:World):Bitmap {
-    val b=Bitmap.createBitmap(64,64,Bitmap.Config.ARGB_8888);val c=Canvas(b);val p=Paint(Paint.ANTI_ALIAS_FLAG)
-    p.color=Color.BLACK;c.drawCircle(32f,32f,19f,p);p.color=world.markerInk();c.drawCircle(32f,32f,13f,p)
+    val b=Bitmap.createBitmap(64,64,Bitmap.Config.ARGB_8888);val c=Canvas(b)
+    val pixel=world==World.PIXEL || world==World.SAN_ANDREAS
+    val p=Paint(if(pixel)0 else Paint.ANTI_ALIAS_FLAG).apply{style=Paint.Style.STROKE;strokeCap=if(pixel)Paint.Cap.SQUARE else Paint.Cap.ROUND;strokeJoin=Paint.Join.MITER}
+    val corners=Path().apply {
+        moveTo(25f,11f);lineTo(11f,11f);lineTo(11f,25f)
+        moveTo(39f,11f);lineTo(53f,11f);lineTo(53f,25f)
+        moveTo(11f,39f);lineTo(11f,53f);lineTo(25f,53f)
+        moveTo(53f,39f);lineTo(53f,53f);lineTo(39f,53f)
+    }
+    p.color=Color.BLACK;p.strokeWidth=9f;c.drawPath(corners,p)
+    p.color=world.markerInk();p.strokeWidth=5f;c.drawPath(corners,p)
     return b
 }

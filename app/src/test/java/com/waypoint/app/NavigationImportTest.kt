@@ -39,4 +39,21 @@ class NavigationImportTest {
         val gate=NavigationImportGate(); val ticket=gate.begin()
         assertFalse(gate.canApply(ticket,true))
     }
+    @Test fun externalDestinationNeedsExplicitAcceptance() {
+        val consent = NavigationImportConsent()
+        val first = NavigationImport.Search("Museum")
+        val latest = NavigationImport.Point(Coordinate(22.57,88.36), "Kolkata")
+        val dismissed = requireNotNull(consent.offer(first, false))
+        assertTrue(consent.dismiss(dismissed))
+        assertNull(consent.accept(dismissed, false))
+        val old = requireNotNull(consent.offer(first, false))
+        val current = requireNotNull(consent.offer(latest, false))
+        assertNull(consent.accept(old, false))
+        assertFalse(consent.dismiss(old))
+        assertEquals(latest, consent.accept(current, false))
+        assertNull(consent.accept(current, false))
+        assertNull(consent.offer(first, true))
+        val navigating = requireNotNull(consent.offer(first, false))
+        assertNull(consent.accept(navigating, true))
+    }
 }

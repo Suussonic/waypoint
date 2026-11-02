@@ -30,6 +30,19 @@ data class RoadRoute(val points: List<Coordinate>, val steps: List<Maneuver>, va
 data class RouteProgress(val traveled: Double, val remaining: Double, val seconds: Double, val offRoute: Double, val nextStep: Int, val toTurn: Double, val snapped: Coordinate,
     val segmentIndex: Int = 0, val projectedAlong: Double = traveled)
 
+data class RouteGuidance(val instruction:String,val maneuver:Maneuver?,val continuingToArrival:Boolean)
+
+/** Keep long final legs readable without announcing arrival hundreds of metres early. */
+fun routeGuidance(route:RoadRoute?,progress:RouteProgress?):RouteGuidance {
+    val step=route?.steps?.getOrNull(progress?.nextStep ?: 0)
+        ?: return RouteGuidance("Finding your route",null,false)
+    if(step.type=="arrive" && progress!=null && progress.toTurn>150.0) {
+        val lastRoad=route.steps.getOrNull((progress.nextStep-1).coerceAtLeast(0))?.road.orEmpty()
+        return RouteGuidance(if(lastRoad.isNotBlank())"Continue on $lastRoad" else "Continue toward your destination",step,true)
+    }
+    return RouteGuidance(step.instruction,step,false)
+}
+
 /** Trim at the accepted route projection, never at an off-road GPS coordinate. */
 fun RoadRoute.remainingPoints(progress: RouteProgress?): List<Coordinate> = if (progress == null) points else
     listOf(progress.snapped) + points.drop((progress.segmentIndex + 1).coerceIn(1, points.lastIndex))

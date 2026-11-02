@@ -20,7 +20,7 @@ class NavigationService : Service() {
                 if(!s.navigating)null else if(!s.gpsReady)s.gpsStatus
                 else if(s.routing)"Rerouting from your current position"
                 else if(s.offRoute)"Off route · finding a new route"
-                else s.route?.steps?.getOrNull(s.progress?.nextStep ?: 0)?.instruction ?: "Following your route"
+                else routeGuidance(s.route,s.progress).instruction
             }.distinctUntilChanged().collect { text ->
                 if(text!=null)getSystemService(NotificationManager::class.java).notify(10,notification(text))
             }

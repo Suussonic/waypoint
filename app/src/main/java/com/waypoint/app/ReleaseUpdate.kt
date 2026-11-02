@@ -11,11 +11,10 @@ data class ReleaseUpdate(val version: String, val versionCode: Int, val url: Str
         const val API = "https://api.github.com/repos/$REPOSITORY/releases/latest"
         const val MAX_BYTES = 150L * 1024 * 1024
         fun versionCode(version: String): Int? {
-            val match = Regex("(0|[1-9][0-9]{0,2})\\.(0|[1-9][0-9]?)\\.(0|[1-9][0-9]?)(?:-r([1-9][0-9]?))?")
+            val match = Regex("(0|[1-9][0-9]{0,2})\\.(0|[1-9][0-9]{0,2})\\.(0|[1-9][0-9]{0,2})")
                 .matchEntire(version) ?: return null
-            val (major, minor, patch, revision) = match.destructured
-            return major.toInt() * 1_000_000 + minor.toInt() * 10_000 + patch.toInt() * 100 +
-                (revision.toIntOrNull() ?: 0)
+            val (major, minor, patch) = match.destructured
+            return major.toInt() * 1_000_000 + minor.toInt() * 1_000 + patch.toInt()
         }
         fun parse(json: String, installedCode: Int): ReleaseUpdate? {
             require(json.length <= 1_000_000) { "The release response is too large." }

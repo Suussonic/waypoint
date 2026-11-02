@@ -142,7 +142,7 @@ components:
 
 ## Overview
 
-**Creative North Star: "Real streets through game maps"**
+**Creative North Star: "Real streets through game worlds"**
 
 Waypoint makes real navigation feel like a game atlas. The map occupies the main surface; controls borrow the selected game's composition, lettering, material and marker grammar. The user's confirmed direction is: “Keep each game's distinct control layout, but polish it.” Consistency comes from touch sizing, legibility and behavior, rather than identical control positions.
 

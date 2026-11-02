@@ -38,10 +38,10 @@ export const OnboardingGlobe: React.FC = () => {
       fontSize: 98, fontWeight: 900, letterSpacing: -3, textShadow: '0 6px 10px #082153cc, 0 1px 1px #fff'}}>
       WAYPOINT
     </div>
-    {sticker('onboarding_sticker_house.webp', 276, 34, 130, -9, .3)}
-    {sticker('onboarding_sticker_pizza.webp', 8, 228, 146, -14, 1.8)}
-    {sticker('onboarding_sticker_sword.webp', 554, 218, 144, 16, 2.5)}
-    {sticker('onboarding_sticker_car.webp', 18, 700, 152, -12, 3.8)}
-    {sticker('onboarding_sticker_diamond.webp', 550, 720, 146, 12, 4.9)}
+    {sticker('map-icons/onboarding_marker_place.webp', 292, 34, 118, -9, .3)}
+    {sticker('map-icons/onboarding_marker_food.webp', 15, 228, 122, -14, 1.8)}
+    {sticker('map-icons/onboarding_marker_sights.webp', 570, 218, 118, 16, 2.5)}
+    {sticker('map-icons/onboarding_marker_cash.webp', 22, 700, 122, -12, 3.8)}
+    {sticker('map-icons/onboarding_marker_nature.webp', 560, 720, 120, 12, 4.9)}
   </AbsoluteFill>;
 };

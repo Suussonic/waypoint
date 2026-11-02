@@ -4,14 +4,13 @@ Native Android navigation with game-inspired maps. Kotlin + Jetpack Compose +
 MapLibre Native. **Twenty-seven game-inspired map styles, no ads, accounts, purchases or feature
 locks.** Source code is MIT licensed.
 
-This is an independent implementation inspired by the supplied screenshots and
-visible controls in Game Maps IRL. It does not contain that app's code or assets,
-and does not modify the installed app.
-Visual references and implementation decisions are recorded in [the sourcebook](visual-sourcebook.md). It is not affiliated with game publishers.
+Waypoint is an independent, open-source implementation. Its visual direction and
+implementation decisions are recorded in [the sourcebook](visual-sourcebook.md).
+It is not affiliated with game publishers.
 
 ## Use
 
-Install `dist/Waypoint.apk` on Android 8.0 or newer, or build the debug APK below.
+Install `Waypoint.apk` from the [latest GitHub release](https://github.com/the-geeky-couldron/waypoint/releases/latest) on Android 8.0 or newer, or build the debug APK below. Local APK copies under `dist/` are ignored and are not part of the source repository.
 Open Waypoint, choose a world on the welcome screen, then tap **Open map**. Tap **Locate**, and allow **precise location**. Search for
 a destination or hold the map to drop a pin. Choose Car, Motorcycle or Walk. Once a route is ready, tap
 **Start navigation**. The app provides live position, next turns, ETA, remaining
@@ -24,7 +23,7 @@ distance, speed, spoken instructions, off-route recalculation, and arrival.
 - The map follows live GPS while browsing until you pan or select a destination. During navigation, a pan pauses following for eight seconds, then it resumes automatically. Tap Locate to recenter immediately. The location pointer stays centred during position animation.
 - Navigation continues through a location foreground service when the screen is
   off. Stop it in the app or from its ongoing Android notification.
-- Standard `geo:` and `google.navigation:` destination links are supported.
+- Standard `geo:` and `google.navigation:` destination links are supported. Waypoint asks before using your location to look up a shared place or preview its route.
 
 ## Android Auto (disabled)
 
@@ -48,12 +47,12 @@ sdk.dir=/absolute/path/to/android-sdk
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The supplied `dist/Waypoint.apk` is the optimized GitHub release build. Rebuild it with
-`./gradlew :app:assembleRelease`. Connected UI tests can target that build with
+The downloadable `Waypoint.apk` is the optimized GitHub release build. Rebuild an installable release with
+`./gradlew :app:assembleRelease` after setting the four signing variables in [Releasing](releasing.md). Connected UI tests can target that build with
 `./gradlew -PtestBuildType=release :app:connectedReleaseAndroidTest` on an unlocked
 development phone; the navigation flow expects a saved nearby destination.
 
-The Gradle wrapper is included. API keys are not required. Local builds use your Android debug key. GitHub releases use the stable signing identity
+The Gradle wrapper is included. API keys are not required. Local debug builds use your Android debug key; local release builds without signing variables are unsigned. GitHub releases use the stable signing identity
 from encrypted repository secrets; see [Releasing](releasing.md).
 No private signing material is included in the source.
 
@@ -120,7 +119,6 @@ You can clear those places in Settings. Location history is not recorded. The sm
 Tests cover heading wraparound/smoothing, segment projection, route-distance maneuver sequencing, GPS jitter,
 off-route fixes, route crossings, destination loops, arrival, units and instructions.
 See `docs/validation.md` for actual verification and outstanding hardware checks.
-See `docs/reference-observations.md` for the bounded reference inspection.
 
 ## Licenses
 

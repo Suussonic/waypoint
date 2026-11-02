@@ -1,11 +1,16 @@
 package com.waypoint.app
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.LruCache
 import androidx.compose.foundation.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,13 +26,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -40,6 +49,10 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.withContext
 
 /** HUD treatments use navigation data only. No simulated game statistics. */
 data class HudPalette(val panel:Color,val foreground:Color,val accent:Color,val muted:Color)
@@ -131,9 +144,16 @@ fun World.inspiration()=when(this) {
     val world=state.world;val p=hudPalette(world)
     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
         Surface(onClick=onWorld,modifier=Modifier.weight(1f),color=p.panel,contentColor=p.foreground,shape=hudShape(world),border=hudBorder(world)) {
-            Row(Modifier.padding(horizontal=14.dp,vertical=10.dp),verticalAlignment=Alignment.CenterVertically) {
+            Row(Modifier.padding(horizontal=12.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically,
+                horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                Image(painterResource(worldEmblemFor(world)),null,Modifier.size(36.dp),contentScale=ContentScale.Fit)
                 Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(1.dp)) {
-                    Text(if(world==World.VICE_COAST)"Vice Coast" else world.title,fontFamily=worldFont(world),fontSize=if(worldFont(world) in listOf(WesternFont,AtlasFont))21.sp else 29.sp,lineHeight=32.sp,fontWeight=FontWeight.Bold,maxLines=1,overflow=TextOverflow.Ellipsis)
+                    Text(if(world==World.VICE_COAST)"Vice Coast" else world.title,fontFamily=worldFont(world),fontSize=when {
+                        world.title.length>=13 -> 20.sp
+                        world==World.PIXEL -> 22.sp
+                        worldFont(world) in listOf(WesternFont,AtlasFont) -> 21.sp
+                        else -> 27.sp
+                    },lineHeight=30.sp,fontWeight=FontWeight.Bold,maxLines=1,overflow=TextOverflow.Ellipsis)
                     Text(world.inspiration(),fontSize=11.sp,lineHeight=15.sp,color=if(world==World.NIGHT_CITY)Color(0xFFFF8B8B) else p.muted,maxLines=1,overflow=TextOverflow.Ellipsis)
                 }
                 Icon(Icons.Default.ExpandMore,"Change HUD theme",Modifier.size(22.dp),tint=p.accent)
@@ -228,14 +248,20 @@ fun World.inspiration()=when(this) {
 
 @Composable fun HudManeuver(state:NavState,onClick:()->Unit) {
     val p=hudPalette(state.world)
-    val step=state.route?.steps?.getOrNull(state.progress?.nextStep ?: 0)
-    Surface(onClick=onClick,color=p.panel,contentColor=p.foreground,shape=hudShape(state.world),border=hudBorder(state.world),modifier=Modifier.fillMaxWidth()) {
+    val guidance=routeGuidance(state.route,state.progress)
+    val distanceText=when { !state.gpsReady -> "Finding GPS"; state.routing -> "Rerouting…"; state.offRoute -> "Off route"; else -> formatDistance(state.progress?.toTurn ?: 0.0,state.imperial) }
+    val instructionText=when { !state.gpsReady -> "Waiting for a fresh, accurate location"; state.routing -> "Updating the route from your position"; state.offRoute -> if(state.routeError!=null)"Route unavailable · retrying automatically" else "Checking your position for a new route"; else -> guidance.instruction }
+    Surface(onClick=onClick,color=p.panel,contentColor=p.foreground,shape=hudShape(state.world),border=hudBorder(state.world),
+        modifier=Modifier.fillMaxWidth().semantics {
+            contentDescription="$distanceText. $instructionText. Show route steps"
+            liveRegion=LiveRegionMode.Polite
+        }) {
         Column {
             Row(Modifier.padding(16.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(16.dp)) {
-                Icon(maneuverIcon(step),null,Modifier.size(44.dp),tint=p.accent)
+                Icon(if(guidance.continuingToArrival)Icons.Default.Straight else maneuverIcon(guidance.maneuver),null,Modifier.size(44.dp),tint=p.accent)
                 Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(3.dp)) {
-                    Text(when { !state.gpsReady -> "Finding GPS"; state.routing -> "Rerouting…"; state.offRoute -> "Off route"; else -> formatDistance(state.progress?.toTurn ?: 0.0,state.imperial) },fontFamily=hudFont(state.world),fontWeight=FontWeight.Bold,fontSize=34.sp,lineHeight=39.sp,color=p.accent)
-                    Text(when { !state.gpsReady -> "Waiting for a fresh, accurate location"; state.routing -> "Updating the route from your position"; state.offRoute -> if(state.routeError!=null)"Route unavailable · retrying automatically" else "Checking your position for a new route"; else -> step?.instruction ?: "Finding your route" },fontSize=16.sp,lineHeight=22.sp,maxLines=3,overflow=TextOverflow.Ellipsis)
+                    Text(distanceText,fontFamily=hudFont(state.world),fontWeight=FontWeight.Bold,fontSize=34.sp,lineHeight=39.sp,color=p.accent)
+                    Text(instructionText,fontSize=16.sp,lineHeight=22.sp,maxLines=3,overflow=TextOverflow.Ellipsis)
                 }
                 Icon(Icons.Default.ExpandMore,"Show route steps",Modifier.size(20.dp),tint=p.muted)
             }
@@ -284,10 +310,51 @@ fun World.inspiration()=when(this) {
     }
 }
 
+private object WorldPreviewBitmaps {
+    private val cache=object:LruCache<Int,Bitmap>(32*1024*1024) {
+        override fun sizeOf(key:Int,value:Bitmap)=value.byteCount
+    }
+    fun cached(id:Int):Bitmap?=synchronized(cache){cache.get(id)}
+    fun load(context:Context,id:Int):Bitmap? {
+        cached(id)?.let{return it}
+        val decoded=BitmapFactory.decodeResource(context.resources,id) ?: return null
+        return synchronized(cache) {
+            cache.get(id)?.also{decoded.recycle()} ?: decoded.also{cache.put(id,it)}
+        }
+    }
+}
+
+@Composable private fun WorldPreviewArtwork(world:World,modifier:Modifier) {
+    val context=LocalContext.current.applicationContext
+    val imageId=world.previewImage()
+    var bitmap by remember(imageId){mutableStateOf(WorldPreviewBitmaps.cached(imageId))}
+    val small=remember(imageId) {
+        if(bitmap!=null)null else {
+            val options=BitmapFactory.Options().apply{inSampleSize=8}
+            BitmapFactory.decodeResource(context.resources,imageId,options)?.asImageBitmap()
+        }
+    }
+    LaunchedEffect(imageId) {
+        if(bitmap==null)bitmap=withContext(Dispatchers.IO){WorldPreviewBitmaps.load(context,imageId)}
+    }
+    val full=remember(bitmap){bitmap?.asImageBitmap()}
+    if(full!=null || small!=null) Image(full ?: requireNotNull(small),null,modifier,contentScale=ContentScale.Crop)
+    else Box(modifier.background(world.ground))
+}
+
 @Composable fun HudLibrary(selected:World,onSelect:(World)->Unit,onClose:()->Unit) {
     var query by rememberSaveable { mutableStateOf("") }
     val worlds=remember(query){World.entries.filter{it.matchesGameQuery(query)}}
-    LazyColumn(Modifier.fillMaxSize().background(Ink).statusBarsPadding().navigationBarsPadding(),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(20.dp)) {
+    val listState=rememberLazyListState()
+    val context=LocalContext.current.applicationContext
+    LaunchedEffect(worlds) {
+        snapshotFlow{listState.firstVisibleItemIndex}.distinctUntilChanged().collectLatest { first ->
+            worlds.drop((first-1).coerceAtLeast(0)).take(6).forEach { world ->
+                withContext(Dispatchers.IO){WorldPreviewBitmaps.load(context,world.previewImage())}
+            }
+        }
+    }
+    LazyColumn(Modifier.fillMaxSize().background(Ink).statusBarsPadding().navigationBarsPadding(),state=listState,contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(20.dp)) {
         item {
             Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
                 Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
@@ -300,19 +367,28 @@ fun World.inspiration()=when(this) {
             }
         }
         if(worlds.isEmpty())item{Text("No matching world. Try a game name.",color=Muted)}
-        items(worlds,key={it.name}) { world ->
+        itemsIndexed(worlds,key={_,world->world.name}) { _,world ->
             val p=hudPalette(world)
             Surface(onClick={onSelect(world)},modifier=Modifier.semantics{contentDescription="Apply ${world.title} theme"},color=Panel,shape=RoundedCornerShape(4.dp),border=if(selected==world)BorderStroke(2.dp,p.accent) else null) {
                 Column {
                     Box(Modifier.fillMaxWidth().height(170.dp)) {
-                        Image(painterResource(world.previewImage()),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
+                        WorldPreviewArtwork(world,Modifier.fillMaxSize())
                         Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(0f to Color.Black.copy(alpha=.04f),.68f to Color.Transparent,1f to Color.Black.copy(alpha=.18f))))
-                        Surface(color=p.panel,shape=hudShape(world),border=hudBorder(world),modifier=Modifier.align(Alignment.TopStart).padding(12.dp)) {
-                            Column(Modifier.padding(horizontal=12.dp,vertical=8.dp)) {
-                                Text(world.title,fontFamily=hudFont(world),fontSize=22.sp,lineHeight=28.sp,maxLines=2,overflow=TextOverflow.Ellipsis,color=p.foreground)
-                                Text(world.inspiration(),fontSize=12.sp,lineHeight=17.sp,color=p.muted)
-                            }
+                        Box(Modifier.align(Alignment.TopStart).fillMaxWidth().height(84.dp)
+                            .background(androidx.compose.ui.graphics.Brush.verticalGradient(
+                                0f to Color.Black.copy(alpha=.84f),
+                                .68f to Color.Black.copy(alpha=.68f),
+                                1f to Color.Transparent)))
+                        Column(Modifier.align(Alignment.TopStart).fillMaxWidth().padding(start=14.dp,top=10.dp,end=64.dp),
+                            verticalArrangement=Arrangement.spacedBy(2.dp)) {
+                            Text(world.title,fontFamily=worldFont(world),fontSize=21.sp,lineHeight=25.sp,
+                                maxLines=1,overflow=TextOverflow.Ellipsis,color=Color.White)
+                            Text(world.inspiration(),fontSize=11.sp,lineHeight=15.sp,
+                                color=Color.White.copy(alpha=.88f),maxLines=1,overflow=TextOverflow.Ellipsis)
                         }
+                        Image(painterResource(worldEmblemFor(world)),null,
+                            Modifier.align(Alignment.TopEnd).padding(11.dp).size(42.dp),
+                            contentScale=ContentScale.Fit)
                         Row(Modifier.align(Alignment.BottomStart).padding(12.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
                             listOf(Icons.Default.Navigation,Icons.Default.VolumeUp,Icons.Default.MyLocation).forEach { icon ->
                                 Surface(color=p.panel,contentColor=p.foreground,shape=if(world==World.OLD_WEST)CircleShape else hudShape(world),border=if(world==World.OLD_WEST)BorderStroke(2.dp,p.foreground) else hudBorder(world)) { Icon(icon,null,Modifier.padding(8.dp).size(18.dp)) }

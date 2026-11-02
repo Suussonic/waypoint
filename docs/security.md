@@ -1,5 +1,13 @@
 # Security review and hardening
 
+## Current source review (1.0.0 release, 2 November 2026)
+
+A second standard audit reviewed the current dirty checkout, including the new feedback flow, debug capture activity, map-tile input, update path and release workflow. Its 37 coverage units ended with 34 covered, two source-grounded leads needing validation and one blocked native-decoder unit. No vulnerability was confirmed by a bounded runtime test. The host lacked the required isolated execution environment, so this audit did not run app builds, Android fixtures or provider requests. The full report and frozen reviewed-source inventory are outside the repository under `security-audit-skill/waypoint/run-2`.
+
+After that baseline review, the debug preview activity was made private, external destination links were changed to require an in-app confirmation before lookup or route preview for the imported destination, map-tile labels were bounded before selection, and local release builds without distribution credentials were made unsigned. Existing user-initiated provider work may continue while a shared-link confirmation is open. These are source fixes and hardening changes; the two audit leads retain their original **needs validation** verdicts until an isolated Android check establishes the runtime behavior. MapLibre native decode limits remain a separate coverage limit.
+
+## Previous 0.2.1 review
+
 Waypoint 0.2.1 includes a source audit of the Android app and release path, followed by remediation. The baseline reviewed was `2d63dbd57e2622ffa133983dfe04607f9ca43739`. Review covered destination intents, local storage, exported components, location input, provider responses, update downloads and GitHub Actions.
 
 The audit used independent source reviewers and candidate verification. **No exploit was demonstrated on an Android runtime.** The required isolated execution environment was unavailable, so cross-app delivery, process failure and data access hypotheses remain validation leads rather than confirmed vulnerabilities. Normal development builds and regression checks are reported separately in [validation](validation.md).

@@ -32,6 +32,7 @@ fun UpdatePanel(updater: AppUpdater, navigating: Boolean) {
             is UpdateStatus.Available -> {
                 Text("Version ${current.release.version} is available", style = MaterialTheme.typography.titleMedium)
                 Text("${String.format(Locale.getDefault(), "%.1f", current.release.size / 1048576.0)} MB · Android will ask before installing.", style = MaterialTheme.typography.bodyMedium, color = Muted)
+                if (current.release.notes.isNotBlank()) ReleaseNotesContent(current.release.notes)
                 Button(onClick = { updater.download(current.release) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Icon(Icons.Default.Download, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text("Download update")
                 }
@@ -39,11 +40,13 @@ fun UpdatePanel(updater: AppUpdater, navigating: Boolean) {
             is UpdateStatus.Downloading -> {
                 LinearProgressIndicator(progress = { current.percent / 100f }, modifier = Modifier.fillMaxWidth())
                 Text(if (current.percent == 100) "Verifying update…" else "Downloading update · ${current.percent}%", style = MaterialTheme.typography.bodyMedium)
+                if (current.release.notes.isNotBlank()) ReleaseNotesContent(current.release.notes)
                 TextButton(onClick = updater::cancel, modifier = Modifier.heightIn(min = 48.dp)) { Text("Cancel download") }
             }
             is UpdateStatus.Ready -> {
                 Text("Version ${current.release.version} is ready", style = MaterialTheme.typography.titleMedium)
                 Text(if (navigating) "End navigation before installing. Your saved places will be kept." else "Download verified. Android may ask you to allow updates from Waypoint. Your saved places will be kept.", style = MaterialTheme.typography.bodyMedium)
+                if (current.release.notes.isNotBlank()) ReleaseNotesContent(current.release.notes)
                 Button(onClick = { installMessage = updater.install(context, current) }, enabled = !navigating, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Icon(Icons.Default.SystemUpdate, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text("Install update")
                 }
