@@ -6,10 +6,10 @@
   <p><strong>Real streets. Another world.</strong><br />A free Android navigation app with 27 game-inspired map styles, live GPS and spoken directions.<br /><sub>Made in India · Open to the world</sub></p>
   <p>
     <a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="https://img.shields.io/github/v/release/the-geeky-couldron/waypoint?label=latest%20release&amp;color=497c6f" alt="Latest Waypoint release version" /></a>
-    <a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="https://img.shields.io/github/downloads/the-geeky-couldron/waypoint/Waypoint.apk?label=latest%20APK%20downloads&amp;displayAssetName=false&amp;color=497c6f" alt="Download count for the latest Waypoint APK" /></a>
+    <a href="https://github.com/the-geeky-couldron/waypoint/releases"><img src="https://img.shields.io/github/downloads/the-geeky-couldron/waypoint/total?label=all%20release%20downloads&amp;color=497c6f" alt="Total GitHub release downloads across every Waypoint version" /></a>
     <a href="https://github.com/the-geeky-couldron/waypoint/stargazers"><img src="https://img.shields.io/github/stars/the-geeky-couldron/waypoint?label=GitHub%20stars&amp;color=497c6f" alt="Waypoint GitHub stars" /></a>
   </p>
-  <p><sub>Download count tracks the latest GitHub APK asset, not unique installs.</sub></p>
+  <p><sub>Download count covers all GitHub release assets across all versions, including checksum files; it does not count unique installs.</sub></p>
   <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="docs/images/promo/download.jpg" width="340" alt="Download Waypoint for Android from GitHub Releases" /></a></p>
   <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><strong>Download the latest APK</strong></a> · <a href="#build-from-source">Build from source</a> · <a href="#privacy-and-services">Privacy and services</a></p>
   <p><sub>Android 8.0+ · No ads or paywall · No Waypoint account · Every world included</sub></p>
