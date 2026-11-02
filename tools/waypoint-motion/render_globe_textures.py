@@ -1,6 +1,7 @@
 """Generate original, theme-specific Earth textures from public-domain Natural Earth data."""
 
 import json
+import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -33,6 +34,18 @@ THEMES = {
     "assassin": ("#797b74", "#cdb589", "#8c826a", "#322a22", "#d1b669", "cinzel.ttf"),
     "ctos": ("#a8cbd5", "#dfe7db", "#a9baaa", "#233b42", "#318bb7", "noto_sans.ttf"),
     "hogwarts": ("#78838a", "#8c957b", "#687163", "#e7d6ac", "#ad9a75", "cinzel.ttf"),
+    "vice_coast": ("#769eaa", "#e6dfcb", "#bca5a8", "#584959", "#f46ac0", "libre_baskerville.ttf"),
+    "liberty": ("#536970", "#a8aaa2", "#646b68", "#20272a", "#efa937", "noto_sans.ttf"),
+    "far_cry": ("#57746e", "#adb78d", "#617356", "#293828", "#f4d57b", "libre_baskerville.ttf"),
+    "ghost": ("#758b8c", "#e3e4d9", "#a7b2a9", "#343d37", "#b84435", "cinzel.ttf"),
+    "bridges": ("#25445d", "#84949b", "#566f79", "#e4e9e3", "#9ae5dd", "rajdhani.ttf"),
+    "horizon_wilds": ("#4c6973", "#a4ad8b", "#6b7762", "#e7dfbf", "#e9ca7d", "cinzel.ttf"),
+    "spider": ("#18465d", "#4d929c", "#236b79", "#edf3ed", "#ff9e9d", "rajdhani.ttf"),
+    "starfield": ("#0d243e", "#4d7089", "#7c9aae", "#f1f4e9", "#f3c56f", "orbitron.ttf"),
+    "kingdom": ("#8a9b91", "#c9b890", "#8c7958", "#342d24", "#dfba52", "cinzel.ttf"),
+    "saints": ("#252d3b", "#4f4c60", "#373247", "#e4ddec", "#b893f3", "rajdhani.ttf"),
+    "just_cause": ("#185d70", "#8eaa90", "#437f7c", "#e8e0c5", "#f0cf6a", "rajdhani.ttf"),
+    "mafia": ("#7d9ca0", "#bbb99c", "#918d72", "#352f2a", "#bd624c", "libre_baskerville.ttf"),
 }
 
 
@@ -139,5 +152,5 @@ def draw_texture(name, palette):
 
 
 if __name__ == "__main__":
-    for theme_name, theme_palette in THEMES.items():
-        draw_texture(theme_name, theme_palette)
+    for theme_name in sys.argv[1:] or THEMES:
+        draw_texture(theme_name, THEMES[theme_name])

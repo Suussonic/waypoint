@@ -3,6 +3,7 @@ import org.json.JSONObject
 import org.json.JSONArray
 import org.junit.Assert.*
 import org.junit.Test
+import java.io.DataInputStream
 import java.io.File
 class WorldCatalogueTest {
     @Test fun everyThemeHasAValidStyleAndNoDuplicateLayers() {
@@ -50,4 +51,31 @@ class WorldCatalogueTest {
     @Test fun gameAbbreviationsFindTheirHud(){assertTrue(World.LOS_SANTOS.matchesGameQuery("GTA V"));assertTrue(World.OLD_WEST.matchesGameQuery("rdr2"));assertTrue(World.HYRULE.matchesGameQuery("BOTW"))}
     @Test fun punctuationDoesNotBreakGameSearch(){assertTrue(World.ASSASSIN.matchesGameQuery("Assassin's Creed"));assertTrue(World.SPIDER.matchesGameQuery("Spider Man"))}
     @Test fun unrelatedNamesDoNotMatch(){assertFalse(World.SKYRIM.matchesGameQuery("Forza"));assertTrue(World.SKYRIM.matchesGameQuery("  "))}
+
+    @Test fun onboardingCarouselIncludesEveryWorldAndLeadsWithFavorites() {
+        val favorites = listOf(World.PIXEL, World.OLD_WEST)
+        val carousel = onboardingCarouselWorlds(favorites)
+        assertEquals(favorites, carousel.take(favorites.size))
+        assertEquals(World.entries.size, carousel.size)
+        assertEquals(World.entries.toSet(), carousel.toSet())
+    }
+
+    @Test fun onboardingFavoriteChoicesCoverEveryWorldOnce() {
+        assertEquals(World.entries.size, gameChoices.size)
+        assertEquals(World.entries.toSet(), gameChoices.map { it.world }.toSet())
+    }
+
+    @Test fun everyWorldHasAFullSizeGlobeTexture() {
+        for (world in World.entries) {
+            val file = File("src/main/assets/globe/textures/${world.file}.png")
+            assertTrue("Missing globe texture for ${world.title}", file.isFile)
+            DataInputStream(file.inputStream()).use { stream ->
+                assertEquals("PNG signature for ${world.title}", 0x89504E470D0A1A0AuL.toLong(), stream.readLong())
+                assertEquals("IHDR length for ${world.title}", 13, stream.readInt())
+                assertEquals("IHDR marker for ${world.title}", 0x49484452, stream.readInt())
+                assertEquals("Width for ${world.title}", 4096, stream.readInt())
+                assertEquals("Height for ${world.title}", 2048, stream.readInt())
+            }
+        }
+    }
 }

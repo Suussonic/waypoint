@@ -113,7 +113,10 @@ private val featuredWorlds = listOf(
     World.NIGHT_CITY, World.SAN_ANDREAS, World.HEAT, World.RIVIA,
 )
 
-private data class GameChoice(val title: String, val world: World)
+internal fun onboardingCarouselWorlds(favorites: List<World>): List<World> =
+    (favorites + featuredWorlds + World.entries).distinct()
+
+internal data class GameChoice(val title: String, val world: World)
 private data class ReferralChoice(val title: String, val icon: Int?, val color: Color)
 private val referralChoices = listOf(
     ReferralChoice("Instagram", R.drawable.brand_instagram, Color(0xFFE4408A)),
@@ -124,7 +127,7 @@ private val referralChoices = listOf(
     ReferralChoice("Telegram", R.drawable.brand_telegram, Color(0xFF26A5E4)),
     ReferralChoice("Friend", null, Color(0xFFFFC84B)),
 )
-private val gameChoices = listOf(
+internal val gameChoices = listOf(
     GameChoice("Red Dead Redemption 2", World.OLD_WEST),
     GameChoice("Grand Theft Auto V", World.LOS_SANTOS),
     GameChoice("Minecraft", World.PIXEL),
@@ -140,6 +143,18 @@ private val gameChoices = listOf(
     GameChoice("Assassin's Creed", World.ASSASSIN),
     GameChoice("Watch Dogs", World.CTOS),
     GameChoice("Hogwarts Legacy", World.HOGWARTS),
+    GameChoice("Grand Theft Auto Vice City", World.VICE_COAST),
+    GameChoice("Grand Theft Auto IV", World.LIBERTY),
+    GameChoice("Far Cry 5", World.FAR_CRY),
+    GameChoice("Ghost of Tsushima", World.GHOST),
+    GameChoice("Death Stranding", World.BRIDGES),
+    GameChoice("Horizon Zero Dawn", World.HORIZON_WILDS),
+    GameChoice("Marvel's Spider-Man", World.SPIDER),
+    GameChoice("Starfield", World.STARFIELD),
+    GameChoice("Kingdom Come: Deliverance II", World.KINGDOM),
+    GameChoice("Saints Row: The Third", World.SAINTS),
+    GameChoice("Just Cause 3", World.JUST_CAUSE),
+    GameChoice("Mafia: Definitive Edition", World.MAFIA),
 )
 
 /** First run follows the reference's cinematic pages, questions, and map carousel. */
@@ -168,7 +183,7 @@ fun ReferenceOnboarding(
         favoriteNames.split(',').mapNotNull { name -> World.entries.find { it.name == name } }.distinct()
     }
     val favorites = remember(favoriteWorlds) { favoriteWorlds.map { it.name }.toSet() }
-    val carouselWorlds = remember(favoriteWorlds) { (favoriteWorlds + featuredWorlds).distinct() }
+    val carouselWorlds = remember(favoriteWorlds) { onboardingCarouselWorlds(favoriteWorlds) }
     val selectedWorld = carouselWorlds.firstOrNull { it.name == selectedWorldName } ?: carouselWorlds.first()
     val selectedIndex = carouselWorlds.indexOf(selectedWorld).coerceAtLeast(0)
 
@@ -612,16 +627,11 @@ private fun OnboardingMapCarousel(
                 overflow = TextOverflow.Ellipsis)
             CarouselArrow(Icons.AutoMirrored.Filled.ArrowForward, "Next map") { onMove(1) }
         }
-        Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 104.dp)
-            .semantics { contentDescription = "Map ${index + 1} of $worldCount" },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            repeat(worldCount) { dot ->
-                Box(Modifier.size(if (dot == index) 20.dp else 8.dp, 6.dp)
-                    .clip(CircleShape)
-                    .background(if (dot == index) Color.White else Color.White.copy(alpha = .38f)))
-            }
-        }
+        Text("${index + 1} / $worldCount",
+            Modifier.align(Alignment.BottomCenter).padding(bottom = 106.dp)
+                .semantics { contentDescription = "Map ${index + 1} of $worldCount" },
+            color = Color.White.copy(alpha = .8f), fontFamily = introFont,
+            fontWeight = FontWeight.Bold, fontSize = 13.sp)
         OnboardingAction("Continue", false, onContinue)
     }
 }
