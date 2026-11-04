@@ -198,8 +198,8 @@ This pass was stationary and used simulated trips and public coordinates. The 50
 
 ## Local issue fixes — 4 November 2026
 
-Changes were implemented in issue creation order. The README includes the Repolode badge. The next-release draft, including reporter
-credits, is in [releases/next.md](releases/next.md); the published 1.1.0 notes and version are unchanged.
+Changes were implemented in issue creation order. The README includes the Repolode badge. The release notes, including reporter
+credits, are in [releases/1.5.0.md](releases/1.5.0.md).
 
 | Issue | Local result | Evidence and remaining limit |
 | --- | --- | --- |

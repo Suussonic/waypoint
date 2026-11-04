@@ -33,7 +33,7 @@ Local release builds accept `WAYPOINT_KEYSTORE`, `WAYPOINT_STORE_PASSWORD`, `WAY
 
 ## Publish an update
 
-1. Change `version.properties`. Use a stable `major.minor.patch` version, with each part from 0–999. Set `VERSION_CODE = major × 1,000,000 + minor × 1,000 + patch`. This matches the updater in the published app, which checks the APK code against the release tag. Always increase the code; `1.1.0` uses `1001000`.
+1. Change `version.properties`. Use a stable `major.minor.patch` version, with each part from 0–999. Set `VERSION_CODE = major × 1,000,000 + minor × 1,000 + patch`. This matches the updater in the published app, which checks the APK code against the release tag. Always increase the code; `1.5.0` uses `1005000`.
 2. Update `docs/releases/current.md` and copy it to `app/src/main/assets/release-notes.md`. The bundled copy powers the post-update What’s New screen; GitHub’s release body powers the updater. `scripts/check_version.py` requires both copies to match. Update tests/screenshots when behavior or appearance changes.
 3. Run verification, commit, push, then tag the exact commit:
 
@@ -42,10 +42,10 @@ python3 scripts/check_version.py
 ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 # Example only: first change version.properties and both release-note files to match.
 git add version.properties docs/releases/current.md app/src/main/assets/release-notes.md
-git commit -m "Release 1.1.0"
+git commit -m "Release 1.5.0"
 git push origin main
-git tag -a v1.1.0 -m "Waypoint 1.1.0"
-git push origin v1.1.0
+git tag -a v1.5.0 -m "Waypoint 1.5.0"
+git push origin v1.5.0
 ```
 
 Watch the Android workflow. Its release job verifies that the tag and version file agree. After publication, verify the APK and checksum on the release page. Keep pushed tags immutable, including tags whose release workflow failed. Use a new patch version and an annotated tag for corrections; never overwrite an already-published APK.

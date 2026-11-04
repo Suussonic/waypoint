@@ -27,7 +27,7 @@ Waypoint includes Android Auto support, but a GitHub-sideloaded APK may not appe
 
 <sub>Captured in the Android Auto Desktop Head Unit with a fixed public London demonstration route. The route and guidance state were simulated for the screenshots; no personal location was used. <a href="docs/images/promo/README.md">Capture and artwork notes</a>.</sub>
 
-**Waypoint 1.1.0** also brings Ferrostar guidance and rerouting, smoother phone and car map updates, better route-preview recovery, and refinements to Locate, tilt, search and the world gallery. [Read the full release notes](docs/releases/current.md).
+**Waypoint 1.5.0** fixes silent voice guidance, improves multiple favourite-game selection, adds UK English spelling and Twitter / X onboarding, and clarifies Android Auto launcher setup. [Read the full release notes](docs/releases/current.md).
 
 Android Auto keeps Google Maps available in the launcher. Open Waypoint there to use it as the current navigation app; installing it cannot change Android Auto's choice on its own. The car UI uses host-safe controls for search, saved destinations, voice, recenter and zoom. The phone remains the place to choose Car, Motorcycle or Walk.
 
@@ -96,7 +96,7 @@ After the first run, Waypoint opens your last selected world. Thanks to [u/cuber
 3. Tap **Locate** and grant precise location. Search for a destination or hold the map to drop a pin.
 4. Choose **Car**, **Motorcycle** or **Walk**. Review the route, then tap **Start navigation**.
 
-Installed versions check for a newer stable GitHub release when Waypoint opens on the phone. If an update is available, an in-app prompt appears when the idle map is visible. Review the release notes, choose **Download update**, and confirm installation in Android. The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 1.1.0**; see the [release notes](docs/releases/current.md).
+Installed versions check for a newer stable GitHub release when Waypoint opens on the phone. If an update is available, an in-app prompt appears when the idle map is visible. Review the release notes, choose **Download update**, and confirm installation in Android. The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 1.5.0**; see the [release notes](docs/releases/current.md).
 
 ## Build from source
 

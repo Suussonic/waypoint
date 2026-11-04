@@ -1,23 +1,43 @@
-# Waypoint 1.1.0
+# Waypoint 1.5.0
 
-Your map now travels with you onto Android Auto. The selected game world, route and guidance move between the phone and car screen while Waypoint keeps the controls appropriate to each display.
+This update fixes silent voice guidance, improves favourite-game selection, respects UK
+English spelling and adds Twitter / X to onboarding. Thank you to everyone who reported
+these problems! 💚
 
-### Android Auto
+### 🔊 Voice guidance
 
-- Open Waypoint from the car launcher to see a live map in the world selected on your phone. Search places, open saved or recent destinations, preview a route, and use the car's recenter, zoom and pan controls.
-- Follow a visible route line, moving position marker, next-turn cue, remaining distance and ETA. The car map turns with travel and looks farther ahead between turns, then closer near a maneuver.
-- Shared destinations ask for confirmation before lookup or route preview. Google Maps remains available from the car launcher; Android Auto uses the navigation app you opened most recently.
+- Start the Android text-to-speech engine explicitly so installed voices can provide turn instructions.
+- Treat engine startup separately from missing language data. Prefer the device's English dialect, with another installed English voice as a fallback.
+- Retry failed initialization when starting navigation or turning voice back on. Discard queued instructions when muted or when the trip ends, and avoid replaying old turns after a delayed startup.
 
-### Navigation and phone experience
+### 🎮 Onboarding
 
-- Ferrostar now drives turn progress, spoken cues and rerouting for car, motorcycle and walking journeys. OSRM and Valhalla still supply the roads and routes; MapLibre draws the themed maps.
-- Locate returns to a useful street-level view, and 2D/3D tilt works across all 27 worlds. The phone and car keep the selected world's palette when it changes during a trip.
-- Route previews clear an outdated line while a new route is requested. Search handles more spelling variations and shows the provider's actual place name and address when available.
-- The launch, world gallery and onboarding flow have received additional layout, motion and readability refinements.
+- Select several favourite games with clear checkmarks, a selection count and accessible checked states. Rapid taps retain earlier choices.
+- Use UK English spelling when the device is set to English (United Kingdom), including “favourite”, “colours” and “recentre”.
+- Choose **Twitter / X** when telling us where you found Waypoint. The referral list scrolls on smaller screens and with larger text.
 
-### Reliability and updates
+### 🚘 Android Auto: launcher availability
 
-- Navigation actions and car callbacks are bound to the trip or destination that created them. Car display input and geocoder result counts are bounded, and signed releases check main-branch ancestry before publishing.
-- An older installed release checks for this stable update when Waypoint enters the foreground. Review these notes in the update prompt, choose **Download update**, then confirm installation in Android. Saved places and settings remain on your phone after a compatible update.
+Settings and the setup guide now explain why a GitHub-installed APK may be absent from
+**Customize launcher** and the car display. Google's **Unknown sources** option does not
+apply to Car App Library apps like Waypoint. Real-car testing needs a supported trusted
+installation channel, such as Google Play Internal App Sharing or an Internal Test Track.
+This release does not claim to remove that distribution requirement or establish a Play channel.
 
-Download **Waypoint.apk** from this release or open **Settings → App updates** in Waypoint. Maps, search and routes need internet access. Live traffic, offline routing and lane guidance are not included. A physical vehicle and long-duration driving remain to be tested.
+### 🙌 Community shout-outs
+
+- 🔊 **[@nikkvfox](https://github.com/nikkvfox)** — thanks for flagging missing voice guidance even with speech languages installed! [#1](https://github.com/the-geeky-couldron/waypoint/issues/1)
+- 🚘 **[@RoseMariXOXOXO](https://github.com/RoseMariXOXOXO)** — thanks for reporting the missing Android Auto launcher entry and the troubleshooting you had already tried. [#2](https://github.com/the-geeky-couldron/waypoint/issues/2)
+- 🧭 **[@kiri-responsib](https://github.com/kiri-responsib)** — thanks for the detailed report covering both Android Auto visibility and silent voice guidance. [#3](https://github.com/the-geeky-couldron/waypoint/issues/3)
+- 🎮 🇬🇧 🐦 **[@harrydbarnes](https://github.com/harrydbarnes)** — a triple shout-out for catching the favourite-game selection, UK spelling and missing Twitter option! [#4](https://github.com/the-geeky-couldron/waypoint/issues/4) · [#5](https://github.com/the-geeky-couldron/waypoint/issues/5) · [#6](https://github.com/the-geeky-couldron/waypoint/issues/6)
+
+Thank you for taking the time to report these. Your feedback helped pinpoint the changes above. 💚
+
+### ✅ Validation
+
+The local debug build, lint and 133 unit tests passed. Seven focused tests passed on a
+physical Android 17 phone, including speech initialization, onboarding persistence, UK/US
+resources, Android Auto host validation and simulated car templates. The tester confirmed
+hearing the synthetic voice instruction. Google's Desktop Head Unit also showed both the
+installed release and local test build in its launcher; both opened and rendered their maps.
+Real-car launcher availability and real-road navigation still require validation; #2 remains open.
