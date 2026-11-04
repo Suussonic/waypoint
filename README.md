@@ -4,7 +4,7 @@
     <img src="docs/images/promo/hero.jpg" width="100%" alt="Waypoint's Old West map on a phone beside Android Auto guidance in the same world, using public London demonstration captures." />
   </picture>
   <h1>Real streets. Another world.</h1>
-  <p>27 game-inspired maps, live navigation and spoken directions<br />on your phone and Android Auto.</p>
+  <p>38 game-inspired maps, personal quests and spoken directions<br />on your phone and Android Auto.</p>
   <p>
     <a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="https://img.shields.io/github/v/release/the-geeky-couldron/waypoint?label=latest%20release&amp;color=497c6f" alt="Latest Waypoint release version" /></a>
     <a href="https://github.com/the-geeky-couldron/waypoint/releases"><img src="https://img.shields.io/github/downloads/the-geeky-couldron/waypoint/total?label=Downloads&amp;color=497c6f" alt="Waypoint Downloads" /></a>
@@ -26,13 +26,25 @@
 
 ---
 
-## What's new in 1.5.0
+## What's new in 2.0.0
 
-- **Voice guidance:** fixed silent spoken directions and improved speech-engine startup and recovery.
-- **Onboarding:** keep multiple favourite games selected, use UK English spelling and choose Twitter / X as your referral source.
-- **Android Auto:** clearer launcher setup, with successful Desktop Head Unit checks. Real-car launcher availability remains under investigation.
+- **Quests, right on the main bar:** add an everyday task, optional place, reminder or focus timer. Complete it to earn personal rewards.
+- **Eleven new worlds:** nautical charts, tactical maps, an ASCII atlas, a 16-bit adventure, Exclusion Zone (S.T.A.L.K.E.R.) and Machine Atlas (NieR:Automata). Search, favourite and preview all 38 before applying one.
+- **Bicycle navigation and saved names:** use a dedicated cycling route, and rename saved destinations to Work, Home or any name you recognise.
+- **New-release alerts:** background checks are on by default. Android notification and battery-access explanations keep you in control of alerts and installation.
+- **Easier map sharing:** share an address or supported Google Maps link into Waypoint, or open a destination in another map app.
 
-[Full release notes and community shout-outs →](docs/releases/1.5.0.md)
+🎮 Built with ideas from **@Balzamus**, **@matvejsyrygin256-dotcom**, **@6HentaiMaster9**, **@artmartins28** and **@VoidKittyKat**. Find the individual shout-outs and requests in the release notes.
+
+[Full release notes →](docs/releases/current.md)
+
+## Your tasks, with rewards
+
+Tap **Quests** beside Map, Worlds and Saved, then **Add a quest**. A title is all you need. Add a note, saved place, reminder, focus timer or character picture whenever it helps. Complete tasks yourself, with Undo if you tap by mistake.
+
+A completed quest earns 20 XP; a finished focus session of at least ten minutes adds 10 XP once per quest. Your level, badges, avatar frames and short story chapters carry across every world. All navigation and worlds stay available from the beginning, and you can hide progression in **Your journey**.
+
+Quests and pictures stay privately on your phone. Updates preserve them; uninstalling removes them. No account, subscription, cloud sync or theme-pack installation is needed. [Quest guide →](docs/quests.md)
 
 ## Your map, your world
 
@@ -63,7 +75,7 @@ After the first run, Waypoint opens your last selected world. Thanks to [u/cuber
 <p><sub>These compositions use sanitised native map captures at a fixed public London demonstration position. <a href="docs/images/promo/README.md">Artwork notes</a>.</sub></p>
 
 <details>
-<summary><strong>See all 27 worlds</strong></summary>
+<summary><strong>See all 38 worlds</strong></summary>
 
 | World | Inspiration |
 | --- | --- |
@@ -94,6 +106,17 @@ After the first run, Waypoint opens your last selected world. Thanks to [u/cuber
 | Steelport | Saints Row: The Third |
 | Medici | Just Cause 3 |
 | Lost Heaven | Mafia: Definitive Edition |
+| Dark Zone | The Division |
+| Sea Chart | Sea of Thieves |
+| DOS Atlas | DOS / ASCII interfaces |
+| Aincrad | Sword Art Online |
+| Tactical Radar | Counter-Strike |
+| Vector Command | DEFCON |
+| Field Ops | Call of Duty |
+| 16-bit Quest | Retro console adventures |
+| Home Console | Wii U / console menus |
+| Exclusion Zone | S.T.A.L.K.E.R.: Shadow of Chernobyl |
+| Machine Atlas | NieR:Automata |
 
 </details>
 
@@ -110,11 +133,11 @@ With a supported installation, connect your phone and open Waypoint from the car
 
 <p><sub>Captured in the Android Auto Desktop Head Unit with a fixed public London demonstration route. The route and guidance state were simulated for the screenshots; no personal location was used. <a href="docs/images/promo/README.md">Capture and artwork notes</a>.</sub></p>
 
-Android Auto keeps Google Maps available in the launcher. Open Waypoint there to use it as the current navigation app; installing it cannot change Android Auto's choice on its own. The car UI uses host-safe controls for search, saved destinations, voice, recenter and zoom. The phone remains the place to choose Car, Motorcycle or Walk.
+Android Auto keeps Google Maps available in the launcher. Open Waypoint there to use it as the current navigation app; installing it cannot change Android Auto's choice on its own. The car UI uses host-safe controls for search, saved destinations, voice, recenter and zoom. The phone remains the place to choose Car, Motorcycle, Bicycle or Walk.
 
 ## Built for the journey
 
-- **Drive, ride or walk.** Choose a car, motorcycle or walking route, then follow spoken turns, remaining distance and ETA.
+- **Drive, cycle, ride or walk.** Choose a car, motorcycle, bicycle or walking route, then follow spoken turns, remaining distance and ETA.
 - **Take the route into the car.** Android Auto shows Waypoint's selected world, moving map, route and next turn. Search, saved destinations and map controls stay within the car's template UI.
 - **Keep your bearings.** Locate recentres on your actual position; the map follows movement and can recalculate after a confirmed wrong turn. A 2D/3D control changes the camera tilt.
 - **Find useful places.** Search destinations, drop a pin, and see world-specific blips for food, pubs, shops, schools, hospitals and other mapped places. Icons appear progressively as you zoom so dense streets stay legible.
@@ -130,13 +153,13 @@ Android Auto keeps Google Maps available in the launcher. Open Waypoint there to
 1. Open the APK and follow Android’s installation prompts.
 2. Complete onboarding, choose a world and open the map.
 3. Tap **Locate** and grant precise location. Search for a destination or hold the map to drop a pin.
-4. Choose **Car**, **Motorcycle** or **Walk**. Review the route, then tap **Start navigation**.
+4. Choose **Car**, **Motorcycle**, **Bicycle** or **Walk**. Review the route, then tap **Start navigation**.
 
 ### Updating
 
 Installed versions check for a newer stable GitHub release when Waypoint opens on the phone. If an update is available, an in-app prompt appears when the idle map is visible. Review the release notes, choose **Download update**, and confirm installation in Android.
 
-The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 1.5.0**; see the [release notes](docs/releases/current.md).
+The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.0.0**; see the [release notes](docs/releases/current.md).
 
 ## Build from source
 
@@ -164,15 +187,17 @@ Run `python3 scripts/check_repo_hygiene.py` before committing. CI checks that ge
 
 ## Privacy and services
 
-Waypoint has no app-owned account, analytics backend or recorded route history. Saved places stay on your device. Location and destinations are sent to providers when a map, search or route needs them; the app’s update check contacts GitHub without location data.
+Waypoint has no app-owned account, analytics backend or recorded route history. Saved places, quests, pictures and personal progress stay on your device. Location and destinations are sent to providers when a map, search or route needs them; the app’s update check contacts GitHub without location data.
 
 | Feature | Service |
 | --- | --- |
 | Map tiles and labels | OpenFreeMap using OpenStreetMap data |
 | Search and reverse geocoding | Photon; Android Geocoder when available |
 | Car routes | OSRM |
-| Motorcycle and walking routes | Valhalla |
+| Motorcycle, bicycle and walking routes | Valhalla |
 | Terrain | Mapzen |
+| Shared Google Maps short links | Google, only when you submit a supported link |
+| New-release checks | GitHub Releases, automatically in the background and when checking in Settings; no location data |
 | Voice | Your installed Android text-to-speech engine |
 | Guidance progress and rerouting | Ferrostar 0.59.0 using OSRM and Valhalla routes |
 

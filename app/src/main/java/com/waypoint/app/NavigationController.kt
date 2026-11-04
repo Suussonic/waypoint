@@ -53,6 +53,7 @@ data class NavState(
     val route: RoadRoute? = null,
     val progress: RouteProgress? = null,
     val navigating: Boolean = false,
+    val carConnected: Boolean = false,
     val arrived: Boolean = false,
     val routing: Boolean = false,
     val routeError: String? = null,
@@ -63,6 +64,7 @@ data class NavState(
     val searchError: String? = null,
     val searchNote: String? = null,
     val voice: Boolean = true,
+    val gameVoice: Boolean = true,
     val imperial: Boolean = false,
     val saved: List<Place> = emptyList(),
     val recent: List<Place> = emptyList(),
@@ -71,6 +73,7 @@ data class NavState(
     val pendingSharedDestinationId: Long = 0L,
     val pendingSharedCoordinates: String? = null,
     val resolvingSharedDestination: Boolean = false,
+    val sharedImportError: Boolean = false,
     val cameraRequest: Int = 0,
     val focusUserCameraRequest: Int = -1,
     val tilted: Boolean = true,
@@ -84,17 +87,21 @@ class WaypointApplication : Application() {
         // An empty preference store means a fresh install; updates retain the previous store.
         if (appPrefs.all.isEmpty()) appPrefs.edit().putInt("whatsNewShownVersion", BuildConfig.VERSION_CODE).apply()
         MapGlyphs.install(this)
+        updateAlerts.schedule()
     }
     fun shouldShowWhatsNew(): Boolean = appPrefs.getInt("whatsNewShownVersion", 0) < BuildConfig.VERSION_CODE
     fun markWhatsNewSeen() { appPrefs.edit().putInt("whatsNewShownVersion", BuildConfig.VERSION_CODE).apply() }
     fun bundledReleaseNotes(): String = assets.open("release-notes.md").bufferedReader().use { it.readText() }
     val navigation by lazy { NavigationController(this) }
     val updater by lazy { AppUpdater(this) }
+    val updateAlerts by lazy { UpdateAlerts(this) }
+    val quests by lazy { QuestController(this) }
 }
 
 class NavigationController(private val app: Application, private val repository: NavigationRepository = MapRepository(), preferencesName: String = "waypoint", fallbackSearch: PlaceSearchProvider? = AndroidPlaceSearch(app)) {
     private val prefs = app.getSharedPreferences(preferencesName,Context.MODE_PRIVATE)
-    private val placeSearch = PlaceSearch(PlaceSearchProvider(repository::search),fallbackSearch,SearchAliases(readSearchAliases()))
+    private val createPlaceSearch = { PlaceSearch(PlaceSearchProvider(repository::search),fallbackSearch,SearchAliases(readSearchAliases())) }
+    private var placeSearch = createPlaceSearch()
     private fun readSearchAliases():Map<String,String> = runCatching {
         val raw=prefs.getString("searchAliases",null) ?: return emptyMap()
         if(raw.length>65536)return emptyMap()
@@ -108,7 +115,7 @@ class NavigationController(private val app: Application, private val repository:
     private val _state = MutableStateFlow(NavState(
         world = initialWorld,
         mode = TravelMode.entries.find{it.name==prefs.getString("mode",null)} ?: TravelMode.CAR,
-        voice = prefs.getBoolean("voice",true), imperial = prefs.getBoolean("imperial",false),
+        voice = prefs.getBoolean("voice",true), gameVoice = prefs.getBoolean("gameVoice",true), imperial = prefs.getBoolean("imperial",false),
         saved = readPlaces("saved"), recent = readPlaces("recent"),
         tilted = prefs.getBoolean("tilted",initialWorld.mapArt().tilt>0.0)
     ))
@@ -116,6 +123,7 @@ class NavigationController(private val app: Application, private val repository:
     private val manager = app.getSystemService(LocationManager::class.java)
     private var visible = false
     private var carVisible = false
+    val isDriving: Boolean get() = carVisible || (_state.value.navigating && _state.value.mode != TravelMode.WALK)
     private var enabled = prefs.getBoolean("locationEnabled",false)
     private var listening = false
     private val fused = LocationServices.getFusedLocationProviderClient(app)
@@ -195,7 +203,27 @@ class NavigationController(private val app: Application, private val repository:
     }
     fun setDisplayRotation(rotation:Int) { heading.displayRotation=rotation }
     fun hasLocationPermission() = ContextCompat.checkSelfPermission(app,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED
-    fun setCarVisible(value: Boolean) { carVisible=value; if(value) enabled=true; updateTracking() }
+    fun setCarVisible(value: Boolean) { carVisible=value; _state.update { it.copy(carConnected=value) }; if(value) enabled=true; updateTracking() }
+    private val carSessions = mutableSetOf<Any>()
+    internal fun attachCarSession(owner: Any) {
+        carSessions.add(owner)
+        setCarVisible(true)
+    }
+    internal fun detachCarSession(owner: Any) {
+        if(carSessions.remove(owner) && carSessions.isEmpty()) {
+            setCarVisible(false)
+            leaveCarSession()
+        }
+    }
+    internal fun refreshCarLocation() {
+        if(hasLocationPermission()) {
+            if(carVisible) enabled=true
+            updateTracking()
+        } else {
+            updateTracking()
+            permissionDenied()
+        }
+    }
     fun enableAutoDrive() {
         lastSimulationSampleAt=0L;lastSimulationTraveled=0.0;simulationSpeed=0f
         guidance.enableAutoDrive(_state.value.route)
@@ -203,8 +231,46 @@ class NavigationController(private val app: Application, private val repository:
     }
     fun leaveCarSession() { guidance.leaveCarSession();lastSimulationSampleAt=0L;simulationSpeed=0f }
     fun handleNavigationIntent(intent: Intent?): Boolean {
+        val shared = when (intent?.action) {
+            Intent.ACTION_SEND -> intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
+            Intent.ACTION_PROCESS_TEXT -> intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()
+            else -> null
+        }
+        if (shared != null) {
+            invalidateImport()
+            if (_state.value.navigating) {
+                _state.update { it.copy(message="End your current navigation before opening a shared destination.") }
+                return false
+            }
+            val parsed = NavigationSharing.parseText(shared)
+            if (parsed != null) return offerNavigationImport(parsed)
+            if (shared.length > 4096 || NavigationSharing.supportedUrl(NavigationSharing.sharedUrl(shared) ?: shared) == null) {
+                sharedImportFailed()
+                return true
+            }
+            val ticket = importGate.begin()
+            _state.update { it.copy(resolvingSharedDestination = true) }
+            importJob = scope.launch {
+                val resolved = try { withTimeoutOrNull(10_000) { NavigationSharing.resolve(shared) } }
+                catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) { null }
+                ensureActive()
+                if (!importGate.canApply(ticket, _state.value.navigating)) return@launch
+                importJob = null
+                _state.update { it.copy(resolvingSharedDestination = false) }
+                if (resolved != null) offerNavigationImport(resolved) else sharedImportFailed()
+            }
+            return true
+        }
         val proposal = NavigationImport.parse(intent?.action, intent?.dataString) ?: return false
         invalidateImport()
+        return offerNavigationImport(proposal)
+    }
+    private fun sharedImportFailed() {
+        _state.update { it.copy(sharedImportError = true, resolvingSharedDestination = false, message = "Couldn't read this place. Paste an address or search for it below.") }
+    }
+    fun dismissSharedImportError() { _state.update { it.copy(sharedImportError = false) } }
+    private fun offerNavigationImport(proposal: NavigationImport): Boolean {
         val id = importConsent.offer(proposal, _state.value.navigating)
         if (id == null) {
             _state.update { it.copy(message="End your current navigation before opening a shared destination.") }
@@ -272,7 +338,13 @@ class NavigationController(private val app: Application, private val repository:
         if (_state.value.pendingSharedDestination != null || _state.value.resolvingSharedDestination)
             _state.update { it.copy(pendingSharedDestination=null,pendingSharedDestinationId=0L,pendingSharedCoordinates=null,resolvingSharedDestination=false) }
     }
-    fun clearHistory() { invalidateImport(); _state.update{it.copy(recent=emptyList(),saved=emptyList())}; prefs.edit().remove("recent").remove("saved").apply() }
+    fun clearHistory() {
+        invalidateImport()
+        searchJob?.cancel();searchJob=null
+        placeSearch=createPlaceSearch()
+        _state.update{it.copy(recent=emptyList(),saved=emptyList(),query="",searchResults=emptyList(),searching=false,searchError=null,searchNote=null)}
+        prefs.edit().remove("recent").remove("saved").apply()
+    }
     fun setVisible(value: Boolean) { visible=value; updateTracking() }
     fun enableLocation() { enabled=true; prefs.edit().putBoolean("locationEnabled",true).apply(); _state.update{it.copy(gpsStatus="Finding GPS…",cameraRequest=it.cameraRequest+1)}; updateTracking() }
     private fun updateTracking() {
@@ -537,8 +609,17 @@ class NavigationController(private val app: Application, private val repository:
             updateTracking()
         }
     }
-    fun search(query: String) = searchPlaces(query,false)
-    fun submitSearch() = searchPlaces(_state.value.query,true)
+    fun search(query: String) {
+        if (query.trim().startsWith("https:") || query.trim().startsWith("geo:")) {
+            searchJob?.cancel()
+            _state.update { it.copy(query=query.take(4096), searching=false, searchResults=emptyList(), searchError=null, searchNote="Tap Search places to open this shared location.") }
+        } else searchPlaces(query,false)
+    }
+    fun submitSearch() {
+        val query = _state.value.query.trim()
+        if (query.startsWith("https:") || query.startsWith("geo:")) handleNavigationIntent(Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_TEXT,query))
+        else searchPlaces(query,true)
+    }
     private fun searchPlaces(query:String,expanded:Boolean) {
         invalidateImport()
         searchJob?.cancel(); _state.update{it.copy(query=query,searching=query.length>=2,searchResults=emptyList(),searchError=null,searchNote=null)}
@@ -548,7 +629,12 @@ class NavigationController(private val app: Application, private val repository:
             try {
                 val snapshot=_state.value
                 val result=placeSearch.search(query,snapshot.fix ?: PreviewCenter,snapshot.saved+snapshot.recent,expanded);ensureActive()
-                _state.update{it.copy(searchResults=result.places,searchNote=result.note,searching=false)}
+                _state.update { current ->
+                    val savedNames=current.saved.associate { it.id to it.name }
+                    current.copy(searchResults=result.places.map { place ->
+                        savedNames[place.id]?.let { place.copy(name=it) } ?: place
+                    },searchNote=result.note,searching=false)
+                }
             } catch(e: CancellationException) { throw e }
             catch(e: Exception) { ensureActive(); _state.update{it.copy(searching=false,searchError=e.message ?: "Search unavailable. Try again.")} }
         }
@@ -576,8 +662,10 @@ class NavigationController(private val app: Application, private val repository:
         ?.mapNotNull { name -> World.entries.find { it.name == name } }
         ?.distinct()
         ?.take(World.entries.size)
-        ?.ifEmpty { listOf(_state.value.world) }
         ?: listOf(_state.value.world)
+    fun setFavoriteWorlds(worlds: List<World>) {
+        prefs.edit().putString("favoriteWorlds", worlds.distinct().joinToString(",") { it.name }).apply()
+    }
     fun completeOnboarding(favorites: List<World>) {
         val edit = prefs.edit().putBoolean("onboardingCompleted", true).putBoolean("mapOpened", true)
             .putInt("welcomeShownVersion", BuildConfig.VERSION_CODE)
@@ -585,6 +673,7 @@ class NavigationController(private val app: Application, private val repository:
         edit.apply()
     }
     fun toggleVoice() { _state.update{it.copy(voice=!it.voice)}; prefs.edit().putBoolean("voice",_state.value.voice).apply(); guidance.mute(!_state.value.voice) }
+    fun toggleGameVoice() { _state.update { it.copy(gameVoice=!it.gameVoice) };prefs.edit().putBoolean("gameVoice",_state.value.gameVoice).apply() }
     fun toggleUnits() { _state.update{it.copy(imperial=!it.imperial)}; prefs.edit().putBoolean("imperial",_state.value.imperial).apply() }
     fun toggleTilt() { _state.update{it.copy(tilted=!it.tilted,cameraRequest=it.cameraRequest+1)};prefs.edit().putBoolean("tilted",_state.value.tilted).apply() }
     fun recenter() {
@@ -597,6 +686,20 @@ class NavigationController(private val app: Application, private val repository:
         val existing=_state.value.saved
         val next=if(existing.any{it.id==place.id}) existing.filter{it.id!=place.id} else existing+place
         _state.update{it.copy(saved=next)}; writePlaces("saved",next)
+    }
+    /** A personal label changes only the name; coordinates, address and provenance stay intact. */
+    fun renameSaved(id: String, label: String): Boolean {
+        val name = savedPlaceName(label) ?: return false
+        if (_state.value.saved.none { it.id == id }) return false
+        _state.update { state -> state.copy(
+            saved = state.saved.map { if (it.id == id) it.copy(name = name) else it },
+            selected = state.selected?.let { if (it.id == id) it.copy(name = name) else it },
+            recent = state.recent.map { if (it.id == id) it.copy(name = name) else it },
+            searchResults = state.searchResults.map { if (it.id == id) it.copy(name = name) else it }
+        ) }
+        writePlaces("saved", _state.value.saved)
+        writePlaces("recent", _state.value.recent)
+        return true
     }
     private fun readPlaces(key: String): List<Place> = runCatching {
         val a=JSONArray(prefs.getString(key,"[]")); (0 until a.length()).map {

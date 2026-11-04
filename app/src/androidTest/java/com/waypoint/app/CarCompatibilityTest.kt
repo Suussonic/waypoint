@@ -17,6 +17,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertThrows
 import org.junit.Test
+import org.junit.Before
 import org.junit.runner.RunWith
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -24,6 +25,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 class CarCompatibilityTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context get() = instrumentation.targetContext
+
+    @Before fun allowLocationForNavigationTemplates() {
+        instrumentation.uiAutomation.grantRuntimePermission(context.packageName, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+        instrumentation.uiAutomation.grantRuntimePermission(context.packageName, android.Manifest.permission.ACCESS_FINE_LOCATION)
+    }
 
     @Test fun signedAndroidAutoHostIsAllowedButOtherCallersAreRejected() {
         val validator = waypointHostValidator(context)

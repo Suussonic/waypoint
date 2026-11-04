@@ -32,4 +32,15 @@ fun artworkFor(world: World): Int = when (world) {
     World.SAINTS -> R.drawable.art_saints
     World.JUST_CAUSE -> R.drawable.art_just_cause
     World.MAFIA -> R.drawable.art_mafia
+    World.DIVISION -> R.drawable.preview_division
+    World.SEA_CHART -> R.drawable.preview_sea_chart
+    World.DOS_ATLAS -> R.drawable.preview_dos_atlas
+    World.AINCRAD -> R.drawable.preview_aincrad
+    World.COUNTER_STRIKE -> R.drawable.preview_counter_strike
+    World.DEFCON -> R.drawable.preview_defcon
+    World.FIELD_OPS -> R.drawable.preview_field_ops
+    World.RETRO_QUEST -> R.drawable.preview_retro_quest
+    World.NIER -> R.drawable.preview_nier
+    World.STALKER -> R.drawable.preview_stalker
+    World.HOME_CONSOLE -> R.drawable.preview_home_console
 }

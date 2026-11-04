@@ -1,0 +1,42 @@
+<resources>
+    <string name="car_location_explanation">While parked, allow precise location on your phone to see your position and navigate. If you previously denied it, open Waypoint’s app settings → Permissions → Location, then check again.</string>
+    <string name="car_allow_location">Allow location</string>
+    <string name="car_check_permission">Check again</string>
+    <string name="car_destinations">Destinations</string>
+    <string name="car_destination">Destination</string>
+    <string name="car_saved">Saved places</string>
+    <string name="car_recent">Recent destinations</string>
+    <string name="car_search">Search places</string>
+    <string name="car_no_destinations">Search for a destination here, or save a place on your phone. Your places stay in sync.</string>
+    <string name="car_places_removed">These places are no longer saved. Go back to choose another destination.</string>
+    <string name="car_through_place">Through %1$s</string>
+    <plurals name="car_places"><item quantity="one">%d place</item><item quantity="other">%d places</item></plurals>
+    <string name="car_search_empty">Search for a place or address</string>
+    <string name="car_search_no_results">No places found. Try a nearby town or a fuller address.</string>
+    <string name="car_search_error">Search unavailable. Check your connection and try again.</string>
+    <string name="car_imperial">Miles and feet</string>
+    <string name="car_map_world">Map world</string>
+    <string name="car_current_world">Current world · shared with your phone</string>
+    <string name="car_world_cities">City streets</string>
+    <string name="car_world_roads">Open roads</string>
+    <string name="car_world_fantasy">Fantasy lands</string>
+    <string name="car_world_future">Future worlds</string>
+    <string name="car_world_tactical">Tactical maps</string>
+    <string name="car_world_classic">Classic and playful</string>
+    <string name="car_settings_title">Android Auto</string>
+    <string name="car_connected">Connected to your car</string>
+    <string name="car_ready_to_connect">Open Waypoint in your car</string>
+    <string name="car_sync_explanation">Your world, saved places, distance units and guidance stay in sync with your phone.</string>
+    <string name="car_connect_explanation">Connect your phone, then choose Waypoint in the Android Auto launcher.</string>
+    <string name="car_location_ready">Precise location allowed</string>
+    <string name="car_location_ready_detail">Waypoint can use your position for the map and turn instructions.</string>
+    <string name="car_location_needed">Precise location needed</string>
+    <string name="car_location_needed_detail">Allow location while parked before starting navigation.</string>
+    <string name="car_distribution_explanation">Missing from the launcher? Real-car testing requires a trusted installation, such as a Google Play testing channel. Developer mode and Unknown sources alone do not enable Waypoint.</string>
+    <string name="car_open_settings">Android Auto settings</string>
+    <string name="car_location_settings">Manage location permission</string>
+    <string name="car_settings_unavailable">Android Auto settings are unavailable. Check that Android Auto is installed and enabled on this phone.</string>
+    <string name="car_group_current">Current: %1$s</string>
+    <string name="car_group_examples">%1$s, %2$s and more</string>
+    <plurals name="car_world_count"><item quantity="one">%d world</item><item quantity="other">%d worlds</item></plurals>
+</resources>

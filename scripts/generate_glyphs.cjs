@@ -12,7 +12,11 @@ for(const [name,sha256] of Object.entries({
 const fonts={
  'Waypoint Condensed':'roboto_condensed.ttf',
  'Waypoint Technical':'rajdhani.ttf',
- 'Waypoint Pixel':'monocraft.ttf',
+ 'Waypoint Pixel':'minecraft_seven.ttf',
+ 'Waypoint Retro':'monocraft.ttf',
+ 'Waypoint Borda':'borda_regular.ttf',
+ 'Waypoint Stratum':'stratum2_regular.ttf',
+ 'Waypoint Futura':'futura_condensed_medium.ttf',
  'Waypoint Terminal':'share_tech_mono.ttf',
  'Waypoint Atlas':'libre_baskerville.ttf',
  'Waypoint Classic':'noto_sans.ttf',

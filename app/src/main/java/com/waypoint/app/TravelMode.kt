@@ -4,5 +4,6 @@ package com.waypoint.app
 enum class TravelMode(val label:String,val costing:String,val routeDescription:String) {
     CAR("Car","auto","driving"),
     MOTORCYCLE("Motorcycle","motorcycle","motorcycle"),
+    BICYCLE("Bicycle","bicycle","cycling"),
     WALK("Walk","pedestrian","walking")
 }

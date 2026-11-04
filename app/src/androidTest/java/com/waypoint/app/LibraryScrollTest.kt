@@ -25,8 +25,16 @@ class LibraryScrollTest {
             val picker=device.wait(Until.findObject(By.desc("Worlds")),1500) ?: device.findObject(By.text("Worlds")) ?: device.findObject(By.desc("HUDs")) ?: device.findObject(By.text("HUDs"))
             assertNotNull(picker);picker!!.click()
             assertNotNull(device.wait(Until.findObject(By.scrollable(true)),4000))
+            SystemClock.sleep(350) // Let the destination's fade-through finish.
             fun fling(direction:Direction) {
-                device.findObject(By.scrollable(true)).apply { setGestureMargin(120) }.fling(direction)
+                var sent=false
+                repeat(3) {
+                    if(!sent) try {
+                        device.wait(Until.findObject(By.scrollable(true)),3000)!!.apply { setGestureMargin(120) }.fling(direction)
+                        sent=true
+                    } catch(_:StaleObjectException) { SystemClock.sleep(200) }
+                }
+                assertTrue("Catalogue remained available to scroll",sent)
                 SystemClock.sleep(400)
             }
             device.executeShellCommand("dumpsys gfxinfo ${context.packageName} reset")

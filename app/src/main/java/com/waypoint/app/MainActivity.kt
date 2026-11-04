@@ -1,5 +1,11 @@
 package com.waypoint.app
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
+
 import android.Manifest
 import android.content.Intent
 import android.hardware.display.DisplayManager
@@ -61,6 +67,7 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 val Ink=Color(0xFF151815)
 val Panel=Color(0xFF20241F)
@@ -70,7 +77,12 @@ val DisplayFont=FontFamily(Font(R.font.barlow_condensed_bold,FontWeight.Bold))
 val WesternFont=FontFamily(Font(R.font.kirsty_regular),Font(R.font.kirsty_bold,FontWeight.Bold))
 val WesternDisplayFont=FontFamily(Font(R.font.chinese_rocks_regular))
 val GtaDisplayFont=FontFamily(Font(R.font.pricedown_black))
-val PixelFont=FontFamily(Font(R.font.monocraft))
+val PixelFont=FontFamily(Font(R.font.minecraft_seven))
+val RetroPixelFont=FontFamily(Font(R.font.monocraft))
+val BordaFont=FontFamily(Font(R.font.borda_regular),Font(R.font.borda_bold,FontWeight.Bold))
+val StratumFont=FontFamily(Font(R.font.stratum2_regular),Font(R.font.stratum2_bold,FontWeight.Bold))
+val WindlassFont=FontFamily(Font(R.font.windlass))
+val FuturaCondensedFont=FontFamily(Font(R.font.futura_condensed_medium))
 val TerminalFont=FontFamily(Font(R.font.share_tech_mono))
 val TechnicalFont=FontFamily(Font(R.font.rajdhani))
 val AtlasFont=FontFamily(Font(R.font.cinzel))
@@ -79,7 +91,7 @@ val ReadingSerifFont=FontFamily(Font(R.font.libre_baskerville))
 val SansFont=FontFamily(Font(R.font.noto_sans))
 val OrbitFont=FontFamily(Font(R.font.orbitron))
 val ViceFont=FontFamily(Font(R.font.yellowtail))
-fun worldFont(world: World)=when(world){World.VICE_COAST->ViceFont;World.LOS_SANTOS,World.SAN_ANDREAS,World.LIBERTY->GtaDisplayFont;World.LANDS_BETWEEN,World.HYRULE,World.ASSASSIN,World.HORIZON_WILDS,World.HOGWARTS,World.KINGDOM,World.MAFIA->AtlasFont;World.OLD_WEST->WesternDisplayFont;World.RIVIA->ReadingSerifFont;World.PIXEL->PixelFont;World.GREEN_TERMINAL->TerminalFont;World.NIGHT_CITY,World.BRIDGES,World.SPIDER,World.STARFIELD->TechnicalFont;else->DisplayFont}
+fun worldFont(world: World)=world.titleTypeface().family
 private val AppTypography=Typography(
     displayLarge=Typography().displayLarge.copy(fontFamily=DisplayFont,fontWeight=FontWeight.Bold),
     displayMedium=Typography().displayMedium.copy(fontFamily=DisplayFont,fontWeight=FontWeight.Bold),
@@ -96,6 +108,15 @@ class MainActivity : ComponentActivity() {
     private val controller get()=(application as WaypointApplication).navigation
     private var destinationLaunch by mutableIntStateOf(0)
     private var foregroundEntry by mutableIntStateOf(0)
+    private var questLaunch by mutableIntStateOf(0)
+    private var updateLaunch by mutableIntStateOf(0)
+    private var questId by mutableStateOf<String?>(null)
+    private fun handleQuestIntent(intent: Intent?) {
+        val uri = intent?.data
+        if (intent?.action == "OPEN_QUEST" && uri?.scheme == "waypoint" && uri.host == "quest") {
+            uri.lastPathSegment?.takeIf { runCatching { java.util.UUID.fromString(it).toString() == it }.getOrDefault(false) }?.let { questId = it; questLaunch++; setIntent(intent) }
+        }
+    }
     private val displayListener=object:DisplayManager.DisplayListener {
         override fun onDisplayAdded(displayId:Int)=Unit
         override fun onDisplayRemoved(displayId:Int)=Unit
@@ -109,15 +130,19 @@ class MainActivity : ComponentActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState); enableEdgeToEdge()
+        handleQuestIntent(intent)
+        if(intent?.action==UpdateAlerts.OPEN_UPDATES)updateLaunch++
         val restorePending = savedInstanceState?.getBoolean("waypoint.pendingSharedDestination") == true
         if((savedInstanceState==null || restorePending && !controller.hasPendingNavigationImport()) && controller.handleNavigationIntent(intent)) destinationLaunch++
         setContent { val state by controller.state.collectAsStateWithLifecycle()
             LaunchedEffect(state.navigating) { if(state.navigating) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
-            WaypointApp(controller,state,destinationLaunch,foregroundEntry)
+            WaypointApp(controller,state,destinationLaunch,foregroundEntry,questId,questLaunch,updateLaunch)
         }
     }
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        handleQuestIntent(intent)
+        if(intent.action==UpdateAlerts.OPEN_UPDATES) { updateLaunch++;setIntent(intent) }
         if (controller.handleNavigationIntent(intent)) {
             // Keep the last validated proposal as the restore source while its dialog is open.
             setIntent(intent)
@@ -128,25 +153,34 @@ class MainActivity : ComponentActivity() {
         outState.putBoolean("waypoint.pendingSharedDestination",controller.hasPendingNavigationImport())
         super.onSaveInstanceState(outState)
     }
-    override fun onStart() { super.onStart();if(configurationRestartPending)configurationRestartPending=false else foregroundEntryCounter++;foregroundEntry=foregroundEntryCounter;getSystemService(DisplayManager::class.java).registerDisplayListener(displayListener,null); updateDisplayRotation(); controller.setVisible(true);(application as WaypointApplication).updater.checkOnLaunch() }
+    override fun onStart() { super.onStart();if(configurationRestartPending)configurationRestartPending=false else foregroundEntryCounter++;foregroundEntry=foregroundEntryCounter;getSystemService(DisplayManager::class.java).registerDisplayListener(displayListener,null); updateDisplayRotation(); controller.setVisible(true);(application as WaypointApplication).updater.checkOnLaunch();(application as WaypointApplication).quests.refresh() }
     override fun onStop() { configurationRestartPending=isChangingConfigurations;getSystemService(DisplayManager::class.java).unregisterDisplayListener(displayListener);controller.setVisible(false); super.onStop() }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WaypointApp(controller: NavigationController,state: NavState,destinationLaunch:Int=0,foregroundEntry:Int=0) {
+fun WaypointApp(controller: NavigationController,state: NavState,destinationLaunch:Int=0,foregroundEntry:Int=0,openQuestId:String?=null,questLaunch:Int=0,updateLaunch:Int=0) {
     val context=LocalContext.current
     val application=context.applicationContext as WaypointApplication
     val updater=application.updater
     var tab by rememberSaveable { mutableIntStateOf(0) }
     val worldsStateHolder=rememberSaveableStateHolder()
+    var questSeed by remember { mutableStateOf<Place?>(null) }
+    var pendingQuestId by rememberSaveable { mutableStateOf<String?>(null) }
+    var questEntry by rememberSaveable { mutableIntStateOf(0) }
+    var externalPlace by remember { mutableStateOf<Place?>(null) }
+    val uiScope = rememberCoroutineScope()
     var landing by rememberSaveable { mutableStateOf(controller.shouldShowLanding()) }
     val welcomeVisible=landing && !state.navigating
     var whatsNewVisible by rememberSaveable { mutableStateOf(application.shouldShowWhatsNew()) }
     val bundledReleaseNotes=remember { application.bundledReleaseNotes() }
     LaunchedEffect(destinationLaunch){if(destinationLaunch>0 && !controller.shouldShowLanding()){controller.markMapOpened();landing=false}}
     var search by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(state.carConnected,tab) { if (state.carConnected && tab == 3) tab = 0 }
+    LaunchedEffect(questLaunch) { if (questLaunch > 0 && !controller.isDriving) { landing=false;tab=3;questEntry++;questSeed=null;pendingQuestId=openQuestId } }
+    LaunchedEffect(state.sharedImportError) { if (state.sharedImportError) { landing=false;search=true;controller.dismissSharedImportError() } }
     var settings by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(updateLaunch) { if(updateLaunch>0 && !controller.isDriving) { landing=false;settings=true } }
     var feedbackOpen by rememberSaveable { mutableStateOf(false) }
     var clearConfirm by remember { mutableStateOf(false) }
     var steps by rememberSaveable { mutableStateOf(false) }
@@ -174,6 +208,13 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
     }
 
     val snackbar=remember { SnackbarHostState() }
+    var pageSystemBarSurface by remember { mutableStateOf<Color?>(null) }
+    val navigationScope=rememberCoroutineScope()
+    fun selectTab(destination:Int) {
+        if(destination==3 && controller.state.value.carConnected) {
+            navigationScope.launch { snackbar.showSnackbar("Quests are available after Android Auto disconnects.") }
+        } else tab=destination
+    }
     val permissions=rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         permissionDenied=!controller.hasLocationPermission()
         permissionRevision++
@@ -195,18 +236,27 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
     val showUpdatePrompt=pendingRelease!=null && !updatePromptDismissed && !whatsNewVisible && !welcomeVisible && !state.navigating && state.selected==null && state.pendingSharedDestination==null &&
         tab==0 && !search && !settings && !steps
     MaterialTheme(colorScheme=darkColorScheme(primary=state.world.accent,onPrimary=Ink,primaryContainer=state.world.accent.copy(alpha=0.18f),onPrimaryContainer=state.world.accent,
-        background=Ink,surface=Ink,surfaceVariant=Panel,onSurface=Cream,onSurfaceVariant=Muted,outline=Color(0xFF51594B),secondary=state.world.accent),typography=AppTypography) {
+        background=Ink,surface=Ink,surfaceVariant=Panel,onSurface=Cream,onSurfaceVariant=Muted,outline=Color(0xFF51594B),secondary=state.world.accent,
+        secondaryContainer=state.world.accent.copy(alpha=.18f),onSecondaryContainer=Cream),typography=AppTypography) {
+        UpdateAlertPermissions(application.updateAlerts,ready=!welcomeVisible && !showWhatsNew && !showUpdatePrompt && !settings && !search && tab==0 && !state.navigating && !state.carConnected && state.pendingSharedDestination==null)
         BackHandler(search || settings || steps || tab!=0 || (!welcomeVisible && state.selected!=null)) {
             when { search->search=false; feedbackOpen->feedbackOpen=false; settings->settings=false; steps->steps=false; tab!=0->tab=0; state.selected!=null->controller.clearDestination() }
         }
         LaunchedEffect(state.message) { state.message?.let{snackbar.showSnackbar(it);controller.dismissMessage()} }
+        CompositionLocalProvider(LocalPageSystemBarSurface provides { pageSystemBarSurface=it }) {
         BoxWithConstraints(Modifier.fillMaxSize().background(Ink)) {
             val wide=maxWidth>=600.dp
             val compactHeight=maxHeight<500.dp
             val density=LocalDensity.current
+            val largeText=density.fontScale>1.3f
+            val adaptivePreview=state.selected!=null && !state.navigating && (compactHeight || largeText)
+            val sidePreview=adaptivePreview && wide && !largeText
             val edge=with(density){28.dp.toPx()}
             val systemBottom=WindowInsets.navigationBars.getBottom(density)
-            val routeInsets=if(state.selected!=null && !state.navigating && !mapBounds.isEmpty && !routeHeaderBounds.isEmpty && !routePanelBounds.isEmpty) {
+            val routeInsets=if(sidePreview && !mapBounds.isEmpty && !routePanelBounds.isEmpty) {
+                MapViewportInsets(edge.roundToInt(),edge.roundToInt(),
+                    (mapBounds.right-routePanelBounds.left+edge).coerceAtLeast(edge).roundToInt(),(systemBottom+edge).roundToInt())
+            } else if(!adaptivePreview && state.selected!=null && !state.navigating && !mapBounds.isEmpty && !routeHeaderBounds.isEmpty && !routePanelBounds.isEmpty) {
                 val top=(routeHeaderBounds.bottom-mapBounds.top+edge).coerceAtLeast(edge)
                 val right=if(compactHeight)(mapBounds.right-routePanelBounds.left+edge).coerceAtLeast(edge) else edge
                 val bottom=if(compactHeight)systemBottom+edge else (mapBounds.bottom-routePanelBounds.top+edge).coerceAtLeast(edge)
@@ -217,13 +267,13 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
             } else null
             Row(Modifier.fillMaxSize()) {
                 if(wide && !state.navigating && !welcomeVisible) NavigationRail(containerColor=Ink,modifier=Modifier.statusBarsPadding()) {
-                    Spacer(Modifier.height(16.dp));Icon(Icons.Default.Navigation,"Waypoint",tint=state.world.accent);Spacer(Modifier.height(32.dp))
-                    listOf("Map" to Icons.Default.Map,"Worlds" to Icons.Default.Layers,"Saved" to Icons.Default.BookmarkBorder).forEachIndexed { i,(name,icon)->NavigationRailItem(selected=tab==i,onClick={tab=i},icon={Icon(icon,name)},label={Text(name)}) }
+                    if(!compactHeight) { Spacer(Modifier.height(16.dp));Icon(Icons.Default.Navigation,"Waypoint",tint=state.world.accent);Spacer(Modifier.height(32.dp)) }
+                    listOf("Map" to Icons.Default.Map,"Worlds" to Icons.Default.Layers,"Saved" to Icons.Default.BookmarkBorder,"Quests" to Icons.Default.Assignment).forEachIndexed { i,(name,icon)->NavigationRailItem(selected=tab==i,onClick={selectTab(i)},icon={Icon(icon,name)},label={Text(name)}) }
                 }
-                Scaffold(modifier=Modifier.weight(1f),snackbarHost={SnackbarHost(snackbar)},contentWindowInsets=WindowInsets(0),bottomBar={
-                    if(!wide && !state.navigating && tab!=0 && !welcomeVisible) HudNavigationBar(state.world,tab,{tab=it})
+                Scaffold(modifier=Modifier.weight(1f).withReadyWindowInsets(),snackbarHost={SnackbarHost(snackbar)},contentWindowInsets=WindowInsets(0),bottomBar={
+                    if(!wide && !state.navigating && !welcomeVisible) HudNavigationBar(state.world,tab,{selectTab(it)})
                 }) { padding ->
-                    Box(Modifier.fillMaxSize().padding(padding)) {
+                    Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
                         // Keep the native map alive when switching destinations; hide other screens above it.
                         if(!welcomeVisible) WorldMap(state,{choose(it)},{mapError=it},Modifier.fillMaxSize().onGloballyPositioned{mapBounds=it.boundsInRoot()},active=tab==0 && !search && !settings && !steps,routeInsets=routeInsets)
                         Box(Modifier.fillMaxWidth().height(36.dp).background(Color.Black.copy(alpha=0.7f)))
@@ -235,6 +285,19 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                                 if(!state.navigating && state.selected==null) {
                                     GameAtlasChrome(state,atlasActions,Modifier.padding(bottom=48.dp))
                                     if(mapError!=null)Notice(mapError!!,Icons.Default.CloudOff)
+                                } else if(adaptivePreview) {
+                                    AdaptiveRoutePreview(state,
+                                        modifier=Modifier.align(if(sidePreview)Alignment.CenterEnd else Alignment.Center)
+                                            .fillMaxWidth(if(sidePreview).58f else 1f).fillMaxHeight()
+                                            .onGloballyPositioned { routePanelBounds=it.boundsInRoot() },
+                                        onBack=controller::clearDestination,onSettings={settings=true},onMode=controller::changeMode,
+                                        onLocate=::locate,onSave={controller.toggleSaved(state.selected!!)},
+                                        onRetry={controller.requestRoute()},onStart={
+                                            controller.startNavigation()
+                                            if(Build.VERSION.SDK_INT>=33)notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                        },onSteps={steps=true},
+                                        onQuest={if(!state.carConnected){questSeed=state.selected;questEntry++};selectTab(3)},
+                                        onShare={externalPlace=state.selected},mapError=mapError)
                                 } else {
                                     AtlasFrame(state.world)
                                     Column(Modifier.align(Alignment.TopStart).fillMaxWidth(if(compactHeight)0.5f else 1f).onGloballyPositioned{routeHeaderBounds=it.boundsInRoot()}.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
@@ -267,10 +330,12 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                                         else DestinationCard(state,{controller.toggleSaved(state.selected!!)},{controller.clearDestination()},{locate()},{controller.requestRoute()},{
                                             controller.startNavigation()
                                             if(Build.VERSION.SDK_INT>=33) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                        },{steps=true},compact=compactHeight)
+                                        },{steps=true},compact=compactHeight,
+                                            onQuest={if(!state.carConnected){questSeed=state.selected;questEntry++};selectTab(3)},onShare={externalPlace=state.selected})
                                     }
                                 }
-                                Box(Modifier.align(Alignment.BottomEnd)){Attribution(state.world)}
+                                if(!adaptivePreview)Box(Modifier.align(Alignment.BottomEnd)){Attribution(state.world)}
+
                             }
                         }
                         if(welcomeVisible) ReferenceOnboarding(
@@ -285,14 +350,31 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                             },
                             onOpenAppSettings={context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))}
                         )
-                        if(tab==1) worldsStateHolder.SaveableStateProvider("worlds") {
-                            WorldsScreen(state.world,{controller.changeWorld(it);tab=0},{tab=0})
+                        AnimatedContent(targetState=tab,modifier=Modifier.fillMaxSize(),
+                            transitionSpec={(fadeIn(tween(180,delayMillis=40)) togetherWith fadeOut(tween(100))).using(null)},
+                            label="Main destinations") { destination ->
+                            when(destination) {
+                                1 -> worldsStateHolder.SaveableStateProvider("worlds") {
+                                    WorldsScreen(state.world,{controller.changeWorld(it);tab=0},{tab=0})
+                                }
+                                2 -> if(!state.navigating) SavedScreen(state,::choose,{controller.toggleSaved(it)},{search=true},controller::renameSaved)
+                                3 -> if(!state.navigating && !state.carConnected) QuestsScreen(state.world,application.quests,controller,state,pendingQuestId,questSeed,questEntry,::choose,{tab=0},{pendingQuestId=null;questSeed=null})
+                                else -> Box(Modifier.fillMaxSize())
+                            }
                         }
-                        if(tab==2 && !state.navigating) SavedScreen(state,::choose,{controller.toggleSaved(it)},{search=true})
                         if(search) SearchScreen(state,controller::search,::choose,{search=false},controller::changeMode,controller::submitSearch)
                     }
                 }
             }
+            pageSystemBarSurface?.let { surface ->
+                Box(Modifier.align(Alignment.TopStart).fillMaxWidth().windowInsetsTopHeight(WindowInsets.statusBars).background(surface))
+            }
+        }
+        }
+        Box(Modifier.fillMaxSize().statusBarsPadding().padding(12.dp), contentAlignment=Alignment.TopCenter) {
+            QuestCelebration(state.world,application.quests,
+                allowed=!welcomeVisible && !state.navigating && !state.carConnected && state.selected==null && !search && !settings && !showWhatsNew && state.pendingSharedDestination==null,
+                onOpen={tab=3})
         }
         if(settings) ModalBottomSheet(onDismissRequest={feedbackOpen=false;settings=false},containerColor=Ink) {
             if(feedbackOpen) {
@@ -303,12 +385,13 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 UpdatePanel((context.applicationContext as WaypointApplication).updater, state.navigating)
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 SettingRow("Voice guidance","Spoken turn instructions",state.voice,controller::toggleVoice)
+                SettingRow("Game-style voice","World-themed phrases and tone. Turn details stay clear.",state.gameVoice,controller::toggleGameVoice)
                 SettingRow("Miles & feet","Use imperial distances",state.imperial,controller::toggleUnits)
                 SettingRow("3D perspective","Tilt the map in every world",state.tilted,controller::toggleTilt)
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
-                Text("Android Auto",style=MaterialTheme.typography.titleLarge)
-                Text("Requires a supported installation channel",style=MaterialTheme.typography.bodyMedium)
-                Text("GitHub-installed APKs may not appear in the car launcher. Android Auto requires a trusted source, such as a Google Play testing channel, for apps like Waypoint. Its Unknown sources setting does not apply. Once Waypoint is visible, allow precise location on your phone and open it from the car launcher.",style=MaterialTheme.typography.bodySmall,color=Muted)
+                AndroidAutoSettingsPanel(state.carConnected,controller.hasLocationPermission(),state.navigating,
+                    onLocation={context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))},
+                    onUnavailable={navigationScope.launch { snackbar.showSnackbar(context.getString(R.string.car_settings_unavailable)) }})
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 Text("Location & sensors",style=MaterialTheme.typography.titleMedium)
                 Text(state.locationProvider,style=MaterialTheme.typography.bodyMedium)
@@ -325,7 +408,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 Text("WAYPOINT",style=MaterialTheme.typography.headlineMedium,color=state.world.accent)
                 Text("Made in India · Open to the world",style=MaterialTheme.typography.bodySmall,color=Muted)
                 Text("Open source. Every world included. No ads or subscriptions.",style=MaterialTheme.typography.bodyMedium)
-                Text("Routes use OpenStreetMap with OSRM (car) and Valhalla (motorcycle/walk). Ferrostar provides guidance and rerouting. Routes don't include live traffic. Online maps and search require internet. Your location and destination are shared with routing and search providers when needed; saved places stay on this phone.",style=MaterialTheme.typography.bodySmall,color=Muted)
+                Text("Routes use OpenStreetMap with OSRM (car) and Valhalla (motorcycle/bicycle/walk). Ferrostar provides guidance and rerouting. Routes don't include live traffic. Online maps and search require internet. Your location and destination are shared with routing and search providers when needed; saved places stay on this phone.",style=MaterialTheme.typography.bodySmall,color=Muted)
                 Text("Original map styles inspired by games. Not affiliated with their publishers.",style=MaterialTheme.typography.bodySmall,color=Muted)
                 Spacer(Modifier.height(24.dp))
             }
@@ -348,12 +431,20 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 state.pendingSharedCoordinates?.let { Text("Coordinates: $it",style=MaterialTheme.typography.bodySmall,color=Muted) }
                 Text("Waypoint will use your location to look up this place and preview a route. Continue?",style=MaterialTheme.typography.bodyMedium)
             }},
-            confirmButton={TextButton(onClick={controller.acceptPendingNavigationImport(sharedDestinationId)}){Text("Open destination")}},
+            confirmButton={TextButton(onClick={search=false;tab=0;controller.acceptPendingNavigationImport(sharedDestinationId)}){Text("Open destination")}},
             dismissButton={TextButton(onClick={controller.dismissPendingNavigationImport(sharedDestinationId)}){Text("Cancel")}},
         )
+        externalPlace?.let { place -> AlertDialog(onDismissRequest={externalPlace=null},title={Text("Open in another map app?")},
+            text={Text(if(state.navigating)"Waypoint’s voice guidance will stop. The other app will calculate its own route to ${place.name}." else "Choose an app to open ${place.name}. It will calculate its own route.")},
+            confirmButton={TextButton(onClick={
+                externalPlace=null
+                runCatching { NavigationSharing.open(context,place,state.mode) }.onSuccess { if(state.navigating)controller.stopNavigation() }
+                    .onFailure { uiScope.launch { snackbar.showSnackbar("No map app could open this place. Install a map app or try again.") } }
+            }){Text("Choose app")}},dismissButton={TextButton(onClick={externalPlace=null}){Text("Cancel")}}) }
         if(clearConfirm) AlertDialog(onDismissRequest={clearConfirm=false},title={Text("Clear your places?")},text={Text("This removes your saved destinations and recent navigation history from this phone.")},confirmButton={TextButton(onClick={controller.clearHistory();clearConfirm=false}){Text("Clear places")}},dismissButton={TextButton(onClick={clearConfirm=false}){Text("Cancel")}})
         if(steps) ModalBottomSheet(onDismissRequest={steps=false},containerColor=Ink) {
             Text("Your route",style=MaterialTheme.typography.headlineLarge,modifier=Modifier.padding(horizontal=24.dp))
+            state.selected?.let { place -> TextButton(onClick={steps=false;externalPlace=place},modifier=Modifier.padding(horizontal=16.dp).heightIn(min=48.dp)) { Text("Open in another map app") } }
             LazyColumn(Modifier.fillMaxWidth().padding(vertical=16.dp)) {
                 items(state.route?.steps.orEmpty().drop(if(state.navigating)state.progress?.nextStep ?: 0 else 0)) { step ->
                     ListItem(headlineContent={Text(step.instruction)},supportingContent={Text(formatDistance(step.distance,state.imperial))},leadingContent={Icon(maneuverIcon(step),null,tint=state.world.accent)},colors=ListItemDefaults.colors(containerColor=Ink))
@@ -379,8 +470,8 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
         }
     },confirmButton={TextButton(onClick={open=false}){Text("Close")}})
 }
-@Composable fun SettingRow(title:String,subtitle:String,checked:Boolean,action:()->Unit) { Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) { Column(Modifier.weight(1f)){Text(title,style=MaterialTheme.typography.titleMedium);Text(subtitle,style=MaterialTheme.typography.bodySmall,color=Muted)};Switch(checked,onCheckedChange={action()}) } }
-fun maneuverIcon(step: Maneuver?): ImageVector = when { step==null->Icons.Default.North; step.type=="arrive"->Icons.Default.Flag; step.type.contains("roundabout")||step.type.contains("rotary")->Icons.Default.RoundaboutRight; step.modifier=="uturn"->Icons.Default.UTurnLeft; step.modifier.contains("left")->Icons.Default.TurnLeft;step.modifier.contains("right")->Icons.Default.TurnRight;else->Icons.Default.Straight }
+@Composable fun SettingRow(title:String,subtitle:String,checked:Boolean,action:()->Unit) { Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) { Column(Modifier.weight(1f)){Text(title,style=MaterialTheme.typography.titleMedium);Text(subtitle,style=MaterialTheme.typography.bodySmall,color=Muted)};Switch(checked,onCheckedChange={action()},modifier=Modifier.semantics { contentDescription=title }) } }
+fun maneuverIcon(step: Maneuver?): ImageVector = when { step==null->Icons.Default.North; step.type=="arrive"->Icons.Default.Flag; step.type.contains("roundabout")||step.type.contains("rotary")->Icons.Default.RoundaboutRight; step.modifier=="uturn"->if(step.uTurnRight)Icons.Default.UTurnRight else Icons.Default.UTurnLeft; step.modifier.contains("left")->Icons.Default.TurnLeft;step.modifier.contains("right")->Icons.Default.TurnRight;else->Icons.Default.Straight }
 
 @Composable fun ManeuverBanner(state: NavState,onClick:()->Unit) = HudManeuver(state,onClick)
 @Composable fun NavigationFooter(state: NavState,onSteps:()->Unit,onStop:()->Unit) = HudRouteFooter(state,onSteps,onStop)
@@ -398,28 +489,34 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
     "atm" -> Icons.Default.AttachMoney to "ATM"
     else -> Icons.Default.Place to "Place"
 }
-@Composable fun DestinationCard(state: NavState,onSave:()->Unit,onClose:()->Unit,onLocate:()->Unit,onRetry:()->Unit,onStart:()->Unit,onSteps:()->Unit,compact:Boolean=false) {
+@OptIn(ExperimentalLayoutApi::class)
+@Composable fun DestinationCard(state: NavState,onSave:()->Unit,onClose:()->Unit,onLocate:()->Unit,onRetry:()->Unit,onStart:()->Unit,onSteps:()->Unit,compact:Boolean=false,onQuest:(()->Unit)?=null,onShare:(()->Unit)?=null,roomyActions:Boolean=false) {
     val place=state.selected ?: return
     val palette=hudPalette(state.world)
     val (categoryIcon,categoryLabel)=placeCategory(place.kind)
     val detail=if(place.address=="Selected on map")"$categoryLabel · Selected on map" else place.address
+    val expandedActions=roomyActions || LocalDensity.current.fontScale>1.3f
     Surface(color=palette.panel,contentColor=palette.foreground,shape=hudShape(state.world),border=hudBorder(state.world),modifier=Modifier.fillMaxWidth()) {
         Column(Modifier.padding(if(compact)12.dp else 16.dp),verticalArrangement=Arrangement.spacedBy(if(compact)8.dp else 12.dp)) {
             Row(verticalAlignment=Alignment.CenterVertically) {
                 Surface(color=palette.accent.copy(alpha=.15f),shape=hudShape(state.world)) {Icon(categoryIcon,categoryLabel,Modifier.padding(10.dp).size(22.dp),tint=palette.accent)}
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) { Text(if(state.arrived)"YOU HAVE ARRIVED" else place.name,style=if(compact)MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,maxLines=2,overflow=TextOverflow.Ellipsis);Text(if(state.arrived)place.name else detail,style=MaterialTheme.typography.bodySmall,color=palette.muted,maxLines=if(compact)1 else 2,overflow=TextOverflow.Ellipsis) }
-                TextButton(onClick=onSave,contentPadding=PaddingValues(2.dp),modifier=Modifier.width(64.dp).heightIn(min=56.dp).semantics{contentDescription="Save place"}) {Column(horizontalAlignment=Alignment.CenterHorizontally){Icon(if(state.saved.any{it.id==place.id})Icons.Default.Bookmark else Icons.Default.BookmarkBorder,null,tint=palette.accent);Text(if(state.saved.any{it.id==place.id})"Saved" else "Save",fontFamily=hudFont(state.world),fontSize=12.sp,lineHeight=16.sp,letterSpacing=0.sp,maxLines=1,softWrap=false,color=palette.accent)}}
+                if(!expandedActions) DestinationActions(state,onSave,onQuest,onShare,false)
             }
+            if(expandedActions) DestinationActions(state,onSave,onQuest,onShare,true)
             when {
                 state.arrived -> Button(onClick=onClose,modifier=Modifier.fillMaxWidth()) { Text("Done") }
                 state.routing -> { LinearProgressIndicator(modifier=Modifier.fillMaxWidth());Text("Finding a ${state.mode.routeDescription} route…",style=MaterialTheme.typography.bodySmall,color=palette.muted) }
                 state.routeError!=null -> { Text(state.routeError,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error);Button(onClick=onRetry,modifier=Modifier.fillMaxWidth()){Text("Try route again")} }
                 state.route!=null -> {
-                    Row(verticalAlignment=Alignment.CenterVertically) {
-                        Icon(modeIcon(state.mode),null,tint=palette.muted,modifier=Modifier.size(20.dp));Spacer(Modifier.width(8.dp))
-                        Text("${ceil(state.route.seconds/60).toInt().coerceAtLeast(1)} min",style=MaterialTheme.typography.titleLarge,color=palette.accent);Spacer(Modifier.width(8.dp));Text("· ${formatDistance(state.route.meters,state.imperial)}",color=palette.muted,style=MaterialTheme.typography.bodyMedium)
-                        Spacer(Modifier.weight(1f));TextButton(onClick=onSteps){Text("Steps",color=palette.accent)}
+                    FlowRow(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                        Row(Modifier.align(Alignment.CenterVertically),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                            Icon(modeIcon(state.mode),null,tint=palette.muted,modifier=Modifier.size(20.dp))
+                            Text("${ceil(state.route.seconds/60).toInt().coerceAtLeast(1)} min",style=MaterialTheme.typography.titleLarge,color=palette.accent)
+                        }
+                        Text("· ${formatDistance(state.route.meters,state.imperial)}",color=palette.muted,style=MaterialTheme.typography.bodyMedium,modifier=Modifier.align(Alignment.CenterVertically))
+                        TextButton(onClick=onSteps,modifier=Modifier.align(Alignment.CenterVertically)){Text("Steps",color=palette.accent)}
                     }
                     Button(onClick=onStart,enabled=state.gpsReady,modifier=Modifier.fillMaxWidth().heightIn(min=50.dp),shape=hudShape(state.world)) { Icon(Icons.Default.Navigation,null,Modifier.size(18.dp));Spacer(Modifier.width(10.dp));Text(if(state.gpsReady)"Start navigation" else "Waiting for GPS…",fontWeight=FontWeight.Bold) }
                 }
@@ -435,7 +532,7 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
     Column(Modifier.fillMaxSize().background(Ink).statusBarsPadding().imePadding()) {
         Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically) {
             IconButton(onClick=onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Back to map")}
-            OutlinedTextField(value=state.query,onValueChange={onQuery(it.take(256))},label={Text("Place or address")},singleLine=true,keyboardOptions=KeyboardOptions(imeAction=ImeAction.Search),keyboardActions=KeyboardActions(onSearch={submit()}),modifier=Modifier.weight(1f),shape=hudShape(state.world),trailingIcon={if(state.query.isNotEmpty())IconButton(onClick={onQuery("")}){Icon(Icons.Default.Close,"Clear search")}})
+            OutlinedTextField(value=state.query,onValueChange={onQuery(it.take(NavigationSharing.MAX_INPUT))},label={Text("Place or address")},singleLine=true,keyboardOptions=KeyboardOptions(imeAction=ImeAction.Search),keyboardActions=KeyboardActions(onSearch={submit()}),modifier=Modifier.weight(1f),shape=hudShape(state.world),trailingIcon={if(state.query.isNotEmpty())IconButton(onClick={onQuery("")}){Icon(Icons.Default.Close,"Clear search")}})
         }
         Button(onClick={submit()},enabled=state.query.trim().length>=2,shape=hudShape(state.world),modifier=Modifier.fillMaxWidth().padding(horizontal=24.dp)) {
             Icon(Icons.Default.Search,null,Modifier.size(20.dp));Spacer(Modifier.width(8.dp));Text("Search places")
@@ -459,20 +556,6 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
 }
 @Composable fun PlaceRow(place: Place,state: NavState,onSelect:(Place)->Unit) {
     ListItem(headlineContent={Text(place.name,maxLines=2,overflow=TextOverflow.Ellipsis)},supportingContent={Column { Text(place.address,maxLines=3,overflow=TextOverflow.Ellipsis);if(place.source.isNotEmpty())Text(place.source,style=MaterialTheme.typography.labelSmall,color=Muted) }},leadingContent={Icon(Icons.Default.Place,null,tint=state.world.accent)},trailingContent={state.fix?.let{Text(formatDistance(distance(it,place.point),state.imperial),style=MaterialTheme.typography.labelSmall,color=Muted)}},modifier=Modifier.clickable{onSelect(place)},colors=ListItemDefaults.colors(containerColor=Ink))
-}
-@Composable fun SavedScreen(state: NavState,onSelect:(Place)->Unit,onDelete:(Place)->Unit,onSearch:()->Unit) {
-    Column(Modifier.fillMaxSize().background(Ink).statusBarsPadding().padding(top=24.dp)) {
-        Text("YOUR PLACES",style=MaterialTheme.typography.displayMedium,modifier=Modifier.padding(horizontal=24.dp))
-        Text("Your bookmarked destinations.",style=MaterialTheme.typography.bodyMedium,color=Muted,modifier=Modifier.padding(horizontal=24.dp,vertical=8.dp))
-        if(state.saved.isEmpty()) Column(Modifier.fillMaxWidth().padding(32.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(20.dp)) {
-            Spacer(Modifier.height(36.dp));Icon(Icons.Default.Bookmarks,null,tint=state.world.accent,modifier=Modifier.size(48.dp));Text("No saved places yet",style=MaterialTheme.typography.titleLarge)
-            Text("Search for a destination and tap the bookmark to keep it here.",color=Muted,style=MaterialTheme.typography.bodyMedium)
-            Button(onClick=onSearch){Text("Find a place")}
-        }
-        LazyColumn { items(state.saved,key={it.id}) { place ->
-            Row(verticalAlignment=Alignment.CenterVertically) { Box(Modifier.weight(1f)){PlaceRow(place,state,onSelect)};IconButton(onClick={onDelete(place)}){Icon(Icons.Default.BookmarkRemove,"Remove ${place.name}",tint=Muted)} }
-        } }
-    }
 }
 @Composable fun WorldsScreen(selected: World,onSelect:(World)->Unit,onClose:()->Unit) = HudLibrary(selected,onSelect,onClose)
 internal enum class WorldRouteStyle { URBAN, NEON, PIXEL, TRAIL, COAST }

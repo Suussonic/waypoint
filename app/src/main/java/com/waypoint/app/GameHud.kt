@@ -62,6 +62,17 @@ import kotlinx.coroutines.withContext
 /** HUD treatments use navigation data only. No simulated game statistics. */
 data class HudPalette(val panel:Color,val foreground:Color,val accent:Color,val muted:Color)
 fun hudPalette(world:World)=when(world) {
+    World.NIER->HudPalette(Color(0xF7D8D4BC),Color(0xFF35362E),Color(0xFF793D2B),Color(0xFF5D5C4D))
+    World.STALKER->HudPalette(Color(0xF7212624),Color(0xFFE9E9DE),Color(0xFFE6C274),Color(0xFFB8BDB0))
+    World.DIVISION->HudPalette(Color(0xF21A2B2D),Color(0xFFF2F4EA),Color(0xFFFFAE61),Color(0xFFB8CCC7))
+    World.SEA_CHART->HudPalette(Color(0xF7E9DAB4),Color(0xFF302D24),Color(0xFF7C352C),Color(0xFF625642))
+    World.DOS_ATLAS->HudPalette(Color(0xF91D160F),Color(0xFFFFDF9B),Color(0xFFFFCF80),Color(0xFFD2B58A))
+    World.AINCRAD->HudPalette(Color(0xF7FCFAEE),Color(0xFF383B3B),Color(0xFF8E531A),Color(0xFF68614D))
+    World.COUNTER_STRIKE->HudPalette(Color(0xF5282927),Color(0xFFF2F0E5),Color(0xFFFFD37F),Color(0xFFBFC3BB))
+    World.DEFCON->HudPalette(Color(0xF5051026),Color(0xFFD9E9FF),Color(0xFF9AC8FF),Color(0xFFA5BBD6))
+    World.FIELD_OPS->HudPalette(Color(0xF5252D25),Color(0xFFF0F2E8),Color(0xFFCDDCAC),Color(0xFFBCC7B0))
+    World.RETRO_QUEST->HudPalette(Color(0xF532284A),Color(0xFFFFF1CF),Color(0xFFFFE0A0),Color(0xFFD6C5DF))
+    World.HOME_CONSOLE->HudPalette(Color(0xF8F7FBFD),Color(0xFF203E4B),Color(0xFF12678C),Color(0xFF4A6472))
     World.ASSASSIN->HudPalette(Color(0xED20282A),Color(0xFFF4EDDB),Color(0xFFEBD28C),Color(0xFFCBC8B7))
     World.FAR_CRY->HudPalette(Color(0xEE17231F),Color(0xFFF5F4E8),Color(0xFFF4D57B),Color(0xFFC3CBBD))
     World.GHOST->HudPalette(Color(0xF2202520),Color(0xFFF2EEE1),Color(0xFFF2EEE1),Color(0xFFC5C9BD))
@@ -90,12 +101,24 @@ fun hudPalette(world:World)=when(world) {
     else->HudPalette(Color(0xF2191B1B),Color(0xFFF5F5F0),Color(0xFFB6DB91),Color(0xFFC0C5BF))
 }
 fun hudShape(world:World):Shape=when(world) {
+    World.NIER->RectangleShape
+    World.STALKER->CutCornerShape(4.dp)
+    World.HOME_CONSOLE->RoundedCornerShape(12.dp)
+    World.AINCRAD->RoundedCornerShape(4.dp)
+    World.DIVISION,World.FIELD_OPS->CutCornerShape(topEnd=8.dp,bottomStart=8.dp)
     World.NIGHT_CITY,World.HEAT,World.SPIDER->CutCornerShape(topStart=10.dp,bottomEnd=10.dp)
     World.CTOS,World.HORIZON->RoundedCornerShape(3.dp)
     World.OLD_WEST,World.RIVIA->RoundedCornerShape(3.dp)
     else->RectangleShape
 }
 fun hudBorder(world:World):BorderStroke?=when(world) {
+    World.STALKER->BorderStroke(1.dp,Color(0xFF778071))
+    World.DIVISION->BorderStroke(1.dp,Color(0xFF9E7651))
+    World.SEA_CHART->BorderStroke(1.dp,Color(0xFF8C7956))
+    World.AINCRAD->BorderStroke(1.dp,Color(0xFFBBA86F))
+    World.DOS_ATLAS->BorderStroke(1.dp,Color(0xFFD2B58A))
+    World.DEFCON->BorderStroke(1.dp,Color(0xFF4F80B4))
+    World.RETRO_QUEST->BorderStroke(2.dp,Color(0xFFDDCBA0))
     World.HOGWARTS,World.KINGDOM,World.ASSASSIN->BorderStroke(1.dp,Color(0xFF9D8A5F))
     World.BRIDGES,World.STARFIELD->BorderStroke(1.dp,Color(0xFF698E9F))
     World.HYRULE->BorderStroke(1.dp,Color(0xFFA9935B))
@@ -106,16 +129,20 @@ fun hudBorder(world:World):BorderStroke?=when(world) {
     World.PIXEL->BorderStroke(2.dp,Color(0xFF92968A))
     else->null
 }
-fun hudFont(world:World):FontFamily=when(world) {
-    World.OLD_WEST->WesternFont
-    World.PIXEL->PixelFont
-    World.GREEN_TERMINAL->PipBoyFont
-    World.NIGHT_CITY,World.BRIDGES,World.SPIDER,World.STARFIELD->TechnicalFont
-    World.LANDS_BETWEEN,World.RIVIA,World.KINGDOM,World.HOGWARTS,World.MAFIA->ReadingSerifFont
-    World.CTOS,World.HORIZON,World.SAINTS->SansFont
-    else->DisplayFont
-}
+fun hudFont(world:World):FontFamily=world.readingTypeface().family
+
 fun World.inspiration()=when(this) {
+    World.NIER->"NieR:Automata"
+    World.STALKER->"S.T.A.L.K.E.R.: Shadow of Chernobyl"
+    World.DIVISION->"Tom Clancy’s The Division"
+    World.SEA_CHART->"Sea of Thieves"
+    World.DOS_ATLAS->"DOS / ASCII interfaces"
+    World.AINCRAD->"Sword Art Online"
+    World.COUNTER_STRIKE->"Counter-Strike"
+    World.DEFCON->"DEFCON"
+    World.FIELD_OPS->"Call of Duty: Modern Warfare"
+    World.RETRO_QUEST->"16-bit console adventures"
+    World.HOME_CONSOLE->"Wii U console interface"
     World.LOS_SANTOS->"Grand Theft Auto V"
     World.OLD_WEST->"Red Dead Redemption 2"
     World.NIGHT_CITY->"Cyberpunk 2077"
@@ -299,15 +326,15 @@ fun World.inspiration()=when(this) {
 @Composable fun HudNavigationBar(world:World,selected:Int,onSelect:(Int)->Unit) {
     val p=hudPalette(world)
     Surface(color=p.panel,contentColor=p.foreground) {
-        Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal=16.dp,vertical=8.dp),horizontalArrangement=Arrangement.spacedBy(if(world==World.PIXEL)5.dp else 0.dp)) {
-            listOf("Map" to Icons.Default.Map,"Worlds" to Icons.Default.Layers,"Saved" to Icons.Default.BookmarkBorder).forEachIndexed { index,(label,icon)->
+        Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal=8.dp,vertical=8.dp),horizontalArrangement=Arrangement.spacedBy(if(world==World.PIXEL)5.dp else 0.dp)) {
+            listOf("Map" to Icons.Default.Map,"Worlds" to Icons.Default.Layers,"Saved" to Icons.Default.BookmarkBorder,"Quests" to Icons.Default.Assignment).forEachIndexed { index,(label,icon)->
                 val active=selected==index
                 val frame=when {world==World.PIXEL->Modifier.border(if(active)2.dp else 1.dp,if(active)Cream else Color(0xFF76796D))
                     world==World.GREEN_TERMINAL && active->Modifier.border(1.dp,p.accent)
                     else->Modifier}
                 Column(Modifier.weight(1f).then(frame).selectable(selected=active,role=Role.Tab,onClick={onSelect(index)}).heightIn(min=52.dp).padding(vertical=6.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(3.dp)) {
-                    Icon(icon,label,Modifier.size(21.dp),tint=if(active)p.accent else p.muted)
-                    Text(if(world==World.GREEN_TERMINAL)label.uppercase() else label,fontFamily=if(world in listOf(World.GREEN_TERMINAL,World.PIXEL))PixelFont else FontFamily.Default,fontSize=if(world in listOf(World.GREEN_TERMINAL,World.PIXEL))17.sp else 11.sp,lineHeight=20.sp,fontWeight=if(active)FontWeight.Bold else FontWeight.Normal,color=if(active)p.accent else p.muted)
+                    Icon(icon,null,Modifier.size(21.dp),tint=if(active)p.accent else p.muted)
+                    Text(if(world==World.GREEN_TERMINAL)label.uppercase() else label,fontFamily=FontFamily.Default,fontSize=12.sp,lineHeight=16.sp,fontWeight=if(active)FontWeight.Bold else FontWeight.Normal,color=if(active)p.accent else p.muted)
                     if(world !in listOf(World.PIXEL,World.GREEN_TERMINAL)) Box(Modifier.width(28.dp).height(2.dp).background(if(active)if(world==World.OLD_WEST)Color(0xFFD75749) else p.accent else Color.Transparent))
                 }
             }
@@ -329,103 +356,46 @@ private object WorldPreviewBitmaps {
     }
 }
 
-@Composable private fun WorldPreviewArtwork(world:World,modifier:Modifier) {
+@Composable internal fun WorldPreviewArtwork(world:World,modifier:Modifier) {
     val context=LocalContext.current.applicationContext
     val imageId=world.previewImage()
     var bitmap by remember(imageId){mutableStateOf(WorldPreviewBitmaps.cached(imageId))}
-    val small=remember(imageId) {
-        if(bitmap!=null)null else {
-            val options=BitmapFactory.Options().apply{inSampleSize=8}
-            BitmapFactory.decodeResource(context.resources,imageId,options)?.asImageBitmap()
-        }
-    }
+    var small by remember(imageId){mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null)}
     LaunchedEffect(imageId) {
-        if(bitmap==null)bitmap=withContext(Dispatchers.IO){WorldPreviewBitmaps.load(context,imageId)}
+        if(bitmap==null) {
+            // Even the tiny placeholder requires decompressing a PNG. Do that
+            // off the UI thread so a cold catalogue fling doesn't block input.
+            small=withContext(Dispatchers.IO) {
+                val options=BitmapFactory.Options().apply{inSampleSize=8}
+                BitmapFactory.decodeResource(context.resources,imageId,options)?.asImageBitmap()
+            }
+            bitmap=withContext(Dispatchers.IO){WorldPreviewBitmaps.load(context,imageId)}
+        }
     }
     val full=remember(bitmap){bitmap?.asImageBitmap()}
     if(full!=null || small!=null) Image(full ?: requireNotNull(small),null,modifier,contentScale=ContentScale.Crop)
     else Box(modifier.background(world.ground))
 }
 
-@Composable fun HudLibrary(selected:World,onSelect:(World)->Unit,onClose:()->Unit) {
-    var query by rememberSaveable { mutableStateOf("") }
-    val worlds=remember(query){World.entries.filter{it.matchesGameQuery(query)}}
-    val listState=rememberLazyListState()
-    val context=LocalContext.current.applicationContext
-    LaunchedEffect(worlds) {
-        snapshotFlow{listState.firstVisibleItemIndex}.distinctUntilChanged().collectLatest { first ->
-            worlds.drop((first-1).coerceAtLeast(0)).take(6).forEach { world ->
-                withContext(Dispatchers.IO){WorldPreviewBitmaps.load(context,world.previewImage())}
-            }
-        }
-    }
-    LazyColumn(Modifier.fillMaxSize().background(Ink).statusBarsPadding().navigationBarsPadding(),state=listState,contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(20.dp)) {
-        item {
-            Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
-                Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                    IconButton(onClick=onClose,modifier=Modifier.size(48.dp)){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Return to map")}
-                    Text("CHOOSE A WORLD",fontFamily=DisplayFont,fontWeight=FontWeight.Bold,fontSize=32.sp,lineHeight=38.sp,modifier=Modifier.weight(1f))
-                }
-                Text("${World.entries.size} maps, controls and guidance themes.\nEvery theme included.",fontSize=14.sp,lineHeight=19.sp,color=Muted)
-                Text("OpenFreeMap © OpenMapTiles · Data from OpenStreetMap",fontSize=10.sp,lineHeight=14.sp,color=Muted)
-                OutlinedTextField(value=query,onValueChange={query=it},label={Text("Find a game")},leadingIcon={Icon(Icons.Default.Search,null)},singleLine=true,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(4.dp))
-            }
-        }
-        if(worlds.isEmpty())item{Text("No matching world. Try a game name.",color=Muted)}
-        itemsIndexed(worlds,key={_,world->world.name}) { _,world ->
-            val p=hudPalette(world)
-            Surface(onClick={onSelect(world)},modifier=Modifier.semantics{contentDescription="Apply ${world.title} theme"},color=Panel,shape=RoundedCornerShape(4.dp),border=if(selected==world)BorderStroke(2.dp,p.accent) else null) {
-                Column {
-                    Box(Modifier.fillMaxWidth().height(170.dp)) {
-                        WorldPreviewArtwork(world,Modifier.fillMaxSize())
-                        Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(0f to Color.Black.copy(alpha=.04f),.68f to Color.Transparent,1f to Color.Black.copy(alpha=.18f))))
-                        Box(Modifier.align(Alignment.TopStart).fillMaxWidth().height(84.dp)
-                            .background(androidx.compose.ui.graphics.Brush.verticalGradient(
-                                0f to Color.Black.copy(alpha=.84f),
-                                .68f to Color.Black.copy(alpha=.68f),
-                                1f to Color.Transparent)))
-                        Column(Modifier.align(Alignment.TopStart).fillMaxWidth().padding(start=14.dp,top=10.dp,end=64.dp),
-                            verticalArrangement=Arrangement.spacedBy(2.dp)) {
-                            Text(world.title,fontFamily=worldFont(world),fontSize=21.sp,lineHeight=25.sp,
-                                maxLines=1,overflow=TextOverflow.Ellipsis,color=Color.White)
-                            Text(world.inspiration(),fontSize=11.sp,lineHeight=15.sp,
-                                color=Color.White.copy(alpha=.88f),maxLines=1,overflow=TextOverflow.Ellipsis)
-                        }
-                        Image(painterResource(worldEmblemFor(world)),null,
-                            Modifier.align(Alignment.TopEnd).padding(11.dp).size(42.dp),
-                            contentScale=ContentScale.Fit)
-                        Row(Modifier.align(Alignment.BottomStart).padding(12.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-                            listOf(Icons.Default.Navigation,Icons.AutoMirrored.Filled.VolumeUp,Icons.Default.MyLocation).forEach { icon ->
-                                Surface(color=p.panel,contentColor=p.foreground,shape=if(world==World.OLD_WEST)CircleShape else hudShape(world),border=if(world==World.OLD_WEST)BorderStroke(2.dp,p.foreground) else hudBorder(world)) { Icon(icon,null,Modifier.padding(8.dp).size(18.dp)) }
-                            }
-                        }
-                        if(selected==world) Surface(color=p.panel,shape=hudShape(world),modifier=Modifier.align(Alignment.BottomEnd).padding(12.dp)) {
-                            Row(Modifier.padding(8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(5.dp)) { Icon(Icons.Default.Check,"Selected",Modifier.size(16.dp),tint=p.accent);Text("ACTIVE",fontSize=10.sp,lineHeight=14.sp,color=p.accent) }
-                        }
-                    }
-                    Row(Modifier.padding(14.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-                        Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(3.dp)) {
-                            Text(world.previewPlace().label,fontSize=11.sp,lineHeight=14.sp,color=p.accent,maxLines=1,overflow=TextOverflow.Ellipsis)
-                            Text(stringResource(world.descriptionRes),fontSize=13.sp,lineHeight=19.sp,color=Muted)
-                        }
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward,null,tint=p.accent,modifier=Modifier.size(20.dp))
-                    }
-                }
-            }
-        }
-    }
-}
 
-fun modeIcon(mode:TravelMode)=when(mode){TravelMode.CAR->Icons.Default.DirectionsCar;TravelMode.MOTORCYCLE->Icons.Default.TwoWheeler;TravelMode.WALK->Icons.AutoMirrored.Filled.DirectionsWalk}
+fun modeIcon(mode:TravelMode)=when(mode){TravelMode.CAR->Icons.Default.DirectionsCar;TravelMode.MOTORCYCLE->Icons.Default.TwoWheeler;TravelMode.BICYCLE->Icons.Default.DirectionsBike;TravelMode.WALK->Icons.AutoMirrored.Filled.DirectionsWalk}
 @Composable fun TransportModes(selected:TravelMode,onSelect:(TravelMode)->Unit,world:World) {
     val palette=hudPalette(world)
-    Row(Modifier.fillMaxWidth().background(palette.panel).selectableGroup(),horizontalArrangement=Arrangement.spacedBy(3.dp)) {
-        TravelMode.entries.forEach{mode->
-            val active=selected==mode
-            Column(Modifier.weight(1f).selectable(selected=active,role=Role.RadioButton,onClick={onSelect(mode)}).heightIn(min=52.dp).padding(vertical=7.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(3.dp)) {
-                Icon(modeIcon(mode),mode.label,Modifier.size(20.dp),tint=if(active)palette.accent else palette.muted)
-                Text(mode.label,fontSize=11.sp,lineHeight=15.sp,color=if(active)palette.accent else palette.muted,fontWeight=if(active)FontWeight.Bold else FontWeight.Normal)
-                Box(Modifier.width(24.dp).height(2.dp).background(if(active)palette.accent else Color.Transparent))
+    val fontScale=androidx.compose.ui.platform.LocalDensity.current.fontScale
+    BoxWithConstraints(Modifier.fillMaxWidth().background(palette.panel).selectableGroup()) {
+        val columns=if(maxWidth<360.dp || fontScale>1.3f)2 else 4
+        Column(verticalArrangement=Arrangement.spacedBy(3.dp)) {
+            TravelMode.entries.chunked(columns).forEach { row ->
+                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(3.dp)) {
+                    row.forEach { mode ->
+                        val active=selected==mode
+                        Column(Modifier.weight(1f).selectable(selected=active,role=Role.RadioButton,onClick={onSelect(mode)}).heightIn(min=52.dp).padding(vertical=7.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(3.dp)) {
+                            Icon(modeIcon(mode),mode.label,Modifier.size(20.dp),tint=if(active)palette.accent else palette.muted)
+                            Text(mode.label,fontSize=11.sp,lineHeight=15.sp,color=if(active)palette.accent else palette.muted,fontWeight=if(active)FontWeight.Bold else FontWeight.Normal)
+                            Box(Modifier.width(24.dp).height(2.dp).background(if(active)palette.accent else Color.Transparent))
+                        }
+                    }
+                }
             }
         }
     }
@@ -448,6 +418,17 @@ fun World.matchesGameQuery(query:String):Boolean {
         World.HEAT->"NFS Heat Need for Speed"
         World.RIVIA->"The Continent Witcher 3 Wild Hunt"
         World.SAINTS->"SR3 Saints Row"
+        World.DIVISION->"Tom Clancy The Division Dark Zone"
+        World.SEA_CHART->"SoT Sea of Thieves Pirate Nautical"
+        World.DOS_ATLAS->"MS DOS ASCII terminal console"
+        World.AINCRAD->"SAO Sword Art Online Hollow Realization"
+        World.COUNTER_STRIKE->"CS CSGO CS2 Counter Strike radar"
+        World.DEFCON->"Defcon vector command"
+        World.FIELD_OPS->"CoD Call of Duty Modern Warfare Warzone"
+        World.RETRO_QUEST->"retro SNES 16 bit Zelda adventure"
+        World.NIER->"Nier NieR Automata Yoko Taro YoRHa 2B 9S android pod machine"
+        World.STALKER->"STALKER S.T.A.L.K.E.R. Shadow of Chernobyl Chornobyl Clear Sky Call of Pripyat PDA Zone"
+        World.HOME_CONSOLE->"Wii WiiU Wii U Nintendo console"
         else->""
     }
     fun normalize(value:String)=value.filter{it.isLetterOrDigit()}.lowercase()

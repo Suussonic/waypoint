@@ -4,6 +4,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("com.google.devtools.ksp")
 }
 val appVersion = Properties().apply { rootProject.file("version.properties").inputStream().use { load(it) } }
 val releaseStore = providers.environmentVariable("WAYPOINT_KEYSTORE").orNull
@@ -29,6 +30,12 @@ android {
         }
     }
     buildTypes {
+        create("preview") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".preview"
+            versionNameSuffix = "-preview"
+            matchingFallbacks += listOf("debug")
+        }
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -38,11 +45,17 @@ android {
         }
     }
     testBuildType = providers.gradleProperty("testBuildType").getOrElse("debug")
+    sourceSets.getByName("preview").java.srcDir("src/debug/java")
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17; isCoreLibraryDesugaringEnabled = true }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
 }
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
+ksp { arg("room.schemaLocation", "$projectDir/schemas") }
 dependencies {
+    implementation("androidx.room:room-runtime:2.8.4")
+    implementation("androidx.room:room-ktx:2.8.4")
+    ksp("androidx.room:room-compiler:2.8.4")
+    androidTestImplementation("androidx.room:room-testing:2.8.4")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
     implementation(composeBom)

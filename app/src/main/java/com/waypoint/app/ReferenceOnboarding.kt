@@ -169,6 +169,17 @@ internal val gameChoices = listOf(
     GameChoice("Saints Row: The Third", World.SAINTS),
     GameChoice("Just Cause 3", World.JUST_CAUSE),
     GameChoice("Mafia: Definitive Edition", World.MAFIA),
+    GameChoice("The Division", World.DIVISION),
+    GameChoice("Sea of Thieves", World.SEA_CHART),
+    GameChoice("DOS / ASCII", World.DOS_ATLAS),
+    GameChoice("Sword Art Online", World.AINCRAD),
+    GameChoice("Counter-Strike", World.COUNTER_STRIKE),
+    GameChoice("DEFCON", World.DEFCON),
+    GameChoice("Call of Duty", World.FIELD_OPS),
+    GameChoice("16-bit adventures", World.RETRO_QUEST),
+    GameChoice("Wii U / console", World.HOME_CONSOLE),
+    GameChoice("S.T.A.L.K.E.R.", World.STALKER),
+    GameChoice("NieR:Automata", World.NIER),
 )
 
 /** First run follows the reference's cinematic pages, questions, and map carousel. */

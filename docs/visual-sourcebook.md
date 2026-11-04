@@ -2,7 +2,35 @@
 
 Research for the user's private Waypoint Android app, 30 October 2026. These sources inform separately authored Compose controls and real-world map styles. Reference screenshots stay in ignored local research folders; they are not packaged as runtime map artwork. Sources show different versions and states, so a pause map, a gameplay radar, a treasure map and a cinematic hologram are not interchangeable.
 
-## Archives checked
+## Nine additional worlds — 4 November 2026
+
+These actual map/HUD references were visually inspected before implementation. Source images remain in ignored local research files. Shipping maps use real geography, original Compose layouts and original vector emblems; none of these screenshots or game sounds is packaged. The generated previews are native MapLibre captures at the public Indian locations in `WorldPreviewPlaces.kt`. Original completion cues come from `scripts/generate_quest_sounds.py`.
+
+| World | Inspected reference | Original interpretation |
+| --- | --- | --- |
+| Dark Zone | [The Division city-map capture](https://www.gamepressure.com/tomclancysdivision/gfx/word/445199038.jpg) | Teal building masses, orange focus details and compact geographic readout. |
+| Sea Chart | [Sea of Thieves map-table capture](https://assets.reedpopcdn.com/sea_of_thieves_19_03_2018_14_54_11.png/BROK/resize/1920x1920%3E/format/jpg/quality/80/sea_of_thieves_19_03_2018_14_54_11.png) | Paper ground, ink paths, nautical compass and a dark red route. |
+| DOS Atlas | [Turbo Vision text interface](https://github.com/magiblot/tvision) | Monospaced labels, simple line framing and amber roads. Native touch controls; no typing commands. |
+| Aincrad | [Bandai Namco’s field-quest screens](https://hr.sao-game.jp/system/quest/field-quest.html) | Warm atlas, white task panels and gold hierarchy inspired by the actual map/quest UI. |
+| Tactical Radar | [Counter-Strike radar capture](https://profilerr.net/static/content/thumbs/440x/9/e3/iynr2p-a6662e6a47e1cd0b6525adc5ba4b4e39.png) | Flat building outlines, compact compass and high-contrast route markers. |
+| Vector Command | [DEFCON developer gallery](https://store.steampowered.com/app/1520/DEFCON/) | Sparse blue vector geography, fine rules and legible white guidance. |
+| Field Ops | [Modern Warfare HUD capture](https://www.gamesradar.com/call-of-duty-modern-warfare-tips/) | Restrained olive/grey geography, compact direction readout and briefing-style header. |
+| 16-bit Quest | [A Link to the Past overworld map](https://www.linkshideaway.com/images/z3/z3overworld_light.gif) | Green atlas, blue water, tan paths and original pixel lettering; real street geometry stays intact. |
+| Home Console | [Nintendo’s Wii U Home Menu support capture](https://en-americas-support.nintendo.com/app/answers/detail/a_id/1078/~/forgot-parental-controls-pin-on-wii-u) | Bright white panels, rounded native controls and friendly blue map treatment. |
+
+Quest structure is shared across every world: title-first form, progressive disclosure, task list/detail, predictable actions and readable native body type. World colours are adjusted for text contrast where a decorative map accent would be too faint. The main navigation exposes Quests beside Map, Worlds and Saved.
+
+## Issue #8: Exclusion Zone — 5 November 2026
+
+The [classic S.T.A.L.K.E.R. PDA and quest-journal screenshot](https://commons.wikimedia.org/wiki/File:STALKER%EA%9E%89_Shadow_of_Chernobyl_%E2%80%93_quest_journal.jpg) was visually inspected before implementation. It shows a grey hardware bezel, dark task panels, muted terrain, green targets and amber selected labels. Waypoint's original `StalkerAtlas.kt` adapts that hierarchy to touch: a shallow map bezel, labelled search and location controls, a charcoal/olive quest journal and green real-world route. The catalogue includes a native MapLibre preview and original PDA emblem; the globe and completion sound are generated originals. No fictional hazard readings or anomaly locations are presented as real data. Roboto Condensed is an explicit readable lettering adaptation.
+
+## Original transport markers — 5 November 2026
+
+The user's examples were a horse for the RDR2-inspired Old West and a minecart for Minecraft-inspired Pixel World. `VehicleMarkers.kt` contains original Canvas illustrations for all 38 worlds' Car and Motorcycle modes. Other transport interpretations include fantasy mounts, a ship/rowboat, a carriage/broom, modern vehicles and rovers. No downloaded game sprite, logo, model or image is packaged. These are themed location markers; changing the illustration does not change Car/Motorcycle route costs or turn instructions. Walking and unknown-heading indicators remain distinct.
+
+Car-display comparison used Google Maps in the official Android Auto Desktop Head Unit. Google Maps continued using the phone's real location rather than our public London fixture; a domestic destination provided a stationary guidance reference. Its visible perspective and marker hierarchy informed the implementation, but proprietary camera values and exact same-route parity were not established. Waypoint uses a 50° guidance tilt, speed/turn-dependent zoom, a lower vehicle anchor within the host's visible map area and a flat route overview. [Android's DHU documentation](https://developer.android.com/training/cars/testing/dhu) documents the simulator and sensor configuration. MapLibre's [image conversion source](https://github.com/maplibre/maplibre-native/blob/android-v11.13.5/platform/android/MapLibreAndroid/src/main/java/org/maplibre/android/maps/Style.java) establishes that bitmap density controls sprite scale.
+
+## Earlier archives checked
 
 | Source | Useful material | Research decision |
 |---|---|---|
@@ -53,7 +81,7 @@ The retained additional-game source URLs follow below; the local files are priva
 
 `generate_materials.py` produces original 16-pixel stone/grass/water tiles, nine pixel control/place sprites, and paper fibre. `Cartography.kt` draws semantic POI glyphs, player pointers and destination shapes, selected by each game's map rules. Compose renders game-specific map composition; map icons and geometry are not screenshots pasted over a functional map. Fonts are bundled with licenses.
 
-No screenshot proves navigation accuracy. Real street connectivity, position, routes and elevations are preserved. Game-authored fictional terrain, unique proprietary fonts and hand-painted map illustrations are not present, so this is not a pixel-exact game asset port. The sourcebook identifies observed similarities and adaptations rather than claiming identity.
+No screenshot proves navigation accuracy. Real street connectivity, position, routes and elevations are preserved. Game-authored fictional terrain and hand-painted map illustrations are not present; selected licensed game-font families are bundled as documented in the typography notes, so this is not a pixel-exact game asset port. The sourcebook identifies observed similarities and adaptations rather than claiming identity.
 
 ## Retained reference-image URLs
 
@@ -101,3 +129,9 @@ regenerating. Upstream changes fail closed until reviewed and repinned. The sour
 is https://tiles.openfreemap.org/styles/liberty; a fresh download may no longer
 match. Committed generated styles are Android build inputs; CI does not regenerate
 from that endpoint.
+
+## NieR:Automata / Machine Atlas — issue #9
+
+Primary reference: [PlatinumGames’ UI designer Hisayoshi Kijima explains the interface](https://www.platinumgames.com/official-blog/article/9624) (25 August 2017), including original map, navigation and UI-concept images. The warm beige, charcoal type, square selections, restrained accents and score-like rules inform Waypoint’s original interpretation. Reference screenshots are inspection-only and are not shipped.
+
+Machine Atlas retains real Tokyo Station geography in its native MapLibre preview, extruded real building footprints, legible roads and a rust route with contrasting casing. Phone chrome, quest palette, car overlay, globe texture, original flight-unit/pod markers, original completion cue and nine authored voice phrases are bundled. Noto Sans is an explicitly identified readable adaptation, not a claim to the game’s original font. Cycling uses an original pedal-cycle marker in each world’s livery; it changes the route profile, unlike decorative Car/Motorcycle marker substitutions.

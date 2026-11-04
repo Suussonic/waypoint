@@ -1,0 +1,11 @@
+<resources>
+    <string name="world_division_description">Orange route beacons, a tilted city atlas and a compact tactical control panel.</string>
+    <string name="world_sea_chart_description">A nautical paper chart with ink roads, a compass rose and a red route.</string>
+    <string name="world_dos_atlas_description">Amber lettering, terminal frames and a clear street map. No commands to learn.</string>
+    <string name="world_aincrad_description">Light quest panels, warm atlas colours and a calm interface for your next chapter.</string>
+    <string name="world_counter_strike_description">A close, flat radar view with strong building outlines and clear direction markers.</string>
+    <string name="world_defcon_description">A quiet vector map with blue outlines and precise, readable navigation.</string>
+    <string name="world_field_ops_description">A field briefing map with muted terrain, a compass strip and practical controls.</string>
+    <string name="world_retro_quest_description">A colourful 16-bit adventure atlas with pixel lettering and real streets.</string>
+    <string name="world_home_console_description">Bright panels, rounded buttons and a welcoming console-style map.</string>
+</resources>

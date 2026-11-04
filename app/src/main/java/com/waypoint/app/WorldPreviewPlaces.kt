@@ -33,6 +33,17 @@ fun World.previewPlace(): WorldPreviewPlace = when (this) {
     World.SAINTS -> WorldPreviewPlace("Delhi · Connaught Place", 28.6310, 77.2200, 15.8)
     World.JUST_CAUSE -> WorldPreviewPlace("Kochi · Fort Kochi", 9.9660, 76.2420, 15.2)
     World.MAFIA -> WorldPreviewPlace("Kolkata · Dalhousie", 22.5720, 88.3480, 15.8)
+    World.DIVISION -> WorldPreviewPlace("Delhi · Connaught Place", 28.631, 77.22, 15.8)
+    World.SEA_CHART -> WorldPreviewPlace("Kochi · Fort Kochi", 9.966, 76.242, 15.2)
+    World.DOS_ATLAS -> WorldPreviewPlace("Kolkata · Esplanade", 22.566, 88.351, 15.6)
+    World.AINCRAD -> WorldPreviewPlace("Udaipur · City Palace", 24.576, 73.685, 15.5)
+    World.COUNTER_STRIKE -> WorldPreviewPlace("Jaipur · Old City", 26.926, 75.828, 16.0)
+    World.DEFCON -> WorldPreviewPlace("Mumbai · Marine Drive", 18.944, 72.824, 14.6)
+    World.FIELD_OPS -> WorldPreviewPlace("Hyderabad · HITEC City", 17.448, 78.378, 15.8)
+    World.RETRO_QUEST -> WorldPreviewPlace("Hampi · Ruins", 15.336, 76.461, 15.0)
+    World.NIER -> WorldPreviewPlace("Tokyo · Station",35.6812,139.7671,16.0)
+    World.STALKER -> WorldPreviewPlace("Dehradun · Clock Tower", 30.3258, 78.0410, 15.6)
+    World.HOME_CONSOLE -> WorldPreviewPlace("Panaji · Waterfront", 15.498, 73.827, 15.2)
 }
 
 @DrawableRes
@@ -64,4 +75,15 @@ fun World.previewImage(): Int = when (this) {
     World.SAINTS -> R.drawable.preview_saints
     World.JUST_CAUSE -> R.drawable.preview_just_cause
     World.MAFIA -> R.drawable.preview_mafia
+    World.DIVISION -> R.drawable.preview_division
+    World.SEA_CHART -> R.drawable.preview_sea_chart
+    World.DOS_ATLAS -> R.drawable.preview_dos_atlas
+    World.AINCRAD -> R.drawable.preview_aincrad
+    World.COUNTER_STRIKE -> R.drawable.preview_counter_strike
+    World.DEFCON -> R.drawable.preview_defcon
+    World.FIELD_OPS -> R.drawable.preview_field_ops
+    World.RETRO_QUEST -> R.drawable.preview_retro_quest
+    World.NIER -> R.drawable.preview_nier
+    World.STALKER -> R.drawable.preview_stalker
+    World.HOME_CONSOLE -> R.drawable.preview_home_console
 }

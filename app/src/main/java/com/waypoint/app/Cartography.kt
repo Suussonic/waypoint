@@ -35,6 +35,17 @@ fun World.mapArt()=when(this) {
     World.SAINTS->MapArt(0.0,16.0,4f,.6f,MarkerArt.PASTEL,PlayerArt.ARROW,true)
     World.JUST_CAUSE->MapArt(0.0,15.6,3f,.55f,MarkerArt.DIAMOND,PlayerArt.POINTER,true)
     World.MAFIA->MapArt(0.0,16.0,4f,.6f,MarkerArt.INK,PlayerArt.ARROW,false)
+    World.DIVISION->MapArt(40.0,16.0,4f,.6f,MarkerArt.TECH,PlayerArt.CHEVRON,true)
+    World.SEA_CHART->MapArt(0.0,15.6,3.5f,.65f,MarkerArt.INK,PlayerArt.TEARDROP,false)
+    World.DOS_ATLAS->MapArt(0.0,16.0,3f,.55f,MarkerArt.PHOSPHOR,PlayerArt.POINTER,true)
+    World.AINCRAD->MapArt(0.0,15.8,3.5f,.6f,MarkerArt.GOLD,PlayerArt.RING,false)
+    World.COUNTER_STRIKE->MapArt(0.0,16.7,4f,.65f,MarkerArt.SILHOUETTE,PlayerArt.ARROW,true)
+    World.DEFCON->MapArt(0.0,15.5,2.5f,.5f,MarkerArt.TECH,PlayerArt.CHEVRON,true)
+    World.FIELD_OPS->MapArt(0.0,16.2,3.5f,.6f,MarkerArt.SILHOUETTE,PlayerArt.ARROW,true)
+    World.RETRO_QUEST->MapArt(0.0,16.0,4f,.6f,MarkerArt.PIXEL,PlayerArt.PIXEL,false)
+    World.NIER->MapArt(42.0,16.0,4.5f,.6f,MarkerArt.DIAMOND,PlayerArt.RING,false)
+    World.STALKER->MapArt(0.0,15.8,4f,.6f,MarkerArt.PHOSPHOR,PlayerArt.POINTER,true)
+    World.HOME_CONSOLE->MapArt(25.0,16.0,4f,.6f,MarkerArt.PASTEL,PlayerArt.RING,false)
 }
 internal fun mapCameraTilt(world:World,enabled:Boolean,navigating:Boolean=false,previewTilt:Double?=null):Double =
     previewTilt ?: if(!enabled) 0.0 else if(navigating) 50.0 else world.mapArt().tilt.takeIf { it>0.0 } ?: 45.0

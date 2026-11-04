@@ -1,6 +1,20 @@
 # Security review and hardening
 
-## Current source audit and safeguards (3 November 2026)
+## Android 2.0.0 codebase and GitHub audit (5 November 2026)
+
+The full standard audit completed all six phases, including independent candidate and final-record reviews. Both the findings and coverage validators pass. It reviewed the entire Android checkout and read-only GitHub configuration, including quests, photos, reminders, sharing, saved-place names, bicycle routing, all 38 worlds, default release alerts, navigation and release signing. The separate iOS port was outside this Android checkout.
+
+**Outcome: zero confirmed findings, four records needing validation and two rejected historical proposals.** The 167 coverage units comprise 124 covered, 19 candidate-linked and 24 blocked units. Candidate-linked units are review bookkeeping, not confirmed vulnerabilities. There are no deferred or unfinished review assignments. The final 740-path snapshot matched the independent coverage review. Full local reports and structured evidence are retained under `security-audit-skill/waypoint/run-5`.
+
+The four unresolved records concern AndroidX Car App Library transport and lifecycle behavior: requests before a completed handshake, malformed session data, service-wide host metadata and shared Binder authority. Exact installed-package behavior, separate-UID delivery, containment and guidance effects require a disposable isolated Android fixture. No severity or demonstrated exploitation is claimed. The historical alternate-route race is rejected against the current synchronized guidance-session guard; the unused exported Compose preview entry is rejected against the repaired manifests.
+
+The audit's required OS isolation and aggregate resource controls were unavailable, so it did not execute target code, probe the phone or run live attacks. It used source, configuration, hashes and static dependency inspection. The 24 blocked units retain explicit native/framework, hosted-authority and dependency-inventory gaps. Ordinary builds, manifest checks and phone/DHU tests in [validation](validation.md) are separate functional evidence. Completing the audit workflow does not certify that all runtime boundaries are safe.
+
+The current source protects default update jobs with Android's binding permission, cancellation generations and current notification/driving checks. Saved-place renaming changes each copy's name without replacing its coordinates or provenance. Car surface replacement cancels its delayed refresh and closes acquired resources. The unused dependency-provided debug Compose preview activity is removed, and packaged-component checks prevent it returning. Quest rewards remain transactional, pictures stay private and incoming places require confirmation.
+
+Read-only GitHub checks found secret scanning and push protection enabled, a read-only default Actions token and commit-pinned actions in the workflow. The visible collaborator list contained the owner. Main had no protection, effective rulesets and environments were empty, Dependabot alerts were disabled, and code scanning had no analysis. Tag/integration authority and dependency inventory were not fully visible. These are recorded limits and hardening opportunities, not demonstrated unauthorized access. Signing authority includes manual candidate dispatch and editing the selected branch; candidate builds must use reviewed source. The audit changed no repository settings and retrieved no secret values.
+
+## Earlier source audit and safeguards (3 November 2026)
 
 A standard full-source audit of the Android Auto and Ferrostar checkout mapped 44 security coverage units: 28 covered, five candidate units linked to four **needs-validation** leads, and 11 blocked by unavailable AndroidX/native runtime evidence. No exploit was confirmed. The frozen baseline report is outside the repository under `security-audit-skill/waypoint/run-3`. The local Docker daemon was unavailable, so this audit did not run target builds, emulator fixtures, or app tests.
 

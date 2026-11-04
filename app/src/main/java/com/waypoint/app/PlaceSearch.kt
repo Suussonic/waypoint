@@ -97,12 +97,16 @@ class PlaceSearch(private val primary:PlaceSearchProvider,private val fallback:P
         val key="${PlaceMatcher.normalize(query)}:${(near.lat*100).roundToInt()}:${(near.lon*100).roundToInt()}:$expanded"
         cache[key]?.let{return@withLock PlaceSearchResult(PlaceMatcher.ranked(effectiveQuery,near,it+local),aliasNote)}
         val candidates=local.toMutableList()
+        val remote=mutableListOf<Place>()
         var failures=0
         var completed=0
         suspend fun lookup(provider:PlaceSearchProvider,q:String) {
             try {
                 val results=withTimeoutOrNull(9000){provider.find(q,near)}
-                if(results==null)failures++ else { candidates.addAll(results.take(20));completed++ }
+                if(results==null)failures++ else {
+                    val bounded=results.take(20)
+                    remote.addAll(bounded);candidates.addAll(bounded);completed++
+                }
             } catch(e:CancellationException){throw e} catch(_:Exception){failures++}
         }
         lookup(primary,variants.first())
@@ -112,7 +116,8 @@ class PlaceSearch(private val primary:PlaceSearchProvider,private val fallback:P
             if(variants.size>1 && PlaceMatcher.ranked(effectiveQuery,near,candidates).isEmpty())lookup(fallback,variants.last())
         }
         val results=PlaceMatcher.ranked(effectiveQuery,near,candidates)
-        if(failures==0) { cache[key]=results;while(cache.size>40)cache.remove(cache.keys.first()) }
+        // Saved/recent matches are supplied afresh: deleting one must not leave a cached copy.
+        if(failures==0) { cache[key]=remote;while(cache.size>40)cache.remove(cache.keys.first()) }
         val note=when {
             failures>0 && results.isEmpty() -> "Search service unavailable. Check your connection and try again."
             failures>0 -> "Some search services are unavailable. Showing the matches found."

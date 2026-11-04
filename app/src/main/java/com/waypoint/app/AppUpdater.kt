@@ -59,30 +59,10 @@ class AppUpdater(private val context: Context) {
         job = scope.launch {
             try {
                 val release = withContext(Dispatchers.IO) {
-                    val request = Request.Builder().url(ReleaseUpdate.API).header("Accept", "application/vnd.github+json")
-                        .header("X-GitHub-Api-Version", "2022-11-28").header("User-Agent", "Waypoint/${BuildConfig.VERSION_NAME}").build()
-                    client.newCall(request).also { call = it }.execute().use { response ->
-                        when (response.code) {
-                            404 -> throw IOException("No public release is available yet. Try again after the first build is published.")
-                            403, 429 -> throw IOException("GitHub's update limit was reached. Please try again later.")
-                        }
-                        if (!response.isSuccessful) throw IOException("GitHub is unavailable (${response.code}). Please try again.")
-                        val body = response.body ?: throw IOException("GitHub returned an empty response.")
-                        val bytes = body.byteStream().use { input ->
-                            val output = java.io.ByteArrayOutputStream()
-                            val buffer = ByteArray(8192)
-                            while (output.size() <= 1_000_000) {
-                                val count = input.read(buffer)
-                                if (count < 0) break
-                                output.write(buffer, 0, count)
-                            }
-                            output.toByteArray()
-                        }
-                        require(bytes.size <= 1_000_000) { "The release response is too large." }
-                        ReleaseUpdate.parse(bytes.toString(Charsets.UTF_8), BuildConfig.VERSION_CODE)
-                    }
+                    readReleaseCheck(releaseCheckCall(client).also { call=it })
                 }
                 mutable.value = release?.let(UpdateStatus::Available) ?: UpdateStatus.Current
+                release?.let { (context.applicationContext as WaypointApplication).updateAlerts.notifyIfNew(it) }
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) { currentCoroutineContext().ensureActive(); mutable.value = previousOffer ?: UpdateStatus.Failed(friendlyError(e)) }
             finally { call = null }

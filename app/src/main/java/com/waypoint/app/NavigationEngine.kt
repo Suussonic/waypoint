@@ -6,7 +6,8 @@ data class Coordinate(val lat: Double, val lon: Double)
 internal fun shortestLongitudeDelta(from: Double,to: Double): Double = ((to-from+540.0)%360.0)-180.0
 internal fun wrappedLongitude(value: Double): Double = ((value+540.0)%360.0)-180.0
 data class Place(val id: String, val name: String, val address: String, val point: Coordinate, val kind: String = "place", val source: String = "")
-data class Maneuver(val point: Coordinate, val type: String, val modifier: String, val road: String, val distance: Double, val duration: Double, val exit: Int = 0) {
+data class Maneuver(val point: Coordinate, val type: String, val modifier: String, val road: String, val distance: Double, val duration: Double, val exit: Int = 0,
+    val uTurnRight: Boolean = false) {
     val instruction: String get() {
         val action = when (type) {
             "depart" -> "Head ${modifier.ifBlank { "straight" }}"
@@ -27,6 +28,18 @@ data class Maneuver(val point: Coordinate, val type: String, val modifier: Strin
         }
         return if (road.isNotBlank() && type != "arrive") "$action onto $road" else action
     }
+}
+
+/** Preserve the provider's actual turn direction, including a crossing of north. */
+internal fun isRightUTurn(before:Double?,after:Double?,drivingSide:String?):Boolean {
+    if(before!=null && after!=null && before.isFinite() && after.isFinite() &&
+        before in 0.0..360.0 && after in 0.0..360.0) {
+        val change=((after-before+540.0)%360.0)-180.0
+        if(abs(change)>1.0 && abs(change)<179.0)return change>0.0
+    }
+    // Exactly opposite bearings do not distinguish the arc. In left-hand traffic
+    // a normal U-turn bends right; missing metadata retains the existing default.
+    return drivingSide=="left"
 }
 data class RoadRoute(val points: List<Coordinate>, val steps: List<Maneuver>, val meters: Double, val seconds: Double, val mode:TravelMode=TravelMode.CAR,
     val ferrostarRoute: uniffi.ferrostar.Route? = null)

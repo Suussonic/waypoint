@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.speech.tts.TextToSpeech
 import com.stadiamaps.ferrostar.core.AndroidTtsObserver
 import com.stadiamaps.ferrostar.core.AndroidTtsStatusListener
@@ -86,10 +87,25 @@ internal class GuidanceVoice(
     }
 }
 
-internal fun androidGuidanceVoice(context: Context, onStatus: (GuidanceVoiceStatus) -> Unit): GuidanceVoice {
+internal fun androidGuidanceVoice(context: Context, world: () -> World? = { null },
+                                  onStatus: (GuidanceVoiceStatus) -> Unit): GuidanceVoice {
     val delegate = AndroidTtsObserver(context)
+    val speaker = WorldGuidanceSpeaker(delegate, world, tone = { style ->
+        // Preserve Android's speech preferences as the baseline. Unsupported
+        // tone controls must never prevent a valid turn from being spoken.
+        delegate.tts?.let { tts ->
+            runCatching {
+                val pitch = Settings.Secure.getInt(context.contentResolver,Settings.Secure.TTS_DEFAULT_PITCH,100)
+                    .takeIf { it in 10..600 }?.div(100f) ?: 1f
+                val rate = Settings.Secure.getInt(context.contentResolver,Settings.Secure.TTS_DEFAULT_RATE,100)
+                    .takeIf { it in 10..600 }?.div(100f) ?: 1f
+                if(tts.setPitch(pitch * (style?.pitch ?: 1f)) == TextToSpeech.ERROR)tts.setPitch(pitch)
+                if(tts.setSpeechRate(rate * (style?.pace ?: 1f)) == TextToSpeech.ERROR)tts.setSpeechRate(rate)
+            }
+        }
+    })
     val main = Handler(Looper.getMainLooper())
-    return GuidanceVoice(delegate, initialize = { report ->
+    return GuidanceVoice(speaker, initialize = { report ->
         // Ferrostar 0.59.0 does not start TTS in its constructor. Release failed
         // instances before retrying; install the listener before explicitly starting.
         delegate.statusObserver = null

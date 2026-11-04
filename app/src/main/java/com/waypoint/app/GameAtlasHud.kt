@@ -63,6 +63,17 @@ data class AtlasActions(val search:()->Unit,val huds:()->Unit,val saved:()->Unit
             World.SAINTS->SaintsAtlas(state,actions)
             World.JUST_CAUSE->MediciAtlas(state,actions)
             World.MAFIA->MafiaAtlas(state,actions)
+            World.DIVISION->DivisionAtlas(state,actions)
+            World.SEA_CHART->SeaChartAtlas(state,heading,actions)
+            World.DOS_ATLAS->DosAtlas(state,actions)
+            World.AINCRAD->AincradAtlas(state,heading,actions)
+            World.COUNTER_STRIKE->CounterStrikeAtlas(state,heading,actions)
+            World.DEFCON->DefconAtlas(state,actions)
+            World.FIELD_OPS->FieldOpsAtlas(state,heading,actions)
+            World.RETRO_QUEST->RetroQuestAtlas(state,actions)
+            World.NIER->NierAtlas(state,heading,actions)
+            World.STALKER->StalkerAtlas(state,heading,actions)
+            World.HOME_CONSOLE->HomeConsoleAtlas(state,actions)
         }
         if(maxHeight<420.dp || state.world !in setOf(World.LOS_SANTOS,World.NIGHT_CITY,World.HORIZON,World.HOGWARTS,World.BRIDGES,World.FAR_CRY)) {
             AtlasTool(state.world,Icons.Default.ViewInAr,"Toggle 2D and 3D",actions.tilt,

@@ -5,6 +5,31 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CarGuidanceCameraTest {
+    @Test fun guidanceKeepsVehicleAnchoredWhenTheRoadAheadBends() {
+        val fix=Coordinate(51.5081,-.1280)
+        val route=RoadRoute(listOf(fix,Coordinate(51.5086,-.1280),Coordinate(51.5086,-.126)),emptyList(),200.0,60.0)
+        val camera=carCamera(NavState(fix=fix,route=route,navigating=true),1280,720,
+            CarMapViewport(0,0,1100,600))
+        assertEquals(fix.lat,camera.target!!.latitude,0.000001)
+        assertEquals(fix.lon,camera.target!!.longitude,0.000001)
+        assertEquals(50.0,camera.tilt,0.001)
+        val padding=camera.padding!!
+        val anchorX=(padding[0]+1280-padding[2])/2
+        val anchorY=(padding[1]+720-padding[3])/2
+        assertTrue("Driver must remain within unobscured map",anchorX in 100.0..1000.0 && anchorY in 350.0..550.0)
+    }
+
+    @Test fun narrowerHostMapAreaZoomsOutToPreserveBothRouteEndpoints() {
+        val route=RoadRoute(listOf(Coordinate(0.0,0.0),Coordinate(0.0,.02)),emptyList(),2200.0,300.0)
+        val state=NavState(route=route)
+        val full=carCamera(state,1280,720)
+        val panel=carCamera(state,1280,720,CarMapViewport(500,0,1280,720))
+        assertTrue(panel.zoom<full.zoom)
+        assertEquals(full.target,panel.target)
+        val invalid=carCamera(state,1280,720,CarMapViewport(900,500,700,200))
+        assertEquals(full.zoom,invalid.zoom,0.001)
+    }
+
     @Test fun guidanceZoomOpensRoadAheadAtSpeedAndClosesOnTurns() {
         assertEquals(17.1,carGuidanceZoom(0f,1000.0),0.001)
         assertEquals(16.6,carGuidanceZoom(10f,1000.0),0.001)
@@ -18,6 +43,25 @@ class CarGuidanceCameraTest {
         val state=NavState(route=route,navigating=true,headingReliable=false)
         assertEquals(90.0,carTravelBearing(state),0.01)
         assertEquals(270.0,carTravelBearing(state.copy(headingReliable=true,headingSource=HeadingSource.COURSE,speed=3f,bearing=270f)),0.01)
+    }
+
+    @Test fun vehicleFollowsCurrentSegmentThroughATightUTurnInsteadOfCuttingTheCorner() {
+        val points=listOf(Coordinate(0.0,0.0),Coordinate(.00004,0.0),Coordinate(.00004,.00003),Coordinate(-.0001,.00003))
+        val route=RoadRoute(points,emptyList(),25.0,10.0)
+        val state=NavState(route=route,navigating=true,headingReliable=false)
+        assertEquals(0.0,carTravelBearing(state),.01)
+        val atTurn=RouteProgress(4.4,20.0,10.0,0.0,0,0.0,points[1],segmentIndex=1)
+        assertEquals(90.0,carTravelBearing(state.copy(progress=atTurn)),.01)
+        assertEquals(180.0,carTravelBearing(state.copy(progress=atTurn.copy(snapped=points[2],segmentIndex=2))),.01)
+    }
+
+    @Test fun uTurnDirectionUsesArcThenDrivingSideForAmbiguousBearings() {
+        assertTrue(isRightUTurn(347.0,53.0,"right"))
+        assertEquals(false,isRightUTurn(13.0,307.0,"left"))
+        assertTrue(isRightUTurn(0.0,180.0,"left"))
+        assertEquals(false,isRightUTurn(0.0,180.0,"right"))
+        assertEquals(false,isRightUTurn(Double.NaN,Double.POSITIVE_INFINITY,null))
+        assertEquals(false,isRightUTurn(-1.0,700.0,"right"))
     }
 
     @Test fun cameraLooksAlongRemainingRoadWithoutJumpingToDestination() {
