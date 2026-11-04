@@ -3,33 +3,36 @@
     <source media="(max-width: 640px)" srcset="docs/images/promo/hero-mobile.jpg" />
     <img src="docs/images/promo/hero.jpg" width="100%" alt="Waypoint's Old West map on a phone beside Android Auto guidance in the same world, using public London demonstration captures." />
   </picture>
-  <p><strong>Real streets. Another world.</strong><br />27 game-inspired maps, live navigation and spoken directions on your phone and Android Auto.<br /><sub>Made in India · Open to the world</sub></p>
+  <h1>Real streets. Another world.</h1>
+  <p>27 game-inspired maps, live navigation and spoken directions<br />on your phone and Android Auto.</p>
   <p>
     <a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="https://img.shields.io/github/v/release/the-geeky-couldron/waypoint?label=latest%20release&amp;color=497c6f" alt="Latest Waypoint release version" /></a>
     <a href="https://github.com/the-geeky-couldron/waypoint/releases"><img src="https://img.shields.io/github/downloads/the-geeky-couldron/waypoint/total?label=Downloads&amp;color=497c6f" alt="Waypoint Downloads" /></a>
     <a href="https://github.com/the-geeky-couldron/waypoint/stargazers"><img src="https://img.shields.io/github/stars/the-geeky-couldron/waypoint?label=GitHub%20stars&amp;color=497c6f" alt="Waypoint GitHub stars" /></a>
   </p>
   <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="docs/images/promo/download.jpg" width="340" alt="Download Waypoint for Android from GitHub Releases" /></a></p>
-  <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><strong>Download the latest APK</strong></a> · <a href="#build-from-source">Build from source</a> · <a href="#privacy-and-services">Privacy and services</a></p>
-  <p><sub>Android 8.0+ · No ads or paywall · No Waypoint account · Every world included</sub></p>
+  <p><strong>Android 8.0+</strong> · No ads or paywall · No Waypoint account<br />Every world included · Made in India, open to the world</p>
+  <p><a href="https://repolode.com/en/repo/the-geeky-couldron/waypoint"><img src="https://repolode.com/badge/the-geeky-couldron/waypoint" alt="Featured on Repolode" height="30" /></a></p>
 </div>
 
-[![Featured on Repolode](https://repolode.com/badge/the-geeky-couldron/waypoint)](https://repolode.com/en/repo/the-geeky-couldron/waypoint)
+<p align="center">
+  <a href="#your-map-your-world">Explore the worlds</a> ·
+  <a href="#your-world-on-the-dashboard">Android Auto</a> ·
+  <a href="#get-waypoint">Install</a> ·
+  <a href="#build-from-source">Build</a> ·
+  <a href="#privacy-and-services">Privacy</a> ·
+  <a href="#open-project">Guides</a>
+</p>
 
-## Your world, on the dashboard
+---
 
-Waypoint includes Android Auto support, but a GitHub-sideloaded APK may not appear in a real car’s launcher. Android requires a trusted distribution channel for Car App Library apps; its “Unknown sources” option does not cover Waypoint. See [Android Auto setup and testing](docs/guide.md#android-auto). With a supported installation, connect your phone and open Waypoint from the car launcher. The projected map follows the world selected on your phone, with a full route line, turn cues and a camera that follows travel. Search or pick a saved destination on the car screen; shared destinations ask before Waypoint previews a route.
+## What's new in 1.5.0
 
-<picture>
-  <source media="(max-width: 640px)" srcset="docs/images/promo/android-auto-mobile.jpg" />
-  <img src="docs/images/promo/android-auto.jpg" width="100%" alt="Actual Android Auto Desktop Head Unit captures of Waypoint guidance on a simulated London route, first in Old West and then in Night City." />
-</picture>
+- **Voice guidance:** fixed silent spoken directions and improved speech-engine startup and recovery.
+- **Onboarding:** keep multiple favourite games selected, use UK English spelling and choose Twitter / X as your referral source.
+- **Android Auto:** clearer launcher setup, with successful Desktop Head Unit checks. Real-car launcher availability remains under investigation.
 
-<sub>Captured in the Android Auto Desktop Head Unit with a fixed public London demonstration route. The route and guidance state were simulated for the screenshots; no personal location was used. <a href="docs/images/promo/README.md">Capture and artwork notes</a>.</sub>
-
-**Waypoint 1.5.0** fixes silent voice guidance, improves multiple favourite-game selection, adds UK English spelling and Twitter / X onboarding, and clarifies Android Auto launcher setup. [Read the full release notes](docs/releases/current.md).
-
-Android Auto keeps Google Maps available in the launcher. Open Waypoint there to use it as the current navigation app; installing it cannot change Android Auto's choice on its own. The car UI uses host-safe controls for search, saved destinations, voice, recenter and zoom. The phone remains the place to choose Car, Motorcycle or Walk.
+[Full release notes and community shout-outs →](docs/releases/1.5.0.md)
 
 ## Your map, your world
 
@@ -42,6 +45,9 @@ After the first run, Waypoint opens your last selected world. Thanks to [u/cuber
   <img src="docs/images/promo/worlds-1.jpg" width="100%" alt="Waypoint's Los Santos and Old West map styles, presented in phone mockups." />
 </picture>
 
+<details>
+<summary><strong>Explore Night City, The Continent, Sheikah Slate and Pixel World</strong></summary>
+
 <picture>
   <source media="(max-width: 640px)" srcset="docs/images/promo/worlds-2-mobile.jpg" />
   <img src="docs/images/promo/worlds-2.jpg" width="100%" alt="Waypoint's Night City and The Continent map styles, presented in phone mockups." />
@@ -52,29 +58,59 @@ After the first run, Waypoint opens your last selected world. Thanks to [u/cuber
   <img src="docs/images/promo/worlds-3.jpg" width="100%" alt="Waypoint's Sheikah Slate and Pixel World map styles, presented in phone mockups." />
 </picture>
 
-<sub>These compositions use sanitised native map captures at a fixed public London demonstration position. <a href="docs/images/promo/README.md">Artwork notes</a>.</sub>
+</details>
+
+<p><sub>These compositions use sanitised native map captures at a fixed public London demonstration position. <a href="docs/images/promo/README.md">Artwork notes</a>.</sub></p>
 
 <details>
 <summary><strong>See all 27 worlds</strong></summary>
 
-| World | Inspiration | World | Inspiration |
-| --- | --- | --- | --- |
-| Los Santos | Grand Theft Auto V | Old West | Red Dead Redemption 2 |
-| Night City | Cyberpunk 2077 | Pixel World | Minecraft |
-| Green Terminal | Fallout | San Andreas | Grand Theft Auto: San Andreas |
-| Midnight Run | Need for Speed Heat | The Continent | The Witcher 3 |
-| Vice Coast | Grand Theft Auto: Vice City | Liberty City | Grand Theft Auto IV |
-| Nudle Maps | Watch Dogs 2 | Sheikah Slate | The Legend of Zelda: Breath of the Wild |
-| Skyrim | The Elder Scrolls V: Skyrim | Lands Between | Elden Ring |
-| Horizon | Forza Horizon | Animus | Assassin’s Creed Origins |
-| Hope County | Far Cry 5 | Tsushima | Ghost of Tsushima |
-| Bridges | Death Stranding | The Embrace | Horizon Zero Dawn |
-| Manhattan | Marvel’s Spider-Man | Highlands | Hogwarts Legacy |
-| Surface Map | Starfield | Bohemia | Kingdom Come: Deliverance II |
-| Steelport | Saints Row: The Third | Medici | Just Cause 3 |
-| Lost Heaven | Mafia: Definitive Edition | | |
+| World | Inspiration |
+| --- | --- |
+| Los Santos | Grand Theft Auto V |
+| Old West | Red Dead Redemption 2 |
+| Night City | Cyberpunk 2077 |
+| Pixel World | Minecraft |
+| Green Terminal | Fallout |
+| San Andreas | Grand Theft Auto: San Andreas |
+| Midnight Run | Need for Speed Heat |
+| The Continent | The Witcher 3 |
+| Vice Coast | Grand Theft Auto: Vice City |
+| Liberty City | Grand Theft Auto IV |
+| Nudle Maps | Watch Dogs 2 |
+| Sheikah Slate | The Legend of Zelda: Breath of the Wild |
+| Skyrim | The Elder Scrolls V: Skyrim |
+| Lands Between | Elden Ring |
+| Horizon | Forza Horizon |
+| Animus | Assassin’s Creed Origins |
+| Hope County | Far Cry 5 |
+| Tsushima | Ghost of Tsushima |
+| Bridges | Death Stranding |
+| The Embrace | Horizon Zero Dawn |
+| Manhattan | Marvel’s Spider-Man |
+| Highlands | Hogwarts Legacy |
+| Surface Map | Starfield |
+| Bohemia | Kingdom Come: Deliverance II |
+| Steelport | Saints Row: The Third |
+| Medici | Just Cause 3 |
+| Lost Heaven | Mafia: Definitive Edition |
 
 </details>
+
+## Your world, on the dashboard
+
+With a supported installation, connect your phone and open Waypoint from the car launcher. The projected map follows the world selected on your phone, with a full route line, turn cues and a camera that follows travel. Search or pick a saved destination on the car screen; shared destinations ask before Waypoint previews a route.
+
+**Launcher availability:** a GitHub-sideloaded APK may not appear in a real car’s launcher. Android requires a trusted distribution channel for Car App Library apps; its “Unknown sources” option does not cover Waypoint. [Android Auto setup and testing →](docs/guide.md#android-auto)
+
+<picture>
+  <source media="(max-width: 640px)" srcset="docs/images/promo/android-auto-mobile.jpg" />
+  <img src="docs/images/promo/android-auto.jpg" width="100%" alt="Actual Android Auto Desktop Head Unit captures of Waypoint guidance on a simulated London route, first in Old West and then in Night City." />
+</picture>
+
+<p><sub>Captured in the Android Auto Desktop Head Unit with a fixed public London demonstration route. The route and guidance state were simulated for the screenshots; no personal location was used. <a href="docs/images/promo/README.md">Capture and artwork notes</a>.</sub></p>
+
+Android Auto keeps Google Maps available in the launcher. Open Waypoint there to use it as the current navigation app; installing it cannot change Android Auto's choice on its own. The car UI uses host-safe controls for search, saved destinations, voice, recenter and zoom. The phone remains the place to choose Car, Motorcycle or Walk.
 
 ## Built for the journey
 
@@ -96,7 +132,11 @@ After the first run, Waypoint opens your last selected world. Thanks to [u/cuber
 3. Tap **Locate** and grant precise location. Search for a destination or hold the map to drop a pin.
 4. Choose **Car**, **Motorcycle** or **Walk**. Review the route, then tap **Start navigation**.
 
-Installed versions check for a newer stable GitHub release when Waypoint opens on the phone. If an update is available, an in-app prompt appears when the idle map is visible. Review the release notes, choose **Download update**, and confirm installation in Android. The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 1.5.0**; see the [release notes](docs/releases/current.md).
+### Updating
+
+Installed versions check for a newer stable GitHub release when Waypoint opens on the phone. If an update is available, an in-app prompt appears when the idle map is visible. Review the release notes, choose **Download update**, and confirm installation in Android.
+
+The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 1.5.0**; see the [release notes](docs/releases/current.md).
 
 ## Build from source
 
@@ -109,9 +149,18 @@ cd waypoint
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The Android build uses Kotlin, Jetpack Compose and MapLibre Native. No map API key, Node installation or Pillow (PIL) installation is needed to build the checked-in app. Pillow is used only by optional artwork-generation scripts. The three MP4s in `app/src/main/res/raw/` are runtime onboarding assets; their editable Remotion compositions and staging instructions are under [`tools/waypoint-motion`](tools/waypoint-motion/README.md). Local release builds stay unsigned unless you supply distribution signing credentials; see [releasing](docs/releasing.md).
+The Android build uses Kotlin, Jetpack Compose and MapLibre Native. No map API key, Node installation or Pillow (PIL) installation is needed to build the checked-in app.
+
+Local release builds stay unsigned unless you supply distribution signing credentials; see the [release guide](docs/releasing.md).
+
+<details>
+<summary><strong>Artwork, motion assets and repository hygiene</strong></summary>
+
+Pillow is used only by optional artwork-generation scripts. The three MP4s in `app/src/main/res/raw/` are runtime onboarding assets; their editable Remotion compositions and staging instructions are under [`tools/waypoint-motion`](tools/waypoint-motion/README.md).
 
 Run `python3 scripts/check_repo_hygiene.py` before committing. CI checks that generated videos, source screenshots, private QA material, APKs and logs do not enter the repository. Runtime Android videos and the finished images used by this README are intentionally retained.
+
+</details>
 
 ## Privacy and services
 
@@ -127,7 +176,11 @@ Waypoint has no app-owned account, analytics backend or recorded route history. 
 | Voice | Your installed Android text-to-speech engine |
 | Guidance progress and rerouting | Ferrostar 0.59.0 using OSRM and Valhalla routes |
 
-The public map, search and routing endpoints require internet access and can be unavailable or rate-limited. Waypoint has **no live traffic, offline routing or lane guidance**. On Android Auto, open Waypoint from the car launcher to use it as the current default navigation app; the last navigation app opened controls that default. The car screen follows the phone's selected world and offers search, saved destinations, guidance, map controls and settings. GPS and place coverage vary by device and location; real-road and long-duration testing are still needed. Read the [service and privacy guide](docs/guide.md#location-and-privacy) and [validation record](docs/validation.md) for the practical limits.
+### Practical limits
+
+The public map, search and routing endpoints require internet access and can be unavailable or rate-limited. Waypoint has **no live traffic, offline routing or lane guidance**.
+
+GPS and place coverage vary by device and location; real-road and long-duration testing are still needed. Read the [service and privacy guide](docs/guide.md#location-and-privacy) and [validation record](docs/validation.md) for the practical limits.
 
 ## Open project
 
@@ -140,7 +193,11 @@ The public map, search and routing endpoints require internet access and can be 
 | [Security review](docs/security.md) | Reviewed boundaries, source fixes and remaining validation |
 | [Contributing](CONTRIBUTING.md) | Tests, public examples and repository hygiene |
 
-Waypoint is independent and is not affiliated with the games or their publishers. The **code is MIT licensed**. Fonts, map data and sourced game markers have separate licenses or rights; review the [font notices](docs/licenses/), [marker sources](docs/poi-icon-sources.md) and [artwork notes](docs/game-artwork-sources.md) before redistributing assets. Report security concerns through [SECURITY.md](SECURITY.md).
+### License and attribution
+
+Waypoint is independent and is not affiliated with the games or their publishers. The **code is MIT licensed**. Fonts, map data and sourced game markers have separate licenses or rights; review the [font notices](docs/licenses/), [marker sources](docs/poi-icon-sources.md) and [artwork notes](docs/game-artwork-sources.md) before redistributing assets.
+
+Report security concerns through [SECURITY.md](SECURITY.md).
 
 ---
 
