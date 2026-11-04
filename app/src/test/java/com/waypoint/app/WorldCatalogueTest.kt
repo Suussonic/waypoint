@@ -60,6 +60,17 @@ class WorldCatalogueTest {
         assertEquals(World.entries.toSet(), carousel.toSet())
     }
 
+    @Test fun rapidFavoriteTogglesAccumulateAndOnlyRemoveTheTappedWorld() {
+        var names = ""
+        names = toggleFavoriteName(names, World.OLD_WEST)
+        names = toggleFavoriteName(names, World.PIXEL)
+        names = toggleFavoriteName(names, World.RIVIA)
+        assertEquals("OLD_WEST,PIXEL,RIVIA", names)
+        names = toggleFavoriteName(names, World.PIXEL)
+        assertEquals("OLD_WEST,RIVIA", names)
+        assertEquals("", toggleFavoriteName("RIVIA", World.RIVIA))
+    }
+
     @Test fun onboardingFavoriteChoicesCoverEveryWorldOnce() {
         assertEquals(World.entries.size, gameChoices.size)
         assertEquals(World.entries.toSet(), gameChoices.map { it.world }.toSet())

@@ -1,5 +1,7 @@
 package com.waypoint.app
 
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
@@ -77,7 +79,7 @@ import androidx.compose.ui.unit.*
         AtlasTabs(s.world,a,activeColor=Color(0xFFEDE8DA));
         Row(Modifier.fillMaxWidth().padding(18.dp),verticalAlignment=Alignment.Top){Column(Modifier.weight(1f)){AtlasText("MAP",s.world,size=28,color=Color(0xFF252921));AtlasText(s.city,s.world,size=18,color=Color(0xFF252921))};AtlasTool(s.world,Icons.Default.Search,"Set a destination",a.search)}
     }
-    Row(Modifier.align(Alignment.BottomCenter).padding(18.dp).fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.Bottom) {CompassRose(b,s.world,ornate=true,onRecenter=a.locate);Column(horizontalAlignment=Alignment.End){AtlasAction(s.world,"GUIDING ROUTE",a.search);AtlasAction(s.world,"RECENTER",a.locate);FixLabel(s)}}
+    Row(Modifier.align(Alignment.BottomCenter).padding(18.dp).fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.Bottom) {CompassRose(b,s.world,ornate=true,onRecenter=a.locate);Column(horizontalAlignment=Alignment.End){AtlasAction(s.world,"GUIDING ROUTE",a.search);AtlasAction(s.world,stringResource(R.string.recenter),a.locate);FixLabel(s)}}
 }
 @Composable internal fun BoxScope.EmbraceAtlas(s:NavState,b:Float,a:AtlasActions) {
     Row(Modifier.align(Alignment.TopCenter).fillMaxWidth().background(Color(0xE5161916)).padding(horizontal=12.dp),verticalAlignment=Alignment.CenterVertically){AtlasTool(s.world,Icons.Default.Layers,"Worlds",a.huds);AtlasText("MAP",s.world,Modifier.weight(1f),23);AtlasTool(s.world,Icons.Default.BookmarkBorder,"Saved",a.saved);AtlasTool(s.world,Icons.Default.Tune,"Settings",a.settings)}

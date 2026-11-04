@@ -195,3 +195,46 @@ This pass was stationary and used simulated trips and public coordinates. The 50
 - The [main verification run](https://github.com/the-geeky-couldron/waypoint/actions/runs/41531016389) and [tagged release run](https://github.com/the-geeky-couldron/waypoint/actions/runs/41531832476) both passed. The latter published the stable [v1.1.0 release](https://github.com/the-geeky-couldron/waypoint/releases/tag/v1.1.0) with `Waypoint.apk` and `SHA256SUMS`.
 - A fresh download of the 1.1.0 APK passed `apksigner verify`; its SHA-256 matched both the checksum file and GitHub's asset digest (`ff3532806f9be490bdfb328f871d6035c10e1524d1516daed937ee55cc388e96`). The APK declares `com.waypoint.app`, version `1.1.0` / `1001000`, and the same signing certificate as the published 1.0.0 APK.
 - The connected phone retained its installed 1.0.0 debug build and saved data. After the stable release appeared, reopening Waypoint showed the **Waypoint 1.1.0 is ready** popup with the published release notes and **Download update** action. No download or installer handoff was attempted on that debug-signed installation because its signer differs from the published release. The matching published release certificates and higher version code establish the signed in-place update prerequisites; final installation confirmation remains with Android and the user.
+
+## Local issue fixes — 4 November 2026
+
+Changes were implemented in issue creation order. The README includes the Repolode badge. The next-release draft, including reporter
+credits, is in [releases/next.md](releases/next.md); the published 1.1.0 notes and version are unchanged.
+
+| Issue | Local result | Evidence and remaining limit |
+| --- | --- | --- |
+| #1 — voice guidance | Fixed missing explicit `AndroidTtsObserver.start()`; added initialization/error states, English voice selection, retry and pending-cue cleanup | Six voice lifecycle unit tests pass. On a physical Android 17 phone, the installed engine initialized, accepted a synthetic navigation utterance and the tester confirmed hearing it. No real route was used. |
+| #2 — Android Auto missing from launcher | Launcher setup and distribution requirements documented; manifest checks expanded; issue remains open | Packaged service discovery, descriptor, car API metadata and permissions pass. Installed Android Auto host signature validation and four simulated car-template tests pass. Both the installed release and isolated local test build appear in the Desktop Head Unit launcher and open their maps. Real-car launcher eligibility is **not resolved or verified**. |
+| #3 — launcher visibility and silent guidance | Voice fix shared with #1; launcher finding shared with #2 | Same evidence and outstanding real-car distribution check. |
+| #4 — selecting multiple favourite games | Toggle events read the latest saved selection, with checkmarks, count and announced states | Device regression selects/deselects several games, navigates Back, recreates the activity and completes onboarding; selected preferences and initial world are verified. Normal and 1.3× text layouts inspected. |
+| #5 — UK spelling | Android default/UK resources for onboarding, world descriptions, recenter controls and car credits/units | Device resource tests verify UK and US variants. The physical onboarding screen displays “favourite” under the device's UK locale. Provider place names and game names are preserved. |
+| #6 — missing Twitter option | Added Twitter / X and a scrolling referral list | Device onboarding test selects Twitter / X and continues. Layout inspected on the physical phone. |
+| #7 — feature wishlist | Deferred at the maintainer's request | Separate task. |
+
+Verification: 133 local JVM tests, debug APK/instrumentation compilation, Android lint,
+version checks, packaged-manifest checks, repository hygiene and whitespace checks passed.
+Seven focused device tests passed across `GuidanceVoiceDeviceTest`, `OnboardingIssuesTest`
+and `CarCompatibilityTest`. The car tests require precise-location permission; without it
+the app correctly returns a permission message instead of a navigation template. The
+onboarding accessibility assertion refreshes cached nodes before reading their announced state.
+
+Device testing used a separately installed `Waypoint Local Test` package. The existing
+Waypoint installation and its stored data were not replaced. Captures and test logs remain
+in ignored local directories; they are not public release artwork. Synthetic speech acceptance
+and simulated car templates do not establish real-road timing, rerouting audio reliability,
+Bluetooth audio behavior or real-head-unit launcher availability.
+
+### Desktop Head Unit launcher check
+
+Google's Desktop Head Unit 2.0 (macOS ARM64) connected to the physical Android 17 phone
+through Android Auto's developer head-unit server and ADB port 5277. USB accessory mode
+failed to attach, so the documented ADB connection was used. Both the installed release
+(`com.waypoint.app`) and isolated local build (`com.waypoint.app.localtest`) appeared as
+separate entries in the projected launcher. Opening the release rendered Liberty City;
+opening the local build rendered Los Santos, and its map settings opened successfully.
+Android Auto's projection process was bound to the respective car service. No installer
+identity or host-validation policy was changed for this check.
+
+This verifies launcher discovery and map presentation in the DHU on this phone. It does
+not reproduce the reporter's real-car failure or establish real-car distribution eligibility.
+Issue #2 remains open. The simulator was stopped and the ADB forwarding removed afterward.

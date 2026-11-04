@@ -1,5 +1,8 @@
 package com.waypoint.app
 
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+
 import android.app.Activity
 import android.graphics.SurfaceTexture
 import android.media.MediaPlayer
@@ -21,6 +24,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +52,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Explore
@@ -90,6 +96,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -116,10 +123,17 @@ private val featuredWorlds = listOf(
 internal fun onboardingCarouselWorlds(favorites: List<World>): List<World> =
     (favorites + featuredWorlds + World.entries).distinct()
 
+internal fun toggleFavoriteName(names: String, world: World): String {
+    val next = names.split(',').filter(String::isNotBlank).distinct().toMutableList()
+    if (!next.remove(world.name)) next.add(world.name)
+    return next.joinToString(",")
+}
+
 internal data class GameChoice(val title: String, val world: World)
 private data class ReferralChoice(val title: String, val icon: Int?, val color: Color)
 private val referralChoices = listOf(
     ReferralChoice("Instagram", R.drawable.brand_instagram, Color(0xFFE4408A)),
+    ReferralChoice("Twitter / X", R.drawable.brand_x, Color(0xFF14171A)),
     ReferralChoice("Reddit", R.drawable.brand_reddit, Color(0xFFFF4500)),
     ReferralChoice("YouTube", R.drawable.brand_youtube, Color(0xFFFF0033)),
     ReferralChoice("Google", R.drawable.brand_google, Color(0xFF4285F4)),
@@ -195,9 +209,9 @@ fun ReferenceOnboarding(
         selectedWorldName = carouselWorlds[(currentIndex + direction + carouselWorlds.size) % carouselWorlds.size].name
     }
     fun toggle(world: World) {
-        val next = favoriteWorlds.map { it.name }.toMutableList()
-        if (world.name in next) next.remove(world.name) else next.add(world.name)
-        favoriteNames = next.joinToString(",")
+        // Read the latest saved state in the event handler. Multiple taps before
+        // recomposition must not overwrite a choice using the old derived list.
+        favoriteNames = toggleFavoriteName(favoriteNames, world)
     }
 
     BackHandler(step > 0) { step-- }
@@ -210,7 +224,7 @@ fun ReferenceOnboarding(
             in 0..2 -> IntroStoryPage(page) { step = page + 1 }
             3 -> ReferralPage(source, { source = it }) { step = 4 }
             4 -> FavoriteGamesPage(favorites, ::toggle) {
-                selectedWorldName = favoriteWorlds.first().name
+                selectedWorldName = favoriteNames.split(',').firstOrNull { it.isNotBlank() } ?: initialWorld.name
                 step = 5
             }
             5 -> OnboardingMapCarousel(selectedWorld, selectedIndex, carouselWorlds.size, ::move) { step = 6 }
@@ -269,7 +283,7 @@ private fun IntroStoryPage(
                 }
                 1 -> {
                     IntroHeading("Map Icons of your", (34 * titleScale).toInt())
-                    IntroHeading("Favorite Game", (47 * titleScale).toInt())
+                    IntroHeading(stringResource(R.string.favorite_game), (47 * titleScale).toInt())
                 }
                 2 -> {
                     IntroHeading("Navigate with", (34 * titleScale).toInt())
@@ -278,8 +292,8 @@ private fun IntroStoryPage(
             }
             Spacer(Modifier.height(18.dp))
             val description = when (page) {
-                0 -> "Find your favorite game and quickly apply its style to your real life map!"
-                1 -> "Make real streets feel like the maps from your favorite games."
+                0 -> stringResource(R.string.intro_find_game)
+                1 -> stringResource(R.string.intro_real_streets)
                 else -> "Follow real routes on a game-inspired map with clear turn-by-turn voice guidance."
             }
             Text(description, color = introMuted, fontFamily = introFont, fontSize = 16.sp,
@@ -508,23 +522,27 @@ private fun ReferralPage(selected: String, onSelect: (String) -> Unit, onContinu
                 fontWeight = FontWeight.ExtraBold, fontSize = 33.sp, lineHeight = 41.sp,
                 textAlign = TextAlign.Center)
             Spacer(Modifier.height(20.dp))
-            referralChoices.forEach { choice ->
-                val name = choice.title
-                Row(Modifier.fillMaxWidth().weight(1f).padding(bottom = 10.dp)
-                    .background(Color(0x1FFFFFFF), CircleShape)
-                    .border(2.dp, if (selected == name) Color.White else Color.White.copy(alpha = .09f), CircleShape)
-                    .clickable(role = Role.RadioButton) { onSelect(name) }
-                    .padding(horizontal = 23.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(29.dp).background(choice.color, CircleShape), contentAlignment = Alignment.Center) {
-                        if (choice.icon == null) {
-                            Icon(Icons.Default.Person, null, Modifier.size(18.dp), tint = Color.White)
-                        } else {
-                            Icon(painterResource(choice.icon), null, Modifier.size(19.dp), tint = Color.White)
+            Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                referralChoices.forEach { choice ->
+                    val name = choice.title
+                    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                        .background(Color(0x1FFFFFFF), CircleShape)
+                        .border(2.dp, if (selected == name) Color.White else Color.White.copy(alpha = .09f), CircleShape)
+                        .selectable(selected = selected == name, role = Role.RadioButton, onClick = { onSelect(name) })
+                        .padding(horizontal = 23.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(29.dp).background(choice.color, CircleShape), contentAlignment = Alignment.Center) {
+                            if (choice.icon == null) {
+                                Icon(Icons.Default.Person, null, Modifier.size(18.dp), tint = Color.White)
+                            } else {
+                                Icon(painterResource(choice.icon), null, Modifier.size(19.dp), tint = Color.White)
+                            }
                         }
+                        Spacer(Modifier.size(17.dp))
+                        Text(name, color = introWhite, fontFamily = introFont,
+                            modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                        if (selected == name) Icon(Icons.Default.Check, null, Modifier.size(20.dp), tint = introWhite)
                     }
-                    Spacer(Modifier.size(17.dp))
-                    Text(name, color = introWhite, fontFamily = introFont,
-                        fontWeight = FontWeight.Bold, fontSize = 17.sp)
                 }
             }
         }
@@ -539,26 +557,33 @@ private fun FavoriteGamesPage(selected: Set<String>, onToggle: (World) -> Unit, 
         val headingSize = if (maxWidth < 360.dp) 31.sp else 34.sp
         Column(Modifier.fillMaxSize().padding(horizontal = 24.dp).padding(top = 22.dp, bottom = 105.dp),
             horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("What are your\nfavorite games?", color = introWhite, fontFamily = introFont,
+            Text(stringResource(R.string.favorite_games_question), color = introWhite, fontFamily = introFont,
                 fontWeight = FontWeight.ExtraBold, fontSize = headingSize,
                 lineHeight = 42.sp, textAlign = TextAlign.Center)
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(8.dp))
+            Text(stringResource(R.string.choose_multiple_games), color = introWhite, fontSize = 16.sp, textAlign = TextAlign.Center)
+            Text(pluralStringResource(R.plurals.games_selected, selected.size, selected.size), color = introWhite, fontSize = 14.sp,
+                modifier = Modifier.padding(top = 4.dp, bottom = 14.dp))
             Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(9.dp),
                     verticalArrangement = Arrangement.spacedBy(11.dp)) {
                     gameChoices.forEach { choice ->
                         val chosen = choice.world.name in selected
-                        Box(Modifier.heightIn(min = 60.dp)
-                            .background(Color(0x17FFFFFF), CircleShape)
+                        val selectionDescription = stringResource(if (chosen) R.string.game_selected else R.string.game_not_selected)
+                        Box(Modifier.heightIn(min = 60.dp).clip(CircleShape)
+                            .background(if (chosen) Color(0xFF224D91) else Color(0x17FFFFFF), CircleShape)
                             .border(2.dp, if (chosen) Color.White else Color.White.copy(alpha = .09f), CircleShape)
-                            .clickable(role = Role.Checkbox) { onToggle(choice.world) }
+                            .toggleable(value = chosen, role = Role.Checkbox, onValueChange = { onToggle(choice.world) })
+                            .semantics { stateDescription = selectionDescription }
                             .padding(horizontal = 18.dp, vertical = 11.dp), contentAlignment = Alignment.Center) {
                             Row(verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Image(painterResource(worldEmblemFor(choice.world)), null,
                                     Modifier.size(28.dp), contentScale = ContentScale.Fit)
                                 Text(choice.title, color = introWhite, fontFamily = introFont,
-                                    fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 2)
+                                    modifier = Modifier.weight(1f, fill = false),
+                                    fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                if (chosen) Icon(Icons.Default.Check, null, Modifier.size(20.dp), tint = introWhite)
                             }
                         }
                     }

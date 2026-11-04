@@ -116,11 +116,11 @@ internal class WaypointCarSettingsScreen(context: CarContext) : Screen(context) 
                 .setOnClickListener { if(acceptsCarInput()) { controller.toggleVoice(); invalidate() } }
                 .build())
             .addItem(Row.Builder().setTitle("Distance units")
-                .addText(if (state.imperial) "Miles and feet" else "Kilometres and metres")
+                .addText(if (state.imperial) "Miles and feet" else carContext.getString(R.string.metric_units))
                 .setOnClickListener { if(acceptsCarInput()) { controller.toggleUnits(); invalidate() } }
                 .build())
-            .addItem(Row.Builder().setTitle("Map data & licences")
-                .addText("Sources and licence information")
+            .addItem(Row.Builder().setTitle(carContext.getString(R.string.map_data_licenses))
+                .addText(carContext.getString(R.string.license_sources))
                 .setOnClickListener { if(acceptsCarInput())screenManager.push(WaypointCarCreditsScreen(carContext)) }
                 .build())
             .build()
@@ -132,8 +132,8 @@ internal class WaypointCarSettingsScreen(context: CarContext) : Screen(context) 
 internal class WaypointCarCreditsScreen(context: CarContext) : Screen(context) {
     override fun onGetTemplate(): Template = MessageTemplate.Builder(
         "Map data: OpenStreetMap contributors (ODbL). Tiles: OpenFreeMap. " +
-            "Style and schema: OpenMapTiles. Full credits and licence links are in Waypoint settings on your phone."
-    ).setHeader(carHeader("Map data & licences")).build()
+            carContext.getString(R.string.map_credits)
+    ).setHeader(carHeader(carContext.getString(R.string.map_data_licenses))).build()
 }
 
 internal class WaypointCarWorldScreen(context: CarContext) : Screen(context) {

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="favorite_game">Favourite Game</string>
+    <string name="intro_find_game">Find your favourite game and quickly apply its style to your real life map!</string>
+    <string name="intro_real_streets">Make real streets feel like the maps from your favourite games.</string>
+    <string name="favorite_games_question">What are your\nfavourite games?</string>
+    <string name="choose_multiple_games">Choose as many as you like</string>
+    <string name="welcome_worlds_description">Real places meet the maps, colours and atmosphere of the games you play.</string>
+    <string name="favorites_hint">Pick as many as you like. Your favourites will be easier to find.</string>
+    <string name="recenter">RECENTRE</string>
+    <string name="heading_recenter">Heading %1$d degrees; tap to recentre</string>
+    <string name="heading_unavailable_recenter">Heading unavailable; tap to recentre</string>
+    <string name="metric_units">Kilometres and metres</string>
+    <string name="map_data_licenses">Map data &amp; licences</string>
+    <string name="license_sources">Sources and licence information</string>
+    <string name="map_credits">Style and schema: OpenMapTiles. Full credits and licence links are in Waypoint settings on your phone.</string>
+    <string name="world_los_santos_description">Monochrome streets, purple routes and the three-bar radar HUD.</string>
+    <string name="world_old_west_description">Parchment roads, scarlet routes and circular core controls.</string>
+    <string name="world_night_city_description">Cyan streets, red buildings and angular navigation panels.</string>
+    <string name="world_pixel_description">Pixel lettering, inventory-style controls and block-built streets.</string>
+    <string name="world_green_terminal_description">Phosphor cartography, terminal lettering and Pip-Boy-style tabs.</string>
+    <string name="world_san_andreas_description">A sun-faded street atlas inspired by the classics.</string>
+    <string name="world_heat_description">A detailed racing atlas with blue water and electric guidance.</string>
+    <string name="world_rivia_description">The Witcher 3 atlas: inked roads, parchment terrain and red guidance.</string>
+    <string name="world_vice_coast_description">Vice City’s pink lettering, pale roads and coastal greens.</string>
+    <string name="world_liberty_description">GTA IV’s graphite atlas, grey streets and amber guidance.</string>
+    <string name="world_ctos_description">Watch Dogs 2’s daylight street atlas and bright place markers.</string>
+    <string name="world_hyrule_description">Breath of the Wild’s blue slate, gold accents and terrain relief.</string>
+    <string name="world_skyrim_description">Cold relief, silver symbols and the restrained Elder Scrolls HUD.</string>
+    <string name="world_lands_between_description">Elden Ring’s antique atlas, gold markers and earth-toned relief.</string>
+    <string name="world_horizon_description">Forza’s vivid road atlas, pink controls and terrain relief.</string>
+    <string name="world_assassin_description">Desert cartography, gold guidance and restrained atlas panels.</string>
+    <string name="world_far_cry_description">Green terrain relief, pale roads and a clear exploration HUD.</string>
+    <string name="world_ghost_description">Washed ink terrain, paper-white land and scarlet guidance.</string>
+    <string name="world_bridges_description">Cold terrain, cyan data marks and the blue-grey route interface.</string>
+    <string name="world_horizon_wilds_description">Dark forest terrain, relief and fine ivory atlas controls.</string>
+    <string name="world_spider_description">Teal 3D city blocks, blue street lines and red HUD accents.</string>
+    <string name="world_hogwarts_description">Muted green relief, gilded borders and a midnight-blue atlas HUD.</string>
+    <string name="world_starfield_description">Deep-blue cartography, bright location marks and precise readouts.</string>
+    <string name="world_kingdom_description">Warm medieval atlas colours, woodland relief and golden routes.</string>
+    <string name="world_saints_description">Dark city blocks, purple selections and bright GPS routes.</string>
+    <string name="world_just_cause_description">Navy terrain, turquoise coastlines and clean tactical-map controls.</string>
+    <string name="world_mafia_description">1930s street-atlas colours, golden roads and quiet cream typography.</string>
+    <plurals name="games_selected">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <string name="game_selected">Selected</string>
+    <string name="game_not_selected">Not selected</string>
+</resources>

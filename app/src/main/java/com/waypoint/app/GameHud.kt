@@ -1,5 +1,7 @@
 package com.waypoint.app
 
+import androidx.compose.ui.res.stringResource
+
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -404,7 +406,7 @@ private object WorldPreviewBitmaps {
                     Row(Modifier.padding(14.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                         Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(3.dp)) {
                             Text(world.previewPlace().label,fontSize=11.sp,lineHeight=14.sp,color=p.accent,maxLines=1,overflow=TextOverflow.Ellipsis)
-                            Text(world.description,fontSize=13.sp,lineHeight=19.sp,color=Muted)
+                            Text(stringResource(world.descriptionRes),fontSize=13.sp,lineHeight=19.sp,color=Muted)
                         }
                         Icon(Icons.AutoMirrored.Filled.ArrowForward,null,tint=p.accent,modifier=Modifier.size(20.dp))
                     }

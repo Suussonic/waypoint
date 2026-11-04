@@ -3,7 +3,6 @@ package com.waypoint.app
 import android.app.Application
 import android.location.Location
 import com.stadiamaps.ferrostar.core.AlternativeRouteProcessor
-import com.stadiamaps.ferrostar.core.AndroidTtsObserver
 import com.stadiamaps.ferrostar.core.CustomRouteProvider
 import com.stadiamaps.ferrostar.core.FerrostarCore
 import com.stadiamaps.ferrostar.core.NavigationState
@@ -58,6 +57,7 @@ internal class FerrostarGuidance(
     private val onState: (NavigationState)->Unit,
     private val onAlternateRoute: (RoadRoute, Coordinate)->Unit,
     private val onAlternateError: (String)->Unit,
+    private val onVoiceStatus: (GuidanceVoiceStatus)->Unit,
 ) {
     private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main.immediate)
     private val locationProvider=WaypointFerrostarLocation()
@@ -71,7 +71,7 @@ internal class FerrostarGuidance(
     private var activeDestination: Coordinate?=null
     private var pendingAlternate: Alternate?=null
     private fun isCurrent(ticket: Long)=synchronized(alternateLock) { ticket==session && activeDestination!=null }
-    private val voice=AndroidTtsObserver(app)
+    private val voice=androidGuidanceVoice(app) { status -> scope.launch { onVoiceStatus(status) } }
     private val core=FerrostarCore(
         customRouteProvider=CustomRouteProvider { user, waypoints ->
             val target=waypoints.lastOrNull()?.coordinate ?: return@CustomRouteProvider emptyList()
@@ -102,6 +102,7 @@ internal class FerrostarGuidance(
     )
     init {
         core.spokenInstructionObserver=voice
+        voice.prepare()
         core.alternativeRouteProcessor=AlternativeRouteProcessor { running, routes ->
             val selected=routes.firstOrNull()
             val replacement=synchronized(alternateLock) {
@@ -138,7 +139,7 @@ internal class FerrostarGuidance(
     fun isAutoDriving()=autoDriveEnabled
     fun acceptLocation(location: Location) { locationProvider.accept(location) }
     fun mute(muted: Boolean) { voice.setMuted(muted) }
-    fun voiceReady(): Boolean=voice.isInitializedSuccessfully
+    fun voiceStatus(): GuidanceVoiceStatus=voice.status
     fun stop() {
         synchronized(alternateLock) { session++;activeDestination=null;pendingAlternate=null }
         navigationLocationProvider.disableSimulation();core.stopNavigation()

@@ -69,3 +69,26 @@ Before showing Install update, Waypoint checks:
 Partial files are discarded when a download fails or is cancelled. Downloads survive screen rotation while the app process lives; if Android ends the process, check and download again. Only the dedicated cache/updates directory is shared with Android's installer through a non-exported FileProvider. Android may require the user to allow installation from Waypoint. The app never toggles that setting or installs silently. Installation is disabled during active navigation.
 
 Private GitHub repositories need authenticated release access and are not supported by this public, token-free update channel. A fork must change `ReleaseUpdate.REPOSITORY`, README links and the signing identity to its own values.
+
+## Android Auto distribution and testing
+
+The GitHub APK channel alone does not guarantee visibility in a real car. Google's
+[testing documentation](https://developer.android.com/training/cars/testing#real-vehicles)
+requires a trusted source for Car App Library apps; **Unknown sources** does not cover this
+category. Do not describe a missing launcher entry as fixed by a manifest change or DHU test.
+
+1. Build locally and run `scripts/check_packaged_manifest.py debug` (or `release` for the
+   release variant). This checks service discovery, the template descriptor, car API metadata,
+   and navigation/surface permissions in the packaged manifest.
+2. Exercise the build using the Android Auto Desktop Head Unit. This is local development
+   validation, not a distribution eligibility check.
+3. For real-vehicle validation, the maintainer must establish a Google Play Internal App
+   Sharing or Internal Test Track channel and install through that channel. Follow Play's
+   setup and signing requirements; keep its signing identity compatible with the intended
+   update channel. No Play channel is created or published by this repository's GitHub workflow.
+4. Confirm that Waypoint appears in **Customize launcher**, opens on a real head unit,
+   and provides map, preview, guidance and voice. Record the installation channel and test
+   outcome without publishing personal routes or device identifiers.
+
+Keep the host certificate allowlist intact. Do not fake an installer identity or relax host
+validation to work around launcher eligibility.

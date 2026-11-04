@@ -9,15 +9,16 @@
     <a href="https://github.com/the-geeky-couldron/waypoint/releases"><img src="https://img.shields.io/github/downloads/the-geeky-couldron/waypoint/total?label=Downloads&amp;color=497c6f" alt="Waypoint Downloads" /></a>
     <a href="https://github.com/the-geeky-couldron/waypoint/stargazers"><img src="https://img.shields.io/github/stars/the-geeky-couldron/waypoint?label=GitHub%20stars&amp;color=497c6f" alt="Waypoint GitHub stars" /></a>
   </p>
-  <p><sub>GitHub release asset downloads; not unique installs.</sub></p>
   <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="docs/images/promo/download.jpg" width="340" alt="Download Waypoint for Android from GitHub Releases" /></a></p>
   <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><strong>Download the latest APK</strong></a> · <a href="#build-from-source">Build from source</a> · <a href="#privacy-and-services">Privacy and services</a></p>
   <p><sub>Android 8.0+ · No ads or paywall · No Waypoint account · Every world included</sub></p>
 </div>
 
+[![Featured on Repolode](https://repolode.com/badge/the-geeky-couldron/waypoint)](https://repolode.com/en/repo/the-geeky-couldron/waypoint)
+
 ## Your world, on the dashboard
 
-Connect your phone to Android Auto and open Waypoint from the car launcher. The projected map follows the world selected on your phone, with a full route line, turn cues and a camera that follows travel. Search or pick a saved destination on the car screen; shared destinations ask before Waypoint previews a route.
+Waypoint includes Android Auto support, but a GitHub-sideloaded APK may not appear in a real car’s launcher. Android requires a trusted distribution channel for Car App Library apps; its “Unknown sources” option does not cover Waypoint. See [Android Auto setup and testing](docs/guide.md#android-auto). With a supported installation, connect your phone and open Waypoint from the car launcher. The projected map follows the world selected on your phone, with a full route line, turn cues and a camera that follows travel. Search or pick a saved destination on the car screen; shared destinations ask before Waypoint previews a route.
 
 <picture>
   <source media="(max-width: 640px)" srcset="docs/images/promo/android-auto-mobile.jpg" />

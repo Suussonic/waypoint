@@ -1,5 +1,7 @@
 package com.waypoint.app
 
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
@@ -137,7 +139,7 @@ internal fun atlasToolCaption(label:String)=when(label) {
     var unwrapped by remember { mutableFloatStateOf(target) }
     LaunchedEffect(target) {unwrapped+=headingDelta(unwrapped%360,target)}
     val rotation by androidx.compose.animation.core.animateFloatAsState(unwrapped,androidx.compose.animation.core.tween(120),label="Compass heading")
-    val description=if(reliable)"Heading ${target.roundToInt()} degrees; tap to recenter" else "Heading unavailable; tap to recenter"
+    val description=if(reliable)stringResource(R.string.heading_recenter, target.roundToInt()) else stringResource(R.string.heading_unavailable_recenter)
     Box(modifier.size(if(ornate)100.dp else 72.dp).background(p.panel.copy(alpha=.96f),CircleShape)
         .clickable(role=Role.Button,onClick=onRecenter).semantics(mergeDescendants=true){contentDescription=description},contentAlignment=Alignment.Center) {
         Canvas(Modifier.fillMaxSize().padding(7.dp)) {
@@ -216,7 +218,7 @@ internal fun atlasToolCaption(label:String)=when(label) {
         AtlasText("DESTINATIONS",s.world,size=12,color=Color(0xFFF2DA5D));Spacer(Modifier.height(7.dp))
         AtlasAction(s.world,"FIND LOCATION",a.search);AtlasAction(s.world,"SAVED PLACES",a.saved)
     }
-    Column(Modifier.align(Alignment.BottomCenter).padding(18.dp)) {FixLabel(s);Spacer(Modifier.height(8.dp));Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically){AtlasAction(s.world,"Worlds",a.huds);AtlasAction(s.world,"RECENTER",a.locate);AtlasTool(s.world,Icons.Default.ViewInAr,"Toggle 2D and 3D",a.tilt)}}
+    Column(Modifier.align(Alignment.BottomCenter).padding(18.dp)) {FixLabel(s);Spacer(Modifier.height(8.dp));Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically){AtlasAction(s.world,"Worlds",a.huds);AtlasAction(s.world,stringResource(R.string.recenter),a.locate);AtlasTool(s.world,Icons.Default.ViewInAr,"Toggle 2D and 3D",a.tilt)}}
 }
 @Composable private fun PixelSlot(label:String,res:Int,action:()->Unit) {
     Column(Modifier.width(64.dp).clickable(role=Role.Button,onClick=action).semantics(mergeDescendants=true){contentDescription=label},horizontalAlignment=Alignment.CenterHorizontally) {

@@ -167,7 +167,7 @@ class NavigationController(private val app: Application, private val repository:
     private val importConsent = NavigationImportConsent()
     private var routeOrigin: Coordinate? = null
     private var lastAcceptedLocation: Location? = null
-    private val guidance=FerrostarGuidance(app,repository,::onFerrostarState,::onFerrostarAlternateRoute,::onFerrostarAlternateError)
+    private val guidance=FerrostarGuidance(app,repository,::onFerrostarState,::onFerrostarAlternateRoute,::onFerrostarAlternateError,::onVoiceStatus)
     private var cityLookupPending = false
     private var lastCityAttempt = -60000L
     private var cityPoint: Coordinate? = null
@@ -509,7 +509,15 @@ class NavigationController(private val app: Application, private val repository:
             val recent = (listOf(place)+s.recent.filter{it.id!=place.id}).take(12)
             _state.update{it.copy(recent=recent)}; writePlaces("recent",recent)
         }
-        if(s.voice && !guidance.voiceReady()) _state.update{it.copy(message="Voice unavailable. Install a text-to-speech voice in Android settings. Visual guidance is active.")}
+        onVoiceStatus(guidance.voiceStatus())
+    }
+    private fun onVoiceStatus(status: GuidanceVoiceStatus) {
+        _state.update { current ->
+            if (!current.navigating || !current.voice) current
+            else if (status.problem != null) current.copy(message=status.problem)
+            else if (status == GuidanceVoiceStatus.READY && GuidanceVoiceStatus.entries.any { it.problem != null && it.problem == current.message }) current.copy(message=null)
+            else current
+        }
     }
     fun stopNavigation(clear: Boolean = true) {
         navigationSessions.end()

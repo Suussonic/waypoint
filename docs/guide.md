@@ -27,6 +27,36 @@ distance, speed, spoken instructions, off-route recalculation, and arrival.
 
 ## Android Auto
 
+### Enable Waypoint in the car launcher
+
+1. On your phone, open **Settings** and search for **Android Auto**.
+2. Open **Android Auto → Customize launcher**.
+3. If **Waypoint** is listed, tick its checkbox. Reconnect the phone to the car,
+   open the car's app launcher and select **Waypoint**.
+4. Allow precise location in Waypoint on the phone when prompted so it can navigate.
+
+If Waypoint is absent from **Customize launcher**, there is no checkbox to enable.
+Read the installation requirement below; location permission and **Unknown sources**
+do not make an ineligible installation appear in that list.
+
+### If Waypoint is missing from the launcher
+
+Waypoint uses the Android for Cars App Library. A GitHub-sideloaded APK can work on the
+phone yet be absent from both the car launcher and **Customize launcher**. Android's
+**Unknown sources** developer option does not apply to Car App Library apps, so enabling
+it, reinstalling the same APK, or granting GPS permission does not establish eligibility.
+
+For real-vehicle testing, Google documents installation through a trusted source, including
+Google Play Internal App Sharing or an Internal Test Track. Waypoint currently distributes
+its public APK through GitHub; a Play testing channel must be set up by the maintainer before
+that path is available. See [Android's real-vehicle testing requirements](https://developer.android.com/training/cars/testing#real-vehicles)
+and the [maintainer testing checklist](releasing.md#android-auto-distribution-and-testing).
+The Desktop Head Unit remains the local development test path. A successful DHU test does
+not prove that a sideloaded release will be eligible in a real car. Host signature validation
+must remain enabled; changing it cannot make the launcher accept a distribution source.
+
+### Once Waypoint is visible
+
 Connect your phone to Android Auto, then open **Waypoint** from the car launcher. The car map
 follows the world selected on the phone. Search for a destination, choose a saved or recent
 place, preview the route, then start guidance. The map supports touch or rotary panning,
@@ -41,6 +71,16 @@ other navigation handoffs. Open Waypoint in the car to make it the current defau
 it alone cannot override the driver's choice. Waypoint accepts `geo:` navigation intents
 through a confirmation screen. It does not replace an active destination without consent.
 The host's Auto Drive test command simulates movement along a selected route.
+
+## Voice guidance
+
+Waypoint explicitly starts the Android speech engine and waits for initialization. A short
+startup delay is not treated as missing voice data. Guidance currently speaks English and
+prefers the device's English dialect when available, with another installed English voice
+as a fallback. Check the preferred engine and voice in Android's text-to-speech settings
+if initialization fails. After changing those settings, turn voice off and on in Waypoint
+to retry, and check navigation/media volume if speech is still inaudible. Visual guidance
+continues while speech is unavailable.
 
 ## Build
 

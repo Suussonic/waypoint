@@ -1,5 +1,7 @@
 package com.waypoint.app
 
+import androidx.compose.ui.res.stringResource
+
 import android.animation.ValueAnimator
 import android.graphics.Color as AndroidColor
 import android.net.Uri
@@ -194,7 +196,7 @@ fun WelcomeScreen(
 private fun StoryStep(step: Int, world: World, onNext: () -> Unit, onBack: () -> Unit) {
     val story = when (step) {
         0 -> "The worlds you love,\nright on the road." to
-            "Real places meet the maps, colors and atmosphere of the games you play."
+            stringResource(R.string.welcome_worlds_description)
         1 -> "Find the style\nthat feels like yours." to
             "Every world brings its own cartography, typography and navigation display."
         else -> "Go your own way." to
@@ -268,7 +270,7 @@ private fun TravelModePreview(world: World) {
 private fun FavoriteWorldPicker(selectedNames: Set<String>, onToggle: (World) -> Unit, onContinue: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Which worlds are yours?", fontFamily = DisplayFont, fontSize = 34.sp, lineHeight = 37.sp, color = Cream)
-        Text("Pick as many as you like. Your favorites will be easier to find.", color = Muted, fontSize = 14.sp, lineHeight = 20.sp)
+        Text(stringResource(R.string.favorites_hint), color = Muted, fontSize = 14.sp, lineHeight = 20.sp)
         Text("${selectedNames.size} selected", color = Cream, fontSize = 13.sp, fontWeight = FontWeight.Medium)
         LazyVerticalGrid(
             columns = GridCells.Adaptive(150.dp),
