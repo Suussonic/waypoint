@@ -13,6 +13,6 @@ Keep real roads, location confidence and guidance readable when changing a game 
 
 ## Verification
 
-Run the relevant Android unit tests and lint. Validate cartography after map-style edits with `node scripts/validate_styles.cjs`. See [the release guide](docs/releasing.md) for signed builds and [validation notes](docs/validation.md) for the distinction between controlled tests and real-road evidence.
+Run the relevant Android unit tests and lint. Validate cartography after map-style edits with `npm ci --prefix tools/style-validation` and `node scripts/validate_styles.cjs`. For changes to editable onboarding motion, run `npm ci --prefix tools/waypoint-motion` and `npm run lint --prefix tools/waypoint-motion`. CI also runs focused Android emulator tests for package security and quest storage. See [the release guide](docs/releasing.md) for the full check tree and signed builds, and [validation notes](docs/validation.md) for the distinction between controlled tests and real-road evidence.
 
 README artwork can be reproduced using [the promotional art generator](scripts/create_readme_promo.py) and local sanitised demonstration captures. Keep source captures, render outputs, logs, APKs and reference imagery out of Git. Run `python3 scripts/check_repo_hygiene.py` before committing; CI runs the same file, media and basic PII/secret-pattern checks. Review examples manually as well: automated checks cannot recognize every personal place or identifier.

@@ -4,11 +4,13 @@ The public update channel is `the-geeky-couldron/waypoint` on GitHub Releases. A
 
 ## What runs automatically
 
-- Pushes to `main` and pull requests: version validation, 38 world map styles plus the shared base style, debug APK, unit tests and Android lint. Reports and the debug APK are saved for 14 days. Pull requests never receive release signing secrets.
-- Every successful push to `main` also builds and signs the optimized APK automatically, then saves `Waypoint.apk` and `SHA256SUMS` as a 14-day Actions artifact. No manual signing dispatch is required.
-- A pushed `v*` tag does not rebuild or re-sign the APK. It finds the successful `main` run for the exact tagged commit, downloads that run's signed artifact, verifies its checksum, then publishes the APK and checksum file. If the main run is still running, the tag job waits up to 10 minutes. A tag without a successful matching main artifact fails.
-- The signing job disables Gradle caches. Verification caches are read-only outside pushes to `main`; the basic GitHub cache provider is explicit.
-- Actions are pinned to commit hashes. Signing jobs are read-only; only the separate tag-publish job receives repository-content write permission and read access to Actions artifacts.
+- Pull requests and pushes to `main` run a check tree: [actionlint](https://github.com/rhysd/actionlint) and [zizmor](https://github.com/zizmorcore/zizmor) for workflow safety; repository hygiene and version checks; all 39 MapLibre styles; ESLint and TypeScript for the editable motion source; a debug build, unit tests and Android lint; then focused Android emulator tests for packaged security and quest storage. Pull requests also use the open-source [Dependency Review Action](https://github.com/actions/dependency-review-action) to reject new dependencies with moderate or more severe known vulnerabilities. The debug APK and test reports are saved for 14 days. Pull requests never receive signing secrets.
+- The `Android` workflow graph starts with repository integrity, fans out into workflow, dependency, map-style, motion-source and Android checks, then joins again. The emulator follows the Android build; on `main`, the branches meet at the signing job. The final `CI tree` job joins every path, writes an indented result tree to the run summary, and fails if any check required for that event failed or was skipped. Require **CI tree** in the `main` branch rule if you want a single branch-protection check; the individual jobs still show their own logs and reports.
+- Every successful push to `main` builds and signs the optimized APK after the checks pass, then saves `Waypoint.apk` and `SHA256SUMS` as a 14-day Actions artifact. No manual signing dispatch is required. Main builds are never canceled by a newer push, so a tag can still find its exact commit's artifact.
+- The separate `Release` workflow handles pushed `v*` tags, so tag publishing does not appear as a disconnected skipped node in the `Android` graph. It does not rebuild or re-sign the APK. It finds the successful `main` run for the exact tagged commit, downloads that run's signed artifact, verifies its checksum, then publishes the APK and checksum file. If the main run is still running, the tag job waits up to 30 minutes; it fails sooner if that run finishes unsuccessfully. A tag without a successful matching main artifact fails.
+- The signing job disables Gradle caches. Other Android jobs use the basic GitHub cache provider, with pull requests and emulator jobs read-only. npm dependencies use lockfiles and the setup-node cache.
+- The motion-source check also runs `npm audit` at high severity. Moderate advisories are visible in npm output but do not block the build.
+- Actions are pinned to commit hashes; the actionlint binary is pinned to a release and SHA-256 digest. Signing jobs are read-only; only the tag-publish job receives repository-content write permission and read access to Actions artifacts. zizmor runs without paid GitHub Advanced Security.
 
 ## Protect release authority
 
@@ -50,7 +52,7 @@ git tag -a v2.0.0 -m "Waypoint 2.0.0"
 git push origin v2.0.0
 ```
 
-Watch the Android workflow. Its publish job verifies that the tag and version file agree, then checks the downloaded APK against its SHA-256 file before publishing. After publication, verify the APK and checksum on the release page. Keep pushed tags immutable, including tags whose release workflow failed. Use a new patch version and an annotated tag for corrections; never overwrite an already-published APK.
+Watch the `Android` workflow for the signed artifact, then the `Release` workflow after pushing the tag. The release job verifies that the tag and version file agree, then checks the downloaded APK against its SHA-256 file before publishing. After publication, verify the APK and checksum on the release page. Keep pushed tags immutable, including tags whose release workflow failed. Use a new patch version and an annotated tag for corrections; never overwrite an already-published APK.
 
 ## Updater behavior
 

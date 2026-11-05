@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: 05 / Publish GitHub release
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check release version
+        run: python3 scripts/check_version.py
+      - name: Find the successful main build for this commit
+        id: main-run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          for attempt in $(seq 1 90); do
+            run_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/android.yml/runs?head_sha=${RELEASE_SHA}&event=push&per_page=100")"
+            main_run="$(printf '%s' "$run_json" | jq -c --arg sha "$RELEASE_SHA" '[.workflow_runs[] | select(.head_branch == "main" and .head_sha == $sha)] | sort_by(.run_number) | last // empty')"
+            if [ -n "$main_run" ]; then
+              status="$(printf '%s' "$main_run" | jq -r '.status')"
+              if [ "$status" = completed ]; then
+                conclusion="$(printf '%s' "$main_run" | jq -r '.conclusion')"
+                if [ "$conclusion" = success ]; then
+                  echo "run_id=$(printf '%s' "$main_run" | jq -r '.id')" >> "$GITHUB_OUTPUT"
+                  exit 0
+                fi
+                echo "Matching main build finished with ${conclusion}"
+                exit 1
+              fi
+            fi
+            echo "Waiting for a successful main build of ${RELEASE_SHA} (${attempt}/90)"
+            sleep 20
+          done
+          echo "No successful main build found for release commit ${RELEASE_SHA}"
+          exit 1
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: Waypoint-signed-apk
+          run-id: ${{ steps.main-run.outputs.run_id }}
+          github-token: ${{ github.token }}
+          path: release
+      - name: Verify downloaded release artifact
+        run: (cd release && sha256sum --check --strict SHA256SUMS)
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" release/Waypoint.apk release/SHA256SUMS \
+            --verify-tag --title "Waypoint $RELEASE_TAG" --notes-file docs/releases/current.md --latest

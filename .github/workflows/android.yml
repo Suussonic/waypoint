@@ -3,7 +3,6 @@ name: Android
 on:
   push:
     branches: [main]
-    tags: ['v*']
   pull_request:
 
 permissions:
@@ -11,20 +10,121 @@ permissions:
 
 concurrency:
   group: android-${{ github.ref }}
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+  # Main builds must finish so a release tag can use the exact commit's artifact.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  verify:
-    name: Build and verify
-    if: github.event_name != 'push' || github.ref == 'refs/heads/main'
+  workflow_safety:
+    name: 01 / Workflow safety
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    needs: repository
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate workflow syntax with actionlint
+        env:
+          ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+        run: |
+          curl --fail --location --silent --show-error --retry 3 \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz \
+            --output "$RUNNER_TEMP/actionlint.tar.gz"
+          printf '%s  %s\n' "$ACTIONLINT_SHA256" "$RUNNER_TEMP/actionlint.tar.gz" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint"
+      - name: Audit workflow security with zizmor
+        uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
+        with:
+          advanced-security: false
+          annotations: true
+          min-severity: medium
+          min-confidence: medium
+          online-audits: false
+          version: v1.32.0
+
+  dependency_review:
+    name: 01 / Dependency changes
+    if: github.event_name == 'pull_request'
+    needs: repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Review new dependency vulnerabilities
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: moderate
+
+  repository:
+    name: 00 / Repository integrity
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Check repository hygiene
         run: python3 scripts/check_repo_hygiene.py
+      - name: Check version and release notes
+        run: python3 scripts/check_version.py
+
+  styles:
+    name: 01 / Map styles
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    needs: repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/style-validation/package-lock.json
+      - name: Validate all MapLibre styles
+        run: |
+          npm ci --prefix tools/style-validation
+          node scripts/validate_styles.cjs
+
+  motion:
+    name: 01 / Motion source
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    needs: repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/waypoint-motion/package-lock.json
+      - name: Lint editable motion source
+        run: |
+          npm ci --prefix tools/waypoint-motion
+          npm run lint --prefix tools/waypoint-motion
+      - name: Check motion dependencies for high-severity advisories
+        run: npm audit --prefix tools/waypoint-motion --audit-level=high
+
+  android:
+    name: 02 / Build, unit tests and lint
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    needs: repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
@@ -32,19 +132,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
           cache-provider: basic
-          cache-read-only: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: '22'
+          cache-read-only: ${{ github.event_name != 'push' }}
       - name: Set up Android SDK
         uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
       - name: Install Android platform
         run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0'
-      - name: Validate version and cartography
-        run: |
-          python3 scripts/check_version.py
-          npm ci --prefix tools/style-validation
-          node scripts/validate_styles.cjs
       - name: Build, unit tests and lint
         run: ./gradlew --no-daemon :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
       - name: Verify packaged component boundaries
@@ -54,22 +146,66 @@ jobs:
         with:
           name: Waypoint-debug
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
           retention-days: 14
       - name: Save test and lint reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: verification-reports
+          name: android-reports
           path: |
             app/build/reports/tests/
             app/build/reports/lint-results-debug.*
           if-no-files-found: ignore
           retention-days: 14
 
+  device_smoke:
+    name: 03 / Emulator smoke tests
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    needs: android
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-provider: basic
+          cache-read-only: true
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+      - name: Install Android platform
+        run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0'
+      - name: Enable emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Test package security and quest persistence
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 35
+          arch: x86_64
+          script: >-
+            ./gradlew --no-daemon :app:connectedDebugAndroidTest
+            -Pandroid.testInstrumentationRunnerArguments.class=com.waypoint.app.SecurityConfigurationTest,com.waypoint.app.QuestRepositoryTest
+      - name: Save device-test reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: device-reports
+          path: |
+            app/build/outputs/androidTest-results/connected/
+            app/build/reports/androidTests/connected/
+          if-no-files-found: ignore
+          retention-days: 14
+
   sign:
-    name: Sign Android APK
+    name: 04 / Sign release APK
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: verify
+    needs: [workflow_safety, repository, styles, motion, android, device_smoke]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -119,55 +255,33 @@ jobs:
         with:
           name: Waypoint-signed-apk
           path: release/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Save release test and lint reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-reports
+          path: |
+            app/build/reports/tests/
+            app/build/reports/lint-results-release.*
+          if-no-files-found: ignore
           retention-days: 14
       - name: Remove temporary signing key
         if: always()
         run: rm -f "$RUNNER_TEMP/waypoint.keystore"
 
-  publish:
-    name: Publish GitHub release
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+  ci_tree:
+    name: CI tree
+    if: always()
+    needs: [workflow_safety, dependency_review, repository, styles, motion, android, device_smoke, sign]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      actions: read
-      contents: write
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Check release version
-        run: python3 scripts/check_version.py
-      - name: Find the successful main build for this commit
-        id: main-run
+      - name: Write check tree to the Actions summary
         env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_SHA: ${{ github.sha }}
-        run: |
-          for attempt in $(seq 1 30); do
-            run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/android.yml/runs?head_sha=${RELEASE_SHA}&event=push&per_page=100" \
-              --jq '.workflow_runs | map(select(.head_branch == "main" and .head_sha == env.RELEASE_SHA and .status == "completed" and .conclusion == "success")) | sort_by(.run_number) | last | .id // empty')"
-            if [ -n "$run_id" ]; then
-              echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            echo "Waiting for a successful main build of ${RELEASE_SHA} (${attempt}/30)"
-            sleep 20
-          done
-          echo "No successful main build found for release commit ${RELEASE_SHA}"
-          exit 1
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          name: Waypoint-signed-apk
-          run-id: ${{ steps.main-run.outputs.run_id }}
-          github-token: ${{ github.token }}
-          path: release
-      - name: Verify downloaded release artifact
-        run: (cd release && sha256sum --check --strict SHA256SUMS)
-      - name: Publish GitHub release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          gh release create "$RELEASE_TAG" release/Waypoint.apk release/SHA256SUMS \
-            --verify-tag --title "Waypoint $RELEASE_TAG" --notes-file docs/releases/current.md --latest
+          CI_NEEDS: ${{ toJSON(needs) }}
+        run: python3 scripts/ci_summary.py
