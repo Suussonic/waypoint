@@ -4,13 +4,12 @@ The public update channel is `the-geeky-couldron/waypoint` on GitHub Releases. A
 
 ## What runs automatically
 
-- Pushes to `main`, pull requests and manual runs: version validation, 38 world map styles plus the shared base style, debug APK, unit tests and Android lint. Reports and the debug APK are saved for 14 days.
-- A pushed `v*` tag: the same checks, followed by an optimized, signed APK. GitHub publishes `Waypoint.apk` and `SHA256SUMS` only after those jobs succeed.
+- Pushes to `main` and pull requests: version validation, 38 world map styles plus the shared base style, debug APK, unit tests and Android lint. Reports and the debug APK are saved for 14 days.
+- Every successful push to `main` also builds and signs the optimized APK automatically, then saves `Waypoint.apk` and `SHA256SUMS` as a 14-day Actions artifact. No manual signing dispatch is required.
+- A pushed `v*` tag: the same checks and signed APK build, then GitHub publishes `Waypoint.apk` and `SHA256SUMS` only after verification succeeds. The publishing job receives contents-write access; the signing job is read-only.
 - The signing job disables Gradle caches. Verification caches are read-only outside pushes to `main`; the basic GitHub cache provider is explicit.
-- Pull requests never receive the release signing secrets. Actions are pinned to commit hashes. The release job alone receives repository-content write permission.
+- Pull requests never receive the release signing secrets. Actions are pinned to commit hashes. Only the separate tag-publish job receives repository-content write permission; signing jobs are read-only.
 - Before restoring the signing key for a tag release, the release job checks that the tagged commit is already reachable from `main`. This catches accidental tags on unmerged commits.
-- A manual run with **signed_candidate** enabled also builds and verifies a signed APK on the selected branch. It saves `Waypoint-signed-candidate` for 14 days and does not create a GitHub release. This permits update testing before publication; it does not satisfy the human usability or real-car distribution checks.
-- A manual run with **publish_release** enabled builds and publishes from the selected existing version tag. The tag must match `version.properties` and point to a commit already on `main`; the workflow checks both before restoring the signing key. The two manual modes cannot be combined. This provides the same signed release path when starting the workflow from the tag in GitHub Actions.
 
 ## Protect release authority
 
@@ -54,8 +53,6 @@ git push origin v2.0.0
 
 Watch the Android workflow. Its release job verifies that the tag and version file agree. After publication, verify the APK and checksum on the release page. Keep pushed tags immutable, including tags whose release workflow failed. Use a new patch version and an annotated tag for corrections; never overwrite an already-published APK.
 
-To publish manually instead of relying on the tag-push trigger, select the already-pushed `v*` tag in **Actions → Android → Run workflow**, leave **signed_candidate** off, and enable **publish_release**. The workflow refuses branch selections, tags that do not match the app version, and tags not reachable from `main`. The signed-candidate mode always remains an artifact-only test.
-
 ## Updater behavior
 
 Waypoint checks GitHub's latest stable release API when the app enters the foreground. Drafts, prereleases and older/equal versions are ignored. An available update is offered over the idle map and returns on each launch until installed; choosing Later dismisses it only for the current foreground entry. The update prompt and Settings show GitHub's release notes before download. After installation, a one-time What’s New dialog shows the matching notes bundled in the APK. Downloads remain explicit, with no GitHub credentials or location information involved. Settings also offers a manual check.
@@ -66,7 +63,7 @@ An allowed App updates notification opens update details and is deduplicated per
 
 On a later foreground entry, Waypoint refreshes an earlier available offer so a newer release can supersede it. A temporary check failure keeps the earlier offer; an active download or verified APK remains available until the user acts on it.
 
-Pushing a commit to `main` only runs verification. Installed users see the update prompt after the newer signed `v*` GitHub release is published and they next open Waypoint on the phone. Version 2.0.0 and later can also notify while closed after a scheduled check, if Android allows notifications. Older installed versions gain that background behaviour only after updating.
+Pushing a commit to `main` automatically creates a signed APK artifact for testing; it does not publish or notify users. Installed users see the update prompt after the newer signed `v*` GitHub release is published and they next open Waypoint on the phone. Version 2.0.0 and later can also notify while closed after a scheduled check, if Android allows notifications. Older installed versions gain that background behaviour only after updating.
 
 Before showing Install update, Waypoint checks:
 
