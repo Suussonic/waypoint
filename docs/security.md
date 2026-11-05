@@ -10,7 +10,7 @@ The four unresolved records concern AndroidX Car App Library transport and lifec
 
 The audit's required OS isolation and aggregate resource controls were unavailable, so it did not execute target code, probe the phone or run live attacks. It used source, configuration, hashes and static dependency inspection. The 24 blocked units retain explicit native/framework, hosted-authority and dependency-inventory gaps. Ordinary builds, manifest checks and phone/DHU tests in [validation](validation.md) are separate functional evidence. Completing the audit workflow does not certify that all runtime boundaries are safe.
 
-After that frozen snapshot, the signing workflow was narrowed: successful pushes to `main` sign and save an APK artifact using a read-only repository token, while a separate tag-only job receives repository-content write access to publish the release. Manual signing of arbitrary selected branches was removed. This workflow follow-up is a source change after the audit snapshot, not a new independent security audit.
+After that frozen snapshot, the signing workflow was narrowed: successful pushes to `main` sign and save an APK artifact using a read-only repository token. Tag workflows skip the build and signing jobs, require a successful `main` run for the exact same commit, download only that run's signed artifact, verify its checksum, and publish it. Only the tag-publish job receives repository-content write access; it also has Actions read access to retrieve the artifact. Manual signing of arbitrary selected branches was removed. This workflow follow-up is a source change after the audit snapshot, not a new independent security audit.
 
 The current source protects default update jobs with Android's binding permission, cancellation generations and current notification/driving checks. Saved-place renaming changes each copy's name without replacing its coordinates or provenance. Car surface replacement cancels its delayed refresh and closes acquired resources. The unused dependency-provided debug Compose preview activity is removed, and packaged-component checks prevent it returning. Quest rewards remain transactional, pictures stay private and incoming places require confirmation.
 
@@ -75,7 +75,7 @@ Disabling the Android Auto component contained the reviewed 0.2.1 paths at that 
 - Download size and SHA-256 verification, followed by package, version and signer checks.
 - Android installation permission and confirmation remain under the user's control.
 - No GitHub token, app account, analytics backend or recorded location history.
-- Commit-pinned Actions and signing secrets restricted to the release job.
+- Commit-pinned Actions and signing secrets restricted to the `main` signing job.
 
 ## What remains unverified
 

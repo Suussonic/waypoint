@@ -4,22 +4,21 @@ The public update channel is `the-geeky-couldron/waypoint` on GitHub Releases. A
 
 ## What runs automatically
 
-- Pushes to `main` and pull requests: version validation, 38 world map styles plus the shared base style, debug APK, unit tests and Android lint. Reports and the debug APK are saved for 14 days.
+- Pushes to `main` and pull requests: version validation, 38 world map styles plus the shared base style, debug APK, unit tests and Android lint. Reports and the debug APK are saved for 14 days. Pull requests never receive release signing secrets.
 - Every successful push to `main` also builds and signs the optimized APK automatically, then saves `Waypoint.apk` and `SHA256SUMS` as a 14-day Actions artifact. No manual signing dispatch is required.
-- A pushed `v*` tag: the same checks and signed APK build, then GitHub publishes `Waypoint.apk` and `SHA256SUMS` only after verification succeeds. The publishing job receives contents-write access; the signing job is read-only.
+- A pushed `v*` tag does not rebuild or re-sign the APK. It finds the successful `main` run for the exact tagged commit, downloads that run's signed artifact, verifies its checksum, then publishes the APK and checksum file. If the main run is still running, the tag job waits up to 10 minutes. A tag without a successful matching main artifact fails.
 - The signing job disables Gradle caches. Verification caches are read-only outside pushes to `main`; the basic GitHub cache provider is explicit.
-- Pull requests never receive the release signing secrets. Actions are pinned to commit hashes. Only the separate tag-publish job receives repository-content write permission; signing jobs are read-only.
-- Before restoring the signing key for a tag release, the release job checks that the tagged commit is already reachable from `main`. This catches accidental tags on unmerged commits.
+- Actions are pinned to commit hashes. Signing jobs are read-only; only the separate tag-publish job receives repository-content write permission and read access to Actions artifacts.
 
 ## Protect release authority
 
-The owner must verify the effective GitHub rules for `main` and `v*` tags before relying on the signed update channel: require review and passing checks before changes reach `main`, limit who can create release tags, prevent tag replacement or deletion, and require an independent release approval where available. A tag-push workflow is read from the tagged revision, so the ancestry check inside this workflow cannot by itself protect against an actor who can tag an arbitrary commit containing a changed workflow. Record who can change workflow files and who can access release signing secrets. These controls are configured on GitHub and are not established by this repository's source.
+The owner must verify the effective GitHub rules for `main` and `v*` tags before relying on the signed update channel: require review and passing checks before changes reach `main`, limit who can create release tags, prevent tag replacement or deletion, and require an independent release approval where available. GitHub evaluates a tag-push workflow from the tagged revision, so protect `main` and release-tag authority even though the publisher only accepts artifacts from a successful `main` run for the exact same commit. Record who can change workflow files and who can access release signing secrets. These controls are configured on GitHub and are not established by this repository's source.
 
-The manual candidate path intentionally permits a branch that has not reached `main`. Treat authority to dispatch that workflow or edit its selected branch as signing authority. Review the exact commit and complete the security audit before dispatching it; repository secret access and any approval rules must be checked on GitHub.
+The published artifact must come from a completed successful `main` run and match the tagged commit exactly. Release tags should be pushed while that signed artifact is still available; it expires after 14 days.
 
 ## Signing
 
-The release job requires four repository Actions secrets:
+The automatic `main` signing job requires four repository Actions secrets:
 
 | Secret | Value |
 | --- | --- |
@@ -38,7 +37,7 @@ Local release builds accept `WAYPOINT_KEYSTORE`, `WAYPOINT_STORE_PASSWORD`, `WAY
 
 1. Change `version.properties`. Use a stable `major.minor.patch` version, with each part from 0–999. Set `VERSION_CODE = major × 1,000,000 + minor × 1,000 + patch`. This matches the updater in the published app, which checks the APK code against the release tag. Always increase the code; `1.5.0` uses `1005000`.
 2. Update `docs/releases/current.md` and copy it to `app/src/main/assets/release-notes.md`. The bundled copy powers the post-update What’s New screen; GitHub’s release body powers the updater. `scripts/check_version.py` requires both copies to match. Update tests/screenshots when behavior or appearance changes.
-3. Run verification, commit, push, then tag the exact commit:
+3. Run verification, commit and push to `main`. Wait for its signed artifact job to pass, then tag that exact commit. The tag workflow publishes the existing signed artifact without rebuilding it:
 
 ```sh
 python3 scripts/check_version.py
@@ -51,7 +50,7 @@ git tag -a v2.0.0 -m "Waypoint 2.0.0"
 git push origin v2.0.0
 ```
 
-Watch the Android workflow. Its release job verifies that the tag and version file agree. After publication, verify the APK and checksum on the release page. Keep pushed tags immutable, including tags whose release workflow failed. Use a new patch version and an annotated tag for corrections; never overwrite an already-published APK.
+Watch the Android workflow. Its publish job verifies that the tag and version file agree, then checks the downloaded APK against its SHA-256 file before publishing. After publication, verify the APK and checksum on the release page. Keep pushed tags immutable, including tags whose release workflow failed. Use a new patch version and an annotated tag for corrections; never overwrite an already-published APK.
 
 ## Updater behavior
 
