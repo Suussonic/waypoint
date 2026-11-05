@@ -89,9 +89,12 @@ class WaypointApplication : Application() {
         MapGlyphs.install(this)
         updateAlerts.schedule()
     }
-    fun shouldShowWhatsNew(): Boolean = appPrefs.getInt("whatsNewShownVersion", 0) < BuildConfig.VERSION_CODE
+    // Older builds did not record which notes were read; show their full published history once.
+    private fun lastNotesVersion(): Int = appPrefs.getInt("whatsNewShownVersion", 0)
+    fun shouldShowWhatsNew(): Boolean = lastNotesVersion() < BuildConfig.VERSION_CODE
     fun markWhatsNewSeen() { appPrefs.edit().putInt("whatsNewShownVersion", BuildConfig.VERSION_CODE).apply() }
-    fun bundledReleaseNotes(): String = assets.open("release-notes.md").bufferedReader().use { it.readText() }
+    fun bundledReleaseNotes(): String = releaseNotesAfter(lastNotesVersion(), BuildConfig.VERSION_CODE)
+        .joinToString("\n\n") { entry -> assets.open(entry.asset).bufferedReader().use { it.readText().trim() } }
     val navigation by lazy { NavigationController(this) }
     val updater by lazy { AppUpdater(this) }
     val updateAlerts by lazy { UpdateAlerts(this) }
@@ -651,9 +654,8 @@ class NavigationController(private val app: Application, private val repository:
         "onboardingCompleted",
         prefs.getBoolean("mapOpened", prefs.contains("world"))
     )
-    // Greet existing users once per installed release, then open their last map on later launches.
-    fun shouldShowLanding(): Boolean = !hasCompletedOnboarding() ||
-        prefs.getInt("welcomeShownVersion", 0) < BuildConfig.VERSION_CODE
+    // Setup is a first-run task. Release changes have their own What's New dialog.
+    fun shouldShowLanding(): Boolean = !hasCompletedOnboarding()
     fun markMapOpened() {
         prefs.edit().putBoolean("mapOpened", true).putBoolean("onboardingCompleted", true).apply()
     }

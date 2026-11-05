@@ -28,7 +28,11 @@ fun ReleaseNotesContent(notes: String, modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         notes.lineSequence().map(String::trim).filter(String::isNotEmpty).forEach { line ->
             when {
-                line.startsWith("# ") -> Unit // The surrounding screen already names the release.
+                line.startsWith("# ") -> Text(
+                    plainNote(line.removePrefix("# ")),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 12.dp),
+                )
                 line.startsWith("### ") -> Text(
                     plainNote(line.removePrefix("### ")),
                     style = MaterialTheme.typography.titleSmall,
@@ -51,7 +55,7 @@ fun WhatsNewDialog(notes: String, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Panel,
-        title = { Text("What’s new in Waypoint ${BuildConfig.VERSION_NAME}") },
+        title = { Text("What’s new in Waypoint") },
         text = {
             ReleaseNotesContent(
                 notes,

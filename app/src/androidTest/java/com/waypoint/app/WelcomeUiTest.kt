@@ -24,7 +24,7 @@ class WelcomeUiTest {
         val oldWelcomeVersion=prefs.getInt("welcomeShownVersion",0)
         val oldFavorites=prefs.getString("favoriteWorlds",null)
         try {
-            prefs.edit().putBoolean("onboardingCompleted",true).putBoolean("mapOpened",true)
+            prefs.edit().putBoolean("onboardingCompleted",false).putBoolean("mapOpened",false)
                 .putInt("welcomeShownVersion",0).putString("favoriteWorlds",World.NIGHT_CITY.name).commit()
             inst.runOnMainSync{(context.applicationContext as WaypointApplication).navigation.clearDestination()}
             context.startActivity(context.packageManager.getLaunchIntentForPackage(context.packageName)!!.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -68,6 +68,22 @@ class WelcomeUiTest {
             device.executeShellCommand("settings put system font_scale $font")
             device.executeShellCommand("settings put global animator_duration_scale $animation")
             config.waitForIdleTimeout=idle
+        }
+    }
+
+    @Test fun completedOnboardingDoesNotReturnForANewVersion() {
+        val context=InstrumentationRegistry.getInstrumentation().targetContext
+        val prefs=context.getSharedPreferences("waypoint",0)
+        val oldOnboarding=prefs.getBoolean("onboardingCompleted",false)
+        val oldMapOpened=prefs.getBoolean("mapOpened",false)
+        val oldWelcomeVersion=prefs.getInt("welcomeShownVersion",0)
+        try {
+            prefs.edit().putBoolean("onboardingCompleted",true).putBoolean("mapOpened",true)
+                .putInt("welcomeShownVersion",1_001_000).commit()
+            assertFalse((context.applicationContext as WaypointApplication).navigation.shouldShowLanding())
+        } finally {
+            prefs.edit().putBoolean("onboardingCompleted",oldOnboarding).putBoolean("mapOpened",oldMapOpened)
+                .putInt("welcomeShownVersion",oldWelcomeVersion).commit()
         }
     }
 }
