@@ -32,4 +32,15 @@ fun worldEmblemFor(world: World): Int = when (world) {
     World.SAINTS -> R.drawable.world_emblem_saints
     World.JUST_CAUSE -> R.drawable.world_emblem_just_cause
     World.MAFIA -> R.drawable.world_emblem_mafia
+    World.DIVISION -> R.drawable.world_emblem_division
+    World.SEA_CHART -> R.drawable.world_emblem_sea_chart
+    World.DOS_ATLAS -> R.drawable.world_emblem_dos_atlas
+    World.AINCRAD -> R.drawable.world_emblem_aincrad
+    World.COUNTER_STRIKE -> R.drawable.world_emblem_counter_strike
+    World.DEFCON -> R.drawable.world_emblem_defcon
+    World.FIELD_OPS -> R.drawable.world_emblem_field_ops
+    World.RETRO_QUEST -> R.drawable.world_emblem_retro_quest
+    World.NIER -> R.drawable.world_emblem_nier
+    World.STALKER -> R.drawable.world_emblem_stalker
+    World.HOME_CONSOLE -> R.drawable.world_emblem_home_console
 }

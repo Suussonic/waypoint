@@ -47,12 +47,28 @@ class WaypointCarService : CarAppService() {
     // Android Auto hosts are accepted by package *and* signing certificate. Never use
     // ALLOW_ALL_HOSTS_VALIDATOR on an exported service that controls navigation state.
     override fun createHostValidator(): HostValidator = waypointHostValidator(this)
-    override fun onCreateSession(): Session = object: Session() {
-        override fun onCreateScreen(intent: Intent): Screen {
-            (carContext.applicationContext as WaypointApplication).navigation.handleNavigationIntent(intent)
-            return WaypointCarScreen(carContext)
+    override fun onCreateSession(): Session = WaypointCarSession()
+}
+
+/** Connection lifetime belongs to the host session, not a map hidden by a menu. */
+internal class WaypointCarSession : Session() {
+    private val controller get() = (carContext.applicationContext as WaypointApplication).navigation
+    init {
+        lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onCreate(owner: LifecycleOwner) { controller.attachCarSession(this@WaypointCarSession) }
+            override fun onResume(owner: LifecycleOwner) { controller.refreshCarLocation() }
+            override fun onDestroy(owner: LifecycleOwner) { controller.detachCarSession(this@WaypointCarSession) }
+        })
+    }
+    override fun onCreateScreen(intent: Intent): Screen {
+        controller.handleNavigationIntent(intent)
+        return WaypointCarScreen(carContext)
+    }
+    override fun onNewIntent(intent: Intent) {
+        if (controller.handleNavigationIntent(intent)) {
+            // The confirmation belongs on the map, even if Search or Settings is open.
+            carContext.getCarService(ScreenManager::class.java).popToRoot()
         }
-        override fun onNewIntent(intent: Intent) { (carContext.applicationContext as WaypointApplication).navigation.handleNavigationIntent(intent) }
     }
 }
 
@@ -89,13 +105,13 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
         })
         lifecycle.addObserver(object: DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) {
-                controller.setCarVisible(true)
+                controller.refreshCarLocation()
+                invalidate()
                 carContext.getCarService(AppManager::class.java).setSurfaceCallback(this@WaypointCarScreen)
             }
-            override fun onStop(owner: LifecycleOwner) { controller.setCarVisible(false) }
             override fun onDestroy(owner: LifecycleOwner) {
-                controller.setCarVisible(false)
-                controller.leaveCarSession()
+                if(signaled) { manager.navigationEnded();signaled=false }
+                manager.clearNavigationManagerCallback()
                 carContext.getCarService(AppManager::class.java).setSurfaceCallback(null)
                 scope.cancel();closeSurface(true)
             }
@@ -117,7 +133,10 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
         }
     }
     override fun onSurfaceAvailable(container: SurfaceContainer) {
-        if(container.surface?.isValid!=true || !validCarSurfaceSize(container.width,container.height,container.dpi))return
+        if(container.surface?.isValid!=true || !validCarSurfaceSize(container.width,container.height,container.dpi)) {
+            if(container.surface === surface) closeSurface(true) else container.surface?.release()
+            return
+        }
         closeSurface(surface !== container.surface)
         surface=container.surface; width=container.width; height=container.height
         mapFirstVisibleAt=SystemClock.elapsedRealtime()
@@ -126,21 +145,22 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
             carContext.getSystemService(DisplayManager::class.java)
                 .createVirtualDisplay("Waypoint Android Auto map",width,height,container.dpi,
                     container.surface,DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY)
-        } catch(_: RuntimeException) { closeSurface(false);return }
-        if(display==null) { closeSurface(false);return }
+        } catch(_: RuntimeException) { closeSurface(true);return }
+        if(display==null) { closeSurface(true);return }
         virtualDisplay=display
         try {
-            val view=WaypointCarLiveMap(carContext,overlay)
+            val window=Presentation(carContext,display.display)
+            val view=WaypointCarLiveMap(window.context,overlay)
             liveMap=view
-            presentation=Presentation(carContext,display.display).apply {
+            presentation=window.apply {
                 setContentView(view)
                 show()
             }
             view.start()
             updateMap()
-            scope.launch { delay(5000);updateMap() }
+            creditRefreshJob=scope.launch { delay(5000);updateMap() }
         } catch(_: RuntimeException) {
-            closeSurface(false)
+            closeSurface(true)
         }
     }
     override fun onVisibleAreaChanged(visibleArea: Rect) {
@@ -154,7 +174,9 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
         if(container.surface !== surface)return
         closeSurface(true)
     }
+    private var creditRefreshJob: kotlinx.coroutines.Job? = null
     private fun closeSurface(release: Boolean) {
+        creditRefreshJob?.cancel();creditRefreshJob=null
         liveMap?.destroy();liveMap=null
         presentation?.dismiss();presentation=null
         virtualDisplay?.release();virtualDisplay=null
@@ -191,12 +213,11 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
         .setIcon(CarIcon.Builder(IconCompat.createWithResource(carContext,icon)).build())
         .setOnClickListener { if(screenActive())click() }.build()
     private fun adjustedCamera(s: NavState): CameraPosition {
-        val camera=carCamera(s,width,height)
+        val camera=carCamera(s,width,height,CarMapViewport(visibleArea.left,visibleArea.top,
+            visibleArea.right,visibleArea.bottom))
         return CameraPosition.Builder(camera)
             .target(mapCenter ?: camera.target)
             .zoom((camera.zoom+zoomOffset).coerceIn(2.0,19.0))
-            .padding(if(s.navigating && mapCenter==null)width*.18 else 0.0,
-                if(s.navigating && mapCenter==null)height*.28 else 0.0,0.0,0.0)
             .build()
     }
     private fun templateKey(s: NavState): List<Any?> {
@@ -204,11 +225,11 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
         return when {
             s.pendingSharedDestination!=null -> listOf(permission,"import",s.pendingSharedDestinationId,s.pendingSharedDestination)
             s.resolvingSharedDestination -> listOf(permission,"resolving")
-            s.navigating -> listOf(permission,"navigation",s.world,s.voice,s.routing,s.offRoute,s.routeError,s.gpsReady,
+            s.navigating -> listOf(permission,"navigation",s.world,s.voice,s.imperial,s.routing,s.offRoute,s.routeError,s.gpsReady,
                 if(s.gpsReady)null else s.gpsStatus,s.progress?.nextStep,
                 s.progress?.toTurn?.toInt()?.div(25),s.progress?.remaining?.toInt()?.div(25),
                 s.progress?.seconds?.toInt()?.div(5))
-            s.selected!=null -> listOf(permission,"preview",s.world,s.selected.id,s.selected.name,
+            s.selected!=null -> listOf(permission,"preview",s.world,s.imperial,s.selected.id,s.selected.name,
                 controller.destinationActionVersion,System.identityHashCode(s.route),
                 s.routing,s.arrived,s.routeError,s.gpsReady,if(s.gpsReady)null else s.gpsStatus,
                 s.route?.seconds?.toInt(),s.route?.meters?.toInt())
@@ -229,7 +250,7 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
                 setRoundaboutExitNumber(maneuver?.exit ?: 0) }.build())
         .apply { maneuver?.road?.takeIf { it.isNotBlank() }?.let(::setRoad) }.build()
     private fun carEstimate(meters: Double,seconds: Long): TravelEstimate =
-        TravelEstimate.Builder(carDistance(meters),DateTimeWithZone.create(
+        TravelEstimate.Builder(carDistance(meters,controller.state.value.imperial),DateTimeWithZone.create(
             System.currentTimeMillis()+seconds*1000,TimeZone.getDefault()))
             .setRemainingTimeSeconds(seconds).build()
     private fun updateTrip(s: NavState) {
@@ -247,13 +268,29 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
     }
     override fun onGetTemplate(): Template {
         val s=controller.state.value
-        if(!controller.hasLocationPermission()) return MessageTemplate.Builder("Allow precise location in Waypoint on your phone before using navigation.").setHeader(header("Waypoint")).build()
+        if(!controller.hasLocationPermission()) return MessageTemplate.Builder(carContext.getString(R.string.car_location_explanation))
+            .setHeader(header("Waypoint"))
+            .addAction(Action.Builder().setTitle(carContext.getString(R.string.car_allow_location))
+                .setOnClickListener(ParkedOnlyOnClickListener.create {
+                    if(screenActive()) carContext.requestPermissions(listOf(
+                        android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                        android.Manifest.permission.ACCESS_FINE_LOCATION
+                    )) { _, _ ->
+                        if(lifecycle.currentState != Lifecycle.State.DESTROYED) {
+                            controller.refreshCarLocation()
+                            invalidate()
+                        }
+                    }
+                }).build())
+            .addAction(Action.Builder().setTitle(carContext.getString(R.string.car_check_permission))
+                .setOnClickListener { if(screenActive()) { controller.refreshCarLocation();invalidate() } }.build())
+            .build()
         if(s.pendingSharedDestination!=null) {
             val id=s.pendingSharedDestinationId
             return MessageTemplate.Builder("Open ${s.pendingSharedDestination} as your destination?")
                 .setHeader(header("New destination"))
-                .addAction(Action.Builder().setTitle("Open").setOnClickListener{controller.acceptPendingNavigationImport(id)}.build())
-                .addAction(Action.Builder().setTitle("Dismiss").setOnClickListener{controller.dismissPendingNavigationImport(id)}.build())
+                .addAction(Action.Builder().setTitle("Open").setOnClickListener{if(screenActive())controller.acceptPendingNavigationImport(id)}.build())
+                .addAction(Action.Builder().setTitle("Dismiss").setOnClickListener{if(screenActive())controller.dismissPendingNavigationImport(id)}.build())
                 .build()
         }
         if(s.resolvingSharedDestination) return MessageTemplate.Builder("Finding the place name…")
@@ -263,7 +300,7 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
             val maneuver=s.route?.steps?.getOrNull(s.progress?.nextStep ?: 0)
             val step=carStep(maneuver,carCue(s))
             val info=if(s.routing && s.progress==null)RoutingInfo.Builder().setLoading(true).build() else
-                RoutingInfo.Builder().setCurrentStep(step,carDistance(s.progress?.toTurn ?: 0.0))
+                RoutingInfo.Builder().setCurrentStep(step,carDistance(s.progress?.toTurn ?: 0.0,s.imperial))
                     .apply {
                         s.route?.steps?.getOrNull((s.progress?.nextStep ?: 0)+1)?.let { next ->
                             setNextStep(carStep(next,next.instruction))
@@ -339,7 +376,7 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
         m?.type=="on ramp" && "right" in m.modifier -> CarManeuver.TYPE_ON_RAMP_NORMAL_RIGHT
         m?.type=="off ramp" && "left" in m.modifier -> CarManeuver.TYPE_OFF_RAMP_NORMAL_LEFT
         m?.type=="off ramp" && "right" in m.modifier -> CarManeuver.TYPE_OFF_RAMP_NORMAL_RIGHT
-        m?.modifier=="uturn" -> CarManeuver.TYPE_U_TURN_LEFT
+        m?.modifier=="uturn" -> if(m.uTurnRight)CarManeuver.TYPE_U_TURN_RIGHT else CarManeuver.TYPE_U_TURN_LEFT
         m?.modifier=="slight left" -> CarManeuver.TYPE_TURN_SLIGHT_LEFT
         m?.modifier=="slight right" -> CarManeuver.TYPE_TURN_SLIGHT_RIGHT
         m?.modifier=="sharp left" -> CarManeuver.TYPE_TURN_SHARP_LEFT
@@ -350,8 +387,16 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
     }
 }
 
-private fun carDistance(meters: Double): Distance {
+internal fun carDistance(meters: Double, imperial: Boolean = false): Distance {
     val safe=meters.takeIf { it.isFinite() }?.coerceAtLeast(0.0) ?: 0.0
+    if(imperial) {
+        val miles = safe / 1609.344
+        return when {
+            miles < 0.1 -> Distance.create(kotlin.math.round(safe * 3.280839895 / 10) * 10,Distance.UNIT_FEET)
+            miles < 10 -> Distance.create(miles,Distance.UNIT_MILES_P1)
+            else -> Distance.create(miles,Distance.UNIT_MILES)
+        }
+    }
     return when {
         safe < 1000 -> Distance.create((safe/10).toInt()*10.0,Distance.UNIT_METERS)
         safe < 10000 -> Distance.create(safe/1000.0,Distance.UNIT_KILOMETERS_P1)
@@ -359,10 +404,19 @@ private fun carDistance(meters: Double): Distance {
     }
 }
 
-/** A flat overview keeps both endpoints visible before the driver starts guidance. */
-internal fun carCamera(s: NavState, width: Int, height: Int): CameraPosition {
+internal data class CarMapViewport(val left: Int,val top: Int,val right: Int,val bottom: Int)
+
+/** Frame the route and driver within the map area left by the car host's panels. */
+internal fun carCamera(s: NavState, width: Int, height: Int,
+    viewport: CarMapViewport=CarMapViewport(0,0,width,height)): CameraPosition {
     val world=s.world
     val builder=CameraPosition.Builder()
+    val area=viewport.takeIf { it.left>=0 && it.top>=0 && it.right<=width && it.bottom<=height &&
+        it.right-it.left>=160 && it.bottom-it.top>=110 } ?: CarMapViewport(0,0,width,height)
+    val mapWidth=area.right-area.left
+    val mapHeight=area.bottom-area.top
+    builder.padding(area.left.toDouble(),area.top.toDouble(),
+        (width-area.right).toDouble(),(height-area.bottom).toDouble())
     val route=s.route
     if(route!=null && !s.navigating && route.points.isNotEmpty()) {
         val points=route.points+listOfNotNull(s.fix,s.selected?.point)
@@ -375,14 +429,19 @@ internal fun carCamera(s: NavState, width: Int, height: Int): CameraPosition {
         fun mercator(lat: Double)=ln(tan(PI/4+Math.toRadians(lat)/2))
         val xSpan=((east-west)/360.0).coerceAtLeast(0.00001)
         val ySpan=((mercator(north)-mercator(south))/(2*PI)).coerceAtLeast(0.00001)
-        val availableWidth=(width-100).coerceAtLeast(160).toDouble()
-        val availableHeight=(height-145).coerceAtLeast(110).toDouble()
+        val availableWidth=(mapWidth-100).coerceAtLeast(160).toDouble()
+        val availableHeight=(mapHeight-145).coerceAtLeast(110).toDouble()
         // MapLibre's camera zoom is based on a 512 px world tile. Using 256 here
         // doubled the preview scale and clipped both route endpoints on the car.
         val zoom=min(log2(availableWidth/(512*xSpan)),log2(availableHeight/(512*ySpan))).coerceIn(3.0,17.0)
         return builder.target(LatLng((south+north)/2,wrappedLongitude((west+east)/2))).zoom(zoom).tilt(0.0).build()
     }
-    val center=(if(s.navigating)carLookAhead(s) else null) ?: s.fix ?: PreviewCenter
+    // Keep the vehicle at a stable screen anchor even when the road bends.
+    // Moving the camera target up the route as well as padding it made the
+    // vehicle drift toward the edge at close zoom levels.
+    val center=s.fix ?: (if(s.navigating)carLookAhead(s) else null) ?: PreviewCenter
+    if(s.navigating)builder.padding(area.left+mapWidth*.18,area.top+mapHeight*.50,
+        (width-area.right).toDouble(),(height-area.bottom).toDouble())
     return builder.target(LatLng(center.lat,center.lon))
         .zoom(if(s.navigating) carGuidanceZoom(s.speed,s.progress?.toTurn) else world.mapArt().zoom)
         .tilt(if(s.navigating) 50.0 else mapCameraTilt(world,s.tilted,false))
@@ -408,7 +467,9 @@ internal fun carTravelBearing(state: NavState): Double {
         return state.bearing.toDouble()
     val ahead=state.route?.remainingPoints(state.progress)
     val origin=ahead?.firstOrNull()
-    val next=origin?.let { start -> ahead.drop(1).firstOrNull { distance(start,it)>=12.0 } }
+    // Follow the current road tangent. A long look-ahead chord points the vehicle
+    // into the next road before it has reached a tight bend or U-turn.
+    val next=origin?.let { start -> ahead.drop(1).firstOrNull { distance(start,it)>=0.5 } }
     if(origin!=null && next!=null) {
         val lat1=Math.toRadians(origin.lat);val lat2=Math.toRadians(next.lat)
         val dLon=Math.toRadians(next.lon-origin.lon)

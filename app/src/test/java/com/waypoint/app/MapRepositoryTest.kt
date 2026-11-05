@@ -57,6 +57,15 @@ class MapRepositoryTest {
         assertEquals(2,r.points.size);assertEquals(111.0,r.meters,0.1);assertEquals("arrive",r.steps.last().type)
         assertEquals(Coordinate(0.0,0.001),r.points.last());assertTrue(server.takeRequest().path!!.contains("geometries=polyline6"))
     }
+    @Test fun retainsRightUTurnAcrossNorthInsteadOfAlwaysShowingLeft()=runBlocking {
+        // Bearings from the public Trafalgar Square reproduction. The provider's
+        // generic driving_side is not allowed to override its actual turn arc.
+        val payload=route.replace("\"type\":\"depart\"", "\"type\":\"continue\",\"modifier\":\"uturn\",\"bearing_before\":347,\"bearing_after\":53")
+        response(payload)
+        val r=repository.route(Coordinate(0.0,0.0),Coordinate(0.0,0.001))
+        assertTrue(r.steps.first().uTurnRight)
+        assertEquals("Make a U-turn onto Main Street",r.steps.first().instruction)
+    }
     @Test fun ferrostarPayloadContainsRequiredBannerComponents()=runBlocking {
         response(route)
         val repo=MapRepository(server.url("/").toString(),server.url("/").toString(),server.url("/").toString(),
@@ -120,6 +129,16 @@ class MapRepositoryTest {
     @Test fun rejectsNegativeRouteDuration()=runBlocking {
         response(route.replace("\"duration\":60.0","\"duration\":-1.0"))
         assertTrue(runCatching { repository.route(Coordinate(0.0,0.0),Coordinate(0.0,0.001)) }.isFailure)
+    }
+    @Test fun bicycleUsesCyclingProfileAndProviderDuration()=runBlocking {
+        response(route)
+        val result=repository.route(Coordinate(0.0,0.0),Coordinate(0.0,0.001),TravelMode.BICYCLE)
+        val request=server.takeRequest()
+        val payload=org.json.JSONObject(request.requestUrl!!.queryParameter("json")!!)
+        assertEquals("bicycle",payload.getString("costing"))
+        assertEquals("osrm",payload.getString("format"))
+        assertEquals(TravelMode.BICYCLE,result.mode)
+        assertEquals(60.0,result.seconds,0.0)
     }
     @Test fun refusesRedirectBeforeSendingCoordinatesElsewhere()=runBlocking {
         server.enqueue(MockResponse().setResponseCode(302).addHeader("Location",server.url("/unexpected")))

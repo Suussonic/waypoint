@@ -6,6 +6,11 @@ on:
     tags: ['v*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      signed_candidate:
+        description: Build a signed candidate APK without publishing a release
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -68,7 +73,7 @@ jobs:
 
   release:
     name: Signed Android release
-    if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
+    if: (startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.signed_candidate)
     needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -80,6 +85,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - name: Check release commit ancestry
+        if: github.event_name == 'push'
         run: |
           git fetch --no-tags origin main
           git merge-base --is-ancestor HEAD origin/main || {
@@ -122,12 +128,20 @@ jobs:
           cd release
           sha256sum Waypoint.apk > SHA256SUMS
       - name: Publish GitHub release
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           gh release create "$RELEASE_TAG" release/Waypoint.apk release/SHA256SUMS \
             --verify-tag --title "Waypoint $RELEASE_TAG" --notes-file docs/releases/current.md --latest
+      - name: Save signed candidate for testing
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Waypoint-signed-candidate
+          path: release/
+          retention-days: 14
       - name: Remove temporary signing key
         if: always()
         run: rm -f "$RUNNER_TEMP/waypoint.keystore"

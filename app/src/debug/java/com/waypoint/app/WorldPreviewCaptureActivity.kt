@@ -15,7 +15,7 @@ import org.maplibre.android.snapshotter.MapSnapshotter
 import java.io.File
 import java.io.FileOutputStream
 
-/** Debug-only asset builder. Captures the real MapLibre style over Indian streets. */
+/** Debug-only asset builder. Captures real MapLibre styles over their documented public-place fixtures. */
 class WorldPreviewCaptureActivity : Activity() {
     private val handler = Handler(Looper.getMainLooper())
     private var snapshotter: MapSnapshotter? = null
@@ -30,7 +30,7 @@ class WorldPreviewCaptureActivity : Activity() {
         setContentView(status)
         output = File(getExternalFilesDir(null), "world-previews").apply { mkdirs() }
         val only = intent.getStringExtra("only")
-        worlds = if (only == null) World.entries else World.entries.filter { it.file == only }
+        worlds = if (only == null) World.entries else if (only == "new") newWorlds.toList() else World.entries.filter { it.file == only }
         require(worlds.isNotEmpty()) { "Unknown world: $only" }
         capture(0)
     }
@@ -46,7 +46,7 @@ class WorldPreviewCaptureActivity : Activity() {
         status.text = "${index + 1}/${worlds.size}: ${world.title}\n${place.label}"
         val json = assets.open("styles/${world.file}.json").bufferedReader().use { it.readText() }
         val camera = CameraPosition.Builder()
-            .target(LatLng(place.lat, place.lon)).zoom(place.zoom).tilt(0.0).bearing(0.0).build()
+            .target(LatLng(place.lat, place.lon)).zoom(place.zoom).tilt(if(world==World.NIER)42.0 else 0.0).bearing(0.0).build()
         val options = MapSnapshotter.Options(960, 520)
             .withStyleBuilder(Style.Builder().fromJson(json)).withCameraPosition(camera).withPixelRatio(1f).withLogo(false)
         val renderer = MapSnapshotter(this, options)

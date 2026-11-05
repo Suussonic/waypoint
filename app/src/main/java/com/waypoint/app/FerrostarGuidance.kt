@@ -66,17 +66,20 @@ internal class FerrostarGuidance(
     private var autoDriveEnabled=false
     private var mode=TravelMode.CAR
     private data class Alternate(val session: Long, val destination: Coordinate, val route: RoadRoute)
-    private val alternateLock=Any()
-    private var session=0L
+    private val sessions=GuidanceSessionGate()
     private var activeDestination: Coordinate?=null
     private var pendingAlternate: Alternate?=null
-    private fun isCurrent(ticket: Long)=synchronized(alternateLock) { ticket==session && activeDestination!=null }
-    private val voice=androidGuidanceVoice(app) { status -> scope.launch { onVoiceStatus(status) } }
+    private fun isCurrent(ticket: Long)=sessions.read { session -> ticket==session && activeDestination!=null }
+    private val voice=androidGuidanceVoice(app,world={
+        val preferences=app.getSharedPreferences("waypoint",0)
+        if(!preferences.getBoolean("gameVoice",true))null
+        else World.entries.firstOrNull { it.name==preferences.getString("world",null) } ?: World.LOS_SANTOS
+    }) { status -> scope.launch { onVoiceStatus(status) } }
     private val core=FerrostarCore(
         customRouteProvider=CustomRouteProvider { user, waypoints ->
             val target=waypoints.lastOrNull()?.coordinate ?: return@CustomRouteProvider emptyList()
             val destination=Coordinate(target.lat,target.lng)
-            val request=synchronized(alternateLock) {
+            val request=sessions.read { session ->
                 if(activeDestination?.let { distance(it,destination)<=5.0 }==true) session to mode else null
             } ?: return@CustomRouteProvider emptyList()
             val (ticket,requestedMode)=request
@@ -89,7 +92,7 @@ internal class FerrostarGuidance(
                 throw error
             }
             val parsed=requireNotNull(replacement.ferrostarRoute) { "Ferrostar could not read the new route." }
-            synchronized(alternateLock) {
+            sessions.read { session ->
                 if(ticket!=session || activeDestination?.let { distance(it,destination)<=5.0 }!=true)
                     throw CancellationException("Navigation session changed")
                 pendingAlternate=Alternate(ticket,destination,replacement)
@@ -105,7 +108,7 @@ internal class FerrostarGuidance(
         voice.prepare()
         core.alternativeRouteProcessor=AlternativeRouteProcessor { running, routes ->
             val selected=routes.firstOrNull()
-            val replacement=synchronized(alternateLock) {
+            val replacement=sessions.read { session ->
                 val candidate=pendingAlternate
                 pendingAlternate=null
                 candidate?.takeIf { it.session==session && selected!=null && it.route.ferrostarRoute==selected }
@@ -114,7 +117,11 @@ internal class FerrostarGuidance(
                 scope.launch {
                     if(!isCurrent(replacement.session))return@launch
                     try {
-                        withContext(Dispatchers.IO) { running.replaceRoute(selected) }
+                        withContext(Dispatchers.IO) {
+                            // Validate on the mutation dispatcher, under the same gate as start/stop.
+                            // A check before withContext cannot protect a later shared-core mutation.
+                            sessions.applyIfCurrent(replacement.session) { running.replaceRoute(selected) }
+                        }
                         if(isCurrent(replacement.session))onAlternateRoute(replacement.route,replacement.destination)
                     } catch(error: CancellationException) { throw error }
                     catch(error: Exception) {
@@ -126,11 +133,14 @@ internal class FerrostarGuidance(
         scope.launch { core.state.collect { onState(it) } }
     }
     fun start(route: RoadRoute, acceptedLocation: Location?, voiceEnabled: Boolean, destination: Coordinate) {
-        synchronized(alternateLock) { session++;activeDestination=destination;pendingAlternate=null;mode=route.mode }
-        acceptedLocation?.let(locationProvider::accept)
-        voice.setMuted(!voiceEnabled)
-        if(autoDriveEnabled) navigationLocationProvider.enableSimulationOn(requireNotNull(route.ferrostarRoute))
-        core.startNavigation(requireNotNull(route.ferrostarRoute) { "Ferrostar could not read this route." },ferrostarConfig(route.mode))
+        sessions.transition {
+            activeDestination=destination;pendingAlternate=null;mode=route.mode
+            acceptedLocation?.let(locationProvider::accept)
+            voice.stopAndClearQueue()
+            voice.setMuted(!voiceEnabled)
+            if(autoDriveEnabled) navigationLocationProvider.enableSimulationOn(requireNotNull(route.ferrostarRoute))
+            core.startNavigation(requireNotNull(route.ferrostarRoute) { "Ferrostar could not read this route." },ferrostarConfig(route.mode))
+        }
     }
     fun enableAutoDrive(route: RoadRoute?) {
         autoDriveEnabled=true
@@ -141,8 +151,10 @@ internal class FerrostarGuidance(
     fun mute(muted: Boolean) { voice.setMuted(muted) }
     fun voiceStatus(): GuidanceVoiceStatus=voice.status
     fun stop() {
-        synchronized(alternateLock) { session++;activeDestination=null;pendingAlternate=null }
-        navigationLocationProvider.disableSimulation();core.stopNavigation()
+        sessions.transition {
+            activeDestination=null;pendingAlternate=null
+            navigationLocationProvider.disableSimulation();core.stopNavigation()
+        }
     }
     fun leaveCarSession() { navigationLocationProvider.disableSimulation();autoDriveEnabled=false }
     fun shutdown() { stop();voice.shutdown();scope.cancel() }

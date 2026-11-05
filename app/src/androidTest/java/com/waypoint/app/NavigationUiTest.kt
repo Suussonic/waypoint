@@ -39,7 +39,8 @@ class NavigationUiTest {
             click("Worlds")
             device.wait(Until.findObject(By.clazz("android.widget.EditText")),4000)!!.text=world.title
             SystemClock.sleep(400)
-            click("Apply ${world.title} theme")
+            click("Preview ${world.title} theme")
+            click("Use this world")
             assertTrue(device.wait(Until.gone(By.clazz("android.widget.EditText")),5000))
             assertEquals(world,controller.state.value.world)
         }

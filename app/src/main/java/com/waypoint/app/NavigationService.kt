@@ -39,6 +39,7 @@ class NavigationService : Service() {
         return NotificationCompat.Builder(this,"navigation").setSmallIcon(R.drawable.ic_navigation)
             .setContentTitle("Waypoint · ${controller.state.value.selected?.name ?: "Navigation"}")
             .setContentText(text).setContentIntent(open).setOngoing(true).setOnlyAlertOnce(true)
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setCategory(NotificationCompat.CATEGORY_NAVIGATION).addAction(0,"End navigation",stop).build()
     }
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

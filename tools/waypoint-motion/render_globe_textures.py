@@ -47,7 +47,12 @@ THEMES = {
     "just_cause": ("#185d70", "#8eaa90", "#437f7c", "#e8e0c5", "#f0cf6a", "rajdhani.ttf"),
     "mafia": ("#7d9ca0", "#bbb99c", "#918d72", "#352f2a", "#bd624c", "libre_baskerville.ttf"),
 }
+THEMES.update({'division': ('#0c2027', '#1f3435', '#517575', '#e3e9df', '#819a98', 'rajdhani.ttf'), 'sea_chart': ('#8eaaa9', '#e2d4b1', '#938566', '#393327', '#f2e6c7', 'libre_baskerville.ttf'), 'dos_atlas': ('#090e11', '#1d170e', '#85673c', '#ffdf9b', '#b38d52', 'share_tech_mono.ttf'), 'aincrad': ('#81a8b0', '#decca4', '#9c906f', '#403c31', '#f7eacb', 'noto_sans.ttf'), 'counter_strike': ('#202b31', '#3c3c33', '#939084', '#f0ebd7', '#d6d2bd', 'roboto_condensed.ttf'), 'defcon': ('#01040c', '#071127', '#24476f', '#c6ddff', '#5d9bd4', 'share_tech_mono.ttf'), 'field_ops': ('#233238', '#3a4235', '#77816b', '#ecefdc', '#bbc2a8', 'roboto_condensed.ttf'), 'retro_quest': ('#437ea5', '#a4bf73', '#705541', '#f9f0d4', '#e5ca89', 'monocraft.ttf'), 'home_console': ('#9ccfe1', '#e2e9eb', '#a8bbc6', '#294b5b', '#ffffff', 'noto_sans.ttf')})
 
+THEMES['nier']=('#9D9F94','#D5D1BB','#84816E','#35362E','#A14F37','noto_sans.ttf')
+THEMES['stalker']=('#283435','#484b39','#818574','#e4e5d3','#9ee376','roboto_condensed.ttf')
+for _world,_font in [('division','borda_regular.ttf'),('counter_strike','stratum2_regular.ttf'),('skyrim','futura_condensed_medium.ttf'),('pixel','minecraft_seven.ttf')]:
+    THEMES[_world]=(*THEMES[_world][:-1],_font)
 
 def polygons(geometry):
     if isinstance(geometry, Polygon):

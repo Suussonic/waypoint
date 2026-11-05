@@ -59,6 +59,7 @@ fun UpdatePanel(updater: AppUpdater, navigating: Boolean) {
                 Text(if (status is UpdateStatus.Failed) "Try again" else "Check for updates")
             }
         }
+        UpdateAlertStatus((context.applicationContext as WaypointApplication).updateAlerts)
         TextButton(onClick = { uri.openUri(ReleaseUpdate.PAGE) }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Release notes on GitHub") }
     }
 }

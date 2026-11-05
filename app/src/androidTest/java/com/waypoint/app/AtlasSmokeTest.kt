@@ -36,8 +36,9 @@ class AtlasSmokeTest {
                 val search=device.wait(Until.findObject(By.clazz("android.widget.EditText")),4000)
                 assertNotNull("Theme search",search);search!!.text=world.title
                 SystemClock.sleep(400)
-                val choice=device.wait(Until.findObject(By.desc("Apply ${world.title} theme")),4000)
+                val choice=device.wait(Until.findObject(By.desc("Preview ${world.title} theme")),4000)
                 assertNotNull("Theme result ${world.title}",choice);choice!!.click()
+                device.wait(Until.findObject(By.text("Use this world")),4000)!!.click()
                 assertTrue("Library closed for ${world.title}",device.wait(Until.gone(By.clazz("android.widget.EditText")),4000))
                 // Allow map tile rendering, camera transition, and multiple heading animations.
                 SystemClock.sleep(1600)

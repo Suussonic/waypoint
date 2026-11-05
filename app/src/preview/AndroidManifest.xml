@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+    <application android:label="Waypoint Preview" tools:replace="android:label">
+        <activity android:name=".WorldPreviewCaptureActivity" android:exported="false" />
+    </application>
+</manifest>

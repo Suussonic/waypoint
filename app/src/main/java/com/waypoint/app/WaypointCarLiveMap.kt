@@ -3,10 +3,12 @@ package com.waypoint.app
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.util.DisplayMetrics
 import android.graphics.Canvas
 import android.graphics.Rect
 import android.view.View
-import android.view.animation.LinearInterpolator
+import android.os.SystemClock
+import android.view.Choreographer
 import android.widget.FrameLayout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -61,8 +63,21 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
     private var lastDestination: Coordinate?=null
     private var renderedPosition: Coordinate?=null
     private var renderedBearing=0f
-    private var positionAnimator: ValueAnimator?=null
-    private var bearingAnimator: ValueAnimator?=null
+    private val motion=MapMotion()
+    private var cameraFrom=camera
+    private var cameraStart=0L
+    private var cameraDuration=0L
+    private var framePosted=false
+    private val frames=Choreographer.getInstance()
+    private val frameCallback=object:Choreographer.FrameCallback {
+        override fun doFrame(frameTimeNanos:Long) {
+            framePosted=false
+            if(destroyed || !started || !styleReady)return
+            val now=SystemClock.elapsedRealtime()
+            renderMotion(now)
+            if(motion.remainingMillis(now)>0 || now<cameraStart+cameraDuration)requestFrame()
+        }
+    }
     private var started=false
     private var destroyed=false
 
@@ -89,6 +104,7 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
         started=true
         mapView.onStart()
         mapView.onResume()
+        if(styleReady)requestFrame()
     }
 
     fun update(newState: NavState,newCamera: CameraPosition,visible: Rect,credit: Boolean,follow: Boolean) {
@@ -106,9 +122,7 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
         if(!styleReady)return
         syncRoute()
         syncDestination()
-        syncBearing()
-        syncCamera()
-        syncPosition()
+        syncMotion()
     }
 
     private fun requestStyle(world: World) {
@@ -117,12 +131,15 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
         requestedWorld=world
         styleReady=false
         val epoch=++styleEpoch
-        positionAnimator?.cancel();bearingAnimator?.cancel()
+        frames.removeFrameCallback(frameCallback);framePosted=false
         scope.launch {
             val (json,images)=withContext(Dispatchers.Default) {
                 val source=context.assets.open("styles/${world.file}.json").bufferedReader().use { it.readText() }
                 val bitmaps=hashMapOf(
                     "nav-arrow" to mapPlayer(world),
+                    "vehicle-car" to mapVehicle(world,TravelMode.CAR),
+                    "vehicle-bike" to mapVehicle(world,TravelMode.MOTORCYCLE),
+                    "vehicle-bicycle" to mapVehicle(world,TravelMode.BICYCLE),
                     "position-uncertain" to mapUnknownPosition(world),
                     "destination-marker" to mapDestination(world),
                     "pixel-grass" to BitmapFactory.decodeResource(context.resources,R.drawable.pixel_grass),
@@ -130,6 +147,11 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
                     "pixel-water" to BitmapFactory.decodeResource(context.resources,R.drawable.pixel_water),
                     "paper-fibre" to BitmapFactory.decodeResource(context.resources,R.drawable.paper_fibre)
                 )
+                // Generated markers have logical pixel dimensions. A bitmap's
+                // default density belongs to the phone, not the projected display.
+                listOf("nav-arrow","position-uncertain","destination-marker").forEach {
+                    bitmaps.getValue(it).density=DisplayMetrics.DENSITY_DEFAULT
+                }
                 source to bitmaps
             }
             if(epoch!=styleEpoch)return@launch
@@ -148,12 +170,15 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
                 style.addSource(GeoJsonSource("car-position",Feature.fromGeometry(Point.fromLngLat(0.0,0.0))))
                 style.addLayer(SymbolLayer("car-position-marker","car-position").withProperties(
                     iconImage("nav-arrow"),iconSize(.55f),iconAllowOverlap(true),iconIgnorePlacement(true),
-                    iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP)))
+                    iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
+                    iconPitchAlignment(Property.ICON_PITCH_ALIGNMENT_VIEWPORT)))
                 loadedWorld=world
                 styleReady=true
                 lastRoute=null;lastRouteProgress=-1.0;lastRouteStyleKey=null
                 lastDestination=null;lastCameraKey=null
-                syncRoute();syncDestination();syncBearing();syncCamera();syncPosition()
+                // A new style owns fresh sources even when the driver has not moved.
+                renderedPosition=null
+                syncRoute();syncDestination();syncMotion()
             }
         }
     }
@@ -187,96 +212,69 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
         })
     }
 
-    private fun syncBearing() {
-        val layer=map?.style?.getLayerAs<SymbolLayer>("car-position-marker") ?: return
-        layer.setProperties(iconImage(if(state.headingReliable)"nav-arrow" else "position-uncertain"))
-        val target=if(state.headingReliable)state.bearing else 0f
-        if(abs(headingDelta(renderedBearing,target))<.5f)return
-        bearingAnimator?.cancel()
-        val from=renderedBearing
-        val delta=headingDelta(from,target)
-        val epoch=styleEpoch
-        bearingAnimator=ValueAnimator.ofFloat(0f,1f).apply {
-            duration=180
-            interpolator=LinearInterpolator()
-            addUpdateListener {
-                if(epoch==styleEpoch) {
-                    renderedBearing=(from+delta*(it.animatedValue as Float)+360f)%360f
-                    layer.setProperties(iconRotate(renderedBearing))
-                }
-            }
-            start()
-        }
-    }
-
-    private fun syncCamera() {
+    private fun syncMotion() {
         val m=map ?: return
-        // GPS fixes drive the camera in the position animator. Reissuing an ease for
-        // every fix fights that animator and makes the car map visibly stutter.
+        val headingKnown=state.headingReliable || state.navigating && state.route!=null
+        m.style?.getLayerAs<SymbolLayer>("car-position-marker")?.setProperties(
+            iconImage(playerMarkerImage(state.mode,headingKnown)),iconSize(if(state.mode==TravelMode.WALK).55f else .72f))
+        val now=SystemClock.elapsedRealtime()
+        val bearing=if(state.navigating)carTravelBearing(state).toFloat() else if(state.headingReliable)state.bearing else 0f
+        motion.update(state.fix,bearing,now,state.navigating,ValueAnimator.areAnimatorsEnabled())
         val manualTarget=if(following)null else camera.target
         val key=listOf(state.world,System.identityHashCode(state.route),state.selected?.id,
             state.navigating,following,manualTarget?.latitude,manualTarget?.longitude,
-            if(state.navigating && following)null else camera.zoom)
-        if(key==lastCameraKey)return
-        val previous=lastCameraKey
-        lastCameraKey=key
-        if(previous==null) m.moveCamera(CameraUpdateFactory.newCameraPosition(camera))
-        else m.easeCamera(CameraUpdateFactory.newCameraPosition(camera),450)
+            camera.zoom,camera.tilt,camera.padding?.toList())
+        if(key!=lastCameraKey) {
+            cameraFrom=m.cameraPosition
+            cameraStart=now
+            cameraDuration=if(lastCameraKey!=null && ValueAnimator.areAnimatorsEnabled())450L else 0L
+            lastCameraKey=key
+            // One frame owner moves the camera, including zoom and follow recovery.
+            // A native ease must never compete with the location interpolation.
+            m.cancelTransitions()
+        }
+        requestFrame()
     }
 
-    private fun syncPosition() {
-        val target=state.fix
-        val source=map?.style?.getSourceAs<GeoJsonSource>("car-position") ?: return
-        if(target==null) {
-            positionAnimator?.cancel();renderedPosition=null;source.setFeature(null)
-            return
-        }
-        val from=renderedPosition
-        if(from==target)return
-        positionAnimator?.cancel()
-        val epoch=styleEpoch
-        val m=map
-        val startBearing=m?.cameraPosition?.bearing?.toFloat() ?: 0f
-        val bearingChange=headingDelta(startBearing,camera.bearing.toFloat())
-        val startZoom=m?.cameraPosition?.zoom ?: camera.zoom
-        val startTilt=m?.cameraPosition?.tilt ?: camera.tilt
-        val targetZoom=camera.zoom
-        val targetTilt=camera.tilt
-        val startCenter=m?.cameraPosition?.target ?: LatLng(from?.lat ?: target.lat,from?.lon ?: target.lon)
-        val targetCenter=camera.target ?: LatLng(target.lat,target.lon)
-        fun render(point: Coordinate,fraction: Float) {
-            if(epoch!=styleEpoch)return
-            renderedPosition=point
-            source.setFeature(Feature.fromGeometry(Point.fromLngLat(point.lon,point.lat)))
-            if(following && (state.selected==null || state.navigating)) {
-                val liveMap=map ?: return
-                liveMap.moveCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder(liveMap.cameraPosition)
-                    .target(LatLng(startCenter.latitude+(targetCenter.latitude-startCenter.latitude)*fraction,
-                        wrappedLongitude(startCenter.longitude+
-                            shortestLongitudeDelta(startCenter.longitude,targetCenter.longitude)*fraction)))
-                    .bearing((startBearing+bearingChange*fraction).toDouble())
-                    .zoom(startZoom+(targetZoom-startZoom)*fraction)
-                    .tilt(startTilt+(targetTilt-startTilt)*fraction).build()))
-            }
-        }
-        if(from!=null && distance(from,target)<150.0) {
-            positionAnimator=ValueAnimator.ofFloat(0f,1f).apply {
-                duration=500
-                interpolator=LinearInterpolator()
-                addUpdateListener { frame ->
-                    val fraction=frame.animatedValue as Float
-                    render(Coordinate(from.lat+(target.lat-from.lat)*fraction,
-                        wrappedLongitude(from.lon+shortestLongitudeDelta(from.lon,target.lon)*fraction)),fraction)
-                }
-                start()
-            }
-        } else render(target,1f)
+    private fun requestFrame() {
+        if(framePosted || destroyed || !started)return
+        framePosted=true
+        frames.postFrameCallback(frameCallback)
+    }
+
+    private fun renderMotion(now:Long) {
+        val m=map ?: return
+        val style=m.style ?: return
+        val pose=motion.sample(now)
+        renderedPosition=pose.point;renderedBearing=pose.bearing
+        style.getSourceAs<GeoJsonSource>("car-position")?.setFeature(pose.point?.let {
+            Feature.fromGeometry(Point.fromLngLat(it.lon,it.lat))
+        })
+        style.getLayerAs<SymbolLayer>("car-position-marker")?.setProperties(iconRotate(pose.bearing))
+        val progress=if(cameraDuration==0L)1.0 else ((now-cameraStart).toDouble()/cameraDuration).coerceIn(0.0,1.0)
+        // Decelerate deliberate camera changes. GPS movement itself stays linear.
+        val eased=1.0-(1.0-progress)*(1.0-progress)*(1.0-progress)
+        val followPosition=following && (state.selected==null || state.navigating) && pose.point!=null
+        val target=if(followPosition)LatLng(pose.point!!.lat,pose.point.lon) else camera.target ?: return
+        val start=cameraFrom.target ?: target
+        val paddingFrom=cameraFrom.padding ?: doubleArrayOf(0.0,0.0,0.0,0.0)
+        val paddingTo=camera.padding ?: doubleArrayOf(0.0,0.0,0.0,0.0)
+        val padding=DoubleArray(4) { paddingFrom[it]+(paddingTo[it]-paddingFrom[it])*eased }
+        val bearing=if(followPosition && state.navigating)pose.bearing.toDouble()
+            else cameraFrom.bearing+headingDelta(cameraFrom.bearing.toFloat(),camera.bearing.toFloat())*eased
+        m.moveCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder()
+            .target(LatLng(start.latitude+(target.latitude-start.latitude)*eased,
+                wrappedLongitude(start.longitude+shortestLongitudeDelta(start.longitude,target.longitude)*eased)))
+            .bearing(bearing)
+            .zoom(cameraFrom.zoom+(camera.zoom-cameraFrom.zoom)*eased)
+            .tilt(cameraFrom.tilt+(camera.tilt-cameraFrom.tilt)*eased)
+            .padding(padding[0],padding[1],padding[2],padding[3]).build()))
     }
 
     fun destroy() {
         destroyed=true
         styleEpoch++
-        positionAnimator?.cancel();bearingAnimator?.cancel()
+        frames.removeFrameCallback(frameCallback);framePosted=false
         scope.cancel()
         if(started) { mapView.onPause();mapView.onStop() }
         mapView.onDestroy()

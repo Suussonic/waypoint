@@ -8,6 +8,13 @@ import java.io.IOException
 class PlaceSearchTest {
     private val near=Coordinate(51.50,-.12)
     private val station=Place("station","Riverton","Riverton, Example District",Coordinate(51.501,-.121),"geocoder")
+    @Test fun deletedLocalMatchesDoNotSurviveInTheProviderCache()=runBlocking {
+        var calls=0
+        val search=PlaceSearch(PlaceSearchProvider { _,_->calls++;emptyList() })
+        assertEquals(listOf(station),search.search("Riverton",near,listOf(station)).places)
+        assertTrue(search.search("Riverton",near).places.isEmpty())
+        assertEquals("Remote cache should still be reused",1,calls)
+    }
     @Test fun railwayQueryRanksTheLocalStationOverUnrelatedStations() {
         val unrelated=Place("other","Farvale Railway Station","Farvale, Example Country",Coordinate(51.6,-.2),"station")
         val farmland=Place("farm","Riverton Research Centre","Riverton",near,"farmland")

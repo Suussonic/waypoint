@@ -31,6 +31,7 @@ class MapLocateWorldsTest {
             .putBoolean("onboardingCompleted",true).putBoolean("mapOpened",true)
             .putInt("welcomeShownVersion",BuildConfig.VERSION_CODE)
             .putString("world",World.LOS_SANTOS.name).commit()
+        inst.uiAutomation.grantRuntimePermission(inst.targetContext.packageName,Manifest.permission.ACCESS_COARSE_LOCATION)
         inst.uiAutomation.grantRuntimePermission(inst.targetContext.packageName,Manifest.permission.ACCESS_FINE_LOCATION)
         val start=Coordinate(22.5726,88.3639)
         val latest=Coordinate(22.5727,88.3640)
@@ -46,7 +47,7 @@ class MapLocateWorldsTest {
                 val field=NavigationController::class.java.getDeclaredField("_state").apply{isAccessible=true}
                 @Suppress("UNCHECKED_CAST")
                 stateFlow=field.get(controller) as MutableStateFlow<NavState>
-                stateFlow.value=stateFlow.value.copy(fix=start,gpsReady=true,accuracy=5f,gpsStatus="GPS connected")
+                stateFlow.value=NavState(world=World.LOS_SANTOS,fix=start,gpsReady=true,accuracy=5f,gpsStatus="GPS connected")
                 val mapView=findMapView(activity.window.decorView)
                 assertNotNull("MapView is missing",mapView)
                 mapView!!.getMapAsync { map=it }
@@ -75,7 +76,7 @@ class MapLocateWorldsTest {
                 assertNotNull("${world.name} camera is missing",camera)
                 assertTrue("${world.name} stayed zoomed out: ${camera!!.zoom}",camera!!.zoom>=16.9)
                 val center=camera!!.target
-                assertTrue("${world.name} did not center on the user",center!=null &&
+                assertTrue("${world.name} did not center on the synthetic fix: $center",center!=null &&
                     distance(Coordinate(center.latitude,center.longitude),latest)<100.0)
                 if(world==World.LOS_SANTOS) {
                     val screenshot=File(inst.targetContext.getExternalFilesDir(null),"map-locate-reticle.png")

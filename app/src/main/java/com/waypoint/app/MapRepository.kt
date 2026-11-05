@@ -173,7 +173,9 @@ class MapRepository(private val photonBase:String="https://photon.komoot.io", pr
                 require(size + s.length() <= 2000 && (size.toLong()+s.length())*points.size <= 10_000_000) { "This route is too complex. Choose a closer destination." }
                 for (j in 0 until s.length()) {
                     val step = s.getJSONObject(j); val m = step.getJSONObject("maneuver"); val c = m.getJSONArray("location")
-                    add(Maneuver(c.point(),text(m.getString("type"),40),text(m.optString("modifier"),40),text(step.optString("name").ifBlank { step.optString("ref") }),number(step.getDouble("distance"),40_000_000.0),number(step.getDouble("duration"),31*86400.0),m.optInt("exit").coerceIn(0,99)))
+                    add(Maneuver(c.point(),text(m.getString("type"),40),text(m.optString("modifier"),40),text(step.optString("name").ifBlank { step.optString("ref") }),number(step.getDouble("distance"),40_000_000.0),number(step.getDouble("duration"),31*86400.0),m.optInt("exit").coerceIn(0,99),
+                        isRightUTurn(m.optDouble("bearing_before").takeIf { it.isFinite() },
+                            m.optDouble("bearing_after").takeIf { it.isFinite() },step.optString("driving_side"))))
                 }
             }
         }
