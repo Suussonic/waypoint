@@ -11,6 +11,10 @@ on:
         description: Build a signed candidate APK without publishing a release
         type: boolean
         default: false
+      publish_release:
+        description: Publish the signed APK from the selected version tag, which must already be on main
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -73,7 +77,7 @@ jobs:
 
   release:
     name: Signed Android release
-    if: (startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.signed_candidate)
+    if: (startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && (inputs.signed_candidate || inputs.publish_release))
     needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -84,8 +88,23 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+      - name: Validate manual release mode
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          SIGNED_CANDIDATE: ${{ inputs.signed_candidate }}
+          PUBLISH_RELEASE: ${{ inputs.publish_release }}
+          REF_TYPE: ${{ github.ref_type }}
+        run: |
+          if [ "$SIGNED_CANDIDATE" = "true" ] && [ "$PUBLISH_RELEASE" = "true" ]; then
+            echo 'Choose either signed_candidate or publish_release, not both.'
+            exit 1
+          fi
+          if [ "$PUBLISH_RELEASE" = "true" ] && [ "$REF_TYPE" != "tag" ]; then
+            echo 'Manual publication requires selecting an existing version tag.'
+            exit 1
+          fi
       - name: Check release commit ancestry
-        if: github.event_name == 'push'
+        if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || (github.event_name == 'workflow_dispatch' && inputs.publish_release)
         run: |
           git fetch --no-tags origin main
           git merge-base --is-ancestor HEAD origin/main || {
@@ -128,7 +147,7 @@ jobs:
           cd release
           sha256sum Waypoint.apk > SHA256SUMS
       - name: Publish GitHub release
-        if: github.event_name == 'push'
+        if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || (github.event_name == 'workflow_dispatch' && inputs.publish_release)
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
@@ -136,7 +155,7 @@ jobs:
           gh release create "$RELEASE_TAG" release/Waypoint.apk release/SHA256SUMS \
             --verify-tag --title "Waypoint $RELEASE_TAG" --notes-file docs/releases/current.md --latest
       - name: Save signed candidate for testing
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && inputs.signed_candidate
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Waypoint-signed-candidate

@@ -10,6 +10,7 @@ The public update channel is `the-geeky-couldron/waypoint` on GitHub Releases. A
 - Pull requests never receive the release signing secrets. Actions are pinned to commit hashes. The release job alone receives repository-content write permission.
 - Before restoring the signing key for a tag release, the release job checks that the tagged commit is already reachable from `main`. This catches accidental tags on unmerged commits.
 - A manual run with **signed_candidate** enabled also builds and verifies a signed APK on the selected branch. It saves `Waypoint-signed-candidate` for 14 days and does not create a GitHub release. This permits update testing before publication; it does not satisfy the human usability or real-car distribution checks.
+- A manual run with **publish_release** enabled builds and publishes from the selected existing version tag. The tag must match `version.properties` and point to a commit already on `main`; the workflow checks both before restoring the signing key. The two manual modes cannot be combined. This provides the same signed release path when starting the workflow from the tag in GitHub Actions.
 
 ## Protect release authority
 
@@ -52,6 +53,8 @@ git push origin v2.0.0
 ```
 
 Watch the Android workflow. Its release job verifies that the tag and version file agree. After publication, verify the APK and checksum on the release page. Keep pushed tags immutable, including tags whose release workflow failed. Use a new patch version and an annotated tag for corrections; never overwrite an already-published APK.
+
+To publish manually instead of relying on the tag-push trigger, select the already-pushed `v*` tag in **Actions → Android → Run workflow**, leave **signed_candidate** off, and enable **publish_release**. The workflow refuses branch selections, tags that do not match the app version, and tags not reachable from `main`. The signed-candidate mode always remains an artifact-only test.
 
 ## Updater behavior
 
