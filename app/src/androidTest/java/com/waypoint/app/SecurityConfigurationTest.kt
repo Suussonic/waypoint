@@ -29,7 +29,13 @@ class SecurityConfigurationTest {
         val provider = requireNotNull(info.providers).single { it.authority == "${context.packageName}.updates" }
         assertFalse(provider.exported)
         assertTrue(provider.grantUriPermissions)
-        assertTrue(requireNotNull(info.services).filterNot { it.name == "com.waypoint.app.WaypointCarService" }.none { it.exported })
+        val services = requireNotNull(info.services)
+        assertEquals(
+            setOf("com.waypoint.app.WaypointCarService", "com.waypoint.app.UpdateCheckJob"),
+            services.filter { it.exported }.map { it.name }.toSet()
+        )
+        val updateJob = services.single { it.name == "com.waypoint.app.UpdateCheckJob" }
+        assertEquals("android.permission.BIND_JOB_SERVICE", updateJob.permission)
         assertEquals(0,context.applicationInfo.flags and ApplicationInfo.FLAG_ALLOW_BACKUP)
         assertEquals(0,context.applicationInfo.flags and ApplicationInfo.FLAG_USES_CLEARTEXT_TRAFFIC)
     }

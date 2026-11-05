@@ -41,7 +41,7 @@ def main():
             suffix = "" if job in required else " (not required for this event)"
             branch = "└── " if entry_index == len(entries) - 1 else "├── "
             lines.append(f"{indent}{branch}{icon} {title}: {status}{suffix}")
-    lines.extend(["```", "", "Required checks must pass. Skipped nodes are outside this event's path."])
+    lines.extend(["```", "", "Required checks must pass. A skipped required check also fails this gate; event-only checks are marked above."])
     summary = "\n".join(lines) + "\n"
     with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as output:
         output.write(summary)
