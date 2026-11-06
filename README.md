@@ -9,7 +9,7 @@
     <a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="https://img.shields.io/github/v/release/the-geeky-couldron/waypoint?label=latest%20release&amp;color=497c6f" alt="Latest Waypoint release version" /></a>
     <a href="https://github.com/the-geeky-couldron/waypoint/releases"><img src="https://img.shields.io/github/downloads/the-geeky-couldron/waypoint/total?label=Downloads&amp;color=497c6f" alt="Waypoint Downloads" /></a>
     <a href="https://github.com/the-geeky-couldron/waypoint/stargazers"><img src="https://img.shields.io/github/stars/the-geeky-couldron/waypoint?label=GitHub%20stars&amp;color=497c6f" alt="Waypoint GitHub stars" /></a>
-    <a href="https://upstar.dev/r/the-geeky-couldron/waypoint" title="Upstar ranks the fastest-rising GitHub projects by topic. Rank as of November 6, 2026."><img src="https://img.shields.io/badge/Upstar-%2313%20in%20Android-497c6f" alt="Ranked number 13 in Android on Upstar" /></a>
+    <a href="https://upstar.dev/r/the-geeky-couldron/waypoint" title="Upstar ranks the fastest-rising GitHub projects by topic. Reached number 12 in Android on November 7, 2026."><img src="https://img.shields.io/badge/Upstar-Reached%20%2312%20in%20Android-497c6f" alt="Reached number 12 in Android on Upstar" /></a>
   </p>
   <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="docs/images/promo/download.jpg" width="340" alt="Download Waypoint for Android from GitHub Releases" /></a></p>
   <p><strong>Android 8.0+</strong> · No ads or paywall · No Waypoint account<br />Every world included · Made in India, open to the world</p>
@@ -172,7 +172,7 @@ Android Auto keeps Google Maps available in the launcher. Open Waypoint there to
 
 Installed versions check for a newer stable GitHub release on foreground entry, at most once every 30 minutes; you can check manually in Settings at any time. If an update is available, an in-app prompt appears when the idle map is visible. Review the release notes, choose **Download update**, and confirm installation in Android.
 
-The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.5.2**; see the [release notes](docs/releases/current.md) and [changelog](CHANGELOG.md).
+The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.5.3**; see the [release notes](docs/releases/current.md) and [changelog](CHANGELOG.md).
 
 ## Build from source
 

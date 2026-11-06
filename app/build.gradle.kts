@@ -78,7 +78,8 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
-    implementation("org.maplibre.gl:android-sdk:11.13.5")
+    // The default 13.x artifact uses Vulkan; OpenGL ES keeps older devices supported.
+    implementation("org.maplibre.gl:android-sdk-opengl:13.7.1")
     implementation("com.stadiamaps.ferrostar:core:0.59.0")
     implementation("com.squareup.okhttp3:okhttp:5.5.1")
     implementation("com.google.android.gms:play-services-location:21.4.0")
@@ -86,7 +87,7 @@ dependencies {
     implementation("androidx.car.app:app-projected:1.9.0-alpha03")
     testImplementation("junit:junit:4.13.2")
     testImplementation("com.squareup.okhttp3:mockwebserver:5.5.1")
-    testImplementation("org.json:json:20240303")
+    testImplementation("org.json:json:20260814")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")

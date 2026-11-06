@@ -73,12 +73,14 @@ Before showing Install update, Waypoint checks:
 - Stable semantic version and a higher Android version code.
 - Exactly one uploaded `Waypoint.apk` asset at this repository's expected release URL.
 - HTTPS downloads restricted to GitHub's release hosts.
-- Declared size (maximum 150 MiB), complete download and GitHub's SHA-256 asset digest.
+- Positive declared size, complete download matching that size and GitHub's SHA-256 asset digest.
 - Correct Android package, version name/code and the same signing identity as the installed app.
 
 Partial files are discarded when a download fails or is cancelled. Downloads survive screen rotation while the app process lives; if Android ends the process, check and download again. Only the dedicated cache/updates directory is shared with Android's installer through a non-exported FileProvider. Android may require the user to allow installation from Waypoint. The app never toggles that setting or installs silently. Installation is disabled during active navigation.
 
 The release APK compresses its native libraries and Android extracts them when installing. This keeps all supported ABIs in one download while staying below the size limit built into previously published versions. `scripts/check_update_size.py` enforces that limit on the signed APK before the artifact can be published.
+
+Waypoint 2.5.3 and later have no fixed client-side APK size cap. They check that the phone has enough free space before downloading and stop if bytes received exceed the release's declared size. The signed release APK remains subject to the 150 MiB publishing check so older installed versions can still update directly.
 
 Private GitHub repositories need authenticated release access and are not supported by this public, token-free update channel. A fork must change `ReleaseUpdate.REPOSITORY`, README links and the signing identity to its own values.
 
