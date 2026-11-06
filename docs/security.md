@@ -10,6 +10,8 @@ The Pages workflow deploys only pushed `dev` commits, checks repository hygiene,
 
 The optional motion-tooling lockfile overrides the affected `minimatch` 10.x branch with 11.0.5. A clean npm install, ESLint/TypeScript check and moderate-threshold npm audit passed with zero advisories; CI now blocks on moderate or higher advisories for this toolchain.
 
+Dependabot security updates are enabled in the hosted repository. The new [Dependabot configuration](../.github/dependabot.yml) covers Gradle, both npm toolchains and GitHub Actions, with weekly version-update proposals. GitHub reads that file from the default branch, so this `dev` change must reach `main` before its schedule and security-PR customization take effect. Dependabot proposes fixes for review; it does not automatically merge them.
+
 AndroidX Car App Library 1.9.0-alpha03 adds per-transaction caller UID checks to the manager and lifecycle Binder paths reviewed in the audit. This is an alpha dependency, so Android Auto compatibility needs connected-device and head-unit checks before a production release. Two dependency-owned paths remain open for validation: malformed session-info extras are decoded in the library's final `onBind`/`onUnbind`, and a failed handshake on a separate Binder can still clear shared host metadata. The app cannot override those final methods without replacing the library. These are unresolved source hypotheses, not confirmed exploits.
 
 The sections below record earlier audits and the codebase at their dates; their counts and dependency versions are historical.

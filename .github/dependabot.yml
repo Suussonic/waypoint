@@ -1,0 +1,35 @@
+# GitHub reads this file from the default branch. Security PRs target main.
+version: 2
+
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      gradle-compatible:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directories:
+      - /tools/style-validation
+      - /tools/waypoint-motion
+    schedule:
+      interval: weekly
+    groups:
+      npm-compatible:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions-compatible:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
