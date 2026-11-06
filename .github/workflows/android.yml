@@ -11,7 +11,7 @@ permissions:
 concurrency:
   group: android-${{ github.ref }}
   # Main builds must finish so a release tag can use the exact commit's artifact.
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
 
 jobs:
   workflow_safety:
@@ -108,8 +108,8 @@ jobs:
         run: |
           npm ci --prefix tools/waypoint-motion
           npm run lint --prefix tools/waypoint-motion
-      - name: Check motion dependencies for high-severity advisories
-        run: npm audit --prefix tools/waypoint-motion --audit-level=high
+      - name: Check motion dependencies for moderate-or-higher advisories
+        run: npm audit --prefix tools/waypoint-motion --audit-level=moderate
 
   android:
     name: 02 / Build, unit tests and lint
