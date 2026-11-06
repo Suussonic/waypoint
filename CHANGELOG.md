@@ -6,6 +6,7 @@ For the full notes and community acknowledgements, see [Waypoint release notes](
 
 - Removed the fixed 150 MiB client-side APK download cap for users who install this version. Downloads still require enough free space and must match the release's declared size, SHA-256 digest, package, version, and signing certificate.
 - Retained the 150 MiB signed-release publishing check so users of earlier Waypoint versions can update directly.
+- Updated MapLibre to 13.7.1 using its OpenGL ES build for broad device compatibility, along with Gradle 9.8.2, TypeScript 6.0.3, and the JSON test dependency.
 
 ## 2.5.2
 
