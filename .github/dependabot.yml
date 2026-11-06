@@ -6,6 +6,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     groups:
       gradle-compatible:
         applies-to: version-updates
@@ -18,6 +20,8 @@ updates:
       - /tools/waypoint-motion
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     groups:
       npm-compatible:
         applies-to: version-updates
@@ -28,6 +32,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     groups:
       actions-compatible:
         applies-to: version-updates
