@@ -5,6 +5,7 @@ import org.junit.Assert.*
 import org.junit.Test
 import java.io.DataInputStream
 import java.io.File
+import java.security.MessageDigest
 class WorldCatalogueTest {
     @Test fun everyThemeHasAValidStyleAndNoDuplicateLayers() {
         for(world in World.entries) {
@@ -16,8 +17,40 @@ class WorldCatalogueTest {
                 assertTrue("Duplicate layer in ${world.title}",ids.add(layer.getString("id")))
                 if(layer.has("source"))assertTrue(style.getJSONObject("sources").has(layer.getString("source")))
             }
-            assertEquals("Terrain flag ${world.title}",world.hasTerrain(),style.getJSONObject("sources").has("terrain"))
+            assertEquals("Terrain flag ${world.title}",world.hasTerrain(),style.getJSONObject("sources").has("waypoint-terrain"))
+            assertEquals("Authored style ${world.title}",true,style.getJSONObject("metadata").getBoolean("waypoint:authored"))
+            assertFalse("No preset sprite ${world.title}",style.has("sprite"))
         }
+    }
+    @Test fun everyWorldShipsDayAndNightArtAndStyles() {
+        fun digest(file:File)=MessageDigest.getInstance("SHA-256").digest(file.readBytes())
+            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        val dayAtlases=mutableSetOf<String>()
+        val nightAtlases=mutableSetOf<String>()
+        fun pngSize(file:File):Pair<Int,Int> {
+            DataInputStream(file.inputStream()).use { stream ->
+                assertEquals("PNG signature ${file.name}",0x89504E470D0A1A0AuL.toLong(),stream.readLong())
+                assertEquals("IHDR length ${file.name}",13,stream.readInt())
+                assertEquals("IHDR marker ${file.name}",0x49484452,stream.readInt())
+                return stream.readInt() to stream.readInt()
+            }
+        }
+        for(world in World.entries) {
+            for(phase in listOf("day","night")) {
+                assertEquals("${world.name} $phase material",128 to 128,pngSize(File("src/main/assets/map-materials/${world.file}_$phase.png")))
+                val suffix=if(phase=="night")"_night" else ""
+                val atlas=File("src/main/assets/poi/${world.file}$suffix.png")
+                assertEquals("${world.name} $phase icon atlas",640 to 1280,pngSize(atlas))
+                assertTrue("${world.name} $phase atlas has a unique symbol grammar",
+                    (if(phase=="night")nightAtlases else dayAtlases).add(digest(atlas)))
+                assertEquals("${world.name} $phase destination marker",128 to 128,pngSize(File("src/main/assets/map-markers/${world.file}$suffix.png")))
+            }
+            assertTrue("Missing ${world.name} night style",File("src/main/assets/styles/${world.file}_night.json").isFile)
+        }
+        assertEquals("Unique day POI atlases",World.entries.size,dayAtlases.size)
+        assertEquals("Unique night POI atlases",World.entries.size,nightAtlases.size)
+        for(name in listOf("division_holo","division_holo_night"))
+            assertTrue("Missing Dark Zone style $name",File("src/main/assets/styles/$name.json").isFile)
     }
     @Test fun roadCameraExpressionsRemainValidForNativeRendering() {
         fun hasZoom(value:Any?):Boolean = value is JSONArray && (value.optString(0)=="zoom" || (0 until value.length()).any{hasZoom(value.opt(it))})
@@ -41,7 +74,7 @@ class WorldCatalogueTest {
     @Test fun everyThemeKeepsConnectedRoadClasses() {
         for(world in World.entries) {
             val layers=JSONObject(File("src/main/assets/styles/${world.file}.json").readText()).getJSONArray("layers")
-            for(id in listOf("road_minor","road_secondary_tertiary","road_trunk_primary","road_motorway","road_service_track")) {
+            for(id in listOf("waypoint-primary-roads","waypoint-secondary-roads","waypoint-local-roads","waypoint-path-roads")) {
                 val road=(0 until layers.length()).map{layers.getJSONObject(it)}.first{it.getString("id")==id}
                 assertNotEquals("${world.name}/$id is hidden","none",road.optJSONObject("layout")?.optString("visibility"))
                 assertTrue(road.getJSONObject("paint").has("line-width"))

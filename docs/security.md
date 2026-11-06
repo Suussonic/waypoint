@@ -1,5 +1,17 @@
 # Security review and hardening
 
+## Current source review and follow-up (6 November 2026)
+
+The latest standard audit reviewed the restructured Android app, public site, build scripts and release workflows. Its independent checks found **zero confirmed vulnerabilities and nine source-grounded leads needing validation** across 174 coverage units. The local audit archive contains the full source traces and safe validation plans. No Android exploit fixture ran because the required isolated offline sandbox was unavailable; ordinary build and device tests are separate functional evidence.
+
+The follow-up on `dev` now rejects shared-text intents during active guidance before decoding their extras and catches malformed parcel failures on the idle path. Text-to-speech WAV input is bounded before parsing or effects allocation, with a sample-rate and frame limit. The automatic foreground update check has a 30-minute cadence, and quest notifications re-read current records while serializing posting with cancellation.
+
+The Pages workflow deploys only pushed `dev` commits, checks repository hygiene, and pins its Actions. The Android workflow runs its checks on `dev` as well as `main` and pull requests. The release workflow checks for a successful exact-commit `main` build before checking out repository source; it uses a named `release` environment, whose reviewer protection must be configured in GitHub settings. Tag creation, tag replacement, branch review and environment approvals remain hosted policy that source cannot prove.
+
+AndroidX Car App Library 1.9.0-alpha03 adds per-transaction caller UID checks to the manager and lifecycle Binder paths reviewed in the audit. This is an alpha dependency, so Android Auto compatibility needs connected-device and head-unit checks before a production release. Two dependency-owned paths remain open for validation: malformed session-info extras are decoded in the library's final `onBind`/`onUnbind`, and a failed handshake on a separate Binder can still clear shared host metadata. The app cannot override those final methods without replacing the library. These are unresolved source hypotheses, not confirmed exploits.
+
+The sections below record earlier audits and the codebase at their dates; their counts and dependency versions are historical.
+
 ## Android 2.0.0 codebase and GitHub audit (5 November 2026)
 
 The full standard audit completed all six phases, including independent candidate and final-record reviews. Both the findings and coverage validators pass. It reviewed the entire Android checkout and read-only GitHub configuration, including quests, photos, reminders, sharing, saved-place names, bicycle routing, all 38 worlds, default release alerts, navigation and release signing. The separate iOS port was outside this Android checkout.
@@ -89,4 +101,4 @@ No single audit makes software “bulletproof.” Report new concerns through th
 
 Gradle's [release checksums](https://gradle.org/release-checksums/) and [wrapper verification guidance](https://docs.gradle.org/current/userguide/gradle_wrapper.html#sec:verification) support the distribution pin. Gradle 8.14.6 addresses the upstream [repository failover](https://github.com/gradle/gradle/security/advisories/GHSA-j5m7-59rp-24f5), [client/daemon](https://github.com/gradle/gradle/security/advisories/GHSA-xwqc-3h47-hg64) and [worker/daemon](https://github.com/gradle/gradle/security/advisories/GHSA-mvvg-497x-hmj8) advisories; this is dependency maintenance, not proof those issues were exploited here.
 
-The [AndroidX Car release notes](https://developer.android.com/jetpack/androidx/releases/car-app) document upstream security fixes. The current source uses 1.8.0-rc01 with the projected component enabled. Android's [deep-link security guidance](https://developer.android.com/privacy-and-security/risks/unsafe-use-of-deeplinks) describes the external-input boundary.
+The [AndroidX Car release notes](https://developer.android.com/jetpack/androidx/releases/car-app) document upstream security fixes. The current source uses 1.9.0-alpha03 with the projected component enabled. Android's [deep-link security guidance](https://developer.android.com/privacy-and-security/risks/unsafe-use-of-deeplinks) describes the external-input boundary.

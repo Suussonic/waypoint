@@ -1,10 +1,10 @@
 # Map and HUD sourcebook
 
-Research for the user's private Waypoint Android app, 30 October 2026. These sources inform separately authored Compose controls and real-world map styles. Reference screenshots stay in ignored local research folders; they are not packaged as runtime map artwork. Sources show different versions and states, so a pause map, a gameplay radar, a treasure map and a cinematic hologram are not interchangeable.
+Research for the user's Waypoint Android app, 30 October 2026. These sources inform separately authored Compose controls and real-world map styles. The current worktree retains source links and implementation notes, not a local archive of game screenshots; no source screenshot is packaged as runtime map artwork. Sources show different versions and states, so a pause map, a gameplay radar, a treasure map and a cinematic hologram are not interchangeable.
 
 ## Nine additional worlds — 4 November 2026
 
-These actual map/HUD references were visually inspected before implementation. Source images remain in ignored local research files. Shipping maps use real geography, original Compose layouts and original vector emblems; none of these screenshots or game sounds is packaged. The generated previews are native MapLibre captures at the public Indian locations in `WorldPreviewPlaces.kt`. Original completion cues come from `scripts/generate_quest_sounds.py`.
+These actual map/HUD references were visually inspected before implementation. The links below preserve the sources; screenshot copies are not currently retained in the worktree. Shipping maps use real geography, original Compose layouts and original vector emblems; none of these screenshots or game sounds is packaged. The generated previews are native MapLibre captures at the public Indian locations in `WorldPreviewPlaces.kt`. Original completion cues come from `scripts/generate_quest_sounds.py`.
 
 | World | Inspected reference | Original interpretation |
 | --- | --- | --- |
@@ -75,11 +75,37 @@ Car-display comparison used Google Maps in the official Android Auto Desktop Hea
 | Just Cause 3 | Local study reference archived outside Git | Blue tactical relief, yellow selected tab, cyan location glyphs, lower-right waypoint controls. |
 | Mafia DE | Local study reference archived outside Git | Printed pale atlas, yellow roads, muted blocks, black map header/footer and compact actions. |
 
-The retained additional-game source URLs follow below; the local files are private review evidence. Only the 27 game inspirations are offered; the plain Classic map was removed at the user’s request.
+The additional-game source URLs follow below; they preserve the research trail without bundling the original images. The catalogue covers all 38 game-inspired worlds; the plain Classic map was removed at the user’s request.
 
-## Authored assets and limitations
+## Original map assets and limitations
 
-`generate_materials.py` produces original 16-pixel stone/grass/water tiles, nine pixel control/place sprites, and paper fibre. `Cartography.kt` draws semantic POI glyphs, player pointers and destination shapes, selected by each game's map rules. Compose renders game-specific map composition; map icons and geometry are not screenshots pasted over a functional map. Fonts are bundled with licenses.
+[`import_imagegen_poi_atlases.py`](../scripts/import_imagegen_poi_atlases.py)
+turns separately prompted, original artwork into 38 high-detail POI atlases
+and 38 destination markers, with transparent padding and night variants. The
+49 atlas symbols correspond to live OpenStreetMap place categories; each
+world's icon treatment and separate destination marker are distinct.
+An image-by-image crop review found neighboring fragments in 43 symbols across
+nine atlases. Their single-icon replacement prompts are kept in
+[`poi-cell-repairs.jsonl`](../tools/imagegen/poi-cell-repairs.jsonl) and the
+cell importer records how those fixes are applied. Night glows render within
+each cell independently.
+[`generate_map_assets.py`](../scripts/generate_map_assets.py) provides the
+in-house vector fallback and 76 day/night material tiles; it is not the source
+of the shipped ImageGen POI artwork. The live-place key names real OSM
+categories without inventing game locations. `generate_styles.py`
+creates 38 authored day/night MapLibre styles plus two Dark Zone holographic
+variants. `scripts/validate_map_assets.py` verifies the 38-world coverage,
+transparent padding, and PNG dimensions; the MapLibre style validator reports zero schema errors across
+all 78 styles. None of the runtime assets is a game screenshot, extracted game
+sprite, imported MapLibre theme, or fictional game location. `Cartography.kt`
+draws the player, transport, destination, and education markers; the Compose
+atlas layouts are split across the fantasy, modern, tactical, NieR, and PDA
+files, with separate map-key and HUD layouts for each world.
+
+World-card map previews remain earlier captures. The debug-only
+`WorldPreviewCaptureActivity` now writes each generated day, night, and Dark
+Zone holographic capture to a distinct filename, but refreshing the checked-in
+gallery previews requires an Android build and capture pass.
 
 No screenshot proves navigation accuracy. Real street connectivity, position, routes and elevations are preserved. Game-authored fictional terrain and hand-painted map illustrations are not present; selected licensed game-font families are bundled as documented in the typography notes, so this is not a pixel-exact game asset port. The sourcebook identifies observed similarities and adaptations rather than claiming identity.
 
@@ -102,7 +128,7 @@ The Saints Row mod-forum URL above is superseded by the verified original retail
 
 ## Map versus navigation state — direct database evidence
 
-Full-size captures were downloaded and visually inspected, including line endings, route patterns and marker treatment:
+The direct source images below were visually inspected for line endings, route patterns and marker treatment. Their URLs are retained here; source-image copies are not present in the current worktree:
 
 | State | Direct image | Applied decision |
 |---|---|---|
@@ -115,20 +141,22 @@ Full-size captures were downloaded and visually inspected, including line ending
 | Saints Row atlas | [Phone map](https://www.gameuidatabase.com/uploads/Saints-Row-The-Third09132020-111621-91368.jpg) | Purple solid route and compact left destination pane. |
 | Saints Row navigation | [Driving radar](https://www.gameuidatabase.com/uploads/Saints-Row-The-Third09132020-111621-17408.jpg) | Live guidance switches to green dots and a yellow player arrow. |
 
-The research images are retained locally in `.tooling/gameuidb/`, not shipped inside the APK or open-source archive. Runtime textures and icons are authored in the project; downloaded full-screen pictures cannot become geographically accurate road tiles.
+The source links are retained in this document; game screenshots are not shipped inside the APK or open-source archive. Runtime textures and icons are authored in the project; full-screen pictures cannot become geographically accurate road tiles.
 
 ## Native map fonts
 
 See [map-fonts.md](map-fonts.md) for researched font roles, bundled native SDF stacks, and the distinction between identified original families and licensed substitutes.
 
-## Reproducible base-style input
+## Authored map styles
 
-The OpenFreeMap Liberty input used for these themes has SHA-256
-`408245464e76791801a64393c403433d09e8110eb9516040f8dc2b62584eee2a`. `scripts/generate_styles.py` verifies this pin before
-regenerating. Upstream changes fail closed until reviewed and repinned. The source
-is https://tiles.openfreemap.org/styles/liberty; a fresh download may no longer
-match. Committed generated styles are Android build inputs; CI does not regenerate
-from that endpoint.
+`scripts/generate_styles.py` assembles every MapLibre layer, filter, zoom range,
+color, road casing, label rule, building treatment, and relief layer from
+Waypoint's `cartography_profiles.py`, `map_style_recipes.py`, and
+`map_theme_catalog.py`. It has no preset style, sprite, or image input. The app
+bundle now contains 78 Waypoint-authored styles for 38 worlds, day and night,
+plus Dark Zone's two holographic modes. The local MapLibre style validator
+reports zero errors. OpenFreeMap serves OpenMapTiles vector features and OSM
+data; generation of style JSON and vector art needs no network access.
 
 ## NieR:Automata / Machine Atlas — issue #9
 

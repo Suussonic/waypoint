@@ -1,7 +1,7 @@
 <div align="center">
   <picture>
     <source media="(max-width: 640px)" srcset="docs/images/promo/hero-mobile.jpg" />
-    <img src="docs/images/promo/hero.jpg" width="100%" alt="Waypoint's Old West map on a phone beside Android Auto guidance in the same world, using public London demonstration captures." />
+    <img src="docs/images/promo/hero.jpg" width="100%" alt="Waypoint's Exclusion Zone map on a phone beside Android Auto guidance in the same world, using public London demonstration captures." />
   </picture>
   <h1>Real streets. Another world.</h1>
   <p>38 game-inspired maps, personal quests and spoken directions<br />on your phone and Android Auto.</p>
@@ -9,9 +9,11 @@
     <a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="https://img.shields.io/github/v/release/the-geeky-couldron/waypoint?label=latest%20release&amp;color=497c6f" alt="Latest Waypoint release version" /></a>
     <a href="https://github.com/the-geeky-couldron/waypoint/releases"><img src="https://img.shields.io/github/downloads/the-geeky-couldron/waypoint/total?label=Downloads&amp;color=497c6f" alt="Waypoint Downloads" /></a>
     <a href="https://github.com/the-geeky-couldron/waypoint/stargazers"><img src="https://img.shields.io/github/stars/the-geeky-couldron/waypoint?label=GitHub%20stars&amp;color=497c6f" alt="Waypoint GitHub stars" /></a>
+    <a href="https://upstar.dev/r/the-geeky-couldron/waypoint" title="Upstar ranks the fastest-rising GitHub projects by topic. Rank as of November 6, 2026."><img src="https://img.shields.io/badge/Upstar-%2313%20in%20Android-497c6f" alt="Ranked number 13 in Android on Upstar" /></a>
   </p>
   <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="docs/images/promo/download.jpg" width="340" alt="Download Waypoint for Android from GitHub Releases" /></a></p>
   <p><strong>Android 8.0+</strong> · No ads or paywall · No Waypoint account<br />Every world included · Made in India, open to the world</p>
+  <p><a href="https://upstar.dev/r/the-geeky-couldron/waypoint"><img src="docs/images/promo/upstar-badge.svg" height="38" alt="Discover Waypoint on Upstar" /></a></p>
   <p><a href="https://repolode.com/en/repo/the-geeky-couldron/waypoint"><img src="https://repolode.com/badge/the-geeky-couldron/waypoint" alt="Featured on Repolode" height="30" /></a></p>
 </div>
 
@@ -26,7 +28,7 @@
 
 ---
 
-## What's new in 2.0.0
+## What's new in 2.0
 
 - **Quests, right on the main bar:** add an everyday task, optional place, reminder or focus timer. Complete it to earn personal rewards.
 - **Eleven new worlds:** nautical charts, tactical maps, an ASCII atlas, a 16-bit adventure, Exclusion Zone (S.T.A.L.K.E.R.) and Machine Atlas (NieR:Automata). Search, favourite and preview all 38 before applying one.
@@ -51,6 +53,8 @@ Quests and pictures stay privately on your phone. Updates preserve them; uninsta
 Pick a world during onboarding, then explore real geography through its roads, typography, markers and navigation controls. Switch styles without losing your destination. The globe, world gallery and map are designed as one journey; the map itself remains readable while you travel.
 
 After the first run, Waypoint opens your last selected world. Thanks to [u/cuberisk](https://www.reddit.com/user/cuberisk/) for suggesting that faster return to the map.
+
+**Drawn for Waypoint:** all 38 worlds use map styles authored from scratch for this project, with their own road treatments, labels, textures, place symbols and destination markers. Day and night variants give the same place a different atmosphere. MapLibre renders the live geography; the app does not use MapLibre's sample styles or presets. [How the artwork is made →](docs/game-artwork-sources.md)
 
 <picture>
   <source media="(max-width: 640px)" srcset="docs/images/promo/worlds-1-mobile.jpg" />
@@ -128,7 +132,7 @@ With a supported installation, connect your phone and open Waypoint from the car
 
 <picture>
   <source media="(max-width: 640px)" srcset="docs/images/promo/android-auto-mobile.jpg" />
-  <img src="docs/images/promo/android-auto.jpg" width="100%" alt="Actual Android Auto Desktop Head Unit captures of Waypoint guidance on a simulated London route, first in Old West and then in Night City." />
+  <img src="docs/images/promo/android-auto.jpg" width="100%" alt="Actual Android Auto Desktop Head Unit captures of Waypoint's Exclusion Zone map before and after a simulated turn on a public London route." />
 </picture>
 
 <p><sub>Captured in the Android Auto Desktop Head Unit with a fixed public London demonstration route. The route and guidance state were simulated for the screenshots; no personal location was used. <a href="docs/images/promo/README.md">Capture and artwork notes</a>.</sub></p>
@@ -157,7 +161,7 @@ Android Auto keeps Google Maps available in the launcher. Open Waypoint there to
 
 ### Updating
 
-Installed versions check for a newer stable GitHub release when Waypoint opens on the phone. If an update is available, an in-app prompt appears when the idle map is visible. Review the release notes, choose **Download update**, and confirm installation in Android.
+Installed versions check for a newer stable GitHub release on foreground entry, at most once every 30 minutes; you can check manually in Settings at any time. If an update is available, an in-app prompt appears when the idle map is visible. Review the release notes, choose **Download update**, and confirm installation in Android.
 
 The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.0.1**; see the [release notes](docs/releases/current.md).
 
@@ -172,22 +176,15 @@ cd waypoint
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The Android build uses Kotlin, Jetpack Compose and MapLibre Native. No map API key, Node installation or Pillow (PIL) installation is needed to build the checked-in app.
+The Android build uses Kotlin, Jetpack Compose and MapLibre Native. The checked-in app does not need a map API key or the optional artwork-generation tools.
 
 Local release builds stay unsigned unless you supply distribution signing credentials; see the [release guide](docs/releasing.md).
 
-<details>
-<summary><strong>Artwork, motion assets and repository hygiene</strong></summary>
-
-Pillow is used only by optional artwork-generation scripts. The three MP4s in `app/src/main/res/raw/` are runtime onboarding assets; their editable Remotion compositions and staging instructions are under [`tools/waypoint-motion`](tools/waypoint-motion/README.md).
-
-Run `python3 scripts/check_repo_hygiene.py` before committing. CI checks that generated videos, source screenshots, private QA material, APKs and logs do not enter the repository. Runtime Android videos and the finished images used by this README are intentionally retained.
-
-</details>
+For maintainers, the [development layout](docs/development/architecture.md) explains the source folders, asset generators and validation commands. The finished images in this README are kept in the repository; their working captures stay outside Git.
 
 ## Privacy and services
 
-Waypoint has no app-owned account, analytics backend or recorded route history. Saved places, quests, pictures and personal progress stay on your device. Location and destinations are sent to providers when a map, search or route needs them; the app’s update check contacts GitHub without location data.
+Waypoint has no app-owned account, analytics backend or recorded route history. Saved places, quests, pictures and personal progress stay on your device. Location and destinations are sent to providers when a map, search or route needs them. No live-traffic provider is configured, so Waypoint does not send location updates to a traffic service. The app’s update check contacts GitHub without location data.
 
 | Feature | Service |
 | --- | --- |
@@ -196,14 +193,15 @@ Waypoint has no app-owned account, analytics backend or recorded route history. 
 | Car routes | OSRM |
 | Motorcycle, bicycle and walking routes | Valhalla |
 | Terrain | Mapzen |
-| Shared Google Maps short links | Google, only when you submit a supported link |
+| Google Maps link import and destination handoff | Google Maps, only when you choose either action |
 | New-release checks | GitHub Releases, automatically in the background and when checking in Settings; no location data |
-| Voice | Your installed Android text-to-speech engine |
+| Voice | Original AI-generated navigation cue packs for all 38 worlds; Android text-to-speech speaks unsupported or route-specific details when a safe recorded cue is unavailable |
 | Guidance progress and rerouting | Ferrostar 0.59.0 using OSRM and Valhalla routes |
+| Live traffic and traffic-adjusted ETA | Not configured; remaining ETA is based on the selected OSRM or Valhalla route through Ferrostar |
 
 ### Practical limits
 
-The public map, search and routing endpoints require internet access and can be unavailable or rate-limited. Waypoint has **no live traffic, offline routing or lane guidance**.
+The public map, search and routing endpoints require internet access and can be unavailable or rate-limited. Live traffic is not available in this build; Ferrostar remains authoritative for route progress, rerouting and remaining ETA using the selected routing response. Waypoint has no offline routing or lane guidance.
 
 GPS and place coverage vary by device and location; real-road and long-duration testing are still needed. Read the [service and privacy guide](docs/guide.md#location-and-privacy) and [validation record](docs/validation.md) for the practical limits.
 
@@ -215,12 +213,15 @@ GPS and place coverage vary by device and location; real-road and long-duration 
 | [Release guide](docs/releasing.md) | Signing, GitHub releases and updates |
 | [Map typography](docs/map-fonts.md) | Fonts and map glyphs |
 | [Visual sourcebook](docs/visual-sourcebook.md) | Cartography decisions and references |
+| [Design system](DESIGN.md) | Colors, type, map treatments and interface rules |
+| [Product notes](PRODUCT.md) | Scope and product behavior |
+| [Development layout](docs/development/architecture.md) | Source structure, assets and checks |
 | [Security review](docs/security.md) | Reviewed boundaries, source fixes and remaining validation |
 | [Contributing](CONTRIBUTING.md) | Tests, public examples and repository hygiene |
 
 ### License and attribution
 
-Waypoint is independent and is not affiliated with the games or their publishers. The **code is MIT licensed**. Fonts, map data and sourced game markers have separate licenses or rights; review the [font notices](docs/licenses/), [marker sources](docs/poi-icon-sources.md) and [artwork notes](docs/game-artwork-sources.md) before redistributing assets.
+Waypoint is independent and is not affiliated with the games or their publishers. The **code is GPL-3.0-only**. The [third-party notices](THIRD_PARTY_NOTICES.md) cover components and data used by this project; [font licenses](docs/licenses/), [map icon notes](docs/poi-icon-sources.md) and [artwork notes](docs/game-artwork-sources.md) record the asset details. The original map-art claim above applies to Waypoint's cartography and map assets, not to retained interface and onboarding images.
 
 Report security concerns through [SECURITY.md](SECURITY.md).
 

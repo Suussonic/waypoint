@@ -22,6 +22,9 @@ def main():
     if event == "push" and ref == "refs/heads/main":
         required = {"workflow_safety", "repository", "styles", "motion", "android", "device_smoke", "sign"}
         mode = "Main branch"
+    elif event == "push" and ref == "refs/heads/dev":
+        required = {"workflow_safety", "repository", "styles", "motion", "android", "device_smoke"}
+        mode = "Dev branch"
     elif event == "pull_request":
         required = {"workflow_safety", "dependency_review", "repository", "styles", "motion", "android", "device_smoke"}
         mode = "Pull request"

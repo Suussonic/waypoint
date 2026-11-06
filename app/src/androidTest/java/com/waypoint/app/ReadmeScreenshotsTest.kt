@@ -43,7 +43,8 @@ class ReadmeScreenshotsTest {
                                 "library" -> androidx.compose.material3.Surface(color=Ink, contentColor=Cream) { HudLibrary(selected, {}, {}) }
                                 "updates" -> androidx.compose.material3.Surface(color=Ink, contentColor=Cream) { Column(Modifier.fillMaxWidth().padding(24.dp)) { UpdatePanel((activity.application as WaypointApplication).updater, false) } }
                                 else -> {
-                                    val state = NavState(world=selected, fix=Coordinate(51.5081,-0.1280), accuracy=5f, bearing=28f,
+                                    // A public route point on the road, rather than the nearby square.
+                                    val state = NavState(world=selected, fix=Coordinate(51.5077,-0.1270), accuracy=5f, bearing=28f,
                                         headingReliable=true, gpsReady=true, city="London · demonstration", tilted=false)
                                     WorldMap(state, {}, { mapError=it })
                                     GameAtlasChrome(state,AtlasActions({},{},{},{},{},{},{},{}),Modifier.padding(bottom=48.dp))
@@ -55,7 +56,7 @@ class ReadmeScreenshotsTest {
                     }
                 }
             }
-            for (theme in if (InstrumentationRegistry.getArguments().getString("panelsOnly") == "true") emptyList() else listOf(World.LOS_SANTOS, World.OLD_WEST, World.NIGHT_CITY, World.RIVIA, World.HYRULE, World.PIXEL)) {
+            for (theme in if (InstrumentationRegistry.getArguments().getString("panelsOnly") == "true") emptyList() else listOf(World.LOS_SANTOS, World.OLD_WEST, World.NIGHT_CITY, World.RIVIA, World.HYRULE, World.PIXEL, World.STALKER)) {
                 inst.runOnMainSync { world.value=theme }
                 SystemClock.sleep(7000)
                 assertNull("Map failed to render", mapError)

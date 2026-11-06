@@ -8,6 +8,7 @@ local.properties
 *.iml
 .DS_Store
 .impeccable/
+graphify-out/
 __pycache__/
 *.pyc
 *.log

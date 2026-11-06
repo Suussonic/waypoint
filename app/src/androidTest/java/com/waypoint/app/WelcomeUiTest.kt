@@ -23,7 +23,13 @@ class WelcomeUiTest {
         val oldMapOpened=prefs.getBoolean("mapOpened",false)
         val oldWelcomeVersion=prefs.getInt("welcomeShownVersion",0)
         val oldFavorites=prefs.getString("favoriteWorlds",null)
+        val oldWhatsNewVersion=prefs.getInt("whatsNewShownVersion",0)
+        val hadWhatsNewVersion=prefs.contains("whatsNewShownVersion")
+        val oldPermissionsExplained=prefs.getBoolean("permissionsExplained",false)
+        val hadPermissionsExplained=prefs.contains("permissionsExplained")
         try {
+            val app=context.applicationContext as WaypointApplication
+            app.markWhatsNewSeen();app.updateAlerts.markExplained()
             prefs.edit().putBoolean("onboardingCompleted",false).putBoolean("mapOpened",false)
                 .putInt("welcomeShownVersion",0).putString("favoriteWorlds",World.NIGHT_CITY.name).commit()
             inst.runOnMainSync{(context.applicationContext as WaypointApplication).navigation.clearDestination()}
@@ -38,32 +44,44 @@ class WelcomeUiTest {
             device.takeScreenshot(File(output,"welcome-large-reduced-motion.png"))
             assertTrue(device.hasObject(By.desc("Continue")))
             device.executeShellCommand("settings put system font_scale $font")
+            SystemClock.sleep(600)
             fun continuePage() {
                 assertTrue(device.wait(Until.hasObject(By.desc("Continue")),5000))
                 device.findObject(By.desc("Continue")).click()
             }
-            continuePage();assertTrue(device.wait(Until.hasObject(By.text("Favorite Game")),5000))
+            continuePage();assertTrue("World introduction uses the device locale",
+                device.wait(Until.hasObject(By.text("Favorite Game")),2500) ||
+                    device.wait(Until.hasObject(By.text("Favourite Game")),2500))
             continuePage();assertTrue(device.wait(Until.hasObject(By.text("your phone")),5000))
-            continuePage();assertTrue(device.wait(Until.hasObject(By.text("Where did you hear\nabout us?")),5000))
-            device.findObject(By.text("GitHub")).click();continuePage()
-            assertTrue(device.wait(Until.hasObject(By.text("What are your\nfavorite games?")),5000))
-            device.findObject(By.text("The Witcher 3: Wild Hunt")).click();continuePage()
+            continuePage()
+            assertTrue("Favorite-game question uses the device locale",
+                device.wait(Until.hasObject(By.text("What are your\nfavorite games?")),2500) ||
+                    device.wait(Until.hasObject(By.text("What are your\nfavourite games?")),2500))
+            val redDead=device.wait(Until.findObject(By.text("Red Dead Redemption 2")),5000)
+            assertNotNull("First favorite option is available",redDead);redDead!!.click();continuePage()
             assertTrue(device.wait(Until.hasObject(By.text("Select Map to")),5000))
-            device.findObject(By.desc("Next map")).click()
-            assertTrue(device.wait(Until.hasObject(By.text("The Rivia III")),5000))
-            device.takeScreenshot(File(output,"witcher-picker.png"))
+            assertTrue("Favorite selection opens its matching map",device.wait(Until.hasObject(By.text("Saint Denis II")),5000))
+            val nextMap=device.wait(Until.findObject(By.desc("Next map")),5000)
+            assertNotNull("Onboarding map carousel has a next control",nextMap);nextMap!!.click()
+            assertTrue("Next map changes the preview",device.wait(Until.hasObject(By.text("Los Santos")),5000))
+            val previousMap=device.wait(Until.findObject(By.desc("Previous map")),5000)
+            assertNotNull("Onboarding map carousel has a previous control",previousMap);previousMap!!.click()
+            assertTrue(device.wait(Until.hasObject(By.text("Saint Denis II")),5000))
+            device.takeScreenshot(File(output,"old-west-picker.png"))
             continuePage();assertTrue(device.wait(Until.hasObject(By.text("Allow location for")),5000))
             val finish=device.wait(Until.findObject(By.text("Open map")),1000)
                 ?: device.wait(Until.findObject(By.text("Continue without location")),4000)
             assertNotNull(finish);finish!!.click()
             assertTrue(device.wait(Until.hasObject(By.text("Worlds")),5000))
-            assertEquals(World.RIVIA,(context.applicationContext as WaypointApplication).navigation.state.value.world)
+            assertEquals(World.OLD_WEST,(context.applicationContext as WaypointApplication).navigation.state.value.world)
         } catch(error:Throwable) {
             device.takeScreenshot(File(output,"welcome-failure.png"));device.dumpWindowHierarchy(File(output,"welcome-failure.xml"));throw error
         } finally {
             val restore=prefs.edit().putBoolean("onboardingCompleted",oldOnboarding)
                 .putBoolean("mapOpened",oldMapOpened).putInt("welcomeShownVersion",oldWelcomeVersion)
             if(oldFavorites==null)restore.remove("favoriteWorlds") else restore.putString("favoriteWorlds",oldFavorites)
+            if(hadWhatsNewVersion)restore.putInt("whatsNewShownVersion",oldWhatsNewVersion) else restore.remove("whatsNewShownVersion")
+            if(hadPermissionsExplained)restore.putBoolean("permissionsExplained",oldPermissionsExplained) else restore.remove("permissionsExplained")
             restore.commit()
             device.executeShellCommand("settings put system font_scale $font")
             device.executeShellCommand("settings put global animator_duration_scale $animation")

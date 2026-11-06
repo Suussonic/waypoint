@@ -15,6 +15,7 @@ class AppMotionTest {
     @Test fun mainDestinationsRemainUsableWithAnimationsEnabledAndRemoved() {
         val inst=InstrumentationRegistry.getInstrumentation()
         val context=inst.targetContext
+        val app=context.applicationContext as WaypointApplication
         check(context.packageName.endsWith(".preview"))
         val device=UiDevice.getInstance(inst)
         val scale=device.executeShellCommand("settings get global animator_duration_scale").trim()
@@ -22,6 +23,12 @@ class AppMotionTest {
         Configurator.getInstance().waitForIdleTimeout=350
         val output=File(context.getExternalFilesDir(null),"app-motion-review").apply { mkdirs() }
         try {
+            inst.runOnMainSync {
+                app.navigation.completeOnboarding(listOf(World.LOS_SANTOS))
+                app.navigation.markMapOpened()
+                app.navigation.changeWorld(World.LOS_SANTOS)
+                app.markWhatsNewSeen();app.updateAlerts.markExplained()
+            }
             for(setting in listOf("1.0","0.0")) {
                 device.executeShellCommand("settings put global animator_duration_scale $setting")
                 ActivityScenario.launch(MainActivity::class.java).use {
@@ -32,13 +39,13 @@ class AppMotionTest {
                             ?: device.wait(Until.findObject(By.text(destination)),3000)
                         assertNotNull("Destination $destination is reachable",control)
                         control!!.click()
-                        val expected=when(destination) {
-                            "Worlds" -> By.text("Find your next world")
-                            "Saved" -> By.text("Your places")
-                            "Quests" -> By.desc("Add a quest")
-                            else -> By.desc("Worlds")
+                        val works=when(destination) {
+                            "Worlds" -> device.wait(Until.hasObject(By.text("Find your next world")),3000)
+                            "Saved" -> device.wait(Until.hasObject(By.text("Your places")),3000)
+                            "Quests" -> device.wait(Until.hasObject(By.desc("Add a quest")),3000)
+                            else -> device.wait(Until.hasObject(By.desc("Worlds")),1500) || device.wait(Until.hasObject(By.text("Worlds")),1500)
                         }
-                        assertTrue("$destination works with animation scale $setting",device.wait(Until.hasObject(expected),3000))
+                        assertTrue("$destination works with animation scale $setting",works)
                         SystemClock.sleep(350)
                         assertTrue(device.takeScreenshot(File(output,"${destination.lowercase()}-$setting.png")))
                     }

@@ -1,13 +1,17 @@
-# Waypoint promotional artwork
+# Waypoint promotional images
 
-Original promotional compositions built from sanitised Waypoint Android captures at a fixed public London demonstration position. Finished README images are kept here; the source captures and temporary previews stay outside Git. The screens are framed and cropped for presentation; their controls and map contents have not been fabricated.
+The finished JPGs in this folder are composed from Waypoint captures at public London demonstration positions. Working captures stay outside the tracked repository; the app screens are framed, cropped and resized for presentation without changing their map contents or controls.
 
-- **Phone screens:** six local demonstration JPGs named `los-santos.jpg`, `old-west.jpg`, `night-city.jpg`, `rivia.jpg`, `hyrule.jpg` and `pixel.jpg`. The opt-in `ReadmeScreenshotsTest` captures fixed London map states; crop the device status and navigation bars, then strip metadata before generating the posters. The 1.1.0 posters use fresh captures from the connected phone.
-- **Android Auto screens:** `old-west-guidance.png` and `night-city-guidance.png` are actual 1280 × 720 Desktop Head Unit screenshots. The opt-in `CarReadmeCaptureTest` feeds a public London route and simulated guidance state to the projected Waypoint session, then switches the phone-selected world. The screenshots show the host controls and the app's real map/template rendering; they do not represent a physical drive or the phone's location.
-- **Identity:** the original `waypoint-icon.png`, rendered from the Android adaptive icon.
-- **Typography:** Barlow Condensed and Noto Sans from `app/src/main/res/font`, under their existing [font licenses](../../licenses/).
-- **Generators:** `python3 scripts/create_readme_promo.py --captures /path/to/sanitised-phone-captures --car-captures /path/to/dhu-captures` and `python3 scripts/create_car_readme_promo.py --captures /path/to/dhu-captures` from the repository root; both require Pillow. The capture folders must be outside the repository or under ignored `docs/images/captures/`.
-- **Responsive art:** the README uses wide posters on desktop and portrait compositions below 640px. The opening hero pairs the Old West phone map with actual Android Auto guidance in the same world. `android-auto.jpg` and `android-auto-mobile.jpg` show two worlds on the same simulated route. Only the finished images used by the README are committed.
-- **Privacy:** no user-provided routes, place queries, device identifiers, notification icons, home/work locations or personal screenshots belong in these assets. Use fixed public landmarks or fictional fixtures for public examples. Keep private QA captures outside Git.
+- **Phone maps:** `ReadmeScreenshotsTest` captures Los Santos, Old West, Night City, The Continent, Sheikah Slate, Pixel World and Exclusion Zone from the current app. Its fixed public road point keeps the vehicle marker on the mapped street. The device status and navigation bars are cropped before making the posters.
+- **Android Auto:** the Exclusion Zone panels show the current app in the Desktop Head Unit at two simulated points on the same public London route. Both captures show the vehicle on the route. They demonstrate the rendered host screen, not a physical drive or the phone's location.
+- **Identity and type:** the poster uses Waypoint's launcher icon and the Barlow Condensed and Noto Sans fonts supplied with the app. Their licenses are in [`docs/licenses`](../../licenses/).
 
-The artwork is not supplied by, or affiliated with, any referenced game or publisher. Game names identify inspiration only. OpenStreetMap/OpenFreeMap attribution is available inside the app through Map info and in the root README.
+From the repository root, stage the sanitized phone JPGs and the two DHU PNGs in ignored local folders, then run:
+
+```sh
+python3 scripts/create_readme_promo.py --captures /path/to/phone-captures --car-captures /path/to/car-captures
+python3 scripts/create_car_readme_promo.py --captures /path/to/car-captures
+python3 scripts/check_repo_hygiene.py
+```
+
+The optional image composition scripts require Pillow; the Android build does not. The README uses wide posters on desktop and portrait versions below 640px. Keep personal routes, queries, notifications, identifiers and device-derived locations out of public media. The games named in the README identify stylistic inspiration and do not imply affiliation.

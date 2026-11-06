@@ -596,7 +596,7 @@ Map info is a small labelled text-and-icon control with a minimum 48dp touch hei
 
 ### Cartography
 
-`cartography_profiles.py` governs each world's road weight, casing, building treatment, labels, park opacity, terrain and paper. `Cartography.kt` governs initial camera, route width, POI scale and marker families. `generate_styles.py` preserves the underlying road geometry and native camera-expression grammar. Runtime overlays place the route, destination, accuracy area and position marker above the basemap. Night City walking guidance is dotted yellow; Steelport changes from a purple atlas route to dotted green active guidance with a yellow player marker. These are state-specific treatments backed by the researched screenshots.
+`cartography_profiles.py` and `map_theme_catalog.py` define each world's road weight, casing, buildings, relief, labels, palette, material and marker family. `generate_styles.py` authors the MapLibre layer stack from those tokens; it consumes no preset theme. `generate_map_assets.py` is designed to draw 38 icon atlases and 76 day/night material tiles from Waypoint vector primitives. The checked-in assets include 78 authored styles, 76 material tiles, 76 world-specific POI atlases and 76 destination-marker images. OpenMapTiles/OSM supplies live geographic features only. Runtime overlays keep the actual route, destination, accuracy area and player marker above those features. Night City walking guidance is dotted yellow; Steelport changes from a purple atlas route to dotted green active guidance with a yellow player marker. These are state-specific treatments backed by the researched screenshots.
 
 ## Do's and Don'ts
 

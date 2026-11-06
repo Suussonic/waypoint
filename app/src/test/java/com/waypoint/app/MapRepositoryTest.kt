@@ -12,6 +12,25 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.Assert.*
 
+private fun encodePolyline6(points:List<Coordinate>):String = buildString {
+    var previousLat=0L
+    var previousLon=0L
+    fun appendDelta(delta:Long) {
+        var value=if(delta<0) (delta shl 1).inv() else delta shl 1
+        while(value>=0x20L) {
+            append(((0x20L or (value and 0x1fL))+63).toInt().toChar())
+            value=value shr 5
+        }
+        append((value+63).toInt().toChar())
+    }
+    points.forEach { point ->
+        val lat=kotlin.math.round(point.lat*1_000_000.0).toLong()
+        val lon=kotlin.math.round(point.lon*1_000_000.0).toLong()
+        appendDelta(lat-previousLat);appendDelta(lon-previousLon)
+        previousLat=lat;previousLon=lon
+    }
+}
+
 class MapRepositoryTest {
     private lateinit var server:MockWebServer
     private lateinit var repository:MapRepository
@@ -19,7 +38,8 @@ class MapRepositoryTest {
     @After fun close(){server.shutdown()}
     private fun response(body:String,code:Int=200){server.enqueue(MockResponse().setResponseCode(code).setBody(body).addHeader("Content-Type","application/json"))}
     private val feature="""{"properties":{"osm_type":"N","osm_id":1,"name":"River Cafe","street":"Example Road","city":"Town"},"geometry":{"type":"Point","coordinates":[-0.12,51.5]}}"""
-    private val route="""{"code":"Ok","routes":[{"distance":111.0,"duration":60.0,"geometry":"???o}@","legs":[{"steps":[{"name":"Main Street","distance":111.0,"duration":60.0,"maneuver":{"type":"depart","location":[0.0,0.0]}},{"name":"","distance":0.0,"duration":0.0,"maneuver":{"type":"arrive","location":[0.001,0.0]}}]}]}]}"""
+    private val routeObject="""{"distance":111.0,"duration":60.0,"geometry":"???o}@","legs":[{"steps":[{"name":"Main Street","distance":111.0,"duration":60.0,"maneuver":{"type":"depart","location":[0.0,0.0]}},{"name":"","distance":0.0,"duration":0.0,"maneuver":{"type":"arrive","location":[0.001,0.0]}}]}]}"""
+    private val route="""{"code":"Ok","routes":[$routeObject]}"""
     @Test fun searchEncodesQueryAndKeepsCoordinateOrder()=runBlocking {
         response("""{"features":[$feature]}""")
         val places=repository.search("Cafe & Park",Coordinate(51.5,-0.12))
@@ -56,6 +76,33 @@ class MapRepositoryTest {
         response(route);val r=repository.route(Coordinate(0.0,0.0),Coordinate(0.0,0.001))
         assertEquals(2,r.points.size);assertEquals(111.0,r.meters,0.1);assertEquals("arrive",r.steps.last().type)
         assertEquals(Coordinate(0.0,0.001),r.points.last());assertTrue(server.takeRequest().path!!.contains("geometries=polyline6"))
+    }
+    @Test fun carRouteUsesRouterDurationWithoutMakingTrafficRequests()=runBlocking {
+        val from=Coordinate(0.0,0.0);val to=Coordinate(0.0,0.001)
+        response(route)
+        val result=repository.route(from,to)
+        assertEquals(60.0,result.seconds,0.0)
+        val request=server.takeRequest()
+        assertEquals(1,server.requestCount)
+        assertNull(request.requestUrl!!.queryParameter("alternatives"))
+    }
+    @Test fun carRouteOptionsKeepUpToThreeDistinctProviderChoices()=runBlocking {
+        val detour=routeObject.replace("111.0","140.0").replace("60.0","75.0").replace(
+            "???o}@",encodePolyline6(listOf(Coordinate(0.0,0.0),Coordinate(0.0001,0.0005),Coordinate(0.0,0.001)))
+        )
+        response("""{"code":"Ok","routes":[$routeObject,$detour]}""")
+        response("""{"code":"NoRoute"}""")   // the second routing provider offers nothing extra
+        val options=repository.routeOptions(Coordinate(0.0,0.0),Coordinate(0.0,0.001))
+        assertEquals(2,options.size)
+        assertEquals(60.0,options[0].seconds,0.0)
+        assertEquals(75.0,options[1].seconds,0.0)
+        assertEquals(3,options[1].points.size)
+        assertEquals("3",server.takeRequest().requestUrl!!.queryParameter("alternatives"))
+    }
+    @Test fun routeStillReturnsTheProvidersFirstChoice()=runBlocking {
+        val slower=routeObject.replace("60.0","90.0")
+        response("""{"code":"Ok","routes":[$routeObject,$slower]}""")
+        assertEquals(60.0,repository.route(Coordinate(0.0,0.0),Coordinate(0.0,0.001)).seconds,0.0)
     }
     @Test fun retainsRightUTurnAcrossNorthInsteadOfAlwaysShowingLeft()=runBlocking {
         // Bearings from the public Trafalgar Square reproduction. The provider's

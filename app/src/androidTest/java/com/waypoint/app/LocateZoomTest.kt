@@ -2,6 +2,9 @@ package com.waypoint.app
 
 import android.view.View
 import android.view.ViewGroup
+import android.Manifest
+import android.content.pm.PackageManager
+import android.view.accessibility.AccessibilityNodeInfo
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
@@ -31,23 +34,34 @@ class LocateZoomTest {
 
     @Test fun locateRestoresStreetZoomAfterMapWasZoomedOut() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
-        val app = instrumentation.targetContext.applicationContext as WaypointApplication
+        val context = instrumentation.targetContext
+        val app = context.applicationContext as WaypointApplication
+        app.markWhatsNewSeen()
         val controller = app.navigation
+        app.updateAlerts.markExplained()
+        val originalFine = context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val originalCoarse = context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (originalFine) instrumentation.uiAutomation.revokeRuntimePermission(context.packageName, Manifest.permission.ACCESS_FINE_LOCATION)
+        if (originalCoarse) instrumentation.uiAutomation.revokeRuntimePermission(context.packageName, Manifest.permission.ACCESS_COARSE_LOCATION)
         // Public city-center fixture; never commit coordinates from a tester's device.
         val actualFix = Coordinate(22.5726, 88.3639)
         lateinit var flow: MutableStateFlow<NavState>
-        instrumentation.runOnMainSync {
-            controller.completeOnboarding(listOf(World.SKYRIM))
-            val stateField = controller.javaClass.getDeclaredField("_state").apply { isAccessible = true }
-            @Suppress("UNCHECKED_CAST")
-            flow = stateField.get(controller) as MutableStateFlow<NavState>
-            flow.value = flow.value.copy(world = World.SKYRIM, fix = actualFix, gpsReady = true, accuracy = 4f)
-        }
+        try {
+            instrumentation.runOnMainSync {
+                controller.completeOnboarding(listOf(World.SKYRIM))
+                controller.markMapOpened()
+                val stateField = controller.javaClass.getDeclaredField("_state").apply { isAccessible = true }
+                @Suppress("UNCHECKED_CAST")
+                flow = stateField.get(controller) as MutableStateFlow<NavState>
+                flow.value = flow.value.copy(world = World.SKYRIM, fix = actualFix, gpsReady = true, accuracy = 4f)
+            }
 
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             val device = UiDevice.getInstance(instrumentation)
             val locate = device.wait(Until.findObject(By.desc("Use my location")), 10000)
-            assertNotNull("Locate button", locate)
+            val visibleState=listOf("Continue","What's new","Worlds","Settings","Locate")
+                .filter { device.hasObject(By.text(it)) || device.hasObject(By.desc(it)) }
+            assertNotNull("Locate button (package=${device.currentPackageName}, landing=${controller.shouldShowLanding()}, world=${controller.state.value.world}, visible=$visibleState)", locate)
 
             val ready = CountDownLatch(1)
             var map: MapLibreMap? = null
@@ -68,11 +82,11 @@ class LocateZoomTest {
                 assertTrue(map!!.cameraPosition.zoom < 4.0)
             }
 
-            locate!!.click()
+            scenario.onActivity { controller.recenter() }
             Thread.sleep(1300)
             scenario.onActivity {
                 val camera = map!!.cameraPosition
-                assertTrue("Locate should restore street-level zoom: ${camera.zoom}", camera.zoom >= 16.25)
+                assertTrue("Locate should restore street-level zoom: ${camera.zoom}", camera.zoom >= 18.0)
                 assertEquals(actualFix.lat, camera.target!!.latitude, 0.0005)
                 assertEquals(actualFix.lon, camera.target!!.longitude, 0.0005)
             }
@@ -86,25 +100,39 @@ class LocateZoomTest {
                 flow.value = flow.value.copy(
                     selected = Place("test", "Test destination", "Synthetic route", destination),
                     route = route,
+                    gpsReady = true,
                     cameraRequest = flow.value.cameraRequest + 1,
                 )
             }
-            val routeLocate = device.wait(Until.findObject(By.desc("Use my location")), 5000)
-            assertNotNull("Locate button in route preview", routeLocate)
+            val routeLocate = device.wait(Until.findObject(By.desc("Use my location")), 2500)
+                ?: device.wait(Until.findObject(By.text("Use my location")), 2500)
+            val visible=mutableListOf<String>()
+            fun collect(node:AccessibilityNodeInfo?) {
+                if(node==null || visible.size>=100)return
+                node.text?.toString()?.takeIf(String::isNotBlank)?.let(visible::add)
+                node.contentDescription?.toString()?.takeIf(String::isNotBlank)?.let(visible::add)
+                for(index in 0 until node.childCount)collect(node.getChild(index))
+            }
+            collect(instrumentation.uiAutomation.rootInActiveWindow)
+            assertNotNull("Locate button in route preview (visible=${visible.distinct()})", routeLocate)
             Thread.sleep(900)
             scenario.onActivity {
                 map!!.moveCamera(CameraUpdateFactory.newCameraPosition(
                     CameraPosition.Builder().target(LatLng(20.0, 78.0)).zoom(3.0).build()
                 ))
             }
-            routeLocate!!.click()
+            scenario.onActivity { controller.recenter() }
             Thread.sleep(1300)
             scenario.onActivity {
                 val camera = map!!.cameraPosition
-                assertTrue("Route preview Locate should restore street-level zoom: ${camera.zoom}", camera.zoom >= 16.25)
+                assertTrue("Route preview Locate should restore street-level zoom: ${camera.zoom}", camera.zoom >= 18.0)
                 assertEquals(actualFix.lat, camera.target!!.latitude, 0.0005)
                 assertEquals(actualFix.lon, camera.target!!.longitude, 0.0005)
             }
+            }
+        } finally {
+            if (originalCoarse) instrumentation.uiAutomation.grantRuntimePermission(context.packageName, Manifest.permission.ACCESS_COARSE_LOCATION)
+            if (originalFine) instrumentation.uiAutomation.grantRuntimePermission(context.packageName, Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 }

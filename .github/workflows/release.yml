@@ -15,16 +15,12 @@ jobs:
   publish:
     name: 05 / Publish GitHub release
     runs-on: ubuntu-latest
+    environment: release
     timeout-minutes: 35
     permissions:
       actions: read
       contents: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Check release version
-        run: python3 scripts/check_version.py
       - name: Find the successful main build for this commit
         id: main-run
         env:
@@ -51,6 +47,13 @@ jobs:
           done
           echo "No successful main build found for release commit ${RELEASE_SHA}"
           exit 1
+      - name: Check out the verified main build source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Check release version
+        run: python3 scripts/check_version.py
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: Waypoint-signed-apk

@@ -24,7 +24,7 @@ class CarMotionContinuityTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             lateinit var view:WaypointCarLiveMap
             val mapField=WaypointCarLiveMap::class.java.getDeclaredField("map").apply { isAccessible=true }
-            val worldField=WaypointCarLiveMap::class.java.getDeclaredField("loadedWorld").apply { isAccessible=true }
+            val styleField=WaypointCarLiveMap::class.java.getDeclaredField("loadedStyleFile").apply { isAccessible=true }
             val positionField=WaypointCarLiveMap::class.java.getDeclaredField("renderedPosition").apply { isAccessible=true }
             var state=NavState(world=World.STALKER,fix=Coordinate(51.5081,-.1280),navigating=true,
                 headingReliable=true,headingSource=HeadingSource.COURSE,bearing=0f,speed=8f,gpsReady=true)
@@ -41,7 +41,7 @@ class CarMotionContinuityTest {
                 var ready=false
                 while(!ready && SystemClock.elapsedRealtime()<deadline) {
                     update()
-                    scenario.onActivity { ready=worldField.get(view)==World.STALKER }
+                    scenario.onActivity { ready=(styleField.get(view) as? String)?.startsWith(World.STALKER.file)==true }
                     SystemClock.sleep(100)
                 }
                 assertTrue("Car map became ready",ready)

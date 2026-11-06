@@ -2,7 +2,7 @@ name: Android
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
 
 permissions:
@@ -16,7 +16,6 @@ concurrency:
 jobs:
   workflow_safety:
     name: 01 / Workflow safety
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     needs: repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -61,7 +60,6 @@ jobs:
 
   repository:
     name: 00 / Repository integrity
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -75,7 +73,6 @@ jobs:
 
   styles:
     name: 01 / Map styles
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     needs: repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -95,7 +92,6 @@ jobs:
 
   motion:
     name: 01 / Motion source
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     needs: repository
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -117,7 +113,6 @@ jobs:
 
   android:
     name: 02 / Build, unit tests and lint
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     needs: repository
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -161,7 +156,6 @@ jobs:
 
   device_smoke:
     name: 03 / Emulator smoke tests
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     needs: android
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -183,14 +177,14 @@ jobs:
         run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0'
       - name: Enable emulator acceleration
         run: sudo chmod 666 /dev/kvm
-      - name: Test package security and quest persistence
+      - name: Test package security, quests and car sessions
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 35
           arch: x86_64
           script: >-
             ./gradlew --no-daemon :app:connectedDebugAndroidTest
-            -Pandroid.testInstrumentationRunnerArguments.class=com.waypoint.app.SecurityConfigurationTest,com.waypoint.app.QuestRepositoryTest
+            -Pandroid.testInstrumentationRunnerArguments.class=com.waypoint.app.SecurityConfigurationTest,com.waypoint.app.QuestRepositoryTest,com.waypoint.app.CarSessionTest
       - name: Save device-test reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

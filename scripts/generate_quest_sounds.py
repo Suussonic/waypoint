@@ -7,7 +7,7 @@ import wave
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-worlds = re.findall(r'R.string.world_[a-z_]+_description,"([a-z_]+)"', (ROOT / 'app/src/main/java/com/waypoint/app/World.kt').read_text())
+worlds = re.findall(r'R.string.world_[a-z_]+_description,"([a-z_]+)"', (ROOT / 'app/src/main/java/com/waypoint/app/core/World.kt').read_text())
 assert len(worlds) == len(set(worlds)) and worlds, "World IDs must be unique"
 folder = ROOT / 'app/src/main/assets/quest-sounds'
 folder.mkdir(exist_ok=True)

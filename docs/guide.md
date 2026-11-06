@@ -1,8 +1,8 @@
 # Waypoint
 
 Native Android navigation with game-inspired maps. Kotlin + Jetpack Compose +
-MapLibre Native. **Twenty-seven game-inspired map styles, no ads, accounts, purchases or feature
-locks.** Source code is MIT licensed.
+MapLibre Native. **Thirty-eight game-inspired map styles, no ads, accounts, purchases or feature
+locks.** Source code is GPL-3.0-only.
 
 Waypoint is an independent, open-source implementation. Its visual direction and
 implementation decisions are recorded in [the sourcebook](visual-sourcebook.md).
@@ -91,13 +91,14 @@ if initialization fails. After changing those settings, turn voice off and on in
 to retry, and check navigation/media volume if speech is still inaudible. Visual guidance
 continues while speech is unavailable.
 
-**Game-style voice** in Settings adds short original phrases and subtle pitch and pace
-changes for the selected world. All 38 worlds have three starting, three travelling and
+**World voice style** in Settings gives each of the 38 worlds its own bounded pitch and
+pace profile on the Android speech voice you selected, plus short original phrases. Each
+world has three starting, three travelling and
 three arrival phrases that rotate during the app session. The distance, turn and road name always come first. Extra
 phrases are spaced out and omitted near imminent turns; they never complete quests.
 Switch it off for standard instructions and your Android speech settings. This preference
-also applies to Android Auto. Voice character depends on the installed speech engine;
-Waypoint does not clone game actors or download voice recordings.
+also applies to Android Auto. Voice character depends on the installed speech engine.
+
 
 ## Build
 
@@ -126,19 +127,18 @@ No private signing material is included in the source.
 
 - Map tiles/glyphs/sprites: [OpenFreeMap](https://openfreemap.org/), derived from
   [OpenStreetMap](https://www.openstreetmap.org/copyright).
+- Satellite imagery under the Elden Ring, Zelda and Hogwarts maps: [Esri World Imagery](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9) (Esri, Maxar, Earthstar Geographics, and the GIS User Community). Only those worlds request it, and the request carries the map area on screen. Check Esri's current terms and key requirements before a public release.
 - Search and reverse geocoding: [Photon public demo](https://github.com/komoot/photon). Search also uses [Android Geocoder](https://developer.android.com/reference/android/location/Geocoder) when available and Photon lacks a strong match, or when you explicitly submit a search. The device selects that backend; its data is not necessarily open source.
 - Driving routes and steps: [OSRM public demo](https://project-osrm.org/).
+- Live traffic and traffic-adjusted ETA: no provider is configured. Ferrostar uses the selected OSRM or Valhalla route for guidance progress, rerouting and remaining ETA.
 - Motorcycle and walking routes: Valhalla public demo.
 - Guidance progress, maneuvers, rerouting and spoken cue selection: [Ferrostar](https://stadiamaps.github.io/ferrostar/) 0.59.0. Ferrostar consumes routes from the providers above; it does not provide the basemap, search or routing server.
-- Voice: Android's installed text-to-speech engine.
+- Voice: Android's installed text-to-speech engine, with selected recorded prompts for Skyrim, Forza Horizon and DOS Atlas and TTS fallback for full instructions.
 
 The public endpoints are suitable for evaluation and can be throttled or unavailable.
 For a public release, self-host or contract services with suitable capacity and
 availability; the endpoints are isolated in `MapRepository.kt` and the style JSON.
-Routes do not include live traffic, closures, speed-limit enforcement,
-lane guidance, or offline routing. GPS accuracy and map coverage vary. ETA is
-estimated from route progress. Road testing is still required. The app is a working
-prototype, not a claim of complete feature parity or production navigation quality.
+No live-traffic source is configured, and the app makes no traffic requests. Ferrostar uses the OSRM or Valhalla route for progress, rerouting and remaining ETA. No location is written to logs. Waypoint does not provide closure guarantees, speed-limit enforcement, lane guidance or offline routing. GPS accuracy and map coverage vary. Road testing is still required. The app is a working prototype, not a claim of production navigation quality.
 
 ## Search matching
 
@@ -163,7 +163,7 @@ The optional fused-location dependency uses Google Play services and its device
 location settings. Native GNSS/network fallback supports devices without it.
 
 Map providers receive the tiles requested. Photon and, when used, the Android geocoder backend receive search terms and location
-bias; OSRM or Valhalla receives route origin/destination coordinates and the selected routing profile. Saved/recent places and
+bias; OSRM or Valhalla receives route origin/destination coordinates and the selected routing profile. No traffic provider is configured, so Waypoint makes no live-traffic requests and sends no in-trip position to Google for traffic. User-initiated Google Maps link import and destination handoff remain available. Saved/recent places and
 settings remain in device preferences, excluded from cloud backup/device transfer.
 You can clear those places in Settings. Location history is not recorded. The small search-result cache lives only in memory and is bounded to 40 queries. Confirmed spelling aliases change the search text; they never supply invented destination coordinates.
 
@@ -200,10 +200,14 @@ See `docs/validation.md` for actual verification and outstanding hardware checks
 
 ## Licenses
 
-Waypoint code: MIT (`LICENSE`). Google Play services location: Google SDK terms
+Waypoint code: GPL-3.0-only (`LICENSE`); see `THIRD_PARTY_NOTICES.md` for components used by the app. Google Play services location: Google SDK terms
 (the library is a dependency; it is not relicensed as MIT). MapLibre: BSD-2-Clause. OpenStreetMap data: ODbL.
-OpenFreeMap Liberty derives from OSM Liberty (BSD-3-Clause) and OpenMapTiles
-(CC-BY 4.0 style/schema attribution). Barlow Condensed, Rye and VT323 fonts: SIL OFL,
+All 38 worlds ship Waypoint-authored day/night map styles, materials, and POI
+atlases. MapLibre renders live geography from OpenFreeMap/OpenMapTiles and
+OpenStreetMap data; Waypoint supplies the theme layers and original map
+artwork. The style JSON and image atlas validators are in `scripts/`; the app
+credits map data providers and contributors in Map info.
+Barlow Condensed, Rye and VT323 fonts: SIL OFL,
 Cinzel, Monocraft, Rajdhani, Share Tech Mono, Roboto Condensed, Libre Baskerville, Noto Sans and Orbitron are SIL OFL; Yellowtail is Apache-2.0,
 with license files in `docs/licenses`. Theme names identify inspiration; no game
 art, logos, textures or voices are included. Licensed game-font families and their source notices are documented in `docs/map-fonts.md` and `third_party/game_fonts/`.
@@ -234,10 +238,11 @@ These recreate map/HUD design language; they are not pixel-perfect game asset po
 
 ```sh
 python3 scripts/generate_styles.py
+python3 scripts/generate_map_assets.py
 npm ci --prefix tools/style-validation
 node scripts/validate_styles.cjs
 node scripts/generate_glyphs.cjs
-# Optional: regenerate original textures/sprites (requires Pillow)
+# Optional: regenerate shared pixel controls and paper fibre (requires Pillow)
 python3 scripts/generate_materials.py
 ```
 

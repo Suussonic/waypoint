@@ -77,7 +77,7 @@ class HorseOnboardingTest {
             SystemClock.sleep(200)
             assertFalse("Returning to onboarding must resume motion", pausedB.sameAs(snapshot(inst, target)))
             device.findObject(By.desc("Continue")).click()
-            assertTrue("The horse page should lead directly to referral", device.wait(Until.hasObject(By.text("Where did you hear\nabout us?")), 5000))
+            assertTrue("The horse page should lead directly to the favourite-games question", device.wait(Until.hasObject(By.text(inst.targetContext.getString(R.string.favorite_games_question))), 5000))
             device.pressBack()
             assertTrue("Back should return to the horse page", device.wait(Until.hasObject(By.text("your phone")), 5000))
         }
