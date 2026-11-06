@@ -9,7 +9,6 @@ data class ReleaseUpdate(val version: String, val versionCode: Int, val url: Str
         const val REPOSITORY = "the-geeky-couldron/waypoint"
         const val PAGE = "https://github.com/$REPOSITORY/releases/latest"
         const val API = "https://api.github.com/repos/$REPOSITORY/releases/latest"
-        const val MAX_BYTES = 150L * 1024 * 1024
         fun versionCode(version: String): Int? {
             val match = Regex("(0|[1-9][0-9]{0,2})\\.(0|[1-9][0-9]{0,2})\\.(0|[1-9][0-9]{0,2})")
                 .matchEntire(version) ?: return null
@@ -35,7 +34,7 @@ data class ReleaseUpdate(val version: String, val versionCode: Int, val url: Str
             val digest = asset.optString("digest")
             require(Regex("sha256:[a-fA-F0-9]{64}").matches(digest)) { "The release checksum is not ready. Try again shortly." }
             val size = asset.getLong("size")
-            require(size in 1..MAX_BYTES) { "The update has an invalid download size." }
+            require(size > 0) { "The update has an invalid download size." }
             return ReleaseUpdate(version, code, url, digest.substringAfter(':').lowercase(), size, release.optString("body").take(5000))
         }
         fun trustedDownloadHost(url: String): Boolean = runCatching {

@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalUriHandler
@@ -184,6 +185,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun WaypointApp(controller: NavigationController,state: NavState,destinationLaunch:Int=0,foregroundEntry:Int=0,openQuestId:String?=null,questLaunch:Int=0,updateLaunch:Int=0) {
     val context=LocalContext.current
+    val carSettingsUnavailable=stringResource(R.string.car_settings_unavailable)
     val application=context.applicationContext as WaypointApplication
     val updater=application.updater
     var tab by rememberSaveable { mutableIntStateOf(0) }
@@ -419,7 +421,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 AndroidAutoSettingsPanel(state.carConnected,controller.hasLocationPermission(),state.navigating,
                     onLocation={context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))},
-                    onUnavailable={navigationScope.launch { snackbar.showSnackbar(context.getString(R.string.car_settings_unavailable)) }})
+                    onUnavailable={navigationScope.launch { snackbar.showSnackbar(carSettingsUnavailable) }})
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 Text("Location & sensors",style=MaterialTheme.typography.titleMedium)
                 Text(state.locationProvider,style=MaterialTheme.typography.bodyMedium)
