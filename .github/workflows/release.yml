@@ -2,11 +2,8 @@ name: Release
 
 on:
   push:
-    tags: ['v*']
-  workflow_run:
-    workflows: ['Android']
     branches: [main]
-    types: [completed]
+    tags: ['v*']
 
 permissions:
   contents: read
@@ -19,13 +16,10 @@ jobs:
   prepare:
     name: Prepare verified release
     if: >-
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
-      (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.event == 'push' &&
-       github.event.workflow_run.head_branch == 'main' &&
-       github.event.workflow_run.conclusion == 'success')
+      (github.ref_type == 'branch' && github.ref_name == 'main') ||
+      (github.ref_type == 'tag' && startsWith(github.ref_name, 'v'))
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 75
     permissions:
       actions: read
       contents: read
@@ -40,35 +34,40 @@ jobs:
         id: source
         env:
           GH_TOKEN: ${{ github.token }}
-          EVENT_NAME: ${{ github.event_name }}
-          EVENT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
-          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
-          WORKFLOW_EVENT: ${{ github.event.workflow_run.event }}
-          WORKFLOW_BRANCH: ${{ github.event.workflow_run.head_branch }}
-          WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          EVENT_REF_TYPE: ${{ github.ref_type }}
+          EVENT_REF_NAME: ${{ github.ref_name }}
+          RELEASE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          if [ "$EVENT_NAME" = workflow_run ]; then
-            test "$WORKFLOW_EVENT" = push
-            test "$WORKFLOW_BRANCH" = main
-            test "$WORKFLOW_CONCLUSION" = success
-            run_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${WORKFLOW_RUN_ID}")"
-            test "$(jq -r '.path' <<<"$run_json")" = .github/workflows/android.yml
-            test "$(jq -r '.head_branch' <<<"$run_json")" = main
-            test "$(jq -r '.head_sha' <<<"$run_json")" = "$EVENT_SHA"
-            test "$(jq -r '.event' <<<"$run_json")" = push
-            test "$(jq -r '.conclusion' <<<"$run_json")" = success
-            run_id="$WORKFLOW_RUN_ID"
-            release_sha="$EVENT_SHA"
+          if [ "$EVENT_REF_TYPE" = branch ]; then
+            test "$EVENT_REF_NAME" = main
           else
-            release_sha="$EVENT_SHA"
-            run_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/android.yml/runs?head_sha=${release_sha}&event=push&per_page=100")"
-            main_run="$(jq -c --arg sha "$release_sha" '[.workflow_runs[] | select(.path == ".github/workflows/android.yml" and .head_branch == "main" and .head_sha == $sha and .conclusion == "success")] | sort_by(.run_number) | last // empty' <<<"$run_json")"
-            test -n "$main_run" || { echo 'No successful main Android build exists for this tag.'; exit 1; }
-            run_id="$(jq -r '.id' <<<"$main_run")"
+            test "$EVENT_REF_TYPE" = tag
+            case "$EVENT_REF_NAME" in v*) ;; *) echo 'Only v* tags can publish releases.'; exit 1 ;; esac
           fi
+
+          run_id=''
+          for attempt in $(seq 1 180); do
+            run_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/android.yml/runs?head_sha=${RELEASE_SHA}&event=push&per_page=100")"
+            main_run="$(jq -c --arg sha "$RELEASE_SHA" '[.workflow_runs[] | select(.path == ".github/workflows/android.yml" and .head_branch == "main" and .head_sha == $sha)] | sort_by(.run_number) | last // empty' <<<"$run_json")"
+            if [ -n "$main_run" ]; then
+              status="$(jq -r '.status' <<<"$main_run")"
+              if [ "$status" = completed ]; then
+                conclusion="$(jq -r '.conclusion' <<<"$main_run")"
+                if [ "$conclusion" = success ]; then
+                  run_id="$(jq -r '.id' <<<"$main_run")"
+                  break
+                fi
+                echo "Matching main Android run finished with ${conclusion}."
+                exit 1
+              fi
+            fi
+            echo "Waiting for the Android run for ${RELEASE_SHA} (${attempt}/180)"
+            sleep 20
+          done
+          test -n "$run_id" || { echo "No successful Android run found for ${RELEASE_SHA}."; exit 1; }
           {
-            echo "release_sha=$release_sha"
+            echo "release_sha=$RELEASE_SHA"
             echo "run_id=$run_id"
           } >> "$GITHUB_OUTPUT"
       - name: Check out the verified release source
@@ -82,16 +81,20 @@ jobs:
         id: plan
         env:
           GH_TOKEN: ${{ github.token }}
-          EVENT_NAME: ${{ github.event_name }}
-          EVENT_TAG: ${{ github.ref_name }}
+          EVENT_REF_TYPE: ${{ github.ref_type }}
+          EVENT_REF_NAME: ${{ github.ref_name }}
           RELEASE_SHA: ${{ steps.source.outputs.release_sha }}
         run: |
           set -euo pipefail
           version="$(sed -n 's/^VERSION_NAME=//p' version.properties)"
           test -n "$version"
           tag="v$version"
-          if [ "$EVENT_NAME" = push ] && [ "$EVENT_TAG" != "$tag" ]; then
-            echo "Tag $EVENT_TAG does not match version.properties ($tag)."
+          if [ "$EVENT_REF_TYPE" = tag ] && [ "$EVENT_REF_NAME" != "$tag" ]; then
+            echo "Tag $EVENT_REF_NAME does not match version.properties ($tag)."
+            exit 1
+          fi
+          if [ "$EVENT_REF_TYPE" = branch ] && [ "$EVENT_REF_NAME" != main ]; then
+            echo "Unexpected branch $EVENT_REF_NAME for release publishing."
             exit 1
           fi
 
