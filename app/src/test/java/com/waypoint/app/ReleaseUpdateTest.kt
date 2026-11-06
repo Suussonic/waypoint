@@ -21,7 +21,19 @@ class ReleaseUpdateTest {
     @Test fun rejectsMissingApk() { rejects(fixture().put("assets", JSONArray())) }
     @Test fun rejectsMissingChecksum() { val f=fixture();f.getJSONArray("assets").getJSONObject(0).remove("digest");rejects(f) }
     @Test fun rejectsForeignDownload() { val f=fixture();f.getJSONArray("assets").getJSONObject(0).put("browser_download_url","https://evil.example/Waypoint.apk");rejects(f) }
-    @Test fun rejectsOversizeApk() { val f=fixture();f.getJSONArray("assets").getJSONObject(0).put("size",ReleaseUpdate.MAX_BYTES+1);rejects(f) }
+    @Test fun acceptsLargerReleaseWhenSizeIsDeclared() {
+        val size = 200L * 1024 * 1024
+        val f = fixture()
+        f.getJSONArray("assets").getJSONObject(0).put("size", size)
+        assertEquals(size, ReleaseUpdate.parse(f.toString(), 1)!!.size)
+    }
+    @Test fun rejectsZeroAndNegativeSizes() {
+        for (size in listOf(0, -1)) {
+            val f = fixture()
+            f.getJSONArray("assets").getJSONObject(0).put("size", size)
+            rejects(f)
+        }
+    }
     @Test fun rejectsDuplicateApks() { val f=fixture();f.getJSONArray("assets").put(f.getJSONArray("assets").getJSONObject(0));rejects(f) }
     @Test fun versionOrderingIsNumeric() {
         assertTrue(ReleaseUpdate.versionCode("0.10.0")!! > ReleaseUpdate.versionCode("0.9.99")!!)

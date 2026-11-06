@@ -85,7 +85,7 @@ class AppUpdater(private val context: Context) {
             try {
                 withContext(Dispatchers.IO) {
                     target.delete(); partial.delete()
-                    require(directory.usableSpace > release.size + 10 * 1024 * 1024) { "Not enough free space. Free some storage and try again." }
+                    require(release.size < directory.usableSpace - 10L * 1024 * 1024) { "Not enough free space. Free some storage and try again." }
                     val digest = MessageDigest.getInstance("SHA-256")
                     val request = Request.Builder().url(release.url).header("User-Agent", "Waypoint/${BuildConfig.VERSION_NAME}").build()
                     client.newCall(request).also { call = it }.execute().use { response ->
@@ -99,7 +99,7 @@ class AppUpdater(private val context: Context) {
                                 val count = input.read(buffer)
                                 if (count < 0) break
                                 received += count
-                                require(received <= release.size && received <= ReleaseUpdate.MAX_BYTES) { "The update is larger than expected." }
+                                require(received <= release.size) { "The update is larger than expected." }
                                 output.write(buffer, 0, count); digest.update(buffer, 0, count)
                                 currentCoroutineContext().ensureActive()
                                 mutable.value = UpdateStatus.Downloading(release, (received * 100 / release.size).toInt())

@@ -2,6 +2,11 @@
 
 For the full notes and community acknowledgements, see [Waypoint release notes](docs/releases/current.md). Published releases are available on [GitHub Releases](https://github.com/the-geeky-couldron/waypoint/releases).
 
+## 2.5.3
+
+- Removed the fixed 150 MiB client-side APK download cap for users who install this version. Downloads still require enough free space and must match the release's declared size, SHA-256 digest, package, version, and signing certificate.
+- Retained the 150 MiB signed-release publishing check so users of earlier Waypoint versions can update directly.
+
 ## 2.5.2
 
 - Updated the Android Gradle plugin, Gradle wrapper, Kotlin and KSP tooling, Compose, Google Play services, OkHttp, MockWebServer, and other compatible Android dependencies from the reviewed Dependabot PRs.
