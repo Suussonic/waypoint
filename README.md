@@ -9,7 +9,7 @@
     <a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="https://img.shields.io/github/v/release/the-geeky-couldron/waypoint?label=latest%20release&amp;color=497c6f" alt="Latest Waypoint release version" /></a>
     <a href="https://github.com/the-geeky-couldron/waypoint/releases"><img src="https://img.shields.io/github/downloads/the-geeky-couldron/waypoint/total?label=Downloads&amp;color=497c6f" alt="Waypoint Downloads" /></a>
     <a href="https://github.com/the-geeky-couldron/waypoint/stargazers"><img src="https://img.shields.io/github/stars/the-geeky-couldron/waypoint?label=GitHub%20stars&amp;color=497c6f" alt="Waypoint GitHub stars" /></a>
-    <a href="https://upstar.dev/r/the-geeky-couldron/waypoint" title="Upstar ranks the fastest-rising GitHub projects by topic. Rank as of November 6, 2026."><img src="https://img.shields.io/badge/Upstar-%2313%20in%20Android-497c6f" alt="Ranked number 13 in Android on Upstar" /></a>
+    <a href="https://upstar.dev/r/the-geeky-couldron/waypoint" title="Upstar ranks the fastest-rising GitHub projects by topic. Reached number 12 in Android on November 7, 2026."><img src="https://img.shields.io/badge/Upstar-Reached%20%2312%20in%20Android-497c6f" alt="Reached number 12 in Android on Upstar" /></a>
   </p>
   <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="docs/images/promo/download.jpg" width="340" alt="Download Waypoint for Android from GitHub Releases" /></a></p>
   <p><strong>Android 8.0+</strong> · No ads or paywall · No Waypoint account<br />Every world included · Made in India, open to the world</p>
