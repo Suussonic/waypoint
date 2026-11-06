@@ -13,9 +13,9 @@ ROOT = Path(__file__).resolve().parents[1]
 IMAGES = ROOT / "docs/images"
 parser = argparse.ArgumentParser()
 parser.add_argument("--captures", type=Path, required=True,
-                    help="Local directory with sanitized exclusion-zone.jpg and six featured-world JPGs")
+                    help="Local directory with sanitized old-west-hero.jpg and the six featured-world JPGs")
 parser.add_argument("--car-captures", type=Path, required=True,
-                    help="Local directory with the public-route exclusion-zone-after-turn.png Desktop Head Unit capture")
+                    help="Local directory with the public-route old-west-after-turn.png Desktop Head Unit capture")
 ARGS = parser.parse_args()
 CAPTURES = ARGS.captures.resolve()
 CAR_CAPTURES = ARGS.car_captures.resolve()
@@ -73,7 +73,7 @@ def phone(canvas, name, x, y, width, angle=0):
 
 
 def car_screen(canvas, x, y, width):
-    shot = Image.open(CAR_CAPTURES / "exclusion-zone-after-turn.png").convert("RGBA")
+    shot = Image.open(CAR_CAPTURES / "old-west-after-turn.png").convert("RGBA")
     assert shot.width * 9 == shot.height * 16, "The car capture must be a 16:9 Desktop Head Unit screenshot"
     height = round(width * 9 / 16)
     shot = shot.resize((width, height), Image.Resampling.LANCZOS)
@@ -109,14 +109,14 @@ def save(image, name):
 
 
 def hero(mobile=False):
-    canvas = map_surface((900, 1450) if mobile else (1600, 980), "exclusion-zone")
+    canvas = map_surface((900, 1450) if mobile else (1600, 980), "old-west-hero")
     brand(canvas, 58 if mobile else 70, 52, 66)
     if mobile:
         lines(canvas, ["YOUR WORLD.", "EVERY SCREEN."], 58, 181, 126, 132)
         text(canvas, "Game-inspired maps on phone and Android Auto.", 62, 485, 31, display=False)
         text(canvas, "38 worlds. Every one included.", 62, 545, 32, LIME, False)
         car_screen(canvas, 42, 819, 816)
-        phone(canvas, "exclusion-zone", 584, 660, 250, -4)
+        phone(canvas, "old-west-hero", 584, 660, 250, -4)
         ImageDraw.Draw(canvas).rectangle((0, 1340, 900, 1450), fill=INK)
         text(canvas, "PHONE  +  ANDROID AUTO  /  38 WORLDS", 62, 1383, 31, LIME)
     else:
@@ -124,7 +124,7 @@ def hero(mobile=False):
         text(canvas, "Game-inspired maps on phone and Android Auto.", 76, 711, 27, display=False)
         text(canvas, "38 worlds. Every one included.", 76, 764, 29, LIME, False)
         car_screen(canvas, 810, 397, 730)
-        phone(canvas, "exclusion-zone", 1234, 209, 270, -4)
+        phone(canvas, "old-west-hero", 1234, 209, 270, -4)
         ImageDraw.Draw(canvas).rectangle((0, 885, 1600, 980), fill=INK)
         text(canvas, "PHONE  +  ANDROID AUTO", 76, 920, 31, LIME)
         text(canvas, "REAL STREETS  ·  38 WORLDS", 1135, 920, 27)

@@ -228,11 +228,11 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
             s.navigating -> listOf(permission,"navigation",s.world,s.voice,s.imperial,s.routing,s.offRoute,s.routeError,s.gpsReady,
                 if(s.gpsReady)null else s.gpsStatus,s.progress?.nextStep,
                 s.progress?.toTurn?.toInt()?.div(25),s.progress?.remaining?.toInt()?.div(25),
-                s.progress?.seconds?.toInt()?.div(5))
+                s.progress?.seconds?.toInt()?.div(5),s.driveAlternatives.size)
             s.selected!=null -> listOf(permission,"preview",s.world,s.imperial,s.selected.id,s.selected.name,
                 controller.destinationActionVersion,System.identityHashCode(s.route),
                 s.routing,s.arrived,s.routeError,s.gpsReady,if(s.gpsReady)null else s.gpsStatus,
-                s.route?.seconds?.toInt(),s.route?.meters?.toInt())
+                s.route?.seconds?.toInt(),s.route?.meters?.toInt(),s.routeOptions.size)
             else -> listOf(permission,"idle",s.world)
         }
     }
@@ -319,7 +319,18 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
                         .setOnClickListener { if(screenActive() && controller.acceptsNavigationSession(tripId))controller.toggleVoice() }.build())
                     .addAction(Action.Builder().setTitle("Settings")
                         .setOnClickListener { if(screenActive() && controller.acceptsNavigationSession(tripId))screenManager.push(WaypointCarSettingsScreen(carContext)) }.build())
-                    .build()).build()
+                    .apply {
+                        // Fresh ways to the same place, offered while guiding as on the phone map.
+                        if(s.driveAlternatives.isNotEmpty() && !s.routing && !s.offRoute)
+                            addAction(Action.Builder()
+                                .setIcon(CarIcon.Builder(IconCompat.createWithResource(carContext,R.drawable.ic_car_routes)).build())
+                                .setOnClickListener {
+                                    val current=controller.state.value
+                                    if(screenActive() && controller.acceptsNavigationSession(tripId) && current.navigating &&
+                                        !current.routing && current.driveAlternatives.isNotEmpty())
+                                        screenManager.push(WaypointCarDriveAlternativesScreen(carContext))
+                                }.build())
+                    }.build()).build()
         }
         if(s.selected!=null) {
             val selectedId=s.selected.id
@@ -428,7 +439,8 @@ internal fun carCamera(s: NavState, width: Int, height: Int,
         (width-area.right).toDouble(),(height-area.bottom).toDouble())
     val route=s.route
     if(route!=null && !s.navigating && route.points.isNotEmpty()) {
-        val points=route.points+listOfNotNull(s.fix,s.selected?.point)
+        // Frame every route on offer, as the phone overview does, so no alternative is cut off.
+        val points=(if(s.routeOptions.size>1)s.routeOptions.flatMap { it.points } else route.points)+route.points+listOfNotNull(s.fix,s.selected?.point)
         val south=points.minOf { it.lat }.coerceIn(-85.0,85.0)
         val north=points.maxOf { it.lat }.coerceIn(-85.0,85.0)
         val originLongitude=route.points.first().lon

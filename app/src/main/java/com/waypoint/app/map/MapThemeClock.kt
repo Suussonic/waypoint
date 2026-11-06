@@ -28,8 +28,11 @@ internal fun MapThemeClock(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalNightMapTheme provides isNight, content = content)
 }
 
+/** Test hook: pins the map to day or night so documentation captures do not depend on the hour. */
+@Volatile internal var mapThemeNightOverride: Boolean? = null
+
 internal fun isNightAtLocalTime(time: LocalTime = LocalTime.now()): Boolean =
-    time.hour >= 19 || time.hour < 6
+    mapThemeNightOverride ?: (time.hour >= 19 || time.hour < 6)
 
 internal fun mapThemeStyleFile(world: World, night: Boolean, tilted: Boolean): String = when {
     world == World.DIVISION && tilted -> if (night) "division_holo_night" else "division_holo"

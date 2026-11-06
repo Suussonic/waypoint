@@ -39,10 +39,11 @@
   /* 3. Scroll progress as CSS variables: --pg (page), --p (per element), data-step (scenes). */
   const live = new Set();
   const vio = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting ? live.add(e.target) : live.delete(e.target)), { rootMargin: '25% 0px' });
-  $$('[data-scrub], [data-scene]').forEach((el) => {
-    if (calm && !el.hasAttribute('data-scene')) return;
+  $$('[data-scrub]').forEach((el) => {
+    if (calm) return;
     vio.observe(el);
   });
+  const runs = [];
   const nav = $$('.masthead nav a[href^="#"]');
   const sections = nav.map((a) => d.querySelector(a.getAttribute('href'))).filter(Boolean);
   let queued = 0;
@@ -56,20 +57,13 @@
       const b = el.getBoundingClientRect();
       const mode = el.dataset.scrub;
       let p;
-      if (el.hasAttribute('data-scene')) p = -b.top / Math.max(1, b.height - h);
-      else if (mode === 'top') p = -b.top / Math.max(1, b.height);
+      if (mode === 'top') p = -b.top / Math.max(1, b.height);
       else if (mode === 'text') p = (h * 0.92 - b.top) / (h * 0.6);
       else p = (h - b.top) / (h + b.height);
       p = clamp(p);
       el.style.setProperty('--p', p.toFixed(4));
-      if (el.hasAttribute('data-scene')) {
-        const n = +el.dataset.steps, s = Math.min(n - 1, Math.floor(p * n));
-        if (el.dataset.step !== String(s)) {
-          el.dataset.step = s;
-          $$('[data-i]', el).forEach((c) => c.classList.toggle('on', +c.dataset.i === s));
-        }
-      }
     });
+    runs.forEach((f) => f());
     let cur = null;
     sections.forEach((s) => { if (s.getBoundingClientRect().top < h * 0.45) cur = s.id; });
     nav.forEach((a) => a.classList.toggle('cur', a.getAttribute('href') === '#' + cur));
@@ -78,6 +72,81 @@
   addEventListener('scroll', () => { queued || (queued = requestAnimationFrame(update)); }, { passive: true });
   addEventListener('resize', update);
   update();
+
+
+  /* 3a. The route run. Scrolling draws one line down the page: a lime trace grows along a dotted
+     guide, a navigation arrow rides its head, and each stop lights up as the arrow reaches its marker.
+     The path is rebuilt from the real marker positions, so it follows the layout at any width. */
+  $$('[data-run]').forEach((run) => {
+    const svg = run.querySelector('.run-line');
+    const guide = svg.querySelector('.run-guide'), trace = svg.querySelector('.run-trace');
+    const car = svg.querySelector('.run-car');
+    const stops = $$('[data-stop]', run);
+    const dots = stops.map((s) => s.querySelector('.dot'));
+    let ys = [], len = [], total = 0, ready = false;
+    const showAll = () => {
+      stops.forEach((s) => s.classList.add('on'));
+      trace.style.strokeDasharray = 'none';
+      trace.style.strokeDashoffset = '0';
+    };
+    const build = () => {
+      const rb = run.getBoundingClientRect();
+      const pts = dots.map((dot) => {
+        const b = dot.getBoundingClientRect();
+        return [b.left + b.width / 2 - rb.left, b.top + b.height / 2 - rb.top];
+      });
+      if (!rb.width || pts.some((p) => !isFinite(p[0]) || !isFinite(p[1]))) return;
+      svg.setAttribute('viewBox', `0 0 ${rb.width} ${rb.height}`);
+      // Straight in from the top edge, then a smooth S between neighbouring markers.
+      let d = `M${pts[0][0]} 0 L${pts[0][0]} ${pts[0][1]}`;
+      for (let i = 1; i < pts.length; i++) {
+        const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], k = (y1 - y0) * 0.55;
+        d += ` C${x0} ${y0 + k} ${x1} ${y1 - k} ${x1} ${y1}`;
+      }
+      guide.setAttribute('d', d);
+      trace.setAttribute('d', d);
+      total = trace.getTotalLength();
+      // Sample the path so a scroll position maps to a length, whatever the curve does.
+      ys = []; len = [];
+      const n = 240;
+      for (let i = 0; i <= n; i++) {
+        const l = (total * i) / n, p = trace.getPointAtLength(l);
+        len.push(l); ys.push(p.y);
+      }
+      stops.forEach((s, i) => { s.dataset.y = pts[i][1]; });
+      ready = true;
+      if (calm) showAll(); else {
+        trace.style.strokeDasharray = `${total}`;
+        step();
+      }
+    };
+    const lengthAt = (y) => {
+      if (y <= ys[0]) return 0;
+      if (y >= ys[ys.length - 1]) return total;
+      let lo = 0, hi = ys.length - 1;
+      while (hi - lo > 1) { const m = (lo + hi) >> 1; if (ys[m] <= y) lo = m; else hi = m; }
+      const f = (y - ys[lo]) / Math.max(0.0001, ys[hi] - ys[lo]);
+      return len[lo] + (len[hi] - len[lo]) * f;
+    };
+    function step() {
+      if (!ready || calm) return;
+      const rb = run.getBoundingClientRect();
+      const head = innerHeight * 0.62 - rb.top;          // where the arrow sits on the run
+      const l = lengthAt(head);
+      trace.style.strokeDashoffset = `${total - l}`;
+      stops.forEach((s) => s.classList.toggle('on', head >= +s.dataset.y - 30));
+      if (car) {
+        const p = trace.getPointAtLength(l), q = trace.getPointAtLength(Math.min(total, l + 2));
+        const a = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI + 90;
+        car.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${a})`);
+        car.classList.toggle('live', head > 0 && l < total - 1 && rb.top < innerHeight && rb.bottom > 0 && run.dataset.car !== 'off');
+      }
+    }
+    runs.push(step);
+    new ResizeObserver(() => build()).observe(run);
+    addEventListener('load', build);
+    build();
+  });
 
   /* 3b. Day/night compare: drag, tap or use arrow keys. Takes over from scroll once touched. */
   $$('.dn-board').forEach((b) => {
@@ -125,14 +194,6 @@
       else if (e.key === 'End') { set(0); e.preventDefault(); }
     });
   });
-
-  // The swipeable captures are a scroll region only on small screens.
-  const stage = d.querySelector('.scene-stage');
-  if (stage) {
-    const mq = matchMedia('(max-width: 55rem)');
-    const sync = () => { mq.matches ? stage.setAttribute('tabindex', '0') : stage.removeAttribute('tabindex'); };
-    sync(); mq.addEventListener('change', sync);
-  }
 
   /* 4. Pointer-driven polish (mouse and trackpad only, never under reduced motion). */
   if (calm || !fine) return;

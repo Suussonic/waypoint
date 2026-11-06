@@ -29,7 +29,9 @@ import kotlin.math.roundToInt
 
 /** Each atlas has its own composition. Shared primitives carry touch and accessibility behavior. */
 data class AtlasActions(val search:()->Unit,val huds:()->Unit,val saved:()->Unit,val settings:()->Unit,
-    val locate:()->Unit,val tilt:()->Unit,val voice:()->Unit,val nearby:(String)->Unit)
+    val locate:()->Unit,val tilt:()->Unit,val voice:()->Unit,val nearby:(String)->Unit,
+    /** The map is panned away from the user, so the recentre control has somewhere to go. */
+    val awayFromUser:Boolean=false)
 
 @Composable fun GameAtlasChrome(state:NavState,actions:AtlasActions,modifier:Modifier=Modifier) {
     val heading=if(state.headingReliable)state.bearing else Float.NaN

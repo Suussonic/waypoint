@@ -117,29 +117,59 @@ h3{font-size:clamp(1.9rem,3vw,2.9rem)}
 .ticker li i{width:2.5rem;height:2.5rem;background:var(--map-texture) center/128px 128px;border:1px solid var(--line-strong)}
 .ticker-row.rev li{color:var(--muted);font-size:1.05rem}
 
-/* ───────── Sticky world scene ───────── */
-.scene{position:relative;width:min(100% - 2*var(--gutter),var(--measure));height:calc(100svh*3.6);margin-inline:auto}
-.scene-sticky{position:sticky;top:0;display:grid;height:100svh;padding-top:4.5rem;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);align-items:center;gap:clamp(2rem,6vw,6rem)}
-.scene-copy h2{max-width:11ch;margin-bottom:1.3rem}
-.scene-copy>p{max-width:32rem;margin-bottom:2rem;color:var(--muted)}
-.steps{margin:0 0 2rem;padding:0;list-style:none}
-.step{padding-block:.55rem;border-top:1px solid var(--line);opacity:.58;transition:opacity .6s var(--ease),translate .7s var(--ease)}
-.step:last-child{border-bottom:1px solid var(--line)}
-.step.on{opacity:1;translate:.7rem 0}
-.step h3{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin:0;font-size:clamp(1.9rem,3vw,2.7rem)}
-.step h3 span{color:var(--quiet);font-family:var(--body);font-size:var(--meta);font-weight:600;letter-spacing:0;text-align:right}
-.step.on h3{color:var(--lime)}
-.step-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .7s var(--ease)}.step.on .step-body{grid-template-rows:1fr}
-.step-body>p{min-height:0;margin:0;overflow:hidden;color:var(--muted);font-size:.95rem}.step.on .step-body>p{padding-block:.35rem .4rem}
-.scene-stage{position:relative;justify-self:center;width:min(100%,23rem,calc((100svh - 9rem)*.565));aspect-ratio:520/920}
-.bed{position:absolute;inset:6% -34% 6%;overflow:hidden;border:1px solid var(--line);background:var(--map-texture) 0 0/128px 128px;opacity:0;transition:opacity .9s ease}
-.bed::after{position:absolute;inset:0;background:rgba(10,16,11,.4);content:""}.bed.on{opacity:1}
-.shot{position:absolute;inset:0;margin:0;border-radius:2.2rem;overflow:hidden;background:#0a100d;box-shadow:0 0 0 1px rgba(245,249,236,.3),0 2.4rem 4.5rem rgba(0,0,0,.6);opacity:0;scale:.93;translate:0 4%;filter:blur(10px);transition:opacity .7s ease,scale .9s var(--ease),translate .9s var(--ease),filter .7s ease}
-.shot.on{opacity:1;scale:1;translate:0 0;filter:none}
-.shot img{width:100%;height:100%;object-fit:cover}
-.world-pin{position:absolute;z-index:3;right:-4.4rem;top:10%;width:5.6rem;height:5.6rem;object-fit:contain;opacity:0;translate:0 1.2rem;scale:.7;filter:drop-shadow(0 1rem .9rem rgba(0,0,0,.5));transition:opacity .6s ease .15s,translate .9s var(--ease) .15s,scale .9s var(--ease) .15s}
-.world-pin.on{opacity:1;translate:0 0;scale:1;animation:bob 6s ease-in-out infinite}
-.scene-rail{position:absolute;top:6%;bottom:6%;left:calc(100% + 1rem);width:2px;background:var(--line)}.scene-rail::after{position:absolute;inset:0;background:var(--lime);content:"";transform:scaleY(var(--p,0));transform-origin:50% 0}
+/* ───────── The route run: scrolling draws one line through five worlds ─────────
+   Everything here is readable without script. With script, --run (0 to 1) is driven by the
+   page scroll: the lime trace grows along the guide, a navigation arrow rides its head and
+   each world lights up as the arrow reaches its marker. */
+.run-sec,.ms-sec{width:min(100% - 2*var(--gutter),var(--measure));margin-inline:auto}
+.run-sec{padding-block:clamp(3rem,7vw,6rem) clamp(1.5rem,4vw,3rem)}
+.run-head,.ms-head{max-width:44rem;margin:0 auto clamp(2.5rem,6vw,5rem);text-align:center}
+.run-head h2,.ms-head h2{margin-bottom:1.2rem}
+.run-head p,.ms-head p{max-width:35rem;margin:0 auto;color:var(--muted)}
+.run,.ms-run{position:relative;isolation:isolate}
+.run-line{position:absolute;inset:0;z-index:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.run-line path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.run-line .run-guide{stroke:rgba(213,241,108,.3);stroke-width:2;stroke-dasharray:2 12}
+.run-line .run-trace{stroke:var(--lime);stroke-width:4;filter:drop-shadow(0 0 .55rem rgba(213,241,108,.5))}
+.run-car{opacity:0;transition:opacity .4s ease}.run-car path{fill:var(--lime);stroke:var(--deep);stroke-width:2.5;stroke-linejoin:round}
+.run-car.live{opacity:1;filter:drop-shadow(0 .45rem .5rem rgba(0,0,0,.55))}
+.stops,.ms-list{position:relative;z-index:1;margin:0;padding:0;list-style:none;counter-reset:rank}
+.dot{display:grid;place-items:center;border:2px solid var(--line-strong);border-radius:50%;background:var(--page);transition:border-color .5s ease,box-shadow .7s ease,background-color .5s ease}
+.on>.dot{border-color:var(--lime);box-shadow:0 0 0 .4rem rgba(213,241,108,.14),0 0 2rem rgba(213,241,108,.35)}
+
+.stop{counter-increment:rank;display:grid;min-height:clamp(32rem,60vw,41rem);grid-template-columns:minmax(0,1fr) 9rem minmax(0,1fr);align-items:center;padding-block:2.2rem}
+.stop-dot{grid-column:2;grid-row:1;justify-self:center;width:4.6rem;height:4.6rem;translate:calc(var(--s,1)*2.6rem) 0}
+.stop-dot img{width:3rem;height:3rem;object-fit:contain}
+.stop:nth-child(odd){--s:1}.stop:nth-child(even){--s:-1}
+.stop-copy{grid-column:1;grid-row:1;justify-self:end;max-width:24rem;transition:opacity .8s ease,translate 1s var(--ease)}
+.stop-copy::before{display:block;margin:0 0 .6rem -.05em;color:transparent;-webkit-text-stroke:2px rgba(213,241,108,.55);font-family:var(--display);font-size:clamp(6.5rem,13vw,10rem);font-weight:700;line-height:.78;content:counter(rank);transition:color .8s ease .2s,-webkit-text-stroke-color .8s ease}
+.on .stop-copy::before{color:var(--lime);-webkit-text-stroke-color:var(--lime)}
+.stop-copy h3{margin-bottom:.3rem}
+.stop-copy .game{margin-bottom:1rem;color:var(--quiet);font-size:var(--meta);font-weight:600}
+.stop-copy p:last-child{margin:0;color:var(--muted);font-size:.98rem}
+.stop-shot{grid-column:3;grid-row:1;justify-self:start;width:min(100%,17rem);margin:0;transition:opacity .8s ease,translate 1.2s var(--ease),clip-path 1.2s var(--ease)}
+.stop:nth-child(even) .stop-copy{grid-column:3;justify-self:start}
+.stop:nth-child(even) .stop-shot{grid-column:1;justify-self:end}
+.stop-shot .s26{box-shadow:inset 0 0 0 1px rgba(255,255,255,.2),inset 0 0 0 2.5px rgba(0,0,0,.55),0 2.2rem 4rem rgba(0,0,0,.55)}
+.js .stop-copy{opacity:0;translate:0 1.6rem}
+.js .stop-shot{opacity:0;translate:0 3rem;clip-path:inset(100% -1rem 0 -1rem)}
+.js .stop.on .stop-copy{opacity:1;translate:0 0}
+.js .stop.on .stop-shot{opacity:1;translate:0 0;clip-path:inset(-1rem)}
+.js .stop-dot{scale:.7}.js .stop.on .stop-dot{scale:1}
+.run-end{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:center;gap:.6rem 1.8rem;margin:clamp(1rem,3vw,2rem) 0 0;text-align:center}
+.run-end span{color:var(--quiet);font-size:var(--meta)}
+
+/* ───────── Milestones: the same line, quieter ───────── */
+.ms-sec{padding-block:clamp(4rem,9vw,8rem)}
+.ms-run{max-width:54rem;margin-inline:auto}
+.ms{display:grid;grid-template-columns:3.2rem minmax(0,1fr);gap:0 1.6rem;padding-block:clamp(1.3rem,3vw,2.2rem)}
+.ms-dot{width:2.6rem;height:2.6rem;margin-top:.2rem}
+.ms-dot svg{width:1.3rem;height:1.3rem;fill:none;stroke:var(--quiet);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:stroke .5s ease}
+.ms.on .ms-dot{background:var(--lime)}.ms.on .ms-dot svg{stroke:var(--lime-ink)}
+.ms-body{transition:opacity .8s ease,translate 1s var(--ease)}
+.ms-body h3{margin-bottom:.5rem;font-size:clamp(2rem,3.6vw,3.1rem)}
+.ms-body p{max-width:38rem;margin-bottom:.8rem;color:var(--muted)}
+.js .ms-body{opacity:.35;translate:0 1rem}.js .ms.on .ms-body{opacity:1;translate:0 0}
 
 /* ───────── World atlas (38) ───────── */
 .atlas{width:min(100% - 2*var(--gutter),var(--measure));margin-inline:auto;padding-block:clamp(2rem,5vw,4rem) clamp(5rem,9vw,8rem)}
@@ -258,21 +288,18 @@ details[open] .world-entry{animation:rise .8s var(--ease) both;animation-delay:c
 /* ───────── Responsive ───────── */
 @media(max-width:68rem){
   .chip-a{left:-.6rem}.chip-b{right:-.6rem}
-  .scene-sticky{grid-template-columns:minmax(0,1fr) minmax(0,.85fr);gap:2rem}
-  .world-pin{right:-2.2rem;width:4.6rem;height:4.6rem}.bed{inset:6% -22% 6%}
 }
 @media(max-width:55rem){
   .masthead nav a:not(.nav-download){display:none}
   .section-heading,.dn,.voice-section,.car-proof,.download-inner{grid-template-columns:1fr}
   .section-heading{gap:1rem}
-  /* The sticky scene becomes a plain list + swipeable captures. */
-  .scene{height:auto}
-  .scene-sticky{position:static;display:block;height:auto;padding-top:clamp(2rem,5vw,3rem)}
-  .scene-copy h2{max-width:12ch}
-  .step,.step.on{opacity:1;translate:0 0}.step h3,.step.on h3{flex-direction:column;gap:.1rem;color:var(--paper)}.step h3 span{text-align:left}.step-body{grid-template-rows:1fr}.step-body>p{padding-block:.35rem .4rem}
-  .scene-stage{display:flex;width:auto;aspect-ratio:auto;margin:2.5rem calc(-1*var(--gutter)) 0;padding-inline:var(--gutter);gap:1rem;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:var(--gutter);overscroll-behavior-x:contain}
-  .shot{position:relative;flex:0 0 min(64%,16rem);aspect-ratio:520/920;opacity:1;scale:1;translate:0 0;filter:none;scroll-snap-align:start}
-  .bed,.world-pin,.scene-rail{display:none}
+  /* The route becomes one column with the line down the left edge. */
+  .stop{min-height:0;grid-template-columns:3.2rem minmax(0,1fr);gap:0 1.2rem;align-items:start;padding-block:1.6rem 2.2rem}
+  .stop-dot,.stop:nth-child(n) .stop-dot{grid-column:1;grid-row:1/3;width:2.8rem;height:2.8rem;translate:0 0;align-self:start}
+  .stop-dot img{width:1.9rem;height:1.9rem}
+  .stop:nth-child(n) .stop-copy{grid-column:2;grid-row:1;justify-self:start}
+  .stop:nth-child(n) .stop-shot{grid-column:2;grid-row:2;justify-self:start;width:min(100%,15rem);margin-top:1.6rem}
+  .stop-copy::before{font-size:5.5rem}
   .voice-copy{padding-left:1rem}
   .dl-phones{min-height:17rem;margin-top:2rem}.dl-phone-a{top:-2rem;right:auto;left:8%}.dl-phone-b{top:0;right:8%}
   .install-section{padding-bottom:clamp(5rem,9vw,8rem)}
@@ -310,17 +337,14 @@ details[open] .world-entry{animation:rise .8s var(--ease) both;animation-delay:c
   .brand,.footer-links a{min-height:2.75rem}.footer-links a{display:inline-flex;align-items:center}
   .text-link{min-height:2.75rem;align-items:center}
 }
-@media(max-height:34rem) and (orientation:landscape){
-  .scene{height:auto}.scene-sticky{position:static;height:auto}
-}
 
 /* ───────── Reduced motion: finished states, no travel, no loops ───────── */
 @media(prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
-  .chip,.world-pin.on,.dn-layer img,.tag b,.route-pin::after,.tag i::after{animation:none}
+  .chip,.dn-layer img,.tag b,.route-pin::after,.tag i::after{animation:none}
   .ticker-row{animation:none;flex-wrap:wrap;width:auto;justify-content:center}.ticker ul[aria-hidden]{display:none}.ticker{-webkit-mask-image:none;mask-image:none;padding-inline:var(--gutter)}
   .wave i{animation:none;transform:none}
-  .js [data-split]:not(.scrub) .wi,.js .rv,.js .phone-in,.js .chip,.js .tag,.shot,.step,.step-body,.world-pin,.bed{transition-duration:.01ms!important;transition-delay:0s!important}
+  .js [data-split]:not(.scrub) .wi,.js .rv,.js .phone-in,.js .chip,.js .tag,.run-sec *{transition-duration:.01ms!important;transition-delay:0s!important}
   .js .route-progress{stroke-dashoffset:0;animation:none!important}
   details[open] .world-entry{animation:none}
 }
@@ -334,7 +358,6 @@ body::after{position:fixed;inset:0;z-index:90;pointer-events:none;opacity:.055;m
 .js .phone-in{transition:opacity .9s ease var(--d,0ms),translate 1.4s var(--ease) var(--d,0ms),scale 1.4s var(--ease) var(--d,0ms),filter 1.2s ease var(--d,0ms)}
 /* Phones dissolve into the page instead of being cut by a hard edge. */
 .phones{-webkit-mask-image:linear-gradient(to bottom,#000 58%,transparent 98%);mask-image:linear-gradient(to bottom,#000 58%,transparent 98%)}
-.shot::after,.dl-phone::after{position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 2.2rem rgba(8,12,9,.45);content:"";pointer-events:none}
 .dl-phone{position:absolute}
 .car-shot::after{position:absolute;inset:0;box-shadow:inset 0 0 3.5rem 1rem rgba(11,17,12,.6);content:"";pointer-events:none}
 /* Cursor light across the hero panel. */
@@ -353,9 +376,6 @@ body::after{position:fixed;inset:0;z-index:90;pointer-events:none;opacity:.055;m
 .masthead nav a.cur{color:var(--paper)}.masthead nav a.cur::after,.masthead nav a:not(.nav-download):hover::after{transform:scaleX(1)}
 /* Lede paragraphs light up word by word with scroll; floor keeps them readable. */
 .scrub .wi{opacity:calc(.42 + .58*clamp(0,calc(var(--p,1)*(var(--n) + 5) - var(--i)),1))}
-/* Stage depth: the scene glow and a ground shadow under the device. */
-.scene-stage::after{position:absolute;right:8%;bottom:-2.2rem;left:8%;height:2rem;background:radial-gradient(50% 50% at 50% 50%,rgba(0,0,0,.55),transparent 70%);content:"";z-index:-1}
-@media(max-width:55rem){.scene-stage::after{display:none}.scene-stage{transform:none!important}}
 @media(max-width:39rem){.hero-copy{translate:none}}
 @media(prefers-reduced-motion:reduce){
   body::after{display:none}
@@ -365,7 +385,7 @@ body::after{position:fixed;inset:0;z-index:90;pointer-events:none;opacity:.055;m
 
 .js .chip.in{opacity:1;scale:1}
 
-/* ───────── Review pass: previews, rising hero phones, no-JS scene, icons ───────── */
+/* ───────── Review pass: previews, rising hero phones, icons ───────── */
 .map-surface{aspect-ratio:3/2;background:var(--deep)}
 .map-surface::before{display:none}
 .world-preview{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:scale 1.4s var(--ease)}
@@ -377,16 +397,6 @@ body::after{position:fixed;inset:0;z-index:90;pointer-events:none;opacity:.055;m
 .hero-lede{max-width:38rem;text-wrap:balance}
 .band{margin-top:0}
 @media not all and (hover:hover) and (pointer:fine){body::after{display:none}}
-/* Without script (or if it fails) the scene is a plain list plus swipeable captures. */
-html:not(.js) .scene{height:auto}
-html:not(.js) .scene-sticky{position:static;display:block;height:auto;padding-top:3rem}
-html:not(.js) .step,html:not(.js) .step.on{opacity:1;translate:0 0}
-html:not(.js) .step h3{color:var(--paper)}
-html:not(.js) .step-body{grid-template-rows:1fr}
-html:not(.js) .step-body>p{padding-block:.35rem .4rem}
-html:not(.js) .scene-stage{display:flex;width:auto;aspect-ratio:auto;margin:2.5rem 0 0;gap:1rem;overflow-x:auto;scroll-snap-type:x mandatory}
-html:not(.js) .shot{position:relative;flex:0 0 min(64%,16rem);aspect-ratio:520/920;opacity:1;scale:1;translate:0 0;filter:none;scroll-snap-align:start}
-html:not(.js) :is(.bed,.world-pin,.scene-rail){display:none}
 html:not(.js) .dn-hint{display:none}
 @media(prefers-reduced-motion:reduce){.world-preview{transition:none}}
 
@@ -426,8 +436,7 @@ html:not(.js) .dn-hint{display:none}
 /* ───────── Device: Samsung Galaxy S26 Ultra ─────────
    Flat titanium rails, thin even bezels, centred punch-hole camera, buttons on the right edge.
    Radii are percentages so the shape holds at every size. */
-.phone-in,.shot,.dl-phone{border-radius:0;overflow:visible;background:none;box-shadow:none}
-.shot::after,.dl-phone::after{display:none}
+.phone-in,.dl-phone{border-radius:0;overflow:visible;background:none;box-shadow:none}
 .s26{position:relative;display:block;width:100%;padding:2.3%;border-radius:13%/7.4%;background:linear-gradient(158deg,#7b807b 0%,#34373a 14%,#1a1c1b 46%,#262928 78%,#6b706b 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2),inset 0 0 0 2.5px rgba(0,0,0,.55),0 2rem 4rem rgba(0,0,0,.55)}
 .s26::before,.s26::after{position:absolute;right:-.2rem;width:.24rem;border-radius:0 2px 2px 0;background:linear-gradient(90deg,#3b3e3c,#8b908b);content:""}
 .s26::before{top:21%;height:13%}
@@ -436,10 +445,6 @@ html:not(.js) .dn-hint{display:none}
 .s26-screen img{width:100%;height:100%;object-fit:cover;scale:1.09}
 .s26-screen::before{position:absolute;inset:0;z-index:2;background:linear-gradient(115deg,rgba(255,255,255,.09),transparent 34%);content:"";pointer-events:none}
 .s26-screen::after{position:absolute;z-index:3;top:1.7%;left:50%;width:3.4%;aspect-ratio:1;translate:-50% 0;border-radius:50%;background:radial-gradient(circle at 35% 35%,#1d2a3a,#05070a 62%);box-shadow:0 0 0 1.5px rgba(0,0,0,.9);content:""}
-.shot .s26{height:100%}
-.shot .s26-screen{height:calc(100% - 0px);aspect-ratio:auto}
-.shot .s26{display:flex}.shot .s26-screen{flex:1}
-.shot{aspect-ratio:520/920}
 .phone-in{border-radius:0}
 @media(max-width:39rem){.phone-in{border-radius:0}.s26::before,.s26::after{right:-.14rem;width:.17rem}}
 
@@ -463,18 +468,11 @@ html:not(.js) .dn-hint{display:none}
 .s26-pill{position:absolute;z-index:3;bottom:1.8%;left:50%;width:30%;height:max(2px,1.1cqw);translate:-50% 0;border-radius:99px;background:rgba(255,255,255,.78)}
 .s26-screen::before{z-index:4}
 .s26-screen::after{z-index:5}
-.shot{aspect-ratio:781/1636}
-.shot .s26{display:block;height:auto}
-.shot .s26-screen{flex:none;height:auto;aspect-ratio:1080/2340}
-.scene-stage{aspect-ratio:781/1636;width:min(100%,23rem,calc((100svh - 9rem)*.477))}
-html:not(.js) .shot{aspect-ratio:781/1636;flex-basis:min(52%,13rem)}
 .hero-panel{--pw:clamp(9rem,16.5vw,15rem);--ph:clamp(14rem,27vw,23rem);margin-bottom:calc(var(--pw)*2.1 - var(--ph) + 3rem)}
 .phone-l,.phone-r{top:3.4rem}
 .download-inner{--dw:clamp(8.6rem,14vw,13.5rem)}
 .dl-phone-l,.dl-phone-r{top:3.6rem}
 @media(max-width:55rem){
-  .shot{flex-basis:min(52%,13rem)}
-  .scene-stage{width:auto;aspect-ratio:auto}
   .dl-phones{--dw:clamp(8rem,26vw,11.5rem)}
 }
 @media(max-width:39rem){.dl-phones{--dw:8.4rem}}
@@ -483,3 +481,9 @@ html:not(.js) .shot{aspect-ratio:781/1636;flex-basis:min(52%,13rem)}
 
 .ticker li img.poi{width:4.2rem;height:2.1rem;object-fit:contain}
 .ticker-row.rev li{padding-left:.9rem}
+
+/* Reduced motion and no script: the run is already drawn and every world is showing. */
+@media(prefers-reduced-motion:reduce){
+  .js .stop-copy,.js .stop-shot,.js .ms-body{opacity:1;translate:0 0;clip-path:none}
+  .js .stop-dot{scale:1}.run-car{display:none}
+}

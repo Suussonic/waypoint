@@ -187,6 +187,43 @@ internal class WaypointCarRouteOptionsScreen(context: CarContext) : Screen(conte
     }
 }
 
+/** Other ways to the destination while guiding. Times compare with what is left on the current route. */
+internal class WaypointCarDriveAlternativesScreen(context: CarContext) : Screen(context) {
+    private val controller = (context.applicationContext as WaypointApplication).navigation
+    // The comparison ticks down by the minute; the options themselves change rarely.
+    init { observeCarState { Triple(it.driveAlternatives,it.navigating,it.progress?.seconds?.let { s -> ceil(s / 60).toInt() }) } }
+
+    override fun onGetTemplate(): Template {
+        val state=controller.state.value
+        val routes=state.driveAlternatives
+        if(!state.navigating || routes.isEmpty())
+            return MessageTemplate.Builder("No other routes are available right now.")
+                .setHeader(carHeader("Other routes")).build()
+
+        val base=carAlternateBaseSeconds(state)
+        val items=ItemList.Builder()
+        routes.take(carContext.listLimit()).forEachIndexed { index,route ->
+            val duration="${ceil(route.seconds/60).toInt().coerceAtLeast(1)} min"
+            val road=route.steps.firstOrNull { it.road.isNotBlank() }?.road
+            items.addItem(Row.Builder()
+                .setTitle("$duration · ${formatDistance(route.meters,state.imperial)}")
+                .addText(carAlternateGapLabel(route.seconds,base)+(road?.let { " · via $it" } ?: ""))
+                .setOnClickListener {
+                    val current=controller.state.value
+                    if(!acceptsCarInput() || !current.navigating || current.routing ||
+                        current.driveAlternatives.getOrNull(index)!==route)
+                        return@setOnClickListener
+                    controller.switchToAlternate(index)
+                    screenManager.popToRoot()
+                }.build())
+        }
+        val content=ListTemplate.Builder()
+            .setHeader(carHeader("Other routes to ${state.selected?.name ?: "your destination"}"))
+            .setSingleList(items.build()).build()
+        return MapWithContentTemplate.Builder().setContentTemplate(content).build()
+    }
+}
+
 internal class WaypointCarSettingsScreen(context: CarContext) : Screen(context) {
     private val controller = (context.applicationContext as WaypointApplication).navigation
     init { observeCarState { Triple(it.world,it.voice,it.imperial) } }

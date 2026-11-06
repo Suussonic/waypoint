@@ -244,14 +244,17 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
         if(controller.hasLocationPermission()) controller.enableLocation() else controller.permissionDenied()
     }
     val notificationPermission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
-    var followPaused by remember { mutableStateOf(false) }
+    // True when the map has been panned away from the user (or guidance follow is paused).
+    var awayFromUser by remember { mutableStateOf(false) }
     fun locate() {
-        if(controller.hasLocationPermission()) {
-            if(state.fix==null || !state.gpsReady) controller.enableLocation()
-            controller.recenter()
-        } else {
-            controller.recenter()
-            permissions.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION))
+        when(locateAction(controller.hasLocationPermission(),state.fix!=null,state.gpsReady,awayFromUser)) {
+            LocateAction.REQUEST_PERMISSION -> {
+                controller.recenter()
+                permissions.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION))
+            }
+            LocateAction.ENABLE_GPS -> { controller.enableLocation();controller.recenter() }
+            LocateAction.RECENTRE -> controller.recenter()
+            LocateAction.NONE -> Unit
         }
     }
     fun choose(place: Place) { controller.markMapOpened();controller.select(place); search=false;tab=0;landing=false }
@@ -304,13 +307,13 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 }) { padding ->
                     Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
                         // Keep the native map alive when switching destinations; hide other screens above it.
-                        if(!welcomeVisible) WorldMap(state,{choose(it)},{mapError=it},Modifier.fillMaxSize().onGloballyPositioned{mapBounds=it.boundsInRoot()},active=tab==0 && !search && !settings && !steps,routeInsets=routeInsets,onFollowPaused={followPaused=it},onSelectRoute={ index -> if(state.navigating)controller.switchToAlternate(index) else controller.selectRouteOption(index) })
+                        if(!welcomeVisible) WorldMap(state,{choose(it)},{mapError=it},Modifier.fillMaxSize().onGloballyPositioned{mapBounds=it.boundsInRoot()},active=tab==0 && !search && !settings && !steps,routeInsets=routeInsets,onAwayFromUser={awayFromUser=it},onSelectRoute={ index -> if(state.navigating)controller.switchToAlternate(index) else controller.selectRouteOption(index) })
                         Box(Modifier.fillMaxWidth().height(36.dp).background(Brush.verticalGradient(listOf(Color.Black.copy(alpha=0.6f),Color.Transparent))))
                         if(!welcomeVisible && (tab==0 || state.navigating)) {
                             Box(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
                                 val atlasActions=AtlasActions({search=true},{tab=1},{tab=2},{settings=true},
                                     {locate()},controller::toggleTilt,controller::toggleVoice,
-                                    {query->search=true;controller.search(query)})
+                                    {query->search=true;controller.search(query)},awayFromUser=awayFromUser)
                                 if(!state.navigating && state.selected==null) {
                                     GameAtlasChrome(state,atlasActions,Modifier.padding(bottom=48.dp))
                                     if(mapError!=null)Notice(mapError!!,Icons.Default.CloudOff)
@@ -339,7 +342,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                                         if(state.navigating && state.routeError!=null)Notice("Reroute unavailable. ${state.routeError}",Icons.Default.CloudOff)
                                     }
                                     Column(Modifier.align(if(compactHeight)Alignment.BottomEnd else Alignment.BottomCenter).fillMaxWidth(if(compactHeight)0.48f else 1f).onGloballyPositioned{routePanelBounds=it.boundsInRoot()}.padding(horizontal=if(state.navigating)0.dp else 16.dp).padding(bottom=if(state.navigating)0.dp else 56.dp).then(if(compactHeight)Modifier.heightIn(max=300.dp).verticalScroll(rememberScrollState()) else Modifier),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                                        if(state.navigating && followPaused) Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.Center) { RecentrePill(state.world,atlasActions.locate) }
+                                        if(state.navigating && awayFromUser) Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.Center) { RecentrePill(state.world,atlasActions.locate) }
                                         if(state.navigating) NavSideControls(state,controller::toggleVoice,atlasActions.locate)
                                         if(!state.navigating && !state.gpsReady) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.Bottom) {
                                             FixLabel(state,Modifier.weight(1f))

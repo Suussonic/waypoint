@@ -81,6 +81,8 @@ data class NavState(
     val sharedImportError: Boolean = false,
     val cameraRequest: Int = 0,
     val focusUserCameraRequest: Int = -1,
+    /** A request the map raised itself (first fix, GPS enabled); it never overrides a pan the user already made. */
+    val passiveCameraRequest: Int = -1,
     val tilted: Boolean = true,
 )
 
@@ -362,7 +364,7 @@ class NavigationController(private val app: Application, private val repository:
         prefs.edit().remove("recent").remove("saved").apply()
     }
     fun setVisible(value: Boolean) { visible=value; updateTracking() }
-    fun enableLocation() { enabled=true; prefs.edit().putBoolean("locationEnabled",true).apply(); _state.update{it.copy(gpsStatus="Finding GPS…",cameraRequest=it.cameraRequest+1)}; updateTracking() }
+    fun enableLocation() { enabled=true; prefs.edit().putBoolean("locationEnabled",true).apply(); _state.update{val next=it.cameraRequest+1;it.copy(gpsStatus="Finding GPS…",cameraRequest=next,passiveCameraRequest=next)}; updateTracking() }
     private fun updateTracking() {
         val should = hasLocationPermission() && enabled && (visible || carVisible || _state.value.navigating)
         if(should && !listening) {
@@ -524,7 +526,8 @@ class NavigationController(private val app: Application, private val repository:
             speed=speed,
             city=if(first)"Current area" else it.city,
             cameraRequest=nextCameraRequest,
-            focusUserCameraRequest=if(focusUserNow) nextCameraRequest else it.focusUserCameraRequest)
+            focusUserCameraRequest=if(focusUserNow) nextCameraRequest else it.focusUserCameraRequest,
+            passiveCameraRequest=if(first && !focusUserNow) nextCameraRequest else it.passiveCameraRequest)
         }
         applyHeading(headingArbiter.location(
             bearing=courseBearing,
@@ -781,7 +784,8 @@ class NavigationController(private val app: Application, private val repository:
     fun toggleVoice() { _state.update{it.copy(voice=!it.voice)}; prefs.edit().putBoolean("voice",_state.value.voice).apply(); guidance.mute(!_state.value.voice) }
     fun toggleGameVoice() { _state.update { it.copy(gameVoice=!it.gameVoice) };prefs.edit().putBoolean("gameVoice",_state.value.gameVoice).apply() }
     fun toggleUnits() { _state.update{it.copy(imperial=!it.imperial)}; prefs.edit().putBoolean("imperial",_state.value.imperial).apply() }
-    fun toggleTilt() { _state.update{it.copy(tilted=!it.tilted,cameraRequest=it.cameraRequest+1)};prefs.edit().putBoolean("tilted",_state.value.tilted).apply() }
+    // Pitch only: bumping cameraRequest here re-targets the camera at the user or destination.
+    fun toggleTilt() { _state.update{it.withTiltToggled()};prefs.edit().putBoolean("tilted",_state.value.tilted).apply() }
     fun recenter() {
         if(_state.value.fix==null || !_state.value.gpsReady) { userFocusPending=true;return }
         userFocusPending=false

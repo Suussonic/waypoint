@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +25,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,7 +59,10 @@ internal fun MapChrome(state: NavState, heading: Float, actions: AtlasActions, m
         Column(Modifier.align(Alignment.BottomEnd).padding(end = ChromeGutter, bottom = ChromeGutter),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             ChromeButton(world, Icons.Default.ViewInAr, "Toggle 2D and 3D", actions.tilt)
-            ChromeButton(world, Icons.Default.MyLocation, "Use my location", actions.locate)
+            // Highlighted while the map is centred on the user and following; otherwise a tap flies back to them.
+            ChromeButton(world, Icons.Default.MyLocation, "Use my location", actions.locate,
+                highlighted = !actions.awayFromUser && state.gpsReady,
+                stateText = if (actions.awayFromUser) "Map is away from you" else if (state.gpsReady) "Centred on you" else null)
         }
         val showFix = !state.gpsReady || state.accuracy > 20 || !state.headingReliable
         Column(Modifier.align(Alignment.BottomStart).padding(start = ChromeGutter, bottom = ChromeGutter),
@@ -73,18 +78,18 @@ private val ChromeButtonsWidth = 108.dp
 
 /** Icon-only 48 dp control. The accessible label is the content description. */
 @Composable
-internal fun ChromeButton(world: World, icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun ChromeButton(world: World, icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier, highlighted: Boolean = false, stateText: String? = null) {
     val p = hudPalette(world)
     Surface(
         onClick = onClick,
-        modifier = modifier.size(48.dp).semantics { contentDescription = label },
+        modifier = modifier.size(48.dp).semantics { contentDescription = label; stateText?.let { stateDescription = it } },
         color = p.panel,
         contentColor = p.foreground,
         shape = hudShape(world),
         border = hudBorder(world),
     ) {
         androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center) {
-            Icon(icon, null, Modifier.size(22.dp))
+            Icon(icon, null, Modifier.size(22.dp), tint = if (highlighted) p.accent else LocalContentColor.current)
         }
     }
 }

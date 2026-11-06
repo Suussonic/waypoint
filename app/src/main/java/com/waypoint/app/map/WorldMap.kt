@@ -35,7 +35,7 @@ import org.maplibre.android.style.expressions.Expression.*
 data class MapViewportInsets(val left:Int,val top:Int,val right:Int,val bottom:Int)
 
 @Composable
-fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit, modifier: Modifier=Modifier,active:Boolean=true,routeInsets:MapViewportInsets?=null,onBearing:(Float)->Unit={},cameraZoomOverride:Double?=null,cameraTiltOverride:Double?=null,styleFileOverride:String?=null,cameraCenterOverride:Coordinate?=null,onFollowPaused:(Boolean)->Unit={},onSelectRoute:(Int)->Unit={}) {
+fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit, modifier: Modifier=Modifier,active:Boolean=true,routeInsets:MapViewportInsets?=null,onBearing:(Float)->Unit={},cameraZoomOverride:Double?=null,cameraTiltOverride:Double?=null,styleFileOverride:String?=null,cameraCenterOverride:Coordinate?=null,onAwayFromUser:(Boolean)->Unit={},onSelectRoute:(Int)->Unit={}) {
     val context=LocalContext.current
     val selectRoute by rememberUpdatedState(onSelectRoute)
     val owner=LocalLifecycleOwner.current
@@ -56,6 +56,9 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
     val followPolicy=remember{MapFollowPolicy()}
     var followTick by remember { mutableIntStateOf(0) }
     val cameraMemory=remember { MapCameraMemory() }
+    val cameraGate=remember{CameraRequestGate()}
+    val tiltRequestSeen=remember{intArrayOf(state.cameraRequest)}
+    val reportAway by rememberUpdatedState(onAwayFromUser)
     val motion=remember { MapMotion() }
     val renderedBearing=remember{floatArrayOf(0f)}
     val positionFrames=remember{arrayOfNulls<MapMotionFrames>(1)}
@@ -116,9 +119,12 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
             m.cameraPosition=CameraPosition.Builder().target((cameraCenterOverride ?: PreviewCenter).latLng()).zoom(cameraZoomOverride ?: 15.2).tilt(mapCameraTilt(currentState.world,currentState.tilted,currentState.navigating,cameraTiltOverride)).bearing(-22.0).build()
             m.addOnCameraMoveListener { currentBearing(m.cameraPosition.bearing.toFloat()) }
             m.addOnCameraMoveStartedListener { reason -> if(reason==MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
-                focusCameraHoldUntil[0]=0L;followPolicy.gestureStarted(SystemClock.elapsedRealtime());followTick++
+                focusCameraHoldUntil[0]=0L;cameraGate.userMovedCamera();followPolicy.gestureStarted(SystemClock.elapsedRealtime());followTick++
             } }
-            m.addOnCameraIdleListener { if(followPolicy.gestureEnded(SystemClock.elapsedRealtime()))followTick++ }
+            m.addOnCameraIdleListener {
+                if(followPolicy.gestureEnded(SystemClock.elapsedRealtime()))followTick++
+                reportAway(m.awayFromUser(currentState,followPolicy))
+            }
             m.addOnMapLongClickListener { point ->
                 if(!currentState.navigating) currentPin(Place("pin:${point.latitude},${point.longitude}","Dropped pin","%.5f, %.5f".format(point.latitude,point.longitude),Coordinate(point.latitude,point.longitude)))
                 true
@@ -351,8 +357,8 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
         if(!active || styleReady==0)return@LaunchedEffect
         val m=map ?: return@LaunchedEffect
         val following=followPolicy.shouldFollow(state.navigating,state.selected!=null,SystemClock.elapsedRealtime())
-        // While guiding, a panned-away map offers an explicit way back to the car.
-        onFollowPaused(state.navigating && !following)
+        // A panned-away map offers an explicit way back to the user.
+        reportAway(m.awayFromUser(state,followPolicy))
         val desiredCameraBearing=if(state.navigating && state.headingSource.isTravelDirection)state.bearing else m.cameraPosition.bearing.toFloat()
         val desiredTilt=mapCameraTilt(state.world,state.tilted,state.navigating,cameraTiltOverride)
         if(motion.remainingMillis(SystemClock.elapsedRealtime())>0)return@LaunchedEffect
@@ -368,9 +374,21 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
                 .tilt(desiredTilt).build()),500)
         }
     }
+    // The 2D/3D control changes pitch alone: same target, zoom and bearing wherever the user is looking.
+    LaunchedEffect(active,styleReady,state.tilted,state.world,cameraTiltOverride,state.cameraRequest) {
+        val requestChanged=tiltRequestSeen[0]!=state.cameraRequest
+        tiltRequestSeen[0]=state.cameraRequest
+        val m=map ?: return@LaunchedEffect
+        // A new camera request already carries the tilt in its own animation.
+        if(!active || styleReady==0 || requestChanged) return@LaunchedEffect
+        val tilt=pitchChange(m.cameraPosition.tilt,mapCameraTilt(state.world,state.tilted,state.navigating,cameraTiltOverride)) ?: return@LaunchedEffect
+        m.easeCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder(m.cameraPosition).tilt(tilt).build()),400)
+    }
     LaunchedEffect(active,state.cameraRequest,styleReady,routeInsets,cameraZoomOverride,cameraTiltOverride,cameraCenterOverride) {
         val m=map ?: return@LaunchedEffect
         if(!active || styleReady==0) return@LaunchedEffect
+        // A style reload or new insets replays this effect; only a fresh request may move a map the user has taken over.
+        if(!cameraGate.accept(state.cameraRequest,passive=state.cameraRequest==state.passiveCameraRequest))return@LaunchedEffect
         val focusUser=state.fix!=null && state.cameraRequest==state.focusUserCameraRequest
         focusCameraHoldUntil[0]=SystemClock.elapsedRealtime()+if(focusUser)1100L else 750L
         followPolicy.resume();cameraMemory.fix=null
@@ -413,6 +431,15 @@ private fun Coordinate.latLng()=LatLng(lat,lon)
 // Native MapLibre cannot accept a Feature whose geometry is null.
 private fun GeoJsonSource.setFeature(feature: Feature?) {
     if(feature==null) setGeoJson(FeatureCollection.fromFeatures(emptyArray<Feature>())) else setGeoJson(feature)
+}
+
+/** Whether the recentre control has somewhere to go: guiding with follow paused, or browsing away from the fix. */
+private fun MapLibreMap.awayFromUser(state: NavState, follow: MapFollowPolicy): Boolean {
+    val target=cameraPosition.target
+    val fix=state.fix
+    val gap=if(target!=null && fix!=null) distance(Coordinate(target.latitude,target.longitude),fix) else null
+    val paused=state.navigating && !follow.shouldFollow(true,state.selected!=null,SystemClock.elapsedRealtime())
+    return cameraAwayFromUser(state.navigating,paused,gap,projection.getMetersPerPixelAtLatitude(target?.latitude ?: 0.0))
 }
 
 private class MapCameraMemory {

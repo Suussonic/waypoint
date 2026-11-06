@@ -59,7 +59,11 @@ must remain enabled; changing it cannot make the launcher accept a distribution 
 
 Connect your phone to Android Auto, then open **Waypoint** from the car launcher. The car map
 follows the world selected on the phone. Search for a destination, choose a saved or recent
-place, preview the route, then start guidance. The map supports touch or rotary panning,
+place, preview the route, then start guidance. When more than one route is available, the
+preview draws the others as quieter lines and **Routes** lists them with their time and
+distance. During guidance, **Other routes** (the fork icon beside End, Mute and Settings)
+lists fresh alternatives with how many minutes each adds or saves; choosing one switches
+guidance on the phone and in the car. The map supports touch or rotary panning,
 recenter and zoom controls. Settings offers worlds, voice, units and map licences. Voice and distance units use
 native switches and reflect changes made on the phone. The world chooser groups all 38
 worlds into six short lists; choosing a world returns to the map without ending guidance.

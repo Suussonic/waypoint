@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Frame sanitized Android Auto DHU screenshots for the public README.
 
-Pass a directory outside Git containing exclusion-zone-before-turn.png and
-exclusion-zone-after-turn.png from a public-route Desktop Head Unit capture. The script never
+Pass a directory outside Git containing old-west-before-turn.png and
+old-west-after-turn.png from a public-route Desktop Head Unit capture. The script never
 alters screen pixels, apart from uniform downsampling for each layout.
 """
 import argparse
@@ -56,9 +56,9 @@ def wide(captures):
     canvas = Image.new("RGB", (1600, 960), INK)
     mark(canvas, 64, 52, 64)
     label(canvas, "THE DASH, YOUR WORLD.", 64, 151, 112)
-    label(canvas, "One public London route. Two moments in Exclusion Zone.", 69, 286, 29, display=False)
-    screen(canvas, captures / "exclusion-zone-before-turn.png", 64, 365, 720)
-    screen(canvas, captures / "exclusion-zone-after-turn.png", 816, 365, 720)
+    label(canvas, "One public London route. Two moments in Old West.", 69, 286, 29, display=False)
+    screen(canvas, captures / "old-west-before-turn.png", 64, 365, 720)
+    screen(canvas, captures / "old-west-after-turn.png", 816, 365, 720)
     label(canvas, "APPROACHING THE TURN", 64, 793, 48)
     label(canvas, "AFTER THE TURN", 816, 793, 48)
     label(canvas, "Guidance view in Android Auto", 64, 854, 23, MUTED, False)
@@ -74,10 +74,10 @@ def narrow(captures):
     label(canvas, "THE DASH,", 48, 157, 126)
     label(canvas, "YOUR WORLD.", 48, 274, 126)
     label(canvas, "One public London route. Two moments.", 52, 414, 29, display=False)
-    screen(canvas, captures / "exclusion-zone-before-turn.png", 40, 500, 820)
+    screen(canvas, captures / "old-west-before-turn.png", 40, 500, 820)
     label(canvas, "APPROACHING THE TURN", 48, 974, 54)
     label(canvas, "Guidance view in Android Auto", 50, 1038, 24, MUTED, False)
-    screen(canvas, captures / "exclusion-zone-after-turn.png", 40, 1100, 820)
+    screen(canvas, captures / "old-west-after-turn.png", 40, 1100, 820)
     label(canvas, "AFTER THE TURN", 48, 1574, 54)
     label(canvas, "Same route, vehicle on the road", 50, 1638, 24, MUTED, False)
     ImageDraw.Draw(canvas).rectangle((48, 1700, 852, 1703), fill=LIME)

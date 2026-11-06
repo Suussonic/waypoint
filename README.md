@@ -1,7 +1,7 @@
 <div align="center">
   <picture>
     <source media="(max-width: 640px)" srcset="docs/images/promo/hero-mobile.jpg" />
-    <img src="docs/images/promo/hero.jpg" width="100%" alt="Waypoint's Exclusion Zone map on a phone beside Android Auto guidance in the same world, using public London demonstration captures." />
+    <img src="docs/images/promo/hero.jpg" width="100%" alt="Waypoint's Old West map in light mode on a phone beside Android Auto guidance in the same world, drawn from public Hampstead Heath demonstration captures." />
   </picture>
   <h1>Real streets. Another world.</h1>
   <p>38 game-inspired maps, personal quests and spoken directions<br />on your phone and Android Auto.</p>
@@ -39,6 +39,13 @@
 🎮 Built with ideas from **@Balzamus**, **@matvejsyrygin256-dotcom**, **@6HentaiMaster9**, **@artmartins28** and **@VoidKittyKat**. Find the individual shout-outs and requests in the release notes.
 
 [Full release notes →](docs/releases/current.md)
+
+### Coming next: more routes, on the phone and in the car
+
+- **Choose your route.** Previews show other ways to your destination as quieter lines on the map, each labelled with how many minutes it adds or saves. Tap one to take it.
+- **Switch while you drive.** Waypoint keeps looking for fresh alternatives during guidance and offers them on the map. Pick one and guidance restarts from where you are.
+- **Same choices in Android Auto.** The car preview frames every route on offer and has a **Routes** button. During guidance an **Other routes** button lists each alternative with its time difference. Selecting one switches your phone and car together.
+- **A map key for every world.** Open the key to see that world's own place symbols, in its day or night palette.
 
 ## Your tasks, with rewards
 
@@ -132,17 +139,19 @@ With a supported installation, connect your phone and open Waypoint from the car
 
 <picture>
   <source media="(max-width: 640px)" srcset="docs/images/promo/android-auto-mobile.jpg" />
-  <img src="docs/images/promo/android-auto.jpg" width="100%" alt="Actual Android Auto Desktop Head Unit captures of Waypoint's Exclusion Zone map before and after a simulated turn on a public London route." />
+  <img src="docs/images/promo/android-auto.jpg" width="100%" alt="Actual Android Auto Desktop Head Unit captures of Waypoint's Old West map in light mode, before and after a simulated turn on a public Hampstead Heath route." />
 </picture>
 
 <p><sub>Captured in the Android Auto Desktop Head Unit with a fixed public London demonstration route. The route and guidance state were simulated for the screenshots; no personal location was used. <a href="docs/images/promo/README.md">Capture and artwork notes</a>.</sub></p>
+
+The car preview shows other routes on the map with their time difference. **Routes** opens the list before you start, and **Other routes** appears during guidance when a different way is available; the same pick applies on the phone.
 
 Android Auto keeps Google Maps available in the launcher. Open Waypoint there to use it as the current navigation app; installing it cannot change Android Auto's choice on its own. The car UI uses host-safe controls for search, saved destinations, voice, recenter and zoom. The phone remains the place to choose Car, Motorcycle, Bicycle or Walk.
 
 ## Built for the journey
 
 - **Drive, cycle, ride or walk.** Choose a car, motorcycle, bicycle or walking route, then follow spoken turns, remaining distance and ETA.
-- **Take the route into the car.** Android Auto shows Waypoint's selected world, moving map, route and next turn. Search, saved destinations and map controls stay within the car's template UI.
+- **Take the route into the car.** Android Auto shows Waypoint's selected world, moving map, route and next turn. Search, saved destinations, route choices and map controls stay within the car's template UI.
 - **Keep your bearings.** Locate recentres on your actual position; the map follows movement and can recalculate after a confirmed wrong turn. A 2D/3D control changes the camera tilt.
 - **Find useful places.** Search destinations, drop a pin, and see world-specific blips for food, pubs, shops, schools, hospitals and other mapped places. Icons appear progressively as you zoom so dense streets stay legible.
 - **Pick up where you left off.** Save places, revisit recent destinations and switch worlds during a trip. Shared `geo:` and `google.navigation:` links ask for confirmation before Waypoint looks up or previews the imported destination.

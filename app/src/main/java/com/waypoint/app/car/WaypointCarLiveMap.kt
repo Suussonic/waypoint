@@ -66,6 +66,8 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
     private var lastRoute: RoadRoute?=null
     private var lastRouteProgress=-1.0
     private var lastRouteStyleKey: List<Any?>?=null
+    private var lastAlternates: List<RoadRoute>?=null
+    private var lastAlternateBase=Double.NaN
     private var lastDestination: Coordinate?=null
     private var renderedPosition: Coordinate?=null
     private var renderedBearing=0f
@@ -142,6 +144,7 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
         }
         if(!styleReady)return
         syncRoute()
+        syncAlternates()
         syncDestination()
         syncMotion()
     }
@@ -182,11 +185,22 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
                 if(epoch!=styleEpoch)return@setStyle
                 style.addImages(images)
                 val art=world.mapArt()
+                // Other ways to the same place sit quietly under the chosen line, as on the phone.
+                style.addSource(GeoJsonSource("car-route-alt",FeatureCollection.fromFeatures(emptyArray<Feature>())))
+                style.addLayer(LineLayer("car-route-alt-casing","car-route-alt").withProperties(
+                    lineColor(world.routeCasingColor(night)),lineWidth(art.routeWidth+2f),lineOpacity(.85f),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)))
+                style.addLayer(LineLayer("car-route-alt-line","car-route-alt").withProperties(
+                    lineColor(if(night)"#8A949A" else "#7E8A92"),lineWidth((art.routeWidth-.5f).coerceAtLeast(2f)),lineOpacity(.95f),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)))
+                style.addSource(GeoJsonSource("car-route-alt-labels",FeatureCollection.fromFeatures(emptyArray<Feature>())))
                 style.addSource(GeoJsonSource("car-route",Feature.fromGeometry(LineString.fromLngLats(emptyList()))))
                 style.addLayer(LineLayer("car-route-casing","car-route").withProperties(
                     lineColor("#161716"),lineWidth(art.routeWidth+3f),lineDasharray(world.routeLineDash(state.mode,state.navigating)),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)))
                 style.addLayer(LineLayer("car-route-line","car-route").withProperties(
                     lineColor(world.routeColor),lineWidth(art.routeWidth),lineDasharray(world.routeLineDash(state.mode,state.navigating)),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)))
+                style.addLayer(SymbolLayer("car-route-alt-label","car-route-alt-labels").withProperties(
+                    textField(get("label")),textFont(arrayOf(world.mapFontName())),textSize(14f),
+                    textColor(if(art.lightLabels)"#EEEEDF" else "#282E26"),textHaloColor(if(art.lightLabels)"#18201C" else "#E3DABF"),
+                    textHaloWidth(2f),textAllowOverlap(true),textIgnorePlacement(true)))
                 style.addSource(GeoJsonSource("car-destination",Feature.fromGeometry(Point.fromLngLat(0.0,0.0))))
                 style.addLayer(SymbolLayer("car-destination-marker","car-destination").withProperties(
                     iconImage("destination-marker"),iconSize(.65f),iconAllowOverlap(true),iconIgnorePlacement(true)))
@@ -197,11 +211,11 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
                     iconPitchAlignment(Property.ICON_PITCH_ALIGNMENT_VIEWPORT)))
                 loadedStyleFile=styleFile
                 styleReady=true
-                lastRoute=null;lastRouteProgress=-1.0;lastRouteStyleKey=null
+                lastRoute=null;lastRouteProgress=-1.0;lastRouteStyleKey=null;lastAlternates=null
                 lastDestination=null;lastCameraKey=null
                 // A new style owns fresh sources even when the driver has not moved.
                 renderedPosition=null
-                syncRoute();syncDestination();syncMotion()
+                syncRoute();syncAlternates();syncDestination();syncMotion()
             }
         }
     }
@@ -225,6 +239,28 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
             lineDasharray(routeDash))
         style.getLayerAs<LineLayer>("car-route-casing")?.setProperties(
             lineDasharray(routeDash),lineOpacity(if(dotted)0f else 1f))
+    }
+
+    private fun syncAlternates() {
+        val style=map?.style ?: return
+        val others=carAlternateRoutes(state)
+        val routes=others.map { it.value }
+        val base=carAlternateBaseSeconds(state) ?: Double.NaN
+        // The base time ticks down while guiding; relabel only when the minute changes.
+        val baseMinute=if(base.isNaN())base else kotlin.math.ceil(base/60.0)
+        if(routes.size==lastAlternates?.size && routes.indices.all { routes[it]===lastAlternates!![it] } &&
+            (baseMinute==lastAlternateBase || baseMinute.isNaN() && lastAlternateBase.isNaN()))return
+        lastAlternates=routes;lastAlternateBase=baseMinute
+        style.getSourceAs<GeoJsonSource>("car-route-alt")?.setGeoJson(FeatureCollection.fromFeatures(others.map { (_,route) ->
+            Feature.fromGeometry(LineString.fromLngLats(route.points.map { Point.fromLngLat(it.lon,it.lat) }))
+        }))
+        style.getSourceAs<GeoJsonSource>("car-route-alt-labels")?.setGeoJson(FeatureCollection.fromFeatures(others.mapIndexedNotNull { rank,(_,route) ->
+            // Spread labels along their own routes so they never sit on top of each other.
+            val mid=route.points.getOrNull((route.points.size*(0.35+0.2*rank)).toInt().coerceIn(0,route.points.lastIndex)) ?: return@mapIndexedNotNull null
+            Feature.fromGeometry(Point.fromLngLat(mid.lon,mid.lat)).also {
+                it.addStringProperty("label",carAlternateGapLabel(route.seconds,base.takeUnless { value -> value.isNaN() }))
+            }
+        }))
     }
 
     private fun syncDestination() {
