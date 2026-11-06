@@ -48,7 +48,12 @@ android {
     sourceSets.getByName("preview").java.srcDir("src/debug/java")
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17; isCoreLibraryDesugaringEnabled = true }
     androidResources { noCompress += listOf("mp3", "m4a") }
-    packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
+    packaging {
+        // Older installed updaters reject APKs above 150 MiB. Keep every ABI while
+        // compressing native libraries in the download; Android extracts them on install.
+        jniLibs.useLegacyPackaging = true
+        resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+    }
 }
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
 ksp { arg("room.schemaLocation", "$projectDir/schemas") }
