@@ -133,7 +133,7 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
       - name: Install Android platform
-        run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0'
+        run: sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
       - name: Build, unit tests and lint
         run: ./gradlew --no-daemon :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
       - name: Verify packaged component boundaries
@@ -177,7 +177,7 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
       - name: Install Android platform
-        run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0'
+        run: sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
       - name: Enable emulator acceleration
         run: sudo chmod 666 /dev/kvm
       - name: Test package security, quests and car sessions
@@ -222,7 +222,7 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
       - name: Install Android platform
-        run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0'
+        run: sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
       - name: Check release version
         run: python3 scripts/check_version.py
       - name: Restore signing key
@@ -244,7 +244,7 @@ jobs:
           python3 scripts/check_packaged_manifest.py release
           mkdir -p release
           cp app/build/outputs/apk/release/app-release.apk release/Waypoint.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose release/Waypoint.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose release/Waypoint.apk
           python3 scripts/check_update_size.py release/Waypoint.apk
           cd release
           sha256sum Waypoint.apk > SHA256SUMS

@@ -2,7 +2,6 @@ import java.util.Properties
 
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
 }
@@ -11,7 +10,7 @@ val releaseStore = providers.environmentVariable("WAYPOINT_KEYSTORE").orNull
 
 android {
     namespace = "com.waypoint.app"
-    compileSdk = 36
+    compileSdk = 37
     defaultConfig {
         applicationId = "com.waypoint.app"
         minSdk = 26
@@ -45,7 +44,7 @@ android {
         }
     }
     testBuildType = providers.gradleProperty("testBuildType").getOrElse("debug")
-    sourceSets.getByName("preview").java.srcDir("src/debug/java")
+    sourceSets.getByName("preview").kotlin.srcDir("src/debug/java")
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17; isCoreLibraryDesugaringEnabled = true }
     androidResources { noCompress += listOf("mp3", "m4a") }
     packaging {

@@ -106,7 +106,7 @@ also applies to Android Auto. Voice character depends on the installed speech en
 
 ## Build
 
-Requires JDK 17, Android SDK Platform 36 and Build Tools 35.0.0. Open the project
+Requires JDK 17, Android SDK Platform 37.0 and Build Tools 36.0.0. Open the project
 in Android Studio or point `local.properties` to your SDK:
 
 ```properties

@@ -176,7 +176,7 @@ The APK is checked against its checksum, package, version and installed signing 
 
 ## Build from source
 
-You need **JDK 17**, Android **SDK Platform 36** and **Build Tools 35.0.0**. Set `ANDROID_HOME` or put your SDK path in the ignored `local.properties` file.
+You need **JDK 17**, Android **SDK Platform 37.0** and **Build Tools 36.0.0**. Set `ANDROID_HOME` or put your SDK path in the ignored `local.properties` file.
 
 ```sh
 git clone https://github.com/the-geeky-couldron/waypoint.git
