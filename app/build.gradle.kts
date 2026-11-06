@@ -79,7 +79,7 @@ dependencies {
     implementation("androidx.car.app:app:1.9.0-alpha03")
     implementation("androidx.car.app:app-projected:1.9.0-alpha03")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.5.1")
     testImplementation("org.json:json:20240303")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
