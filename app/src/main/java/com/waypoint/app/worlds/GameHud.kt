@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -51,7 +52,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
@@ -324,6 +324,7 @@ fun World.inspiration()=when(this) {
 @Composable fun HudRouteFooter(state:NavState,onSteps:()->Unit,onStop:()->Unit) {
     val p=hudPalette(state.world)
     val seconds=state.progress?.seconds ?: state.route?.seconds ?: 0.0
+    val locale=LocalConfiguration.current.locales[0]
     Surface(color=p.panel,contentColor=p.foreground,shape=hudShape(state.world),border=hudBorder(state.world),modifier=Modifier.fillMaxWidth()) {
         Column {
             Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
@@ -333,7 +334,7 @@ fun World.inspiration()=when(this) {
                         Text("${ceil(seconds/60).toInt().coerceAtLeast(1)} min",fontFamily=hudFont(state.world),fontSize=29.sp,lineHeight=33.sp,color=p.accent)
                         Text(formatDistance(state.progress?.remaining ?: state.route?.meters ?: 0.0,state.imperial),fontSize=TypeScale.Label,lineHeight=18.sp,modifier=Modifier.padding(bottom=4.dp))
                     }
-                    Text("${SimpleDateFormat("h:mm a",Locale.getDefault()).format(Date(System.currentTimeMillis()+(seconds*1000).toLong()))} arrival · ${if(state.gpsReady) (state.speed * if(state.imperial)2.23694 else 3.6).roundToInt().toString() else "—"} ${if(state.imperial)"mph" else "km/h"}",fontSize=12.sp,lineHeight=16.sp,color=p.muted)
+                    Text("${SimpleDateFormat("h:mm a",locale).format(Date(System.currentTimeMillis()+(seconds*1000).toLong()))} arrival · ${if(state.gpsReady) (state.speed * if(state.imperial)2.23694 else 3.6).roundToInt().toString() else "—"} ${if(state.imperial)"mph" else "km/h"}",fontSize=12.sp,lineHeight=16.sp,color=p.muted)
                 }
                 TextButton(onClick=onSteps,contentPadding=PaddingValues(2.dp),modifier=Modifier.width(64.dp).heightIn(min=64.dp).semantics{contentDescription="Route steps"}) { Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(5.dp)){Icon(Icons.AutoMirrored.Filled.FormatListBulleted,null,tint=p.foreground);Text("Steps",color=p.foreground,fontFamily=PipBoyFont,fontSize=12.sp,lineHeight=16.sp,letterSpacing=0.sp,maxLines=1,softWrap=false)} }
             }

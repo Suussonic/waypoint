@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -39,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
@@ -192,7 +192,7 @@ internal fun NavBottomBar(state: NavState, onSteps: () -> Unit, onStop: () -> Un
     val p = hudPalette(state.world)
     val seconds = state.progress?.seconds ?: state.route?.seconds ?: 0.0
     val meters = state.progress?.remaining ?: state.route?.meters ?: 0.0
-    val arrival = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(System.currentTimeMillis() + (seconds * 1000).toLong()))
+    val arrival = SimpleDateFormat("h:mm a", LocalConfiguration.current.locales[0]).format(Date(System.currentTimeMillis() + (seconds * 1000).toLong()))
     Surface(color = p.panel, contentColor = p.foreground, shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         modifier = Modifier.fillMaxWidth().pointerInput(Unit) {
             detectVerticalDragGestures { _, drag -> if (drag < -18f) onSteps() }

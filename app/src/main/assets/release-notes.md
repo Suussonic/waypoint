@@ -1,9 +1,9 @@
-# Waypoint 2.5.1
+# Waypoint 2.5.2
 
-This update fixes the “The update has an invalid download size” message shown by older Waypoint versions when checking for an update.
+This maintenance update refreshes Waypoint's Android libraries and build tools.
 
-- The Android download now fits the size limit in earlier versions of Waypoint, so you can update from inside the app again.
-- All 38 worlds, their original map artwork, and the driving improvements from 2.5.0 remain available.
-- Android still asks you to confirm installation. Compatible updates keep your saved places, quests, and settings on this phone.
+- Updated Android, map, and networking dependencies, including the Android build tools.
+- Kept the APK below the download size limit in older Waypoint versions, so the in-app update path remains available.
+- All 38 worlds, map artwork, and driving features remain available. Android still asks before installing and keeps your saved places, quests, and settings on compatible updates.
 
 Maps, search, and routes need an internet connection. Android Auto availability in a real vehicle still depends on Google’s trusted installation requirements.

@@ -3,8 +3,8 @@
 ## Build requirements
 
 - JDK 17
-- Android SDK Platform 36
-- Android Build Tools 35.0.0
+- Android SDK Platform 37.0
+- Android Build Tools 36.0.0
 - A connected Android device or emulator only when you choose to run device tests
 
 Clone the repository and set `ANDROID_HOME` or `sdk.dir` in the ignored `local.properties` file. Then run:
