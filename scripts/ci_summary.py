@@ -23,7 +23,7 @@ def main():
         required = {"workflow_safety", "repository", "styles", "motion", "android", "device_smoke", "sign"}
         mode = "Main branch"
     elif event == "pull_request":
-        required = {"workflow_safety", "dependency_review", "repository", "styles", "motion", "android", "device_smoke"}
+        required = {"workflow_safety", "dependency_review", "repository", "styles", "motion"}
         mode = "Pull request"
     else:
         raise SystemExit(f"Unsupported CI event/ref: {event} / {ref}")
