@@ -487,3 +487,15 @@ html:not(.js) .dn-hint{display:none}
   .js .stop-copy,.js .stop-shot,.js .ms-body{opacity:1;translate:0 0;clip-path:none}
   .js .stop-dot{scale:1}.run-car{display:none}
 }
+
+/* Phone captures show the whole screen: no crop, no zoom, no faded edges, no blurred filler. */
+.s26-screen .s26-bg{display:none}
+.s26-box{top:0;height:100%;-webkit-mask-image:none;mask-image:none}
+.s26-screen .s26-app{scale:1;object-fit:cover;object-position:50% 0}
+
+/* The car capture is shown whole and unshaded; its callouts sit beneath it instead of over the interface. */
+.car-shot img{transform:none}
+.car-shot::after{display:none}
+.car-tags{position:static;display:flex;flex-wrap:wrap;gap:.5rem;padding:.9rem 0 0}
+.tag{position:static;opacity:1!important}.tag i{display:none}
+.tag b{position:static;display:block;translate:none!important;animation:none;font-size:.9rem}
