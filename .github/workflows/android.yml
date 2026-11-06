@@ -245,6 +245,7 @@ jobs:
           mkdir -p release
           cp app/build/outputs/apk/release/app-release.apk release/Waypoint.apk
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose release/Waypoint.apk
+          python3 scripts/check_update_size.py release/Waypoint.apk
           cd release
           sha256sum Waypoint.apk > SHA256SUMS
       - name: Save signed APK for release job
