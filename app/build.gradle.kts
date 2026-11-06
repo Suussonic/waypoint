@@ -78,7 +78,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
-    implementation("org.maplibre.gl:android-sdk:11.13.5")
+    implementation("org.maplibre.gl:android-sdk:13.7.1")
     implementation("com.stadiamaps.ferrostar:core:0.59.0")
     implementation("com.squareup.okhttp3:okhttp:5.5.1")
     implementation("com.google.android.gms:play-services-location:21.4.0")
