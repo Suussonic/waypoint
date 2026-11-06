@@ -2,6 +2,12 @@
 
 For the full notes and community acknowledgements, see [Waypoint release notes](docs/releases/current.md). Published releases are available on [GitHub Releases](https://github.com/the-geeky-couldron/waypoint/releases).
 
+## 2.5.2
+
+- Updated the Android Gradle plugin, Gradle wrapper, Kotlin and KSP tooling, Compose, Google Play services, OkHttp, MockWebServer, and other compatible Android dependencies from the reviewed Dependabot PRs.
+- Updated pinned GitHub Actions and the motion source toolchain; adapted Android builds and Compose code to the new tooling.
+- Kept the release APK within the 150 MiB download limit enforced by older installed updaters.
+
 ## 2.5.1
 
 - Reduced the APK download size so older installed versions can update through Waypoint again, including versions that showed "The update has an invalid download size."

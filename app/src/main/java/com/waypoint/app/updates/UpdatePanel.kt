@@ -8,15 +8,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import java.util.Locale
 
 @Composable
 fun UpdatePanel(updater: AppUpdater, navigating: Boolean) {
     val status by updater.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val locale = LocalConfiguration.current.locales[0]
     val uri = LocalUriHandler.current
     var installMessage by remember { mutableStateOf<String?>(null) }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -31,7 +32,7 @@ fun UpdatePanel(updater: AppUpdater, navigating: Boolean) {
             UpdateStatus.Current -> Text("You're up to date.", style = MaterialTheme.typography.bodyMedium)
             is UpdateStatus.Available -> {
                 Text("Version ${current.release.version} is available", style = MaterialTheme.typography.titleMedium)
-                Text("${String.format(Locale.getDefault(), "%.1f", current.release.size / 1048576.0)} MB · Android will ask before installing.", style = MaterialTheme.typography.bodyMedium, color = Muted)
+                Text("${String.format(locale, "%.1f", current.release.size / 1048576.0)} MB · Android will ask before installing.", style = MaterialTheme.typography.bodyMedium, color = Muted)
                 if (current.release.notes.isNotBlank()) ReleaseNotesContent(current.release.notes)
                 Button(onClick = { updater.download(current.release) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Icon(Icons.Default.Download, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text("Download update")

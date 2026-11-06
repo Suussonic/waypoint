@@ -44,7 +44,8 @@ android {
         }
     }
     testBuildType = providers.gradleProperty("testBuildType").getOrElse("debug")
-    sourceSets.getByName("preview").kotlin.srcDir("src/debug/java")
+    testOptions.unitTests.isIncludeAndroidResources = true
+    sourceSets.getByName("preview").kotlin.directories += "src/debug/java"
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17; isCoreLibraryDesugaringEnabled = true }
     androidResources { noCompress += listOf("mp3", "m4a") }
     packaging {
@@ -52,6 +53,12 @@ android {
         // compressing native libraries in the download; Android extracts them on install.
         jniLibs.useLegacyPackaging = true
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+    }
+}
+androidComponents.beforeVariants { variant ->
+    variant.hostTests[com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE]?.apply {
+        enable = true
+        includeAndroidResources = true
     }
 }
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }

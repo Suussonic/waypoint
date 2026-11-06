@@ -22,6 +22,11 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+    # The motion tool's Remotion ESLint config currently pins TypeScript 5.9.3.
+    # Revisit this when its parser supports TypeScript 7.
+    ignore:
+      - dependency-name: typescript
+        versions: [">=7.0.0"]
     groups:
       npm-compatible:
         applies-to: version-updates
