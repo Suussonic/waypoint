@@ -69,7 +69,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     implementation("org.maplibre.gl:android-sdk:11.13.5")
     implementation("com.stadiamaps.ferrostar:core:0.59.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:okhttp:5.5.1")
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("androidx.car.app:app:1.9.0-alpha03")
     implementation("androidx.car.app:app-projected:1.9.0-alpha03")
