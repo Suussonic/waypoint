@@ -13,6 +13,8 @@ assert int(values['VERSION_CODE']) == major * 1_000_000 + minor * 1_000 + patch,
 notes = Path('docs/releases/current.md').read_bytes()
 assert notes == Path('app/src/main/assets/release-notes.md').read_bytes(), 'Bundled and published release notes differ.'
 assert f'# Waypoint {name}'.encode() in notes, 'Release notes do not match VERSION_NAME.'
+assert notes == (Path('docs/releases') / f'{name}.md').read_bytes(), 'Versioned release page differs from current release notes.'
+assert notes == (Path('app/src/main/assets') / f'release-notes-{name}.md').read_bytes(), 'Archived in-app release notes differ from current release notes.'
 if os.environ.get('GITHUB_REF_TYPE') == 'tag':
     assert os.environ['GITHUB_REF_NAME'] == 'v' + name, 'Release tag does not match version.properties.'
 print(f'Version {name} ({values["VERSION_CODE"]}) verified')

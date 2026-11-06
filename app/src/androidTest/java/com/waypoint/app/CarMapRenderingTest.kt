@@ -23,7 +23,7 @@ class CarMapRenderingTest {
                 activity.setContentView(view);view.start()
             }
             val mapField=WaypointCarLiveMap::class.java.getDeclaredField("map").apply { isAccessible=true }
-            val worldField=WaypointCarLiveMap::class.java.getDeclaredField("loadedWorld").apply { isAccessible=true }
+            val styleField=WaypointCarLiveMap::class.java.getDeclaredField("loadedStyleFile").apply { isAccessible=true }
             // A synthetic U-turn around public Trafalgar Square, deliberately
             // rounded to four decimals; no device-derived positions are stored.
             val points=listOf(Coordinate(51.5081,-.1272),Coordinate(51.5083,-.1273),
@@ -43,7 +43,7 @@ class CarMapRenderingTest {
                         scenario.onActivity {
                             val w=view.width.coerceAtLeast(1);val h=view.height.coerceAtLeast(1)
                             view.update(state,carCamera(state,w,h),Rect(0,0,w,h),false,true)
-                            ready=worldField.get(view)==World.STALKER
+                            ready=(styleField.get(view) as? String)?.startsWith(World.STALKER.file)==true
                         }
                         if(!ready)SystemClock.sleep(150)
                     }
@@ -88,7 +88,7 @@ class CarMapRenderingTest {
             }
             try {
                 val mapField=WaypointCarLiveMap::class.java.getDeclaredField("map").apply { isAccessible=true }
-                val worldField=WaypointCarLiveMap::class.java.getDeclaredField("loadedWorld").apply { isAccessible=true }
+                val styleField=WaypointCarLiveMap::class.java.getDeclaredField("loadedStyleFile").apply { isAccessible=true }
                 val point=Coordinate(51.5081,-0.1280)
                 for((world,mode) in listOf(World.DIVISION to TravelMode.CAR,World.STALKER to TravelMode.CAR,
                     World.OLD_WEST to TravelMode.CAR,World.PIXEL to TravelMode.CAR,World.PIXEL to TravelMode.MOTORCYCLE,World.NIER to TravelMode.CAR,
@@ -101,7 +101,7 @@ class CarMapRenderingTest {
                             val width=view.width.coerceAtLeast(1);val height=view.height.coerceAtLeast(1)
                             view.update(state,carCamera(state,width,height),Rect(0,0,width,height),true,true)
                             val map=mapField.get(view) as? MapLibreMap
-                            if(map!=null && worldField.get(view)==world) {
+                            if(map!=null && (styleField.get(view) as? String)?.startsWith(world.file)==true) {
                                 val screen=map.projection.toScreenLocation(LatLng(point.lat,point.lon))
                                 rendered=map.queryRenderedFeatures(screen,"car-position-marker").isNotEmpty()
                             }

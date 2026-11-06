@@ -12,7 +12,7 @@ class WorldVoiceTest {
     @Test fun everyWorldPreservesTheUsefulInstructionAndItsTimingIdentity() {
         for(world in World.entries) {
             val original=cue()
-            val spoken=WorldVoiceNarrator { 0 }.decorate(original,world)
+            val spoken=WorldVoiceNarrator(personaStyling=false) { 0 }.decorate(original,world)
             assertTrue(world.name,spoken.text.startsWith(original.text))
             assertTrue(spoken.text.endsWith(world.voiceStyle().opening))
             assertEquals(original.utteranceId,spoken.utteranceId)
@@ -20,12 +20,17 @@ class WorldVoiceTest {
             assertEquals("In 200 metres, turn left onto King's Road.",original.text)
             assertNotNull(original.ssml)
             assertNull(spoken.ssml)
-            assertTrue(world.voiceStyle().pitch in .94f..1.04f)
-            assertTrue(world.voiceStyle().pace in .97f..1.03f)
+            assertTrue(world.name,world.voiceStyle().pitch in .89f..1.14f)
+            assertTrue(world.name,world.voiceStyle().pace in .91f..1.09f)
         }
     }
+    @Test fun eachWorldHasItsOwnBoundedSpeechTone() {
+        val styles=World.entries.map { world -> world.voiceStyle().let { it.pitch to it.pace } }
+        assertEquals(World.entries.size,styles.distinct().size)
+        assertTrue(styles.all { (pitch,pace) -> pitch in .89f..1.14f && pace in .91f..1.09f })
+    }
     @Test fun imminentAndUrgentInstructionsHaveNoExtraWords() {
-        val narrator=WorldVoiceNarrator { 0 }
+        val narrator=WorldVoiceNarrator(personaStyling=false) { 0 }
         for(original in listOf(cue(distance=25.0),cue(distance=Double.NaN),cue("Turn right now.",200.0),
             cue("Recalculating your route.",300.0))) {
             assertSame(original,narrator.decorate(original,World.SEA_CHART))
@@ -33,29 +38,30 @@ class WorldVoiceTest {
     }
     @Test fun flavourIsSpacedAndResetForANewTrip() {
         var clock=0L
-        val narrator=WorldVoiceNarrator { clock }
-        assertTrue(narrator.decorate(cue(),World.OLD_WEST).text.endsWith("Let's ride, partner."))
+        val narrator=WorldVoiceNarrator(personaStyling=false) { clock }
+        val lines=World.OLD_WEST.voiceLines()
+        assertTrue(narrator.decorate(cue(),World.OLD_WEST).text.endsWith(lines.openings[0]))
         clock=44_999
         val repeated=cue("In 300 metres, turn right onto Left Bank Road.",300.0)
         assertSame(repeated,narrator.decorate(repeated,World.OLD_WEST))
         clock=45_000
-        assertTrue(narrator.decorate(repeated,World.OLD_WEST).text.endsWith("Follow the trail."))
+        assertTrue(narrator.decorate(repeated,World.OLD_WEST).text.endsWith(lines.cues[0]))
         narrator.reset()
-        assertTrue(narrator.decorate(repeated,World.OLD_WEST).text.endsWith("The trail is marked, partner."))
+        assertTrue(narrator.decorate(repeated,World.OLD_WEST).text.endsWith(lines.openings[1]))
     }
     @Test fun standardGuidanceIsUnchangedAndWorldSwitchUsesTheNextProfile() {
         var clock=0L
-        val narrator=WorldVoiceNarrator { clock }
+        val narrator=WorldVoiceNarrator(personaStyling=false) { clock }
         val original=cue()
         assertSame(original,narrator.decorate(original,null))
         narrator.decorate(original,World.OLD_WEST)
         clock=60_000
-        assertTrue(narrator.decorate(original,World.STALKER).text.endsWith("Next waypoint, stalker."))
+        assertTrue(narrator.decorate(original,World.STALKER).text.endsWith(World.STALKER.voiceLines().cues[0]))
     }
     @Test fun ArrivalKeepsItsDestinationAndDoesNotClaimTaskCompletion() {
         val original=cue("You have arrived at your destination, City Library.",0.0)
         for(world in World.entries) {
-            val spoken=WorldVoiceNarrator { 0 }.decorate(original,world)
+            val spoken=WorldVoiceNarrator(personaStyling=false) { 0 }.decorate(original,world)
             assertTrue(spoken.text.startsWith(original.text))
             assertTrue(spoken.text.endsWith(world.voiceStyle().arrival))
             assertFalse(spoken.text.contains("quest complete",ignoreCase=true))
@@ -65,7 +71,7 @@ class WorldVoiceTest {
     @Test fun everyWorldRotatesThreeLinesForEachMomentWithoutChangingTheTurn() {
         for(world in World.entries) {
             var clock=0L
-            val narrator=WorldVoiceNarrator { clock }
+            val narrator=WorldVoiceNarrator(personaStyling=false) { clock }
             val lines=world.voiceLines()
             for(group in listOf(lines.openings,lines.cues,lines.arrivals)) {
                 assertEquals(world.name,3,group.size)

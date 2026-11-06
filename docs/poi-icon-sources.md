@@ -1,20 +1,38 @@
-# Map blip sources and mappings
+# Map icon assets
 
-Waypoint's 12 real-world POI classes are `place`, `food`, `cafe`, `pub`, `stay`, `fuel`, `parking`, `shop`, `sights`, `health`, `nature`, and `cash`. Each of the 27 worlds has its own compact atlas at `app/src/main/assets/poi/<world>.webp`. `tools/waypoint-motion/prepare_poi_atlases.py` builds these atlases from the sources below. If a game has no matching original map marker for a class, its generated world-specific icon supplies that cell. This avoids misrepresenting a quest or location marker as a restaurant, fuel pump, or hospital.
+Waypoint ships 38 original world-specific icon atlases. Each 640×1280 PNG uses
+a 5×10 grid of 128-pixel cells: 49 live OpenStreetMap place categories and one
+empty cell. Each world has a separate 128×128 destination-marker PNG.
+The icons keep the real place category recognizable while changing the
+silhouette, border, ornament, material, and color language for that world.
 
-| Waypoint world | Original game marker source | Cells using original markers |
-| --- | --- | --- |
-| Los Santos (GTA V) | [DemiAutomatic FiveM blip image archive](https://github.com/DemiAutomatic/fivem-blip-images) and [FiveM blip reference](https://docs.fivem.net/docs/game-references/blips/) | place, pub, stay, parking, shop, sights, health, cash |
-| Old West (Red Dead Redemption 2) | [Piggyback RDR2 official guide sample, map legend](https://www.piggyback.com/us/wp-content/uploads/sites/6/2020/04/RDR2_UE_SAMPLEPAGES_181019_CO.pdf) | place, food (butcher), pub (saloon), stay (hotel), parking (stable), shop, sights (show), health (doctor), nature (camp), cash (camp ledger) |
-| Night City (Cyberpunk 2077) | [Cyberpunk Wiki's in-game map pin files](https://cyberpunk.fandom.com/wiki/Category:Cyberpunk_2077_images_-_Icons), fetched through its image API | place, food, pub (bar), stay (apartment), parking (vehicle), shop (clothing), sights (landmark), health (medpoint), cash (drop point) |
-| San Andreas (GTA San Andreas) | [GTAMidori's extracted `hud.txd` radar sprites](https://gtamidori.com/textdrawsprites) and [GTA Connected's original radar blip list](https://wiki.gtaconnected.com/Resources/GTASA/RadarBlips) | place (waypoint), food (Burger Shot), cafe (diner), pub (drink), stay (save point), parking (garage), shop (clothing), sights (question mark), health (hospital), cash, education (school) |
-| Pixel (Minecraft Bedrock) | [Mojang Bedrock sample resource pack map icons](https://github.com/Mojang/bedrock-samples/blob/main/resource_pack/textures/map/map_icons.png) | place, stay (village), sights, nature |
-| Rivia (The Witcher 3) | [witcher3map game map icon files](https://github.com/witcher3map/witcher3map/tree/master/assets/images/icons) | place, pub (tavern), shop (merchant), sights (notice board), health (herbalist) |
-| Lands Between (Elden Ring) | [Elden Ring wiki in-game map icon files](https://eldenring.wiki.gg/wiki/Map/Icons) | place (Site of Grace), stay (shack), shop (village), sights (tower), nature (tree) |
-| Hyrule (Breath of the Wild) | [Zelda Dungeon game map icon files](https://zeldadungeon.net/wiki/Category:Breath_of_the_Wild_Map_Icon_Files) | place (objective), sights (shrine), nature (Korok seed) |
+The daytime atlases are original Waypoint artwork generated from dedicated
+world prompts and imported by
+[`import_imagegen_poi_atlases.py`](../scripts/import_imagegen_poi_atlases.py).
+[`generate_night_icon_variants.py`](../scripts/generate_night_icon_variants.py)
+derives a separate, high-contrast night palette for every world while
+preserving its icon shapes, details, and transparent background. It processes
+each 128-pixel icon cell independently, preventing night glows from crossing
+into a neighboring symbol. A visual QA pass identified 43 contaminated source
+cells across nine worlds; their individual replacement prompts and importer
+are recorded in [`poi-cell-repairs.jsonl`](../tools/imagegen/poi-cell-repairs.jsonl)
+and [`import_imagegen_poi_cell_repairs.py`](../scripts/import_imagegen_poi_cell_repairs.py).
+The app shifts
+between these assets with its local day/night map mode. The independent
+[`generate_map_assets.py`](../scripts/generate_map_assets.py) renderer supplies
+the original vector fallback assets and cartographic material textures.
 
-The remaining cells and worlds use local imagegen sheets; their reproducible prompt set is `docs/poi-world-prompts.jsonl`. The imagegen CLI used `gpt-image-2` at high quality. The processing step removes the sheet background, trims each icon, places native files where mapped above, and exports transparent WebP atlases. Source sheets and original marker references belong in the ignored `tools/waypoint-motion/source-poi-sheets/` and `source-blips/` directories or an external local archive. They are not needed to build the app. The committed atlases and onboarding markers are the runtime assets; Remotion stages copies from those Android resources when needed.
+The shipped atlases do not contain game screenshots, extracted game sprites,
+publisher logos, or pasted game UI. The actual in-game references that guided
+each map and HUD are documented in the
+[`visual sourcebook`](visual-sourcebook.md); those references inform new
+Waypoint artwork and layouts. Map geometry, place names, and category semantics
+still come from live OpenStreetMap/OpenMapTiles data. Each themed map key uses
+world-specific terminology, with the real OSM class retained underneath it.
 
-Schools, colleges, universities, and kindergartens use the native San Andreas school blip in that world; other worlds use their neutral place blip. Shopping centres and malls use the world shopping blip. The map reveals higher-ranked schools, hospitals, food, pubs, shops, parks, transit, and other useful places at lower zoom, then adds lower-ranked places as the user zooms in. Icon collision detection prevents dense areas from becoming a solid field of markers.
-
-Original game assets remain the property of their respective owners. Their presence here follows the repository owner's stated redistribution authorization; this document does not grant any new rights to downstream users.
+The atlas order follows `app/src/main/assets/poi_categories.json`; the last
+cell in the runtime atlas is intentionally transparent. Destination markers
+are separate images. The in-app map key uses the same world's day or night
+atlas. Run
+`scripts/validate_map_assets.py` to verify world coverage, dimensions,
+transparent padding, and distinct day/night assets before packaging.

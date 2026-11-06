@@ -4,6 +4,10 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class NavigationPoliciesTest {
+    @Test fun displayedNavigationEtaUsesFerrostarRemainingDuration() {
+        assertEquals(137.5,ferrostarProgressSeconds(137.5),0.0)
+        assertEquals(0.0,ferrostarProgressSeconds(-1.0),0.0)
+    }
     @Test fun navigationActionExpiresWhenItsTripEnds() {
         val gate = NavigationSessionGate()
         val first = gate.begin()

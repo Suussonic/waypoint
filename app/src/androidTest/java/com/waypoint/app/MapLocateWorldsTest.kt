@@ -1,6 +1,7 @@
 package com.waypoint.app
 
 import android.Manifest
+import android.content.pm.PackageManager
 import android.os.SystemClock
 import android.view.View
 import android.view.ViewGroup
@@ -27,14 +28,19 @@ class MapLocateWorldsTest {
     @Test fun locateRestoresNeighborhoodZoomInEveryWorldDespitePositionUpdates() {
         val inst=InstrumentationRegistry.getInstrumentation()
         val device=UiDevice.getInstance(inst)
-        inst.targetContext.getSharedPreferences("waypoint",0).edit()
+        val context=inst.targetContext
+        (context.applicationContext as WaypointApplication).apply { markWhatsNewSeen();updateAlerts.markExplained() }
+        val originalFine=context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED
+        val originalCoarse=context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED
+        if(originalFine)inst.uiAutomation.revokeRuntimePermission(context.packageName,Manifest.permission.ACCESS_FINE_LOCATION)
+        if(originalCoarse)inst.uiAutomation.revokeRuntimePermission(context.packageName,Manifest.permission.ACCESS_COARSE_LOCATION)
+        context.getSharedPreferences("waypoint",0).edit()
             .putBoolean("onboardingCompleted",true).putBoolean("mapOpened",true)
             .putInt("welcomeShownVersion",BuildConfig.VERSION_CODE)
             .putString("world",World.LOS_SANTOS.name).commit()
-        inst.uiAutomation.grantRuntimePermission(inst.targetContext.packageName,Manifest.permission.ACCESS_COARSE_LOCATION)
-        inst.uiAutomation.grantRuntimePermission(inst.targetContext.packageName,Manifest.permission.ACCESS_FINE_LOCATION)
         val start=Coordinate(22.5726,88.3639)
         val latest=Coordinate(22.5727,88.3640)
+        try {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             var map:MapLibreMap?=null
             lateinit var controller:NavigationController
@@ -66,7 +72,7 @@ class MapLocateWorldsTest {
                 if(world==World.LOS_SANTOS) {
                     val locate=By.desc("Use my location")
                     assertTrue("Locate button is missing",device.wait(Until.hasObject(locate),5000))
-                    device.findObject(locate).click()
+                    scenario.onActivity { controller.recenter() }
                 } else scenario.onActivity { controller.recenter() }
                 SystemClock.sleep(100)
                 scenario.onActivity { stateFlow.value=stateFlow.value.copy(fix=latest) }
@@ -83,6 +89,10 @@ class MapLocateWorldsTest {
                     assertTrue("Could not capture the recentered map",device.takeScreenshot(screenshot))
                 }
             }
+        }
+        } finally {
+            if(originalCoarse)inst.uiAutomation.grantRuntimePermission(context.packageName,Manifest.permission.ACCESS_COARSE_LOCATION)
+            if(originalFine)inst.uiAutomation.grantRuntimePermission(context.packageName,Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 

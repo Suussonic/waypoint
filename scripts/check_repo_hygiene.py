@@ -14,6 +14,7 @@ untracked = subprocess.check_output(
 candidates = sorted(set(filter(None, tracked + untracked)))
 blocked_roots = (
     ".impeccable/", ".local/", ".tooling/", "dist/", "output/", "tmp/",
+    "graphify-out/", "reverse-engineering/",
     "tools/waypoint-motion/public/", "tools/waypoint-motion/source-blips/",
     "tools/waypoint-motion/source-poi-sheets/", "docs/images/captures/",
 )
@@ -30,6 +31,9 @@ readme_media = {
     *(f"docs/images/promo/worlds-{index}{suffix}.jpg"
       for index in range(1, 4) for suffix in ("", "-mobile")),
 }
+site_sources = "\n".join(
+    (ROOT / path).read_text() for path in ("docs/index.html", "docs/site.css", "docs/site.js")
+)
 errors = []
 for name in candidates:
     # A locally deleted file will disappear from the next commit; CI sees the committed tree.
@@ -40,7 +44,8 @@ for name in candidates:
         errors.append(f"Unexpected tracked artifact: {name}")
     elif suffix == ".mp4" and not name.startswith("app/src/main/res/raw/"):
         errors.append(f"Video outside Android runtime resources: {name}")
-    elif name.startswith("docs/images/") and suffix in {".jpg", ".jpeg", ".png", ".webp", ".gif"} and name not in readme_media:
+    elif (name.startswith("docs/images/") and suffix in {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+          and name not in readme_media and name.removeprefix("docs/") not in site_sources):
         errors.append(f"Unused or source screenshot in public docs: {name}")
 
 readme = (ROOT / "README.md").read_text()

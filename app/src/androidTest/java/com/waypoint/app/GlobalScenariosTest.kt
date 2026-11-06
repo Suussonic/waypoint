@@ -187,8 +187,8 @@ class GlobalScenariosTest {
                     val width=device.displayWidth.toFloat()
                     val height=device.displayHeight.toFloat()
                     native.queryRenderedFeatures(RectF(width*.1f,height*.1f,width*.9f,height*.9f),
-                        "road_minor","road_secondary_tertiary","road_trunk_primary","road_motorway",
-                        "road_service_track","building").isNotEmpty()
+                        "waypoint-local-roads","waypoint-secondary-roads","waypoint-primary-roads",
+                        "waypoint-path-roads","waypoint-rail-roads","waypoint-ferry-roads").isNotEmpty()
                 }
                 // The initial world can finish before the listener is registered. Rendered
                 // road features plus a ready camera/marker prove that frame was drawn.

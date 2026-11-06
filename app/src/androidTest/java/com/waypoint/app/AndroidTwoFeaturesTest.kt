@@ -24,10 +24,14 @@ class AndroidTwoFeaturesTest {
         folder.listFiles()?.filter { it.extension=="png" }?.forEach { it.delete() }
         val config=Configurator.getInstance();val oldIdle=config.waitForIdleTimeout;config.waitForIdleTimeout=350
         fun click(label:String) {
-            assertEquals("Phone must remain in Waypoint Preview for UI testing",context.packageName,device.currentPackageName)
-            val node=device.wait(Until.findObject(By.desc(label).pkg(context.packageName)),2500) ?: device.wait(Until.findObject(By.text(label).pkg(context.packageName)),2500)
-            if(node==null && device.currentPackageName==context.packageName) { device.takeScreenshot(File(folder,"failure.png"));device.dumpWindowHierarchy(File(folder,"failure.xml")) }
-            assertNotNull("Find $label",node);node!!.click()
+            repeat(5) {
+                assertEquals("Phone must remain in Waypoint Preview for UI testing",context.packageName,device.currentPackageName)
+                val node=device.wait(Until.findObject(By.desc(label).pkg(context.packageName)),800)
+                    ?: device.wait(Until.findObject(By.text(label).pkg(context.packageName)),800)
+                if(node!=null)try { node.click();return } catch(_:StaleObjectException) { SystemClock.sleep(150) }
+            }
+            device.takeScreenshot(File(folder,"failure.png"));device.dumpWindowHierarchy(File(folder,"failure.xml"))
+            fail("Find and click $label")
         }
         fun scrollTo(label:String) {
             repeat(5) {

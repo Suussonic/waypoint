@@ -16,6 +16,7 @@ class AndroidAutoSettingsUiTest {
         val inst = InstrumentationRegistry.getInstrumentation()
         val context = inst.targetContext
         val app = context.applicationContext as WaypointApplication
+        app.updateAlerts.markExplained()
         val device = UiDevice.getInstance(inst)
         val output = File(context.getExternalFilesDir(null),"android-auto-review").apply { mkdirs() }
         val originalWorld = app.navigation.state.value.world
@@ -41,18 +42,18 @@ class AndroidAutoSettingsUiTest {
                     return (0 until node.childCount).any { scrollNode(node.getChild(it)) }
                 }
                 var voiceScrolls=0
-                while(!device.hasObject(By.desc("Game-style voice")) && voiceScrolls++ < 12) {
+                while(!device.hasObject(By.desc("World voice style")) && voiceScrolls++ < 12) {
                     scrollNode(inst.uiAutomation.rootInActiveWindow)
                     SystemClock.sleep(400)
                     if(android.os.Build.VERSION.SDK_INT>=33)inst.uiAutomation.clearCache()
                 }
-                val gameVoice=device.wait(Until.findObject(By.desc("Game-style voice")),3000)
+                val gameVoice=device.wait(Until.findObject(By.desc("World voice style")),3000)
                 assertNotNull("Labelled game-style voice switch in $name",gameVoice)
                 if(name=="phone-settings") {
                     val before=app.navigation.state.value.gameVoice
                     try {
                         gameVoice!!.click()
-                        assertTrue(device.wait(Until.hasObject(By.desc("Game-style voice").checked(!before)),3000))
+                        assertTrue(device.wait(Until.hasObject(By.desc("World voice style").checked(!before)),3000))
                         assertEquals(!before,app.navigation.state.value.gameVoice)
                         assertEquals(!before,context.getSharedPreferences("waypoint",0).getBoolean("gameVoice",before))
                     } finally {

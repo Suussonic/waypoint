@@ -1,42 +1,31 @@
-# Waypoint 2.0.1
+# Waypoint 2.5.0
 
-This Android update keeps first-run setup finished after an app update, makes coordinate search reliable for more than one saved place, and keeps the release history readable when you skip versions.
+Waypoint 2.5.0 refreshes the art and driving experience across the real-world map. Choose one of 38 generated game-inspired worlds while keeping the same real streets, places and road routes underneath.
 
-### 🧭 A smoother update
+### 🎨 Original art over real geography
 
-- Updating Waypoint no longer brings back the first-run onboarding after you have completed it. Your chosen world and favourites stay in place.
-- **What’s New** now includes the notes for every published version since the last notes you viewed. If an older build did not record that choice, Waypoint shows the full published history once. The notes are bundled for offline reading.
+- All 38 worlds now use map artwork created for Waypoint: generated materials, place symbols, destination markers and day/night treatments.
+- These maps do not use stock MapLibre style presets as their artwork. MapLibre remains the renderer for the live terrestrial map; it displays real geography and provider-supplied road and place data.
+- The underlying map remains a real-world map. Themes change its colors, textures, labels and symbols; they do not replace streets with fictional game geography.
 
-### 📍 Places you can find again
+### 🚗 Road-aware driving and recentering
 
-- Enter a latitude and longitude pair in **Search places** to get that exact destination, even when another coordinate location is already saved. The pair is checked on your phone and is not sent to place-name search.
-- Invalid coordinate pairs show a clear format hint instead of a misleading saved-place match. You can still bookmark each different point separately.
-- **Saved → place options → Rename** keeps your own place name while preserving its address and coordinates. This feature arrived in 2.0.0 and remains available in 2.0.1.
+- The phone and Android Auto camera now follow navigation along the selected road instead of putting the vehicle in the visual center when that point is away from the route.
+- Recenter and heading behavior account for map tilt and recent user movement, keeping the live vehicle marker and road view aligned as guidance continues through turns.
+- Android Auto can show alternate driving routes with their own distance and time estimates before you choose one.
 
-### 🙌 Thanks for this feedback
+### 🧭 The terrestrial map stays useful
 
-💚 Thank you **[@harrydbarnes](https://github.com/harrydbarnes)** for reporting returning onboarding and asking for notes across skipped updates in [#14](https://github.com/the-geeky-couldron/waypoint/issues/14). Both changes shaped this update.
+Search, routing, live location, saved places and voice guidance continue to work across the themed maps. The art is game-inspired; the destinations and roads remain real. Map and routing services still depend on network access and their providers’ availability.
 
-📍 Thank you **[@Mahdi-fatemii](https://github.com/Mahdi-fatemii)** for the saved-place naming request in [#15](https://github.com/the-geeky-couldron/waypoint/issues/15). Personal names were added in 2.0.0 and checked again for this release.
+### 🙌 Thanks for the requests and feedback
 
-🗺️ Thank you **[@Althayyr](https://github.com/Althayyr)** for reporting that a second coordinate location could not be found in [#16](https://github.com/the-geeky-couldron/waypoint/issues/16). Your report led to exact coordinate search.
+🎮 Thank you **[@Balzamus](https://github.com/Balzamus)** for the detailed map-world requests and follow-up style references in [#7](https://github.com/the-geeky-couldron/waypoint/issues/7). Quests, place sharing and the requested bundled world directions arrived earlier; the remaining multiplayer, community-pack and game-folder-import ideas are not part of this release.
 
-### 🙌 Credits from the previous 2.0.0 update
+🗺️ Thanks to everyone who asked for more distinctive map artwork through Instagram and X/Twitter. Those requests helped guide this original-art pass across the worlds.
 
-🎮 Huge thanks to **[@Balzamus](https://github.com/Balzamus)** for the ideas in [#7](https://github.com/the-geeky-couldron/waypoint/issues/7) that helped shape quests, map sharing and the new worlds! Your detailed suggestions gave this update its direction. 💚🧭
+🚘 Thank you **[@RoseMariXOXOXO](https://github.com/RoseMariXOXOXO)** for reporting the Android Auto launcher issue in [#2](https://github.com/the-geeky-couldron/waypoint/issues/2). This release improves road display and route choices in the car interface. It does not claim to resolve real-vehicle launcher eligibility for GitHub-installed APKs; that report remains open while a supported installation path is being verified.
 
-☢️ A big thank-you to **[@matvejsyrygin256-dotcom](https://github.com/matvejsyrygin256-dotcom)** for requesting the S.T.A.L.K.E.R. world in [#8](https://github.com/the-geeky-couldron/waypoint/issues/8). Your idea became **Exclusion Zone**! 🗺️📟
+### 🔒 What to expect
 
-🤖 Thanks to **[@6HentaiMaster9](https://github.com/6HentaiMaster9)** for the NieR:Automata request in [#9](https://github.com/the-geeky-couldron/waypoint/issues/9). Your enthusiasm brought **Machine Atlas** to the world selector! 🗺️
-
-📍 Thank you **[@artmartins28](https://github.com/artmartins28)** for suggesting personal names for saved places in [#10](https://github.com/the-geeky-couldron/waypoint/issues/10). Work, home and the places that matter are easier to recognise. 💚
-
-🚲 Cheers to **[@VoidKittyKat](https://github.com/VoidKittyKat)** for asking for bicycle navigation in [#11](https://github.com/the-geeky-couldron/waypoint/issues/11). Your request added a dedicated cycling option! 🧭
-
-🚗 Thanks again to **[@RoseMariXOXOXO](https://github.com/RoseMariXOXOXO)** ([#2](https://github.com/the-geeky-couldron/waypoint/issues/2)) and **[@kiri-responsib](https://github.com/kiri-responsib)** ([#3](https://github.com/the-geeky-couldron/waypoint/issues/3)) for the Android Auto reports that kept these car improvements moving. The trusted-installation requirement below still applies.
-
-💚 And thanks to the reporters behind the earlier 1.5.0 fixes: **[@nikkvfox](https://github.com/nikkvfox)** ([#1](https://github.com/the-geeky-couldron/waypoint/issues/1), voice guidance), **@kiri-responsib** (#3, voice guidance), and **[@harrydbarnes](https://github.com/harrydbarnes)** ([#4](https://github.com/the-geeky-couldron/waypoint/issues/4), favourite worlds; [#5](https://github.com/the-geeky-couldron/waypoint/issues/5), UK wording; [#6](https://github.com/the-geeky-couldron/waypoint/issues/6), the Twitter link).
-
-### On your phone
-
-Saved places and preferences stay on this phone across compatible updates. Waypoint asks before installing an update. This release is Android-only. Android Auto still needs a supported trusted installation channel to appear in real-car launchers.
+This is an Android release. Updates remain user-confirmed and preserve compatible saved places and preferences. Android Auto availability in a real vehicle still depends on Google’s trusted installation requirements. No Play Store release is included.

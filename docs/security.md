@@ -1,5 +1,21 @@
 # Security review and hardening
 
+## Current source review and follow-up (6 November 2026)
+
+The latest standard audit reviewed the restructured Android app, public site, build scripts and release workflows. Its independent checks found **zero confirmed vulnerabilities and nine source-grounded leads needing validation** across 174 coverage units. The local audit archive contains the full source traces and safe validation plans. No Android exploit fixture ran because the required isolated offline sandbox was unavailable; ordinary build and device tests are separate functional evidence.
+
+The follow-up on `dev` now rejects shared-text intents during active guidance before decoding their extras and catches malformed parcel failures on the idle path. Text-to-speech WAV input is bounded before parsing or effects allocation, with a sample-rate and frame limit. The automatic foreground update check has a 30-minute cadence, and quest notifications re-read current records while serializing posting with cancellation.
+
+The Pages workflow deploys only pushed `dev` commits, checks repository hygiene, and pins its Actions. GitHub Pages is enabled for workflow deployment, and its environment is restricted to `dev`. Pull requests targeting `main` run source and dependency checks; Android builds, unit tests, emulator tests and signing run only after a push to `main`. Pushing `dev` does not build an APK. The release workflow checks for a successful exact-commit `main` build before checking out repository source. Its hosted `release` environment now accepts only `v*` tags and requires owner review before publishing. Main-branch review and tag creation/replacement policy remain separate hosted controls.
+
+The optional motion-tooling lockfile overrides the affected `minimatch` 10.x branch with 11.0.5. A clean npm install, ESLint/TypeScript check and moderate-threshold npm audit passed with zero advisories; CI now blocks on moderate or higher advisories for this toolchain.
+
+Dependabot security updates are enabled in the hosted repository. The new [Dependabot configuration](../.github/dependabot.yml) covers Gradle, both npm toolchains and GitHub Actions, with weekly version-update proposals. GitHub reads that file from the default branch, so this `dev` change must reach `main` before its schedule and security-PR customization take effect. Dependabot proposes fixes for review; it does not automatically merge them.
+
+AndroidX Car App Library 1.9.0-alpha03 adds per-transaction caller UID checks to the manager and lifecycle Binder paths reviewed in the audit. This is an alpha dependency, so Android Auto compatibility needs connected-device and head-unit checks before a production release. Two dependency-owned paths remain open for validation: malformed session-info extras are decoded in the library's final `onBind`/`onUnbind`, and a failed handshake on a separate Binder can still clear shared host metadata. The app cannot override those final methods without replacing the library. These are unresolved source hypotheses, not confirmed exploits.
+
+The sections below record earlier audits and the codebase at their dates; their counts and dependency versions are historical.
+
 ## Android 2.0.0 codebase and GitHub audit (5 November 2026)
 
 The full standard audit completed all six phases, including independent candidate and final-record reviews. Both the findings and coverage validators pass. It reviewed the entire Android checkout and read-only GitHub configuration, including quests, photos, reminders, sharing, saved-place names, bicycle routing, all 38 worlds, default release alerts, navigation and release signing. The separate iOS port was outside this Android checkout.
@@ -89,4 +105,4 @@ No single audit makes software “bulletproof.” Report new concerns through th
 
 Gradle's [release checksums](https://gradle.org/release-checksums/) and [wrapper verification guidance](https://docs.gradle.org/current/userguide/gradle_wrapper.html#sec:verification) support the distribution pin. Gradle 8.14.6 addresses the upstream [repository failover](https://github.com/gradle/gradle/security/advisories/GHSA-j5m7-59rp-24f5), [client/daemon](https://github.com/gradle/gradle/security/advisories/GHSA-xwqc-3h47-hg64) and [worker/daemon](https://github.com/gradle/gradle/security/advisories/GHSA-mvvg-497x-hmj8) advisories; this is dependency maintenance, not proof those issues were exploited here.
 
-The [AndroidX Car release notes](https://developer.android.com/jetpack/androidx/releases/car-app) document upstream security fixes. The current source uses 1.8.0-rc01 with the projected component enabled. Android's [deep-link security guidance](https://developer.android.com/privacy-and-security/risks/unsafe-use-of-deeplinks) describes the external-input boundary.
+The [AndroidX Car release notes](https://developer.android.com/jetpack/androidx/releases/car-app) document upstream security fixes. The current source uses 1.9.0-alpha03 with the projected component enabled. Android's [deep-link security guidance](https://developer.android.com/privacy-and-security/risks/unsafe-use-of-deeplinks) describes the external-input boundary.

@@ -26,20 +26,43 @@ class AtlasSmokeTest {
         config.waitForIdleTimeout=350
         config.waitForSelectorTimeout=3000
         val output=File(context.getExternalFilesDir(null),"atlas-review").apply{mkdirs()}
+        fun click(label:String) {
+            repeat(5) {
+                val node=device.wait(Until.findObject(By.desc(label).pkg(context.packageName)),800)
+                    ?: device.wait(Until.findObject(By.text(label).pkg(context.packageName)),800)
+                if(node!=null)try { node.click();return } catch(_:StaleObjectException) { SystemClock.sleep(150) }
+            }
+            fail("Click $label")
+        }
         try {
+            val app=context.applicationContext as WaypointApplication
+            instrumentation.runOnMainSync {
+                app.navigation.completeOnboarding(listOf(World.LOS_SANTOS))
+                app.navigation.markMapOpened()
+                app.navigation.changeWorld(World.LOS_SANTOS)
+                app.markWhatsNewSeen();app.updateAlerts.markExplained()
+            }
             context.startActivity(context.packageManager.getLaunchIntentForPackage(context.packageName)!!.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK))
             assertTrue(device.wait(Until.hasObject(By.pkg(context.packageName)),10000))
             device.wait(Until.findObject(By.text("Open map")),3000)?.click()
             for(world in World.entries) {
-                val hud=device.wait(Until.findObject(By.desc("Worlds")),4000) ?: device.wait(Until.findObject(By.text("Worlds")),4000)
-                assertNotNull("HUD library control in ${world.title}",hud);hud!!.click()
+                assertTrue("HUD library control in ${world.title}",device.wait(Until.hasObject(By.desc("Worlds")),4000) || device.wait(Until.hasObject(By.text("Worlds")),4000))
+                click("Worlds")
                 val search=device.wait(Until.findObject(By.clazz("android.widget.EditText")),4000)
                 assertNotNull("Theme search",search);search!!.text=world.title
                 SystemClock.sleep(400)
-                val choice=device.wait(Until.findObject(By.desc("Preview ${world.title} theme")),4000)
-                assertNotNull("Theme result ${world.title}",choice);choice!!.click()
-                device.wait(Until.findObject(By.text("Use this world")),4000)!!.click()
+                assertTrue("Theme result ${world.title}",device.wait(Until.hasObject(By.desc("Preview ${world.title} theme")),4000))
+                click("Preview ${world.title} theme")
+                click("Use this world")
                 assertTrue("Library closed for ${world.title}",device.wait(Until.gone(By.clazz("android.widget.EditText")),4000))
+                val legend=WorldLegendProfiles.forWorld(world)
+                click("Open ${world.title} map key")
+                assertTrue("Themed legend title ${world.title}",device.wait(Until.hasObject(By.text(legend.title)),3000))
+                assertTrue("Themed route mark ${world.title}",device.wait(Until.hasObject(By.desc(legend.navigation.route)),3000))
+                assertTrue("Themed place section ${world.title}",device.wait(Until.hasObject(By.text(legend.groupTitles.getValue(legend.groupOrder.first()))),3000))
+                assertTrue("Live place data source ${world.title}",device.wait(Until.hasObject(By.text("LIVE PLACE DATA · OSM")),3000))
+                assertTrue("Legend screenshot ${world.title}",device.takeScreenshot(File(output,"legend-${world.name.lowercase()}.png")))
+                click("Close ${world.title} map key")
                 // Allow map tile rendering, camera transition, and multiple heading animations.
                 SystemClock.sleep(1600)
                 assertEquals("App survived ${world.title}",context.packageName,device.currentPackageName)

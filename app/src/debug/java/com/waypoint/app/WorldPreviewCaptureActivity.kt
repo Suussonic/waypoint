@@ -32,8 +32,13 @@ class WorldPreviewCaptureActivity : Activity() {
         val only = intent.getStringExtra("only")
         worlds = if (only == null) World.entries else if (only == "new") newWorlds.toList() else World.entries.filter { it.file == only }
         require(worlds.isNotEmpty()) { "Unknown world: $only" }
+        previewNight = intent.getBooleanExtra("night", false)
+        previewHologram = intent.getBooleanExtra("hologram", false)
         capture(0)
     }
+
+    private var previewNight = false
+    private var previewHologram = false
 
     private fun capture(index: Int) {
         if (index == worlds.size) {
@@ -44,9 +49,13 @@ class WorldPreviewCaptureActivity : Activity() {
         val world = worlds[index]
         val place = world.previewPlace()
         status.text = "${index + 1}/${worlds.size}: ${world.title}\n${place.label}"
-        val json = assets.open("styles/${world.file}.json").bufferedReader().use { it.readText() }
+        val styleFile = resolveMapThemeStyleFile(
+            world,previewNight,previewHologram && world==World.DIVISION,mapThemeStyleFiles(this))
+        val json = assets.open("styles/$styleFile.json").bufferedReader().use { it.readText() }
         val camera = CameraPosition.Builder()
-            .target(LatLng(place.lat, place.lon)).zoom(place.zoom).tilt(if(world==World.NIER)42.0 else 0.0).bearing(0.0).build()
+            .target(LatLng(place.lat, place.lon)).zoom(place.zoom)
+            .tilt(if(world==World.NIER)42.0 else if(previewHologram && world==World.DIVISION)40.0 else 0.0)
+            .bearing(0.0).build()
         val options = MapSnapshotter.Options(960, 520)
             .withStyleBuilder(Style.Builder().fromJson(json)).withCameraPosition(camera).withPixelRatio(1f).withLogo(false)
         val renderer = MapSnapshotter(this, options)
@@ -55,6 +64,11 @@ class WorldPreviewCaptureActivity : Activity() {
             override fun onDidFinishLoadingStyle() = Unit
             override fun onStyleImageMissing(id: String) {
                 val res = when (id) {
+                    "world-material" -> {
+                        val material=mapMaterial(this@WorldPreviewCaptureActivity,world,previewNight) ?: return
+                        renderer.addImage(id,material,false)
+                        return
+                    }
                     "pixel-grass" -> R.drawable.pixel_grass
                     "pixel-stone" -> R.drawable.pixel_stone
                     "pixel-water" -> R.drawable.pixel_water
@@ -65,7 +79,12 @@ class WorldPreviewCaptureActivity : Activity() {
             }
         })
         renderer.start({ result ->
-            val file = File(output, "${world.file}.png")
+            val variant = when {
+                world == World.DIVISION && previewHologram -> "division_holo${if (previewNight) "_night" else ""}"
+                previewNight -> "${world.file}_night"
+                else -> world.file
+            }
+            val file = File(output, "$variant.png")
             FileOutputStream(file).use { result.bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
             Log.i("WaypointPreview", "Captured ${world.file}: ${place.label} (${file.length()} bytes)")
             snapshotter = null

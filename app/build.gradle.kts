@@ -47,6 +47,7 @@ android {
     testBuildType = providers.gradleProperty("testBuildType").getOrElse("debug")
     sourceSets.getByName("preview").java.srcDir("src/debug/java")
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17; isCoreLibraryDesugaringEnabled = true }
+    androidResources { noCompress += listOf("mp3", "m4a") }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
 }
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
@@ -70,15 +71,15 @@ dependencies {
     implementation("com.stadiamaps.ferrostar:core:0.59.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
-    implementation("androidx.car.app:app:1.8.0-rc01")
-    implementation("androidx.car.app:app-projected:1.8.0-rc01")
+    implementation("androidx.car.app:app:1.9.0-alpha03")
+    implementation("androidx.car.app:app-projected:1.9.0-alpha03")
     testImplementation("junit:junit:4.13.2")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testImplementation("org.json:json:20240303")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
-    androidTestImplementation("androidx.car.app:app-testing:1.8.0-rc01") {
+    androidTestImplementation("androidx.car.app:app-testing:1.9.0-alpha03") {
         // Robolectric belongs to local JVM tests. On a device it causes
         // ActivityScenario to select ShadowLooper without a sandbox.
         exclude(group = "org.robolectric")

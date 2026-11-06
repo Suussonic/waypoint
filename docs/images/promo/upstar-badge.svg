@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="232" height="42" viewBox="0 0 232 42" role="img" aria-labelledby="title desc">
+  <title id="title">Discover Waypoint on Upstar</title>
+  <desc id="desc">A rising chart and star icon beside a Waypoint on Upstar link.</desc>
+  <rect x=".5" y=".5" width="231" height="41" rx="12" fill="#14201f" stroke="#46645b"/>
+  <rect x="4" y="4" width="34" height="34" rx="9" fill="#24483d"/>
+  <path d="M10 28h16" fill="none" stroke="#92d9b1" stroke-linecap="round" stroke-width="2" opacity=".65"/>
+  <path d="m11 24 6-6 5 3 8-9m-6 0h6v6" fill="none" stroke="#92f0c0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3"/>
+  <path d="m15 9 .9 2 2.1.3-1.5 1.4.4 2-1.9-1-1.9 1 .4-2-1.5-1.4 2.1-.3z" fill="#c0f4d4"/>
+  <text x="48" y="17" fill="#a8bbb5" font-family="Inter,Arial,sans-serif" font-size="9" font-weight="600" letter-spacing="1.4">DISCOVER WAYPOINT</text>
+  <text x="48" y="32" fill="#f2f7f2" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="700" letter-spacing=".5">ON UPSTAR <tspan fill="#92f0c0">↗</tspan></text>
+</svg>

@@ -1,145 +1,559 @@
-"""Build game HUD map palettes from OpenFreeMap Liberty (OSM/OpenMapTiles)."""
-import json, copy, hashlib
-from cartography_profiles import PROFILES
+#!/usr/bin/env python3
+"""Build original Waypoint styles from live OpenMapTiles geographic data.
+
+This generator deliberately has no preset-style input. It authors every layer,
+filter, zoom range, label rule, road hierarchy and material reference below.
+OpenMapTiles supplies geographic features only; no MapLibre theme or sprite sheet
+is downloaded or copied.
+"""
+
+from __future__ import annotations
+
+import json
+import os
 from pathlib import Path
-import urllib.request
-source=Path('.tooling/liberty.json')
-if not source.exists():
- source.parent.mkdir(parents=True,exist_ok=True)
- with urllib.request.urlopen('https://tiles.openfreemap.org/styles/liberty',timeout=30) as response:
-  source.write_bytes(response.read())
-# Review a new source deliberately; upstream changes must not silently rewrite themes.
-expected_source_sha256 = "408245464e76791801a64393c403433d09e8110eb9516040f8dc2b62584eee2a"
-if hashlib.sha256(source.read_bytes()).hexdigest() != expected_source_sha256:
- raise ValueError("OpenFreeMap Liberty changed. Review the new base style before updating its checksum.")
-base=json.loads(source.read_text())
-palettes={
-'los_santos':dict(bg='#202020',land='#252525',park='#30362f',water='#182126',building='#383838',road='#898989',casing='#171717',label='#e1e1da',halo='#262626',outline='#505050'),
-'old_west':dict(bg='#dac8a2',land='#dfcba5',park='#a9ac80',water='#9faeac',building='#c6b18d',road='#eee0be',casing='#665f4b',label='#3b382d',halo='#dfcba5',outline='#756c55'),
-'night_city':dict(bg='#0c1019',land='#11121f',park='#152e32',water='#050a14',building='#6f1849',road='#258da3',casing='#092934',label='#8fd6dd',halo='#0c1019',outline='#b32c72'),
-'pixel':dict(bg='#566943',land='#6a8151',park='#3f6743',water='#3d718b',building='#777d6c',road='#c7c4a5',casing='#43513b',label='#faf4da',halo='#47543b',outline='#a7ad95')}
-palettes.update({
-'green_terminal':dict(bg='#071109',land='#0a180d',park='#17371a',water='#030904',building='#1e4922',road='#6bcf55',casing='#102a12',label='#9af477',halo='#071109',outline='#3f8835'),
-'san_andreas':dict(bg='#c2c5ad',land='#ceccb7',park='#7e9c64',water='#789dba',building='#a4a48e',road='#f4f0d8',casing='#737864',label='#252d27',halo='#d5d2be',outline='#7f846d'),
-'heat':dict(bg='#16152a',land='#1f1c36',park='#263846',water='#0d1428',building='#3c305c',road='#cf77c5',casing='#20172b',label='#e7cceb',halo='#20172b',outline='#655281'),
-'rivia':dict(bg='#b6af8d',land='#c8bc97',park='#727f54',water='#607d7c',building='#93886b',road='#e4d6ae',casing='#716548',label='#33372c',halo='#c8bc97',outline='#655d47'),
-})
-palettes.update({
-'vice_coast':dict(bg='#94909d',land='#a6a5a4',park='#3d8960',water='#6b6d84',building='#b4b4b0',road='#f6f1dd',casing='#575e59',label='#fff4ef',halo='#525465',outline='#757b75'),
-'liberty':dict(bg='#222527',land='#2b2e30',park='#333c36',water='#121518',building='#42484b',road='#92999c',casing='#222426',label='#dbdfda',halo='#24272a',outline='#646c6c'),
-'ctos':dict(bg='#e5e9dd',land='#e1e8dc',park='#a9d4a8',water='#83cbe3',building='#c8ced0',road='#ffffff',casing='#bec8c3',label='#263b43',halo='#f1f5ef',outline='#b5bcbe'),
-'hyrule':dict(bg='#121f2a',land='#162b38',park='#1b3d47',water='#0a192b',building='#253e4a',road='#48788f',casing='#0d202e',label='#a4dafa',halo='#142330',outline='#345e70'),
-'skyrim':dict(bg='#859395',land='#9aa9a8',park='#657e7b',water='#526e7a',building='#647577',road='#bdc4be',casing='#626e6d',label='#f5f6ee',halo='#465354',outline='#677877'),
-'lands_between':dict(bg='#b1a789',land='#b9ac89',park='#798568',water='#798b89',building='#817963',road='#e0d1aa',casing='#776e54',label='#eee2c5',halo='#655b43',outline='#6f654e'),
-'horizon':dict(bg='#8a966a',land='#a9ae82',park='#5c8058',water='#5095a8',building='#a3a18a',road='#f5f0dd',casing='#747852',label='#f6f1df',halo='#525d3f',outline='#7c8466')
-})
-terrain_worlds={'rivia','hyrule','skyrim','lands_between','horizon'}
-flat_worlds={'old_west','green_terminal','rivia','vice_coast','liberty','ctos','hyrule','skyrim','lands_between','horizon'}
-palettes.update({'assassin': {'bg': '#b49b6e', 'land': '#c8b58b', 'park': '#8d9a63', 'water': '#426e82', 'building': '#a49477', 'road': '#e7d6ad', 'casing': '#857452', 'label': '#fff1d5', 'halo': '#645840', 'outline': '#8d805f'}, 'far_cry': {'bg': '#6e7a60', 'land': '#90987a', 'park': '#46694a', 'water': '#496e79', 'building': '#818777', 'road': '#ddd9bc', 'casing': '#505f48', 'label': '#f2efde', 'halo': '#364c3e', 'outline': '#67735f'}, 'ghost': {'bg': '#c9ccc2', 'land': '#d8d9ce', 'park': '#9ba69b', 'water': '#a7b4b1', 'building': '#aeb4a8', 'road': '#eeeade', 'casing': '#777f76', 'label': '#242c27', 'halo': '#e1e2d7', 'outline': '#8b9589'}, 'bridges': {'bg': '#182b37', 'land': '#283c47', 'park': '#253e3e', 'water': '#101f32', 'building': '#344953', 'road': '#86aab1', 'casing': '#172b37', 'label': '#b9e8e5', 'halo': '#172c3b', 'outline': '#45636c'}, 'horizon_wilds': {'bg': '#a28159', 'land': '#b6976d', 'park': '#646c42', 'water': '#557e88', 'building': '#8b775b', 'road': '#e6d5ad', 'casing': '#695439', 'label': '#f3e8cd', 'halo': '#55452f', 'outline': '#88734f'}, 'spider': {'bg': '#102a38', 'land': '#153948', 'park': '#164851', 'water': '#0b2031', 'building': '#1b6173', 'road': '#4290a4', 'casing': '#103342', 'label': '#bcecf4', 'halo': '#102f3c', 'outline': '#287c8c'}, 'hogwarts': {'bg': '#77765f', 'land': '#929378', 'park': '#596c4b', 'water': '#526d77', 'building': '#72765e', 'road': '#c4bea0', 'casing': '#555b45', 'label': '#e9dfc5', 'halo': '#424939', 'outline': '#767f64'}, 'starfield': {'bg': '#1b304b', 'land': '#233e58', 'park': '#28485d', 'water': '#12273f', 'building': '#36546a', 'road': '#7196af', 'casing': '#1b324a', 'label': '#dce9ed', 'halo': '#20354b', 'outline': '#486b83'}, 'kingdom': {'bg': '#b2a37d', 'land': '#c4b38a', 'park': '#76805a', 'water': '#8caaa5', 'building': '#a39472', 'road': '#e7d4aa', 'casing': '#81704e', 'label': '#3c392b', 'halo': '#d9c9a4', 'outline': '#8e805b'}, 'saints': {'bg': '#1b1c22', 'land': '#292932', 'park': '#2d3740', 'water': '#3e5962', 'building': '#363740', 'road': '#7c8490', 'casing': '#161c27', 'label': '#e0ddeb', 'halo': '#23232e', 'outline': '#505565'}, 'just_cause': {'bg': '#143748', 'land': '#1e4653', 'park': '#235c5d', 'water': '#0b2539', 'building': '#305360', 'road': '#6fa4ad', 'casing': '#183643', 'label': '#c4edef', 'halo': '#193745', 'outline': '#3e7580'}, 'mafia': {'bg': '#c1c1a4', 'land': '#d0c9aa', 'park': '#8ca66b', 'water': '#83b1b1', 'building': '#aaa99a', 'road': '#e8d174', 'casing': '#8e8e74', 'label': '#3e453c', 'halo': '#dbd5b9', 'outline': '#8d9585'}})
-terrain_worlds.update({'horizon_wilds', 'kingdom', 'bridges', 'assassin', 'far_cry', 'starfield', 'ghost', 'hogwarts', 'just_cause'})
-flat_worlds.update({'horizon_wilds', 'kingdom', 'bridges', 'assassin', 'mafia', 'starfield', 'ghost', 'hogwarts', 'just_cause'})
-# Official owner-published worlds from issue #7; see docs/visual-sourcebook.md.
-palettes.update({'division': {'bg': '#182c2e', 'land': '#1f3435', 'park': '#283e36', 'water': '#0c2027', 'building': '#355152', 'road': '#819a98', 'casing': '#112325', 'label': '#e3e9df', 'halo': '#182c2e', 'outline': '#517575'}, 'sea_chart': {'bg': '#d8cbab', 'land': '#e2d4b1', 'park': '#b2b18a', 'water': '#8eaaa9', 'building': '#aca080', 'road': '#f2e6c7', 'casing': '#726849', 'label': '#393327', 'halo': '#e2d4b1', 'outline': '#938566'}, 'dos_atlas': {'bg': '#15100d', 'land': '#1d170e', 'park': '#272414', 'water': '#090e11', 'building': '#4c3d28', 'road': '#b38d52', 'casing': '#15100d', 'label': '#ffdf9b', 'halo': '#15100d', 'outline': '#85673c'}, 'aincrad': {'bg': '#cebc92', 'land': '#decca4', 'park': '#9eaa7b', 'water': '#81a8b0', 'building': '#b3a78b', 'road': '#f7eacb', 'casing': '#8c7956', 'label': '#403c31', 'halo': '#e7d7b4', 'outline': '#9c906f'}, 'counter_strike': {'bg': '#302f2a', 'land': '#3c3c33', 'park': '#424a39', 'water': '#202b31', 'building': '#65635b', 'road': '#d6d2bd', 'casing': '#23241e', 'label': '#f0ebd7', 'halo': '#302f2a', 'outline': '#939084'}, 'defcon': {'bg': '#030815', 'land': '#071127', 'park': '#0a1c29', 'water': '#01040c', 'building': '#112449', 'road': '#5d9bd4', 'casing': '#040a19', 'label': '#c6ddff', 'halo': '#030815', 'outline': '#24476f'}, 'field_ops': {'bg': '#31382f', 'land': '#3a4235', 'park': '#3b5137', 'water': '#233238', 'building': '#535d4e', 'road': '#bbc2a8', 'casing': '#252e25', 'label': '#ecefdc', 'halo': '#31382f', 'outline': '#77816b'}, 'retro_quest': {'bg': '#88a95c', 'land': '#a4bf73', 'park': '#598154', 'water': '#437ea5', 'building': '#a2856f', 'road': '#e5ca89', 'casing': '#786240', 'label': '#f9f0d4', 'halo': '#4d6239', 'outline': '#705541'}, 'home_console': {'bg': '#e8edf0', 'land': '#e2e9eb', 'park': '#b4d5b3', 'water': '#9ccfe1', 'building': '#c5cfd7', 'road': '#ffffff', 'casing': '#b3c4cd', 'label': '#294b5b', 'halo': '#f3f7f7', 'outline': '#a8bbc6'}})
-# Issue #8: PDA field map. Real geography; no fictional anomaly or hazard overlays.
-palettes['nier']=dict(bg='#CCC8B0',land='#D5D1BB',park='#B9BCA4',water='#9D9F94',building='#B1AD99',road='#EAE5CF',casing='#716F60',label='#35362E',halo='#E5E1CD',outline='#84816E')
-palettes['stalker']=dict(bg='#3a3f31',land='#484b39',park='#273a29',water='#283435',building='#66695d',road='#b6b39a',casing='#252b21',label='#e4e5d3',halo='#262c22',outline='#818574')
-# Corrections from verified map screens, rather than neon gameplay associations.
-palettes['night_city'].update(building='#8b2029',outline='#c94045',land='#121d28',road='#286b78',water='#070e19')
-palettes['old_west'].update(road='#d9c69e',casing='#413b2e',building='#d0bd97',park='#b9ae89',water='#a9a58b')
-palettes['green_terminal'].update(road='#427d35',building='#102815',park='#0f2211')
-palettes['hyrule'].update(bg='#4b4932',land='#4b4932',park='#424a32',water='#112a3d',road='#a69c64',casing='#393b2c',building='#5f5b3b')
-palettes['heat'].update(bg='#555946',land='#555946',park='#3a4932',water='#234b83',road='#d2d2b6',building='#6a6a5a',casing='#383c33')
-palettes['horizon_wilds'].update(bg='#5b6251',land='#5b6251',park='#354a33',water='#516d71',road='#c6b88c',building='#707365',casing='#30362c')
-terrain_worlds.add('heat')
-flat_worlds={n for n,p in PROFILES.items() if p['building'] not in ('extrude','pixel')}
-def scale_width(value,scale):
- if isinstance(value,(int,float)):return value*scale
- if isinstance(value,dict):
-  v=copy.deepcopy(value)
-  if 'stops' in v:v['stops']=[[z,n*scale] for z,n in v['stops']]
-  return v
- if isinstance(value,list) and value and value[0] in ('interpolate','interpolate-hcl','interpolate-lab','step'):
-  # Camera expressions must stay top-level; multiplying the whole expression
-  # makes MapLibre discard the road layer. Scale only its output stops.
-  v=copy.deepcopy(value)
-  outputs=range(4,len(v),2) if value[0]!='step' else [2]+list(range(4,len(v),2))
-  for i in outputs:v[i]=scale_width(v[i],scale)
-  return v
- return ['*',value,scale]
-map_fonts={name:'Waypoint Classic' for name in palettes}
-for name in ('night_city','bridges','spider','starfield','just_cause'):map_fonts[name]='Waypoint Technical'
-for name in ('rivia','lands_between','kingdom','hogwarts','mafia'):map_fonts[name]='Waypoint Atlas'
-map_fonts['old_west']='Waypoint Western'
-for name in ('los_santos','green_terminal','skyrim','san_andreas','liberty','heat','far_cry'):map_fonts[name]='Waypoint Condensed'
-map_fonts['pixel']='Waypoint Pixel'
-map_fonts.update({'division': 'Waypoint Borda', 'sea_chart': 'Waypoint Atlas', 'dos_atlas': 'Waypoint Terminal', 'aincrad': 'Waypoint Classic', 'counter_strike': 'Waypoint Stratum', 'defcon': 'Waypoint Terminal', 'field_ops': 'Waypoint Condensed', 'retro_quest': 'Waypoint Retro', 'home_console': 'Waypoint Classic'})
-map_fonts['stalker']='Waypoint Condensed'
-map_fonts['skyrim']='Waypoint Futura'
-for name,c in palettes.items():
- profile=PROFILES[name]
- s=copy.deepcopy(base); s['name']='Waypoint '+name; s['layers']=[l for l in s['layers'] if l['type'] not in ('raster','fill-extrusion') and 'pattern' not in l['id']]
- for l in s['layers']:
-  p=l.setdefault('paint',{}); source=l.get('source-layer',''); id=l['id']; typ=l['type']
-  if typ=='background':
-   p['background-color']=c['bg']
-   if name=='pixel':p['background-pattern']='pixel-grass'
-  if typ=='fill':
-   color=c['land']
-   if source in ('park','landcover') or any(k in id for k in ['pitch','cemetery']):color=c['park']
-   if source=='water':color=c['water']
-   if source=='building':
-    color=c['building'];p['fill-outline-color']=c['outline']
-    if name=='old_west':p['fill-opacity']=0.55
-    if name in ('skyrim','lands_between'):p['fill-opacity']=0.45
-   p['fill-color']=color;p.pop('fill-pattern',None)
-   if source in ('park','landcover'):p['fill-opacity']=profile['park']
-   if source=='building':
-    if profile['building']=='hidden':l.setdefault('layout',{})['visibility']='none'
-    elif profile['building']=='outline':p['fill-opacity']=0.18
-    elif profile['building']=='ink':p['fill-opacity']=0.42
-    else:p['fill-opacity']=0.8
-   if name=='pixel' and source in ('landcover','landuse','park'):p['fill-pattern']='pixel-grass';p['fill-opacity']=0.8
-   if name=='pixel' and source=='water':p['fill-pattern']='pixel-water'
-   if name=='pixel' and source=='building':p['fill-pattern']='pixel-stone'
 
-  if typ=='line':
-   p['line-color']=c['water'] if source=='waterway' else (c['casing'] if 'casing' in id else c['road'])
-   if 'rail' in id:p['line-color']=c['outline']
-   if source=='transportation':
-    factor=profile['case'] if 'casing' in id else profile['road']
-    if 'line-width' in p:p['line-width']=scale_width(p['line-width'],factor)
-    if factor==0:l.setdefault('layout',{})['visibility']='none'
-    if name in ('old_west','ghost','kingdom','rivia') and any(t in id for t in ('path','track')):p['line-dasharray']=[2,2]
+from cartography_profiles import PROFILES
+from map_theme_catalog import THEMES
+from map_style_recipes import RECIPES
 
-  if typ=='symbol':
-   if 'text-field' in l.get('layout',{}):l['layout']['text-font']=[map_fonts[name]]
-   p['text-color']=c['label'];p['text-halo-color']=c['halo'];p['text-halo-width']=1.3
-   if source=='poi':l.setdefault('layout',{})['visibility']='none'
-   if source=='transportation_name':
-    l.setdefault('layout',{})['text-size']=profile['labels']
-    l['layout']['text-font']=[map_fonts[name]]
-    l['layout']['text-letter-spacing']=0.04 if name in ('old_west','ghost','rivia') else 0
-    l['minzoom']=14
-    if name in ('old_west','liberty','green_terminal'):l['layout']['text-transform']='uppercase'
-    l['layout']['symbol-spacing']=300
-   if id in ('road_one_way_arrow','road_one_way_arrow_opposite'):
-    l['minzoom']=17
-  if typ=='fill-extrusion':
-   p['fill-extrusion-color']=c['building']
- # Real terrain relief for the open-world atlas styles, below roads and labels.
- if name in terrain_worlds:
-  s['sources']['terrain']={'type':'raster-dem','tiles':['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],'encoding':'terrarium','tileSize':256,'maxzoom':15,'attribution':'Terrain © Mapzen / data providers'}
-  terrain_index=next((i for i,l in enumerate(s['layers']) if l.get('source-layer') in ('transportation','building')),len(s['layers']))
-  s['layers'].insert(terrain_index,{'id':'world-terrain-relief','type':'hillshade','source':'terrain','paint':{'hillshade-exaggeration':profile['relief'],'hillshade-shadow-color':c['casing'],'hillshade-highlight-color':c['road'],'hillshade-accent-color':c['outline']}})
- if profile['paper']:
-  before_roads=next((i for i,l in enumerate(s['layers']) if l.get('source-layer')=='transportation'),len(s['layers']))
-  s['layers'].insert(before_roads,{'id':'atlas-paper-fibre','type':'background','paint':{'background-pattern':'paper-fibre','background-opacity':0.4}})
- if profile['building'] in ('ink','outline'):
-  idx=next((i for i,l in enumerate(s['layers']) if l['type']=='symbol'),len(s['layers']))
-  s['layers'].insert(idx,{'id':'atlas-building-ink','type':'line','source':'openmaptiles','source-layer':'building','minzoom':15,'paint':{'line-color':c['outline'],'line-width':0.8 if profile['building']=='ink' else 0.5,'line-opacity':0.75}})
- # Dim short buildings with native vector height; retain 2D ink in the western palette.
- before=next((i for i,l in enumerate(s['layers']) if l['type']=='symbol'),len(s['layers']))
- if name not in flat_worlds:
-  s['layers'].insert(before,{'id':'waypoint-buildings','type':'fill-extrusion','source':'openmaptiles','source-layer':'building','minzoom':14.5,
-   'paint':{'fill-extrusion-color':c['building'],'fill-extrusion-height':['interpolate',['linear'],['zoom'],14.5,0,16,['coalesce',['get','render_height'],8]],'fill-extrusion-base':['coalesce',['get','render_min_height'],0],'fill-extrusion-opacity':0.9,**({'fill-extrusion-pattern':'pixel-stone'} if name=='pixel' else {})}})
- Path(f'app/src/main/assets/styles/{name}.json').write_text(json.dumps(s,separators=(',',':')))
+ROOT = Path(__file__).resolve().parents[1]
+OUTPUT_ROOT = Path(os.environ.get("WAYPOINT_ASSET_OUTPUT", ROOT)).resolve()
+STYLE_DIR = OUTPUT_ROOT / "app/src/main/assets/styles"
+ROAD_GROUPS = {
+    "primary": ("motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary_link"),
+    "secondary": ("secondary", "secondary_link", "tertiary", "tertiary_link"),
+    "local": ("minor", "service", "residential", "living_street", "track"),
+    "path": ("path", "footway", "cycleway", "steps", "pedestrian"),
+    "rail": ("rail", "transit", "subway", "light_rail", "tram"),
+    "ferry": ("ferry",),
+}
+RELIEF_ATTRIBUTION = "Terrain tiles © Mapzen / data providers"
+OPENMAPTILES_ATTRIBUTION = "© OpenStreetMap contributors · © OpenMapTiles"
+
+
+def rgba_mix(a: str, b: str, amount: float) -> str:
+    left = tuple(int(a[index:index + 2], 16) for index in (1, 3, 5))
+    right = tuple(int(b[index:index + 2], 16) for index in (1, 3, 5))
+    return "#" + "".join(f"{round(x * (1 - amount) + y * amount):02x}" for x, y in zip(left, right))
+
+
+def linear_luminance(value: str) -> float:
+    def convert(channel: int) -> float:
+        channel /= 255
+        return channel / 12.92 if channel <= .04045 else ((channel + .055) / 1.055) ** 2.4
+    r, g, b = (convert(int(value[i:i + 2], 16)) for i in (1, 3, 5))
+    return .2126 * r + .7152 * g + .0722 * b
+
+
+def contrast_ratio(a: str, b: str) -> float:
+    first, second = sorted((linear_luminance(a), linear_luminance(b)), reverse=True)
+    return (first + .05) / (second + .05)
+
+
+def colors_for(theme: dict[str, str], night: bool) -> dict[str, str]:
+    colors = dict(theme)
+    if night:
+        for key, amount in (
+            ("ground", .60), ("land", .56), ("park", .50),
+            ("water", .63), ("building", .58), ("casing", .50),
+        ):
+            colors[key] = rgba_mix(theme[key], "#071018", amount)
+        colors["label"] = "#F0F4EF"
+        colors["halo"] = colors["ground"]
+        colors["road"] = rgba_mix(theme["road"], "#D8EDF3", .28)
+        colors["outline"] = rgba_mix(theme["outline"], "#D8EDF3", .24)
+    # Keep reference-specific lettering while ensuring labels remain readable.
+    if contrast_ratio(colors["label"], colors["ground"]) < 4.5:
+        colors["label"] = "#F3F4EE" if linear_luminance(colors["ground"]) < .35 else "#18211D"
+    return colors
+
+
+def any_class(values: tuple[str, ...]) -> list:
+    return ["any", *[["==", ["get", "class"], value] for value in values]]
+
+
+def layer_filter(classes: tuple[str, ...], brunnel: str | None = None) -> list:
+    parts = [any_class(classes)]
+    if brunnel == "surface":
+        parts.append(["any", ["!", ["has", "brunnel"]], ["!=", ["get", "brunnel"], "tunnel"]])
+    elif brunnel:
+        parts.append(["==", ["get", "brunnel"], brunnel])
+    return ["all", *parts]
+
+
+def width_expr(base: float, minzoom: float = 5.0) -> list:
+    return [
+        "interpolate", ["linear"], ["zoom"],
+        minzoom, max(.18, round(base * .18, 2)),
+        10, max(.35, round(base * .38, 2)),
+        14, max(.65, round(base * .82, 2)),
+        18, round(base * 2.25, 2),
+    ]
+
+
+def fill_layer(layer_id: str, source_layer: str, color: str, opacity: float = 1.0,
+               classes: tuple[str, ...] | None = None, minzoom: float | None = None,
+               outline: str | None = None, pattern: str | None = None) -> dict:
+    result = {
+        "id": layer_id,
+        "type": "fill",
+        "source": "openmaptiles",
+        "source-layer": source_layer,
+        "paint": {"fill-color": color, "fill-opacity": opacity},
+    }
+    if minzoom is not None:
+        result["minzoom"] = minzoom
+    if classes:
+        result["filter"] = any_class(classes)
+    if outline:
+        result["paint"]["fill-outline-color"] = outline
+    if pattern:
+        result["paint"]["fill-pattern"] = pattern
+    return result
+
+
+def line_layer(layer_id: str, source_layer: str, color: str, base_width: float,
+               classes: tuple[str, ...] | None = None, brunnel: str | None = "surface",
+               opacity: float = 1.0, minzoom: float | None = None,
+               dash: list[float] | None = None, blur: float = 0.0,
+               line_cap: str = "round", line_join: str = "round") -> dict:
+    result = {
+        "id": layer_id,
+        "type": "line",
+        "source": "openmaptiles",
+        "source-layer": source_layer,
+        "layout": {"line-cap": line_cap, "line-join": line_join},
+        "paint": {
+            "line-color": color,
+            "line-width": width_expr(base_width),
+            "line-opacity": opacity,
+        },
+    }
+    if minzoom is not None:
+        result["minzoom"] = minzoom
+    if classes:
+        result["filter"] = layer_filter(classes, brunnel)
+    if dash:
+        result["paint"]["line-dasharray"] = dash
+    if blur:
+        result["paint"]["line-blur"] = blur
+    return result
+
+
+def symbol_layer(layer_id: str, source_layer: str, font: str, color: str, halo: str,
+                 minzoom: float, classes: tuple[str, ...] | None = None,
+                 placement: str = "point", size: list | float = 11.0,
+                 letter_spacing: float = .02, transform: str | None = None,
+                 halo_width: float = 1.4) -> dict:
+    layout = {
+        "text-field": ["coalesce", ["get", "name:en"], ["get", "name_en"], ["get", "name"]],
+        "text-font": [font],
+        "text-size": size,
+        "text-max-width": 8,
+        "text-allow-overlap": False,
+        "text-ignore-placement": False,
+        "symbol-placement": placement,
+        "text-letter-spacing": letter_spacing,
+    }
+    if transform:
+        layout["text-transform"] = transform
+    result = {
+        "id": layer_id,
+        "type": "symbol",
+        "source": "openmaptiles",
+        "source-layer": source_layer,
+        "minzoom": minzoom,
+        "layout": layout,
+        "paint": {"text-color": color, "text-halo-color": halo,
+                  "text-halo-width": halo_width, "text-halo-blur": .25},
+    }
+    if classes:
+        result["filter"] = any_class(classes)
+    return result
+
+
+def label_size(start: float, end: float) -> list:
+    return ["interpolate", ["linear"], ["zoom"], 8, start, 14, start + 1.5, 18, end]
+
+
+def terrain_world(profile: dict) -> bool:
+    return profile["relief"] >= .45
+
+
+def build_layers(name: str, colors: dict[str, str], profile: dict,
+                 holographic: bool = False) -> tuple[list[dict], dict[str, dict]]:
+    theme = THEMES[name]
+    recipe = RECIPES[name]
+    detail = recipe["detail"]
+    font = theme["font"]
+    buildings = "extrude" if holographic else ("flat" if name == "division" else profile["building"])
+    land_edge = colors["outline"] if recipe["land_edges"] else None
+    land_opacity = {
+        "municipal": (.88, .82, .62), "monochrome-city": (.82, .76, .52),
+        "neon": (.72, .82, .58), "phosphor": (.54, .68, .46),
+        "dark-tactical": (.62, .78, .58), "strategic-vector": (.44, .7, .36),
+        "competitive-radar": (.74, .86, .6), "amber-terminal": (.52, .7, .46),
+        "engraved": (.84, .6, .84), "antique-atlas": (.82, .58, .86),
+        "nautical-engraving": (.8, .56, .84), "printed-medieval": (.84, .62, .86),
+        "machine-atlas": (.86, .6, .86), "ink-wash": (.74, .58, .82),
+    }.get(detail, (.92, .78, .9))
+
+    def themed_line(layer_id: str, source_layer: str, color: str, base_width: float,
+                    classes: tuple[str, ...] | None = None, brunnel: str | None = "surface",
+                    opacity: float = 1.0, minzoom: float | None = None,
+                    dash: list[float] | None = None, blur: float = 0.0) -> dict:
+        return line_layer(layer_id, source_layer, color, base_width, classes, brunnel,
+                          opacity, minzoom, dash, blur,
+                          recipe["line_cap"], recipe["line_join"])
+
+    layers: list[dict] = [
+        {"id": "waypoint-ground", "type": "background", "paint": {"background-pattern": "world-material"}},
+        fill_layer("waypoint-land-residential", "landuse", colors["land"], land_opacity[0],
+                   ("residential", "suburb", "neighbourhood", "hamlet"), outline=land_edge),
+        fill_layer("waypoint-land-urban", "landuse", rgba_mix(colors["land"], colors["building"], .22), land_opacity[1],
+                   ("commercial", "retail", "industrial", "railway", "construction"), outline=land_edge),
+        fill_layer("waypoint-land-amenities", "landuse", rgba_mix(colors["land"], colors["park"], .35), land_opacity[2],
+                   ("school", "hospital", "university", "cemetery", "pitch", "playground"), outline=land_edge),
+        fill_layer("waypoint-landcover-woodland", "landcover", colors["park"], profile["park"],
+                   ("wood", "forest", "tree_cover")),
+        fill_layer("waypoint-landcover-open", "landcover", rgba_mix(colors["park"], colors["land"], .28),
+                   profile["park"] * .82, ("grass", "meadow", "scrub", "heath", "grassland")),
+        fill_layer("waypoint-landcover-wetland", "landcover", rgba_mix(colors["park"], colors["water"], .28),
+                   .72, ("wetland", "marsh")),
+        fill_layer("waypoint-landcover-bare", "landcover", rgba_mix(colors["land"], colors["park"], .24),
+                   .8, ("sand", "scree", "rock", "bare_rock", "ice")),
+        fill_layer("waypoint-land-park", "park", colors["park"], min(1.0, profile["park"] + .12), outline=colors["outline"]),
+    ]
+
+    sources: dict[str, dict] = {
+        "openmaptiles": {
+            "type": "vector",
+            "url": "https://tiles.openfreemap.org/planet",
+            "attribution": OPENMAPTILES_ATTRIBUTION,
+        },
+    }
+    if terrain_world(profile):
+        sources["waypoint-terrain"] = {
+            "type": "raster-dem",
+            "tiles": ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"],
+            "encoding": "terrarium",
+            "tileSize": 256,
+            "maxzoom": 15,
+            "attribution": RELIEF_ATTRIBUTION,
+        }
+        layers.append({
+            "id": "waypoint-terrain-relief",
+            "type": "hillshade",
+            "source": "waypoint-terrain",
+            "paint": {
+                "hillshade-exaggeration": profile["relief"],
+                "hillshade-shadow-color": colors["casing"],
+                "hillshade-highlight-color": colors["road"],
+                "hillshade-accent-color": colors["outline"],
+                "hillshade-illumination-direction": 315,
+            },
+        })
+
+    layers.extend([
+        fill_layer("waypoint-water", "water", colors["water"], 1.0, outline=rgba_mix(colors["water"], colors["road"], .12)),
+        fill_layer("waypoint-aeroway", "aeroway", rgba_mix(colors["land"], colors["road"], .12), .88,
+                   ("apron", "helipad", "taxiway")),
+    ])
+    waterway_width = 1.6 if detail in {"strategic-vector", "phosphor", "amber-terminal", "survey-grid"} else 2.4
+    layers.append(themed_line("waypoint-waterways", "waterway", colors["water"], waterway_width,
+                             ("river", "canal", "stream", "ditch", "drain"), brunnel="surface", opacity=.92))
+    layers.append(themed_line("waypoint-aeroway-runways", "aeroway", colors["road"], 3.2,
+                             ("runway", "taxiway"), brunnel=None, opacity=.74))
+
+    if buildings != "hidden":
+        opacity = (.18 if holographic else {"outline": .13, "ink": .28, "pixel": .95}.get(buildings, .78))
+        min_building_zoom = 13.5 if buildings in ("extrude", "pixel") else 15.0
+        building_color = "#226C70" if holographic else colors["building"]
+        building_outline = "#55E4D5" if holographic else rgba_mix(colors["building"], colors["outline"], .38)
+        layers.append(fill_layer("waypoint-buildings", "building", building_color, opacity,
+                                 minzoom=min_building_zoom,
+                                 outline=building_outline))
+        if buildings in ("ink", "outline", "pixel") or holographic:
+            layers.append(themed_line(
+                "waypoint-building-edges", "building", colors["outline"],
+                1.0 if holographic else (.9 if buildings == "ink" else .55),
+                brunnel=None, opacity=.86 if holographic else .7, minzoom=14.5,
+            ))
+        if buildings == "extrude":
+            layers.append({
+                "id": "waypoint-building-extrusions",
+                "type": "fill-extrusion",
+                "source": "openmaptiles",
+                "source-layer": "building",
+                "minzoom": 14.2,
+                "paint": {
+                    "fill-extrusion-color": "#258E89" if holographic else colors["building"],
+                    "fill-extrusion-height": ["interpolate", ["linear"], ["zoom"],
+                                              14.2, 0, 15.5, ["coalesce", ["get", "render_height"], 7]],
+                    "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
+                    "fill-extrusion-opacity": .36 if holographic else .9,
+                },
+            })
+
+    if holographic:
+        # The selected Dark Zone 3D mode is a new teal hologram over actual
+        # building footprints and roads, with no fabricated mission markers.
+        layers.append(themed_line("waypoint-hologram-building-glow", "building",
+                                 "#62F6E1", 1.25, brunnel=None,
+                                 opacity=.48, minzoom=14.5, blur=1.6))
+        layers.append(themed_line("waypoint-hologram-road-glow", "transportation",
+                                 "#32B8AA", 2.8, sum((list(values) for values in ROAD_GROUPS.values()), []),
+                                 brunnel="surface", opacity=.26, minzoom=10, blur=2.2))
+
+    road_scale = max(.42, profile["road"] * recipe["road_scale"])
+    case_scale = max(.12, profile["case"] * recipe["case_scale"])
+    casing_color = colors["casing"]
+    road_color = colors["road"]
+    if holographic:
+        casing_color = "#124D4E"
+        road_color = "#7DE8D8"
+    for group, classes in ROAD_GROUPS.items():
+        if group == "primary":
+            base, priority = 3.25, 1.0
+        elif group == "secondary":
+            base, priority = 2.35, .78
+        elif group == "local":
+            base, priority = 1.55, .52
+        elif group == "path":
+            base, priority = 1.2, .36
+        elif group == "rail":
+            base, priority = 1.0, .5
+        else:
+            base, priority = 1.2, .45
+        if group not in ("path", "rail", "ferry") and case_scale > .2:
+            layers.append(themed_line(f"waypoint-{group}-casing", "transportation", casing_color,
+                                     base * (1.55 + case_scale * .28) * road_scale * priority,
+                                     classes, "surface", .9))
+        dash = None
+        if group == "path" and recipe["path_dash"]:
+            dash = recipe["path_dash"]
+        elif group == "path" and (profile["paper"] or name in {"counter_strike", "field_ops", "stalker"}):
+            dash = [1.6, 1.8]
+        if group == "rail":
+            dash = [3.2, 1.6]
+        layers.append(themed_line(f"waypoint-{group}-roads", "transportation", road_color,
+                                 base * road_scale * priority, classes,
+                                 "surface",
+                                 .84 if group == "ferry" else 1.0, dash=dash))
+        if group in ("primary", "secondary", "local"):
+            layers.append(themed_line(f"waypoint-{group}-tunnels", "transportation",
+                                     colors["outline"], base * road_scale * priority,
+                                     classes, "tunnel", .78, dash=[1.2, 1.3]))
+
+    layers.extend([
+        themed_line("waypoint-bridge-structure", "transportation", colors["outline"],
+                   2.1 * road_scale, tuple(sum((list(v) for v in ROAD_GROUPS.values()), [])),
+                   "bridge", .94, minzoom=10),
+        {
+            "id": "waypoint-boundaries",
+            "type": "line",
+            "source": "openmaptiles",
+            "source-layer": "boundary",
+            "filter": ["!=", ["get", "admin_level"], 2],
+            "paint": {"line-color": colors["outline"],
+                      "line-width": ["interpolate", ["linear"], ["zoom"], 3, .35, 12, .8, 16, 1.1],
+                      "line-opacity": .72 if detail in {"strategic-vector", "competitive-radar", "dark-tactical", "survey-grid"} else .42 if detail in {"municipal", "monochrome-city", "clean-network"} else .56},
+        },
+        {
+            "id": "waypoint-country-boundaries",
+            "type": "line",
+            "source": "openmaptiles",
+            "source-layer": "boundary",
+            "filter": ["==", ["get", "admin_level"], 2],
+            "paint": {"line-color": colors["outline"],
+                      "line-width": ["interpolate", ["linear"], ["zoom"], 2, .7, 8, 1.1],
+                      "line-dasharray": recipe["boundary_dash"] or [2, 1.5], "line-opacity": .72},
+        },
+    ])
+
+    water_font_color = colors["label"]
+    water_halo = colors["halo"]
+    layers.extend([
+        symbol_layer("waypoint-water-labels", "water_name", font, water_font_color, water_halo,
+                     11.0, placement="point", size=label_size(9.5, 12.5), letter_spacing=recipe["label_spacing"],
+                     transform=recipe["label_transform"], halo_width=recipe["label_halo"]),
+        symbol_layer("waypoint-river-labels", "waterway", font, water_font_color, water_halo,
+                     12.5, ("river", "canal"), placement="line", size=label_size(9, 11.5),
+                     letter_spacing=recipe["label_spacing"], transform=recipe["label_transform"],
+                     halo_width=recipe["label_halo"]),
+        symbol_layer("waypoint-road-labels", "transportation_name", font, colors["label"], colors["halo"],
+                     13.2, placement="line", size=label_size(profile["labels"] - 1.5, profile["labels"]),
+                     letter_spacing=recipe["label_spacing"],
+                     transform=recipe["label_transform"] or ("uppercase" if name in {"old_west", "green_terminal", "liberty", "counter_strike", "defcon", "dos_atlas"} else None),
+                     halo_width=recipe["label_halo"]),
+        symbol_layer("waypoint-city-labels", "place", font, colors["label"], colors["halo"],
+                     4.0, ("city", "town", "village", "hamlet", "suburb", "neighbourhood"),
+                     size=label_size(10, 15), letter_spacing=recipe["label_spacing"],
+                     transform=recipe["label_transform"] or ("uppercase" if name in {"los_santos", "liberty", "green_terminal", "counter_strike", "defcon"} else None),
+                     halo_width=recipe["label_halo"]),
+        symbol_layer("waypoint-region-labels", "place", font, colors["label"], colors["halo"],
+                     2.0, ("country", "state", "province", "region"),
+                     size=label_size(12, 18), letter_spacing=max(.08, recipe["label_spacing"]),
+                     transform=recipe["label_transform"], halo_width=recipe["label_halo"]),
+        symbol_layer("waypoint-aerodrome-labels", "aerodrome_label", font, colors["label"], colors["halo"],
+                     11.5, placement="point", size=label_size(10, 12), letter_spacing=recipe["label_spacing"],
+                     transform=recipe["label_transform"], halo_width=recipe["label_halo"]),
+    ])
+
+    if name == "pixel":
+        # Original 16-bit textures reinforce the pixel world while still using
+        # actual landcover, water, road and building geometry.
+        for layer in layers:
+            if layer.get("id") == "waypoint-landcover-woodland":
+                layer["paint"]["fill-pattern"] = "pixel-grass"
+            elif layer.get("id") == "waypoint-water":
+                layer["paint"]["fill-pattern"] = "pixel-water"
+            elif layer.get("id") == "waypoint-buildings":
+                layer["paint"]["fill-pattern"] = "pixel-stone"
+    if name == "retro_quest":
+        for layer in layers:
+            if layer.get("id") == "waypoint-landcover-woodland":
+                layer["paint"]["fill-pattern"] = "pixel-grass"
+    return order_layers(name, layers), sources
+
+
+def order_layers(name: str, layers: list[dict]) -> list[dict]:
+    """Apply the world-specific geography, network, and label hierarchy."""
+    recipe = RECIPES[name]
+    buckets: dict[str, list[dict]] = {
+        "background": [], "terrain": [], "landuse": [], "landcover": [], "park": [],
+        "hydro": [], "aeroway": [], "buildings": [], "boundaries": [],
+        "hologram": [], "roads": [], "labels": [],
+    }
+    road_buckets = {group: [] for group in ROAD_GROUPS}
+    label_names = {
+        "city": "waypoint-city-labels",
+        "region": "waypoint-region-labels",
+        "aerodrome": "waypoint-aerodrome-labels",
+        "water": "waypoint-water-labels",
+        "river": "waypoint-river-labels",
+        "road": "waypoint-road-labels",
+    }
+    label_buckets = {kind: [] for kind in label_names}
+
+    for layer in layers:
+        layer_id = layer["id"]
+        if layer_id == "waypoint-ground":
+            buckets["background"].append(layer)
+        elif layer_id == "waypoint-terrain-relief":
+            buckets["terrain"].append(layer)
+        elif layer_id.startswith("waypoint-landcover-"):
+            buckets["landcover"].append(layer)
+        elif layer_id == "waypoint-land-park":
+            buckets["park"].append(layer)
+        elif layer_id.startswith("waypoint-land-"):
+            buckets["landuse"].append(layer)
+        elif layer_id in {"waypoint-water", "waypoint-waterways"}:
+            buckets["hydro"].append(layer)
+        elif layer_id in {"waypoint-aeroway", "waypoint-aeroway-runways"}:
+            buckets["aeroway"].append(layer)
+        elif layer_id.startswith("waypoint-hologram-"):
+            buckets["hologram"].append(layer)
+        elif layer_id.startswith("waypoint-building"):
+            buckets["buildings"].append(layer)
+        elif layer_id in {"waypoint-boundaries", "waypoint-country-boundaries"}:
+            buckets["boundaries"].append(layer)
+        elif layer_id in label_names.values():
+            kind = next(kind for kind, label_id in label_names.items() if label_id == layer_id)
+            label_buckets[kind].append(layer)
+        else:
+            road_group = next((group for group in ROAD_GROUPS if layer_id.startswith(f"waypoint-{group}-")), None)
+            if road_group:
+                road_buckets[road_group].append(layer)
+            elif layer_id == "waypoint-bridge-structure":
+                buckets["roads"].append(layer)
+            else:
+                raise ValueError(f"Unclassified map layer in {name}: {layer_id}")
+
+    if sorted(label_names) != sorted(recipe["label_order"]):
+        raise ValueError(f"Invalid label priority for {name}")
+    result = list(buckets["background"])
+    result.extend(buckets["terrain"])
+    for group in recipe["land_order"]:
+        result.extend(buckets[group])
+    for group in recipe["feature_order"]:
+        result.extend(buckets[group])
+    for group in recipe["road_order"]:
+        result.extend(road_buckets[group])
+    result.extend(buckets["roads"])
+    for kind in recipe["label_order"]:
+        result.extend(label_buckets[kind])
+
+    if len(result) != len(layers):
+        raise ValueError(f"The layer hierarchy dropped or duplicated layers in {name}")
+    return result
+
+
+def build_style(name: str, night: bool, holographic: bool = False) -> dict:
+    colors = colors_for(THEMES[name], night)
+    layers, sources = build_layers(name, colors, PROFILES[name], holographic)
+    title = name.replace("_", " ").title()
+    mode = "Dark Zone Hologram" if holographic else title
+    phase = "Night" if night else "Day"
+    return {
+        "version": 8,
+        "name": f"Waypoint · {mode} · {phase}",
+        "metadata": {
+            "waypoint:authored": True,
+            "waypoint:theme": name,
+            "waypoint:phase": phase.lower(),
+            "waypoint:grammar": RECIPES[name]["detail"],
+            "waypoint:land-order": ",".join(RECIPES[name]["land_order"]),
+            "waypoint:feature-order": ",".join(RECIPES[name]["feature_order"]),
+            "waypoint:road-order": ",".join(RECIPES[name]["road_order"]),
+            "waypoint:label-priority": ",".join(RECIPES[name]["label_order"]),
+            "waypoint:material": THEMES[name]["material"],
+            "waypoint:holographic": holographic,
+            "maplibre:autocomposite": False,
+        },
+        # Keep local custom typefaces where bundled; MapGlyphs falls back to
+        # OpenFreeMap's Noto Sans for ranges a custom face does not contain.
+        "glyphs": "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+        "sources": sources,
+        "layers": layers,
+    }
+
+
+def main() -> None:
+    if len(THEMES) != 38 or set(THEMES) != set(PROFILES) or set(THEMES) != set(RECIPES):
+        raise ValueError("World catalogue, palettes, cartography profiles and style recipes must contain the same 38 worlds")
+    signatures = {
+        name: tuple((layer["id"], layer["type"], layer.get("source-layer"),
+                     json.dumps(layer.get("filter"), sort_keys=True))
+                   for layer in build_style(name, False)["layers"])
+        for name in THEMES
+    }
+    if len(set(signatures.values())) != 38:
+        raise ValueError("Every world must have a structurally distinct ordered map grammar")
+    for name in THEMES:
+        if signatures[name] != tuple((layer["id"], layer["type"], layer.get("source-layer"),
+                                      json.dumps(layer.get("filter"), sort_keys=True))
+                                     for layer in build_style(name, True)["layers"]):
+            raise ValueError(f"Day and night map layer structure drifted for {name}")
+    STYLE_DIR.mkdir(parents=True, exist_ok=True)
+    generated: set[str] = set()
+    for name in THEMES:
+        styles = [(f"{name}.json", build_style(name, False, holographic=False)),
+                  (f"{name}_night.json", build_style(name, True, holographic=False))]
+        if name == "division":
+            styles.extend([
+                ("division_holo.json", build_style(name, False, holographic=True)),
+                ("division_holo_night.json", build_style(name, True, holographic=True)),
+            ])
+        for filename, style in styles:
+            (STYLE_DIR / filename).write_text(json.dumps(style, separators=(",", ":")) + "\n")
+            generated.add(filename)
+    for path in STYLE_DIR.glob("*.json"):
+        if path.name not in generated:
+            path.unlink()
+    print(f"Generated {len(generated)} original styles for {len(THEMES)} worlds; no preset theme input")
+
+
+if __name__ == "__main__":
+    main()

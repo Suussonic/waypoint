@@ -1,11 +1,15 @@
 package com.waypoint.app
 
 import androidx.car.app.HostInfo
+import androidx.car.app.ScreenManager
 import androidx.car.app.navigation.model.MessageInfo
 import androidx.car.app.navigation.model.NavigationTemplate
 import androidx.car.app.navigation.model.RoutingInfo
 import androidx.car.app.navigation.model.Maneuver as CarManeuver
 import androidx.car.app.model.MessageTemplate
+import androidx.car.app.model.ListTemplate
+import androidx.car.app.model.Row
+import androidx.car.app.navigation.model.MapWithContentTemplate
 import androidx.car.app.model.SearchTemplate
 import androidx.car.app.testing.ScreenController
 import androidx.car.app.testing.TestCarContext
@@ -14,8 +18,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertThrows
+import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -63,6 +69,7 @@ class CarCompatibilityTest {
         assertEquals(listOf("Search", "Destinations", "Settings"),
             template.actionStrip!!.actions.map { it.title?.toString() })
         assertEquals("Search places", search.searchHint)
+        assertFalse("Keep the keyboard closed until the driver opens search",search.isShowKeyboardByDefault)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -77,6 +84,7 @@ class CarCompatibilityTest {
         val turn=Maneuver(start,"roundabout","left","Grand Road",100.0,20.0,exit=2)
         val arrive=Maneuver(target,"arrive","","",0.0,0.0)
         val route=RoadRoute(listOf(start,target),listOf(turn,arrive),900.0,110.0)
+        val alternate=route.copy(meters=1200.0,seconds=140.0)
         val progress=RouteProgress(100.0,800.0,95.0,0.0,0,80.0,start)
         instrumentation.runOnMainSync {
             val carContext=TestCarContext.createCarContext(context)
@@ -85,10 +93,10 @@ class CarCompatibilityTest {
             screenController.moveToState(Lifecycle.State.RESUMED)
             try {
                 state.value=NavState(world=World.OLD_WEST,fix=start,gpsReady=true,
-                    selected=place,route=route)
+                    selected=place,route=route,routeOptions=listOf(route,alternate))
                 val preview=screen.onGetTemplate() as NavigationTemplate
                 assertEquals(place.name,(preview.navigationInfo as MessageInfo).title.toString())
-                assertEquals(listOf("Start","Cancel"),preview.actionStrip!!.actions.map { it.title.toString() })
+                assertEquals(listOf("Routes","Start","Cancel"),preview.actionStrip!!.actions.map { it.title.toString() })
 
                 state.value=state.value.copy(navigating=true,progress=progress,voice=false)
                 val active=screen.onGetTemplate() as NavigationTemplate
@@ -114,6 +122,87 @@ class CarCompatibilityTest {
                 state.value=original
                 screenController.moveToState(Lifecycle.State.DESTROYED)
             }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Test fun carRoutePickerShowsAlternativesAndReturnsToTheMapAfterSelection() = instrumentation.runOnMainSync {
+        val app=context.applicationContext as WaypointApplication
+        val controller=app.navigation
+        val stateField=NavigationController::class.java.getDeclaredField("_state").apply { isAccessible=true }
+        val state=stateField.get(controller) as MutableStateFlow<NavState>
+        val original=state.value
+        val start=Coordinate(51.5000,-0.1200)
+        val destination=Coordinate(51.5050,-0.1150)
+        val place=Place("route-picker-test","Museum of Navigation","Test address",destination)
+        val primary=RoadRoute(listOf(start,destination),listOf(
+            Maneuver(start,"depart","","Grand Road",900.0,90.0),
+            Maneuver(destination,"arrive","","",0.0,0.0)),900.0,110.0)
+        val alternative=RoadRoute(listOf(start,Coordinate(51.5020,-0.1170),destination),listOf(
+            Maneuver(start,"depart","","Harbour Street",1100.0,120.0),
+            Maneuver(destination,"arrive","","",0.0,0.0)),1100.0,130.0)
+        val car=TestCarContext.createCarContext(context)
+        car.lifecycleOwner.registry.currentState=Lifecycle.State.RESUMED
+        val screens=car.getCarService(ScreenManager::class.java)
+        val root=WaypointCarWorldScreen(car)
+        screens.push(root)
+        try {
+            state.value=NavState(world=World.OLD_WEST,fix=start,gpsReady=true,
+                selected=place,route=primary,routeOptions=listOf(primary,alternative))
+            val picker=WaypointCarRouteOptionsScreen(car)
+            screens.push(picker)
+            val template=picker.onGetTemplate() as MapWithContentTemplate
+            val rows=template.contentTemplate.let { it as ListTemplate }.singleList!!.items.map { it as Row }
+            assertEquals(2,rows.size)
+            assertTrue(rows[0].title.toString().contains("min"))
+            assertTrue(rows[0].texts.any { it.toString().contains("Grand Road") })
+            assertTrue(rows[0].texts.any { it.toString().contains("Selected") })
+            rows[1].onClickDelegate!!.sendClick(object : androidx.car.app.OnDoneCallback {
+                override fun onFailure(response: androidx.car.app.serialization.Bundleable) { fail("Route selection failed") }
+            })
+            assertSame(alternative,controller.state.value.route)
+            assertSame(root,screens.top)
+        } finally {
+            state.value=original
+            screens.popToRoot()
+            car.lifecycleOwner.registry.currentState=Lifecycle.State.DESTROYED
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Test fun staleCarRouteChoiceCannotReplaceANewerDestination() = instrumentation.runOnMainSync {
+        val controller=(context.applicationContext as WaypointApplication).navigation
+        val stateField=NavigationController::class.java.getDeclaredField("_state").apply { isAccessible=true }
+        val state=stateField.get(controller) as MutableStateFlow<NavState>
+        val original=state.value
+        val start=Coordinate(51.5000,-0.1200)
+        val first=Place("first-destination","First place","First address",Coordinate(51.5050,-0.1150))
+        val second=Place("second-destination","Second place","Second address",Coordinate(51.5100,-0.1100))
+        val route=RoadRoute(listOf(start,first.point),listOf(Maneuver(first.point,"arrive","","",0.0,0.0)),900.0,110.0)
+        val alternative=route.copy(meters=1100.0,seconds=130.0)
+        val replacement=RoadRoute(listOf(start,second.point),listOf(Maneuver(second.point,"arrive","","",0.0,0.0)),1500.0,180.0)
+        val car=TestCarContext.createCarContext(context)
+        car.lifecycleOwner.registry.currentState=Lifecycle.State.RESUMED
+        val screens=car.getCarService(ScreenManager::class.java)
+        val root=WaypointCarWorldScreen(car)
+        screens.push(root)
+        try {
+            state.value=NavState(world=World.OLD_WEST,fix=start,gpsReady=true,
+                selected=first,route=route,routeOptions=listOf(route,alternative))
+            val picker=WaypointCarRouteOptionsScreen(car)
+            screens.push(picker)
+            val rows=(picker.onGetTemplate() as MapWithContentTemplate).contentTemplate
+                .let { it as ListTemplate }.singleList!!.items.map { it as Row }
+            state.value=state.value.copy(selected=second,route=replacement,routeOptions=listOf(replacement))
+            rows[1].onClickDelegate!!.sendClick(object : androidx.car.app.OnDoneCallback {
+                override fun onFailure(response: androidx.car.app.serialization.Bundleable) { fail("Stale route callback failed") }
+            })
+            assertSame(replacement,controller.state.value.route)
+            assertSame(picker,screens.top)
+        } finally {
+            state.value=original
+            screens.popToRoot()
+            car.lifecycleOwner.registry.currentState=Lifecycle.State.DESTROYED
         }
     }
 

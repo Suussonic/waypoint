@@ -41,11 +41,6 @@ class OnboardingIssuesTest {
             inst.runOnMainSync { controller.clearDestination() }
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
                 repeat(3) { continuePage() }
-                val twitter = device.wait(Until.findObject(By.text("Twitter / X")), 5000)
-                assertNotNull(twitter); twitter!!.click()
-                assertTrue(device.wait(Until.hasObject(By.desc("Continue").enabled(true)), 3000))
-                device.takeScreenshot(File(output, "referral-twitter.png"))
-                continuePage()
                 assertTrue(device.wait(Until.hasObject(By.text(context.getString(R.string.favorite_games_question))), 5000))
                 device.findObject(By.text("Red Dead Redemption 2")).click()
                 device.findObject(By.text("Minecraft")).click()
@@ -55,7 +50,7 @@ class OnboardingIssuesTest {
                 assertTrue(device.wait(Until.hasObject(By.text("1 selected")), 3000))
                 device.findObject(By.text("Red Dead Redemption 2")).click()
                 device.pressBack()
-                assertTrue(device.wait(Until.hasObject(By.text("Twitter / X")), 5000))
+                assertTrue(device.wait(Until.hasObject(By.text("your phone")), 5000))
                 continuePage()
                 assertTrue(device.wait(Until.hasObject(By.text("2 selected")), 3000))
                 scenario.recreate()
