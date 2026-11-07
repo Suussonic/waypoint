@@ -42,16 +42,16 @@ Local release builds accept `WAYPOINT_KEYSTORE`, `WAYPOINT_STORE_PASSWORD`, `WAY
 ## Publish an update
 
 1. Change `version.properties`. Use a stable `major.minor.patch` version, with each part from 0–999. Set `VERSION_CODE = major × 1,000,000 + minor × 1,000 + patch`. This matches the updater in the published app, which checks the APK code against the release tag. Always increase the code; `1.5.0` uses `1005000`.
-2. Write the detailed notes to `docs/releases/<version>.md`, copy them to `docs/releases/current.md`, `app/src/main/assets/release-notes.md` and `app/src/main/assets/release-notes-<version>.md`, update `CHANGELOG.md`, then add the version to `ReleaseNotesHistory.kt`. The bundled current copy powers the post-update What’s New screen; the GitHub release body powers the updater and release page. `scripts/check_version.py` requires the versioned page and both bundled copies to match. Update UI tests/screenshots when behavior or appearance changes.
-3. Open and review the change through the normal PR process. After it is merged to `main`, the Android workflow builds, tests, lints, signs and saves the APK. On success, the Release workflow verifies that exact run, waits for the configured owner approval, then publishes the version tag, APK, checksum and release notes:
+2. Write release-specific notes to `docs/releases/<version>.md`, copy them to `docs/releases/current.md`, `app/src/main/assets/release-notes.md` and `app/src/main/assets/release-notes-<version>.md`, then add the version to `ReleaseNotesHistory.kt`. Credit issue reporters in these notes, with links to their reports. Add a new top section to `CHANGELOG.md` and refresh the README’s **What’s new** summary and source-tree version for every release; keep user credits out of the README. The bundled current copy powers the post-update What’s New screen; the GitHub release body powers the updater and release page. `scripts/check_version.py` checks the note copies, history, README and changelog against the version and rejects a reused previous note body. Update UI tests/screenshots when behavior or appearance changes.
+3. Build and test the app before promoting to `dev`: run the local Gradle build, unit tests and lint, then exercise relevant flows on a connected device or emulator for UI changes. Inspect portrait and landscape captures where layout changed. Review the tested branch in a PR to `dev`, wait for its site checks after merging, then review a `dev` to `main` PR. After merging to `main`, the Android workflow builds, tests, lints, signs and saves the APK. On success, the Release workflow verifies that exact run, waits for the configured owner approval, then publishes the version tag, APK, checksum and release notes:
 
 ```sh
 python3 scripts/check_version.py
 ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 # Example only: first update version.properties and all release-note copies.
-git add version.properties CHANGELOG.md docs/releases app/src/main/assets/release-notes*.md app/src/main/java/com/waypoint/app/updates/ReleaseNotesHistory.kt
-git commit -m "Prepare Waypoint 2.5.0 release"
-git push origin dev
+git add version.properties README.md CHANGELOG.md docs/releases app/src/main/assets/release-notes*.md app/src/main/java/com/waypoint/app/updates/ReleaseNotesHistory.kt app/src/test/java/com/waypoint/app/ReleaseNotesHistoryTest.kt
+git commit -m "Prepare Waypoint release"
+git push
 ```
 
 Watch the PR source checks. After merge, confirm the `Android` workflow passed and approve the protected `Release` job. Verify the published APK, checksum and notes on the GitHub release page. Keep release tags immutable. Use a new patch version for corrections; never replace an already-published APK.

@@ -45,11 +45,11 @@ Every world has a Waypoint-authored palette, typography, road hierarchy, map mat
 | Exclusion Zone | S.T.A.L.K.E.R.: Shadow of Chernobyl |
 | Machine Atlas | NieR:Automata |
 
-Names identify the inspiration for each original Waypoint treatment. They do not indicate endorsement, affiliation or included game assets.
+Names identify each map's inspiration. They do not indicate endorsement or affiliation. Night City's documented Cyberpunk 2077 place glyphs are the only game map icons included.
 
 ## Symbols and legend
 
-Each world has its own original 13-category POI atlas and destination marker, with separate day and night variants. The Map info control explains the symbols for the current world. The key includes mapped places, food, cafes, pubs, lodging, fuel, parking, shops, sights, health, nature, cash and schools. Which points appear depends on the live map data and zoom level.
+Each world has a 49-category POI atlas and a separate destination marker, with day and night variants. Most icon artwork is original Waypoint work; Night City uses seven documented game glyphs for ten directly matching categories. The Map info control explains the symbols for the current world. Which places appear depends on the live map data and zoom level.
 
 ## Day and night
 

@@ -275,11 +275,16 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
         CompositionLocalProvider(LocalPageSystemBarSurface provides { pageSystemBarSurface=it }) {
         BoxWithConstraints(Modifier.fillMaxSize().background(Ink)) {
             val wide=maxWidth>=600.dp
+            val landscape=maxWidth>maxHeight
             val compactHeight=maxHeight<500.dp
             val density=LocalDensity.current
             val largeText=density.fontScale>1.3f
-            val adaptivePreview=state.selected!=null && !state.navigating && (compactHeight || largeText)
-            val sidePreview=adaptivePreview && wide && !largeText
+            val adaptivePreview=state.selected!=null && !state.navigating && (compactHeight || landscape || largeText)
+            val mapContentWidth=maxWidth-(if(wide && !state.navigating && !welcomeVisible)80.dp else 0.dp)
+            // Leave at least 300 dp for the map after the navigation rail.
+            val sidePreviewWidth=if(adaptivePreview && landscape && wide && mapContentWidth>=600.dp)
+                minOf(if(density.fontScale>=1.75f)420.dp else 360.dp,mapContentWidth-300.dp) else null
+            val sidePreview=sidePreviewWidth!=null
             val edge=with(density){28.dp.toPx()}
             val systemBottom=WindowInsets.navigationBars.getBottom(density)
             val routeInsets=if(sidePreview && !mapBounds.isEmpty && !routePanelBounds.isEmpty) {
@@ -289,11 +294,30 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 val top=(routeHeaderBounds.bottom-mapBounds.top+edge).coerceAtLeast(edge)
                 val right=if(compactHeight)(mapBounds.right-routePanelBounds.left+edge).coerceAtLeast(edge) else edge
                 val bottom=if(compactHeight)systemBottom+edge else (mapBounds.bottom-routePanelBounds.top+edge).coerceAtLeast(edge)
-                // Fit the clear middle in portrait, or the area below the left toolbar in landscape.
+                // Fit the clear middle of the portrait route preview.
                 if(top+bottom<mapBounds.height-32 && edge+right<mapBounds.width-32)
                     MapViewportInsets(edge.roundToInt(),top.roundToInt(),right.roundToInt(),bottom.roundToInt())
                 else null
             } else null
+            val scaleInsets=when {
+                routeInsets!=null -> routeInsets
+                state.navigating && !landscape && !mapBounds.isEmpty &&
+                    !routeHeaderBounds.isEmpty && !routePanelBounds.isEmpty -> {
+                    val top=(routeHeaderBounds.bottom-mapBounds.top+edge).coerceAtLeast(0f)
+                    val bottom=(mapBounds.bottom-routePanelBounds.top+edge).coerceAtLeast(0f)
+                    if(top+bottom+with(density){80.dp.toPx()}<mapBounds.height)
+                        MapViewportInsets(0,top.roundToInt(),0,bottom.roundToInt())
+                    else null
+                }
+                else -> null
+            }
+            val scaleFits=scaleInsets==null || mapBounds.isEmpty ||
+                (mapBounds.height-scaleInsets.top-scaleInsets.bottom>with(density){72.dp.toPx()} &&
+                    mapBounds.width-scaleInsets.left-scaleInsets.right>
+                        with(density){(if(compactHeight)160.dp else 180.dp).toPx()})
+            val scaleVisible=tab==0 && !welcomeVisible && !search && !settings && !steps && scaleFits &&
+                (!adaptivePreview || sidePreview) &&
+                (state.selected==null || scaleInsets!=null || state.navigating && landscape)
             Row(Modifier.fillMaxSize()) {
                 if(wide && !state.navigating && !welcomeVisible) NavigationRail(containerColor=Ink,modifier=Modifier.statusBarsPadding()) {
                     if(!compactHeight) { Spacer(Modifier.height(16.dp));Icon(Icons.Default.Navigation,"Waypoint",tint=WaypointColors.accent);Spacer(Modifier.height(32.dp)) }
@@ -309,20 +333,23 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 }) { padding ->
                     Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
                         // Keep the native map alive when switching destinations; hide other screens above it.
-                        if(!welcomeVisible) WorldMap(state,{choose(it)},{mapError=it},Modifier.fillMaxSize().onGloballyPositioned{mapBounds=it.boundsInRoot()},active=tab==0 && !search && !settings && !steps,routeInsets=routeInsets,onAwayFromUser={awayFromUser=it},onSelectRoute={ index -> if(state.navigating)controller.switchToAlternate(index) else controller.selectRouteOption(index) })
+                        if(!welcomeVisible) WorldMap(state,{choose(it)},{mapError=it},Modifier.fillMaxSize().onGloballyPositioned{mapBounds=it.boundsInRoot()},active=tab==0 && !search && !settings && !steps,routeInsets=routeInsets,onAwayFromUser={awayFromUser=it},onSelectRoute={ index -> if(state.navigating)controller.switchToAlternate(index) else controller.selectRouteOption(index) },showScaleBar=scaleVisible,scaleBarInsets=scaleInsets)
                         Box(Modifier.fillMaxWidth().height(36.dp).background(Brush.verticalGradient(listOf(Color.Black.copy(alpha=0.6f),Color.Transparent))))
                         if(!welcomeVisible && (tab==0 || state.navigating)) {
-                            Box(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+                            BoxWithConstraints(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+                                val overlayWidth=maxWidth
+                                val overlayHeight=maxHeight
                                 val atlasActions=AtlasActions({search=true},{tab=1},{tab=2},{settings=true},
                                     {locate()},controller::toggleTilt,controller::toggleVoice,
                                     {query->search=true;controller.search(query)},awayFromUser=awayFromUser)
                                 if(!state.navigating && state.selected==null) {
-                                    GameAtlasChrome(state,atlasActions,Modifier.padding(bottom=48.dp))
+                                    GameAtlasChrome(state,atlasActions,Modifier.padding(bottom=if(landscape)0.dp else 48.dp))
                                     if(mapError!=null)Notice(mapError!!,Icons.Default.CloudOff)
                                 } else if(adaptivePreview) {
                                     AdaptiveRoutePreview(state,
                                         modifier=Modifier.align(if(sidePreview)Alignment.CenterEnd else Alignment.Center)
-                                            .fillMaxWidth(if(sidePreview).58f else 1f).fillMaxHeight()
+                                            .then(if(sidePreview)Modifier.width(sidePreviewWidth) else Modifier.fillMaxWidth())
+                                            .fillMaxHeight()
                                             .onGloballyPositioned { routePanelBounds=it.boundsInRoot() },
                                         onBack=controller::clearDestination,onSettings={settings=true},onMode=controller::changeMode,
                                         onLocate=::locate,onSave={controller.toggleSaved(state.selected!!)},
@@ -332,7 +359,31 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                                         },onSteps={steps=true},
                                         onSelectRoute=controller::selectRouteOption,
                                         onQuest={if(!state.carConnected){questSeed=state.selected;questEntry++};selectTab(3)},
-                                        onShare={externalPlace=state.selected},mapError=mapError)
+                                        onShare={externalPlace=state.selected},mapError=mapError,
+                                        compactLandscape=sidePreview)
+                                } else if(state.navigating && landscape) {
+                                    AtlasFrame(state.world)
+                                    Column(Modifier.align(Alignment.TopStart)
+                                        .width(minOf(400.dp,overlayWidth/2-16.dp))
+                                        .onGloballyPositioned { routeHeaderBounds=it.boundsInRoot() }
+                                        .padding(start=16.dp,top=12.dp)
+                                        .heightIn(max=overlayHeight*0.5f)
+                                        .verticalScroll(rememberScrollState()),
+                                        verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                                        CompactLandscapeNavBanner(state,{steps=true},{selectTab(1)})
+                                        when {
+                                            mapError!=null -> Notice(mapError!!,Icons.Default.CloudOff)
+                                            !state.gpsReady -> Notice(state.gpsStatus,Icons.Default.GpsOff)
+                                            state.routeError!=null -> Notice("Reroute unavailable. ${state.routeError}",Icons.Default.CloudOff)
+                                        }
+                                    }
+                                    Box(Modifier.align(Alignment.BottomEnd)
+                                        .width(minOf(384.dp,overlayWidth/2-32.dp))
+                                        .onGloballyPositioned { routePanelBounds=it.boundsInRoot() }
+                                        .padding(end=16.dp,bottom=12.dp)) {
+                                        CompactLandscapeNavFooter(state,{steps=true},{controller.stopNavigation()},
+                                            controller::toggleVoice,atlasActions.locate,Modifier.fillMaxWidth())
+                                    }
                                 } else {
                                     AtlasFrame(state.world)
                                     Column(Modifier.align(Alignment.TopStart).fillMaxWidth(if(compactHeight)0.5f else 1f).onGloballyPositioned{routeHeaderBounds=it.boundsInRoot()}.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
@@ -345,7 +396,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                                     }
                                     Column(Modifier.align(if(compactHeight)Alignment.BottomEnd else Alignment.BottomCenter).fillMaxWidth(if(compactHeight)0.48f else 1f).onGloballyPositioned{routePanelBounds=it.boundsInRoot()}.padding(horizontal=if(state.navigating)0.dp else 16.dp).padding(bottom=if(state.navigating)0.dp else 56.dp).then(if(compactHeight)Modifier.heightIn(max=300.dp).verticalScroll(rememberScrollState()) else Modifier),verticalArrangement=Arrangement.spacedBy(10.dp)) {
                                         if(state.navigating && awayFromUser) Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.Center) { RecentrePill(state.world,atlasActions.locate) }
-                                        if(state.navigating) NavSideControls(state,controller::toggleVoice,atlasActions.locate)
+                                        if(state.navigating) NavSideControls(state,controller::toggleVoice,atlasActions.locate,{selectTab(1)})
                                         if(!state.navigating && !state.gpsReady) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.Bottom) {
                                             FixLabel(state,Modifier.weight(1f))
                                             if(state.navigating) AtlasTool(state.world,if(state.voice)Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,if(state.voice)"Mute guidance" else "Unmute guidance",controller::toggleVoice)
@@ -418,6 +469,27 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 SettingRow("World voice style","Give each world its own spoken wording and delivery on your device's speech voice. Turn it off for standard instructions.",state.gameVoice,controller::toggleGameVoice)
                 SettingRow("Miles & feet","Use imperial distances",state.imperial,controller::toggleUnits)
                 SettingRow("3D perspective","Tilt the map in every world",state.tilted,controller::toggleTilt)
+                HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
+                Text("Map controls", style=MaterialTheme.typography.titleMedium)
+                Text("These presets affect controls floating over the phone map.",
+                    style=MaterialTheme.typography.bodySmall, color=Muted)
+                Text("Size", style=MaterialTheme.typography.titleSmall)
+                FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),
+                    verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                    HudSize.entries.forEach { size ->
+                        FilterChip(selected=state.hudSize==size,onClick={controller.setHudSize(size)},
+                            label={Text(size.label)},modifier=Modifier.heightIn(min=48.dp))
+                    }
+                }
+                Text("Side", style=MaterialTheme.typography.titleSmall)
+                FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),
+                    verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                    listOf<Pair<HudSide?,String>>(null to "Original", HudSide.LEFT to "Left", HudSide.RIGHT to "Right")
+                        .forEach { (side,label) ->
+                            FilterChip(selected=state.hudSide==side,onClick={controller.setHudSide(side)},
+                                label={Text(label)},modifier=Modifier.heightIn(min=48.dp))
+                        }
+                }
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 AndroidAutoSettingsPanel(state.carConnected,controller.hasLocationPermission(),state.navigating,
                     onLocation={context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))},

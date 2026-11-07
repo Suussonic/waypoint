@@ -105,6 +105,8 @@ private fun buildHudPalette(world:World,isNight:Boolean):HudPalette {
     World.HEAT->HudPalette(Color(0xF2191427),Color(0xFFFFF0FB),Color(0xFF9CF5F7),Color(0xFFD7B6D4))
         else->HudPalette(Color(0xF2191B1B),Color(0xFFF5F5F0),Color(0xFFB6DB91),Color(0xFFC0C5BF))
     }
+    // The Machine Atlas accent is its restrained rust; the paper HUD stays warm all day.
+    if(world==World.NIER)return base
     val brandBase=base.copy(accent=questInk(WaypointColors.accent,base.panel.copy(alpha=1f)))
     if(!isNight)return brandBase
     val nightSurface=blendHudColor(brandBase.panel.copy(alpha=1f),Color(0xFF071018),.72f).copy(alpha=.97f)

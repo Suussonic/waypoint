@@ -1,0 +1,1918 @@
+{
+  "day": {
+    "order": [
+      "waypoint-ground",
+      "waypoint-land-residential",
+      "waypoint-land-urban",
+      "waypoint-land-amenities",
+      "waypoint-landcover-woodland",
+      "waypoint-landcover-open",
+      "waypoint-landcover-wetland",
+      "waypoint-landcover-bare",
+      "waypoint-land-park",
+      "waypoint-water",
+      "nc-water-grid",
+      "waypoint-waterways",
+      "waypoint-buildings",
+      "waypoint-building-extrusions",
+      "waypoint-aeroway",
+      "waypoint-aeroway-runways",
+      "waypoint-boundaries",
+      "waypoint-country-boundaries",
+      "waypoint-local-casing",
+      "glow-local",
+      "waypoint-local-roads",
+      "waypoint-local-tunnels",
+      "waypoint-path-roads",
+      "waypoint-primary-casing",
+      "glow-primary",
+      "waypoint-primary-roads",
+      "waypoint-primary-tunnels",
+      "waypoint-secondary-casing",
+      "glow-secondary",
+      "waypoint-secondary-roads",
+      "waypoint-secondary-tunnels",
+      "waypoint-rail-roads",
+      "waypoint-ferry-roads",
+      "waypoint-bridge-structure",
+      "waypoint-city-labels",
+      "waypoint-region-labels",
+      "waypoint-aerodrome-labels",
+      "waypoint-road-labels",
+      "waypoint-river-labels",
+      "waypoint-water-labels"
+    ],
+    "added": {
+      "nc-water-grid": {
+        "id": "nc-water-grid",
+        "type": "fill",
+        "source": "openmaptiles",
+        "source-layer": "water",
+        "paint": {
+          "fill-pattern": "nc-grid",
+          "fill-opacity": 1.0
+        }
+      },
+      "glow-local": {
+        "id": "glow-local",
+        "type": "line",
+        "source": "openmaptiles",
+        "source-layer": "transportation",
+        "layout": {
+          "line-cap": "square",
+          "line-join": "miter"
+        },
+        "paint": {
+          "line-color": "#14b6c4",
+          "line-width": [
+            "interpolate",
+            [
+              "linear"
+            ],
+            [
+              "zoom"
+            ],
+            5,
+            0.9,
+            10,
+            1.8,
+            13,
+            3.6,
+            15,
+            7.8,
+            17,
+            16.2,
+            18,
+            27.0,
+            19,
+            43.5,
+            20,
+            66.0
+          ],
+          "line-opacity": 0.28,
+          "line-blur": 2.0
+        },
+        "filter": [
+          "all",
+          [
+            "any",
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "minor"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "service"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "residential"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "living_street"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "track"
+            ]
+          ],
+          [
+            "any",
+            [
+              "!",
+              [
+                "has",
+                "brunnel"
+              ]
+            ],
+            [
+              "!=",
+              [
+                "get",
+                "brunnel"
+              ],
+              "tunnel"
+            ]
+          ]
+        ]
+      },
+      "glow-primary": {
+        "id": "glow-primary",
+        "type": "line",
+        "source": "openmaptiles",
+        "source-layer": "transportation",
+        "layout": {
+          "line-cap": "square",
+          "line-join": "miter"
+        },
+        "paint": {
+          "line-color": "#14b6c4",
+          "line-width": [
+            "interpolate",
+            [
+              "linear"
+            ],
+            [
+              "zoom"
+            ],
+            5,
+            2.1,
+            10,
+            4.2,
+            13,
+            9.0,
+            15,
+            16.8,
+            17,
+            30.0,
+            18,
+            45.0,
+            19,
+            69.0,
+            20,
+            102.0
+          ],
+          "line-opacity": 0.28,
+          "line-blur": 2.0
+        },
+        "filter": [
+          "all",
+          [
+            "any",
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "motorway"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "motorway_link"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "trunk"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "trunk_link"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "primary"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "primary_link"
+            ]
+          ],
+          [
+            "any",
+            [
+              "!",
+              [
+                "has",
+                "brunnel"
+              ]
+            ],
+            [
+              "!=",
+              [
+                "get",
+                "brunnel"
+              ],
+              "tunnel"
+            ]
+          ]
+        ]
+      },
+      "glow-secondary": {
+        "id": "glow-secondary",
+        "type": "line",
+        "source": "openmaptiles",
+        "source-layer": "transportation",
+        "layout": {
+          "line-cap": "square",
+          "line-join": "miter"
+        },
+        "paint": {
+          "line-color": "#14b6c4",
+          "line-width": [
+            "interpolate",
+            [
+              "linear"
+            ],
+            [
+              "zoom"
+            ],
+            5,
+            1.5,
+            10,
+            3.0,
+            13,
+            6.6,
+            15,
+            12.6,
+            17,
+            22.5,
+            18,
+            34.5,
+            19,
+            54.0,
+            20,
+            81.0
+          ],
+          "line-opacity": 0.28,
+          "line-blur": 2.0
+        },
+        "filter": [
+          "all",
+          [
+            "any",
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "secondary"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "secondary_link"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "tertiary"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "tertiary_link"
+            ]
+          ],
+          [
+            "any",
+            [
+              "!",
+              [
+                "has",
+                "brunnel"
+              ]
+            ],
+            [
+              "!=",
+              [
+                "get",
+                "brunnel"
+              ],
+              "tunnel"
+            ]
+          ]
+        ]
+      }
+    },
+    "changes": {
+      "waypoint-ground": {
+        "set": {
+          "paint": {
+            "background-color": "#0b1220"
+          }
+        },
+        "remove": []
+      },
+      "waypoint-land-residential": {
+        "set": {
+          "paint": {
+            "fill-color": "#0b1220",
+            "fill-opacity": 1
+          }
+        },
+        "remove": []
+      },
+      "waypoint-land-urban": {
+        "set": {
+          "paint": {
+            "fill-color": "#1a1522",
+            "fill-opacity": 1
+          }
+        },
+        "remove": []
+      },
+      "waypoint-water": {
+        "set": {
+          "paint": {
+            "fill-color": "#050a14",
+            "fill-opacity": 1.0,
+            "fill-outline-color": "#050a14"
+          }
+        },
+        "remove": []
+      },
+      "waypoint-building-extrusions": {
+        "set": {
+          "paint": {
+            "fill-extrusion-color": "#d1242f",
+            "fill-extrusion-height": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              14.2,
+              0,
+              15.5,
+              [
+                "coalesce",
+                [
+                  "get",
+                  "render_height"
+                ],
+                7
+              ]
+            ],
+            "fill-extrusion-base": [
+              "coalesce",
+              [
+                "get",
+                "render_min_height"
+              ],
+              0
+            ],
+            "fill-extrusion-opacity": 0.95,
+            "fill-extrusion-vertical-gradient": true
+          }
+        },
+        "remove": []
+      },
+      "waypoint-local-casing": {
+        "set": {
+          "paint": {
+            "line-color": "#092934",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              1.554,
+              10,
+              1.908,
+              13,
+              2.616,
+              15,
+              4.268,
+              17,
+              7.572,
+              18,
+              11.82,
+              19,
+              18.31,
+              20,
+              27.16
+            ],
+            "line-opacity": 0
+          }
+        },
+        "remove": []
+      },
+      "waypoint-local-roads": {
+        "set": {
+          "paint": {
+            "line-color": "#46e6ee",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              0.3,
+              10,
+              0.6,
+              13,
+              1.2,
+              15,
+              2.6,
+              17,
+              5.4,
+              18,
+              9.0,
+              19,
+              14.5,
+              20,
+              22.0
+            ],
+            "line-opacity": 1.0
+          }
+        },
+        "remove": []
+      },
+      "waypoint-local-tunnels": {
+        "set": {
+          "paint": {
+            "line-color": "#286b78",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              0.3,
+              10,
+              0.6,
+              13,
+              1.2,
+              15,
+              2.6,
+              17,
+              5.4,
+              18,
+              9.0,
+              19,
+              14.5,
+              20,
+              22.0
+            ],
+            "line-opacity": 0.78,
+            "line-dasharray": [
+              1.2,
+              1.3
+            ]
+          }
+        },
+        "remove": []
+      },
+      "waypoint-path-roads": {
+        "set": {
+          "paint": {
+            "line-color": "#286b78",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              0.3,
+              10,
+              0.5,
+              13,
+              0.8,
+              15,
+              1.3,
+              17,
+              2.0,
+              18,
+              3.0,
+              19,
+              4.5,
+              20,
+              6.5
+            ],
+            "line-opacity": 1.0
+          }
+        },
+        "remove": []
+      },
+      "waypoint-primary-casing": {
+        "set": {
+          "paint": {
+            "line-color": "#092934",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              2.026,
+              10,
+              2.852,
+              13,
+              4.74,
+              15,
+              7.808,
+              17,
+              13.0,
+              18,
+              18.9,
+              19,
+              28.34,
+              20,
+              41.32
+            ],
+            "line-opacity": 0
+          }
+        },
+        "remove": []
+      },
+      "waypoint-primary-roads": {
+        "set": {
+          "paint": {
+            "line-color": "#46e6ee",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              0.7,
+              10,
+              1.4,
+              13,
+              3.0,
+              15,
+              5.6,
+              17,
+              10.0,
+              18,
+              15.0,
+              19,
+              23.0,
+              20,
+              34.0
+            ],
+            "line-opacity": 1.0
+          }
+        },
+        "remove": []
+      },
+      "waypoint-primary-tunnels": {
+        "set": {
+          "paint": {
+            "line-color": "#286b78",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              0.7,
+              10,
+              1.4,
+              13,
+              3.0,
+              15,
+              5.6,
+              17,
+              10.0,
+              18,
+              15.0,
+              19,
+              23.0,
+              20,
+              34.0
+            ],
+            "line-opacity": 0.78,
+            "line-dasharray": [
+              1.2,
+              1.3
+            ]
+          }
+        },
+        "remove": []
+      },
+      "waypoint-secondary-casing": {
+        "set": {
+          "paint": {
+            "line-color": "#092934",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              1.79,
+              10,
+              2.38,
+              13,
+              3.796,
+              15,
+              6.156,
+              17,
+              10.05,
+              18,
+              14.77,
+              19,
+              22.44,
+              20,
+              33.06
+            ],
+            "line-opacity": 0
+          }
+        },
+        "remove": []
+      },
+      "waypoint-secondary-roads": {
+        "set": {
+          "paint": {
+            "line-color": "#46e6ee",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              0.5,
+              10,
+              1.0,
+              13,
+              2.2,
+              15,
+              4.2,
+              17,
+              7.5,
+              18,
+              11.5,
+              19,
+              18.0,
+              20,
+              27.0
+            ],
+            "line-opacity": 1.0
+          }
+        },
+        "remove": []
+      },
+      "waypoint-secondary-tunnels": {
+        "set": {
+          "paint": {
+            "line-color": "#286b78",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              0.5,
+              10,
+              1.0,
+              13,
+              2.2,
+              15,
+              4.2,
+              17,
+              7.5,
+              18,
+              11.5,
+              19,
+              18.0,
+              20,
+              27.0
+            ],
+            "line-opacity": 0.78,
+            "line-dasharray": [
+              1.2,
+              1.3
+            ]
+          }
+        },
+        "remove": []
+      }
+    }
+  },
+  "night": {
+    "order": [
+      "waypoint-ground",
+      "waypoint-land-residential",
+      "waypoint-land-urban",
+      "waypoint-land-amenities",
+      "waypoint-landcover-woodland",
+      "waypoint-landcover-open",
+      "waypoint-landcover-wetland",
+      "waypoint-landcover-bare",
+      "waypoint-land-park",
+      "waypoint-water",
+      "nc-water-grid",
+      "waypoint-waterways",
+      "waypoint-buildings",
+      "waypoint-building-extrusions",
+      "waypoint-aeroway",
+      "waypoint-aeroway-runways",
+      "waypoint-boundaries",
+      "waypoint-country-boundaries",
+      "waypoint-local-casing",
+      "glow-local",
+      "waypoint-local-roads",
+      "waypoint-local-tunnels",
+      "waypoint-path-roads",
+      "waypoint-primary-casing",
+      "glow-primary",
+      "waypoint-primary-roads",
+      "waypoint-primary-tunnels",
+      "waypoint-secondary-casing",
+      "glow-secondary",
+      "waypoint-secondary-roads",
+      "waypoint-secondary-tunnels",
+      "waypoint-rail-roads",
+      "waypoint-ferry-roads",
+      "waypoint-bridge-structure",
+      "waypoint-city-labels",
+      "waypoint-region-labels",
+      "waypoint-aerodrome-labels",
+      "waypoint-road-labels",
+      "waypoint-river-labels",
+      "waypoint-water-labels"
+    ],
+    "added": {
+      "nc-water-grid": {
+        "id": "nc-water-grid",
+        "type": "fill",
+        "source": "openmaptiles",
+        "source-layer": "water",
+        "paint": {
+          "fill-pattern": "nc-grid",
+          "fill-opacity": 1.0
+        }
+      },
+      "glow-local": {
+        "id": "glow-local",
+        "type": "line",
+        "source": "openmaptiles",
+        "source-layer": "transportation",
+        "layout": {
+          "line-cap": "square",
+          "line-join": "miter"
+        },
+        "paint": {
+          "line-color": "#40d5e2",
+          "line-width": [
+            "interpolate",
+            [
+              "linear"
+            ],
+            [
+              "zoom"
+            ],
+            5,
+            0.9,
+            10,
+            1.8,
+            13,
+            3.6,
+            15,
+            7.8,
+            17,
+            16.2,
+            18,
+            27.0,
+            19,
+            43.5,
+            20,
+            66.0
+          ],
+          "line-opacity": 0.28,
+          "line-blur": 2.0
+        },
+        "filter": [
+          "all",
+          [
+            "any",
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "minor"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "service"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "residential"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "living_street"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "track"
+            ]
+          ],
+          [
+            "any",
+            [
+              "!",
+              [
+                "has",
+                "brunnel"
+              ]
+            ],
+            [
+              "!=",
+              [
+                "get",
+                "brunnel"
+              ],
+              "tunnel"
+            ]
+          ]
+        ]
+      },
+      "glow-primary": {
+        "id": "glow-primary",
+        "type": "line",
+        "source": "openmaptiles",
+        "source-layer": "transportation",
+        "layout": {
+          "line-cap": "square",
+          "line-join": "miter"
+        },
+        "paint": {
+          "line-color": "#40d5e2",
+          "line-width": [
+            "interpolate",
+            [
+              "linear"
+            ],
+            [
+              "zoom"
+            ],
+            5,
+            2.1,
+            10,
+            4.2,
+            13,
+            9.0,
+            15,
+            16.8,
+            17,
+            30.0,
+            18,
+            45.0,
+            19,
+            69.0,
+            20,
+            102.0
+          ],
+          "line-opacity": 0.28,
+          "line-blur": 2.0
+        },
+        "filter": [
+          "all",
+          [
+            "any",
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "motorway"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "motorway_link"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "trunk"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "trunk_link"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "primary"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "primary_link"
+            ]
+          ],
+          [
+            "any",
+            [
+              "!",
+              [
+                "has",
+                "brunnel"
+              ]
+            ],
+            [
+              "!=",
+              [
+                "get",
+                "brunnel"
+              ],
+              "tunnel"
+            ]
+          ]
+        ]
+      },
+      "glow-secondary": {
+        "id": "glow-secondary",
+        "type": "line",
+        "source": "openmaptiles",
+        "source-layer": "transportation",
+        "layout": {
+          "line-cap": "square",
+          "line-join": "miter"
+        },
+        "paint": {
+          "line-color": "#40d5e2",
+          "line-width": [
+            "interpolate",
+            [
+              "linear"
+            ],
+            [
+              "zoom"
+            ],
+            5,
+            1.5,
+            10,
+            3.0,
+            13,
+            6.6,
+            15,
+            12.6,
+            17,
+            22.5,
+            18,
+            34.5,
+            19,
+            54.0,
+            20,
+            81.0
+          ],
+          "line-opacity": 0.28,
+          "line-blur": 2.0
+        },
+        "filter": [
+          "all",
+          [
+            "any",
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "secondary"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "secondary_link"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "tertiary"
+            ],
+            [
+              "==",
+              [
+                "get",
+                "class"
+              ],
+              "tertiary_link"
+            ]
+          ],
+          [
+            "any",
+            [
+              "!",
+              [
+                "has",
+                "brunnel"
+              ]
+            ],
+            [
+              "!=",
+              [
+                "get",
+                "brunnel"
+              ],
+              "tunnel"
+            ]
+          ]
+        ]
+      }
+    },
+    "changes": {
+      "waypoint-ground": {
+        "set": {
+          "paint": {
+            "background-color": "#0a101a"
+          }
+        },
+        "remove": []
+      },
+      "waypoint-land-residential": {
+        "set": {
+          "paint": {
+            "fill-color": "#0a101a",
+            "fill-opacity": 1
+          }
+        },
+        "remove": []
+      },
+      "waypoint-land-urban": {
+        "set": {
+          "paint": {
+            "fill-color": "#16121c",
+            "fill-opacity": 1
+          }
+        },
+        "remove": []
+      },
+      "waypoint-land-amenities": {
+        "set": {
+          "paint": {
+            "fill-color": "#111d24",
+            "fill-opacity": 0.58
+          }
+        },
+        "remove": []
+      },
+      "waypoint-landcover-woodland": {
+        "set": {
+          "paint": {
+            "fill-color": "#132629",
+            "fill-opacity": 0.3
+          }
+        },
+        "remove": []
+      },
+      "waypoint-landcover-open": {
+        "set": {
+          "paint": {
+            "fill-color": "#122227",
+            "fill-opacity": 0.24599999999999997
+          }
+        },
+        "remove": []
+      },
+      "waypoint-landcover-wetland": {
+        "set": {
+          "paint": {
+            "fill-color": "#101f23",
+            "fill-opacity": 0.72
+          }
+        },
+        "remove": []
+      },
+      "waypoint-landcover-bare": {
+        "set": {
+          "paint": {
+            "fill-color": "#111c23",
+            "fill-opacity": 0.8
+          }
+        },
+        "remove": []
+      },
+      "waypoint-land-park": {
+        "set": {
+          "paint": {
+            "fill-color": "#132629",
+            "fill-opacity": 0.42,
+            "fill-outline-color": "#255963"
+          }
+        },
+        "remove": []
+      },
+      "waypoint-water": {
+        "set": {
+          "paint": {
+            "fill-color": "#050910",
+            "fill-opacity": 1.0,
+            "fill-outline-color": "#050910"
+          }
+        },
+        "remove": []
+      },
+      "waypoint-waterways": {
+        "set": {
+          "paint": {
+            "line-color": "#a5bce1",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5.0,
+              0.43,
+              10,
+              0.91,
+              14,
+              1.97,
+              18,
+              5.4
+            ],
+            "line-opacity": 0.92
+          }
+        },
+        "remove": []
+      },
+      "waypoint-buildings": {
+        "set": {
+          "paint": {
+            "fill-color": "#722027",
+            "fill-opacity": 0.78,
+            "fill-outline-color": "#54353d"
+          }
+        },
+        "remove": []
+      },
+      "waypoint-building-extrusions": {
+        "set": {
+          "paint": {
+            "fill-extrusion-color": "#aa262e",
+            "fill-extrusion-height": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              14.2,
+              0,
+              15.5,
+              [
+                "coalesce",
+                [
+                  "get",
+                  "render_height"
+                ],
+                7
+              ]
+            ],
+            "fill-extrusion-base": [
+              "coalesce",
+              [
+                "get",
+                "render_min_height"
+              ],
+              0
+            ],
+            "fill-extrusion-opacity": 0.95,
+            "fill-extrusion-vertical-gradient": true
+          }
+        },
+        "remove": []
+      },
+      "waypoint-aeroway": {
+        "set": {
+          "paint": {
+            "fill-color": "#132029",
+            "fill-opacity": 0.88
+          }
+        },
+        "remove": []
+      },
+      "waypoint-aeroway-runways": {
+        "set": {
+          "paint": {
+            "line-color": "#75bdcb",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5.0,
+              0.58,
+              10,
+              1.22,
+              14,
+              2.62,
+              18,
+              7.2
+            ],
+            "line-opacity": 0.74
+          }
+        },
+        "remove": []
+      },
+      "waypoint-boundaries": {
+        "set": {
+          "paint": {
+            "line-color": "#75bdcb",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              3,
+              0.35,
+              12,
+              0.8,
+              16,
+              1.1
+            ],
+            "line-opacity": 0.56
+          }
+        },
+        "remove": []
+      },
+      "waypoint-country-boundaries": {
+        "set": {
+          "paint": {
+            "line-color": "#75bdcb",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              2,
+              0.7,
+              8,
+              1.1
+            ],
+            "line-dasharray": [
+              2,
+              1.5
+            ],
+            "line-opacity": 0.72
+          }
+        },
+        "remove": []
+      },
+      "waypoint-local-casing": {
+        "set": {
+          "paint": {
+            "line-color": "#041015",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              1.554,
+              10,
+              1.908,
+              13,
+              2.616,
+              15,
+              4.268,
+              17,
+              7.572,
+              18,
+              11.82,
+              19,
+              18.31,
+              20,
+              27.16
+            ],
+            "line-opacity": 0
+          }
+        },
+        "remove": []
+      },
+      "waypoint-local-roads": {
+        "set": {
+          "paint": {
+            "line-color": "#2ed8e1",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              0.3,
+              10,
+              0.6,
+              13,
+              1.2,
+              15,
+              2.6,
+              17,
+              5.4,
+              18,
+              9.0,
+              19,
+              14.5,
+              20,
+              22.0
+            ],
+            "line-opacity": 1.0
+          }
+        },
+        "remove": []
+      },
+      "waypoint-local-tunnels": {
+        "set": {
+          "paint": {
+            "line-color": "#75bdcb",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              0.3,
+              10,
+              0.6,
+              13,
+              1.2,
+              15,
+              2.6,
+              17,
+              5.4,
+              18,
+              9.0,
+              19,
+              14.5,
+              20,
+              22.0
+            ],
+            "line-opacity": 0.78,
+            "line-dasharray": [
+              1.2,
+              1.3
+            ]
+          }
+        },
+        "remove": []
+      },
+      "waypoint-path-roads": {
+        "set": {
+          "paint": {
+            "line-color": "#75bdcb",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              0.3,
+              10,
+              0.5,
+              13,
+              0.8,
+              15,
+              1.3,
+              17,
+              2.0,
+              18,
+              3.0,
+              19,
+              4.5,
+              20,
+              6.5
+            ],
+            "line-opacity": 1.0
+          }
+        },
+        "remove": []
+      },
+      "waypoint-primary-casing": {
+        "set": {
+          "paint": {
+            "line-color": "#041015",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              2.026,
+              10,
+              2.852,
+              13,
+              4.74,
+              15,
+              7.808,
+              17,
+              13.0,
+              18,
+              18.9,
+              19,
+              28.34,
+              20,
+              41.32
+            ],
+            "line-opacity": 0
+          }
+        },
+        "remove": []
+      },
+      "waypoint-primary-roads": {
+        "set": {
+          "paint": {
+            "line-color": "#2ed8e1",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              0.7,
+              10,
+              1.4,
+              13,
+              3.0,
+              15,
+              5.6,
+              17,
+              10.0,
+              18,
+              15.0,
+              19,
+              23.0,
+              20,
+              34.0
+            ],
+            "line-opacity": 1.0
+          }
+        },
+        "remove": []
+      },
+      "waypoint-primary-tunnels": {
+        "set": {
+          "paint": {
+            "line-color": "#75bdcb",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              0.7,
+              10,
+              1.4,
+              13,
+              3.0,
+              15,
+              5.6,
+              17,
+              10.0,
+              18,
+              15.0,
+              19,
+              23.0,
+              20,
+              34.0
+            ],
+            "line-opacity": 0.78,
+            "line-dasharray": [
+              1.2,
+              1.3
+            ]
+          }
+        },
+        "remove": []
+      },
+      "waypoint-secondary-casing": {
+        "set": {
+          "paint": {
+            "line-color": "#041015",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              1.79,
+              10,
+              2.38,
+              13,
+              3.796,
+              15,
+              6.156,
+              17,
+              10.05,
+              18,
+              14.77,
+              19,
+              22.44,
+              20,
+              33.06
+            ],
+            "line-opacity": 0
+          }
+        },
+        "remove": []
+      },
+      "waypoint-secondary-roads": {
+        "set": {
+          "paint": {
+            "line-color": "#2ed8e1",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              0.5,
+              10,
+              1.0,
+              13,
+              2.2,
+              15,
+              4.2,
+              17,
+              7.5,
+              18,
+              11.5,
+              19,
+              18.0,
+              20,
+              27.0
+            ],
+            "line-opacity": 1.0
+          }
+        },
+        "remove": []
+      },
+      "waypoint-secondary-tunnels": {
+        "set": {
+          "paint": {
+            "line-color": "#75bdcb",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5,
+              0.5,
+              10,
+              1.0,
+              13,
+              2.2,
+              15,
+              4.2,
+              17,
+              7.5,
+              18,
+              11.5,
+              19,
+              18.0,
+              20,
+              27.0
+            ],
+            "line-opacity": 0.78,
+            "line-dasharray": [
+              1.2,
+              1.3
+            ]
+          }
+        },
+        "remove": []
+      },
+      "waypoint-rail-roads": {
+        "set": {
+          "paint": {
+            "line-color": "#75bdcb",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5.0,
+              0.18,
+              10,
+              0.35,
+              14,
+              0.65,
+              18,
+              0.62
+            ],
+            "line-opacity": 1.0,
+            "line-dasharray": [
+              3.2,
+              1.6
+            ]
+          }
+        },
+        "remove": []
+      },
+      "waypoint-ferry-roads": {
+        "set": {
+          "paint": {
+            "line-color": "#75bdcb",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5.0,
+              0.18,
+              10,
+              0.35,
+              14,
+              0.65,
+              18,
+              0.66
+            ],
+            "line-opacity": 0.84
+          }
+        },
+        "remove": []
+      },
+      "waypoint-bridge-structure": {
+        "set": {
+          "paint": {
+            "line-color": "#75bdcb",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              5.0,
+              0.21,
+              10,
+              0.44,
+              14,
+              0.94,
+              18,
+              2.59
+            ],
+            "line-opacity": 0.94
+          }
+        },
+        "remove": []
+      },
+      "waypoint-city-labels": {
+        "set": {
+          "paint": {
+            "text-color": "#dae5e7",
+            "text-halo-color": "#0d1016",
+            "text-halo-width": 1.8,
+            "text-halo-blur": 0.25
+          }
+        },
+        "remove": []
+      },
+      "waypoint-region-labels": {
+        "set": {
+          "paint": {
+            "text-color": "#dae5e7",
+            "text-halo-color": "#0d1016",
+            "text-halo-width": 1.8,
+            "text-halo-blur": 0.25
+          }
+        },
+        "remove": []
+      },
+      "waypoint-aerodrome-labels": {
+        "set": {
+          "paint": {
+            "text-color": "#dae5e7",
+            "text-halo-color": "#0d1016",
+            "text-halo-width": 1.8,
+            "text-halo-blur": 0.25
+          }
+        },
+        "remove": []
+      },
+      "waypoint-road-labels": {
+        "set": {
+          "paint": {
+            "text-color": "#dae5e7",
+            "text-halo-color": "#0d1016",
+            "text-halo-width": 1.8,
+            "text-halo-blur": 0.25
+          }
+        },
+        "remove": []
+      },
+      "waypoint-river-labels": {
+        "set": {
+          "paint": {
+            "text-color": "#dae5e7",
+            "text-halo-color": "#0d1016",
+            "text-halo-width": 1.8,
+            "text-halo-blur": 0.25
+          }
+        },
+        "remove": []
+      },
+      "waypoint-water-labels": {
+        "set": {
+          "paint": {
+            "text-color": "#dae5e7",
+            "text-halo-color": "#0d1016",
+            "text-halo-width": 1.8,
+            "text-halo-blur": 0.25
+          }
+        },
+        "remove": []
+      }
+    }
+  }
+}

@@ -1,0 +1,1780 @@
+{
+  "schema": 1,
+  "source_directory": "output/imagegen/poi-atlases-all",
+  "source_dimensions": [
+    1280,
+    2560
+  ],
+  "target_cell_pixels": 128,
+  "pillow_version": "13.0.0",
+  "excluded_worlds": {
+    "nier": "scripts/generate_map_assets.py (procedural Nier glyphs)",
+    "night_city": "scripts/generate_night_city_icons.py (authored third-party glyphs)"
+  },
+  "worlds": {
+    "aincrad": {
+      "sheet_sha256": "92ce3dc52b1d2451964cb0e221c385b5e611484232dc625e2cc2ae083ccb66ae",
+      "column_bounds": [
+        0,
+        258,
+        509,
+        760,
+        1010,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        279,
+        547,
+        815,
+        1082,
+        1348,
+        1612,
+        1874,
+        2130,
+        2363,
+        2560
+      ],
+      "overrides": {}
+    },
+    "assassin": {
+      "sheet_sha256": "cf136404c645c24d28c0e5142ca62bf1b39bf169f73de1937ee8b8c87cf3f3fa",
+      "column_bounds": [
+        0,
+        266,
+        514,
+        763,
+        1011,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        293,
+        567,
+        839,
+        1107,
+        1377,
+        1645,
+        1903,
+        2159,
+        2404,
+        2560
+      ],
+      "overrides": {
+        "car_repair": {
+          "kind": "sheet_crop",
+          "source_index": 42,
+          "bounds": [
+            514,
+            2159,
+            763,
+            2404
+          ]
+        },
+        "fire_station": {
+          "kind": "sheet_crop",
+          "source_index": 39,
+          "bounds": [
+            1011,
+            1903,
+            1280,
+            2159
+          ],
+          "keep_primary_component": true
+        },
+        "office": {
+          "kind": "sheet_crop",
+          "source_index": 43,
+          "bounds": [
+            763,
+            2159,
+            993,
+            2404
+          ]
+        },
+        "sports": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "ellipse",
+          "cover_box": [
+            34,
+            30,
+            94,
+            90
+          ],
+          "cover_fill": "#F4DEAA",
+          "ink": "#302718",
+          "accent": "#C79B49"
+        },
+        "stadium": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "ellipse",
+          "cover_box": [
+            34,
+            30,
+            94,
+            90
+          ],
+          "cover_fill": "#F4DEAA",
+          "ink": "#302718",
+          "accent": "#C79B49"
+        },
+        "train_station": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "ellipse",
+          "cover_box": [
+            34,
+            30,
+            94,
+            90
+          ],
+          "cover_fill": "#F4DEAA",
+          "ink": "#302718",
+          "accent": "#C79B49"
+        }
+      }
+    },
+    "bridges": {
+      "sheet_sha256": "c5049864ab54514ba450f2508f5eac17cdf201f37019fa101bd2fb2a630cf630",
+      "column_bounds": [
+        0,
+        262,
+        513,
+        765,
+        1013,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        287,
+        547,
+        813,
+        1081,
+        1346,
+        1611,
+        1876,
+        2134,
+        2383,
+        2560
+      ],
+      "overrides": {}
+    },
+    "counter_strike": {
+      "sheet_sha256": "4bc69002c9c9c718ee0c554e55ca3468b6b84c544510600d8bfceba11336e237",
+      "column_bounds": [
+        0,
+        264,
+        515,
+        765,
+        1015,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        280,
+        542,
+        804,
+        1067,
+        1330,
+        1593,
+        1856,
+        2119,
+        2374,
+        2560
+      ],
+      "overrides": {
+        "train_station": {
+          "kind": "sheet_crop",
+          "source_index": 44,
+          "bounds": [
+            1015,
+            2119,
+            1280,
+            2374
+          ],
+          "keep_primary_component": true
+        }
+      }
+    },
+    "ctos": {
+      "sheet_sha256": "d97c55f93f75beada9bdbb6979f2aabb9b97fb5885b63fe1a1819b48d2873336",
+      "column_bounds": [
+        0,
+        261,
+        508,
+        755,
+        1004,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        273,
+        535,
+        797,
+        1061,
+        1323,
+        1583,
+        1836,
+        2073,
+        2311,
+        2560
+      ],
+      "overrides": {}
+    },
+    "defcon": {
+      "sheet_sha256": "6dc872081c7166447f81f4f9eacfadc2922abec7e5c44ac557188f46e2ec4a83",
+      "column_bounds": [
+        0,
+        258,
+        507,
+        761,
+        1013,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        285,
+        549,
+        818,
+        1088,
+        1354,
+        1620,
+        1886,
+        2142,
+        2366,
+        2560
+      ],
+      "overrides": {}
+    },
+    "division": {
+      "sheet_sha256": "6b76dc5e670ae1e5a54e8ed81c13aec39bc93d53d7f1f62b8574148526cacdca",
+      "column_bounds": [
+        0,
+        254,
+        505,
+        758,
+        1011,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        279,
+        537,
+        795,
+        1053,
+        1314,
+        1576,
+        1837,
+        2093,
+        2335,
+        2560
+      ],
+      "overrides": {
+        "train_station": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "ellipse",
+          "cover_box": [
+            34,
+            31,
+            94,
+            91
+          ],
+          "cover_fill": "#25383F",
+          "ink": "#D7E5E4",
+          "accent": "#63AFBC"
+        }
+      }
+    },
+    "dos_atlas": {
+      "sheet_sha256": "a0a23b8d5421025f9dff9f03439eb6ae7f9d7ad3432fdc6103502aa4df71a19f",
+      "column_bounds": [
+        0,
+        262,
+        512,
+        762,
+        1012,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        318,
+        586,
+        855,
+        1123,
+        1393,
+        1662,
+        1931,
+        2200,
+        2415,
+        2560
+      ],
+      "overrides": {
+        "bus_stop": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "rectangle",
+          "cover_box": [
+            34,
+            33,
+            94,
+            94
+          ],
+          "cover_fill": "#0E0D08",
+          "ink": "#F6BB3D",
+          "accent": "#D68A19"
+        },
+        "car_repair": {
+          "kind": "sheet_crop",
+          "source_index": 42,
+          "bounds": [
+            512,
+            2200,
+            762,
+            2450
+          ]
+        },
+        "ferry_terminal": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "rectangle",
+          "cover_box": [
+            34,
+            33,
+            94,
+            94
+          ],
+          "cover_fill": "#0E0D08",
+          "ink": "#F6BB3D",
+          "accent": "#D68A19"
+        },
+        "office": {
+          "kind": "sheet_crop",
+          "source_index": 43,
+          "bounds": [
+            762,
+            2200,
+            992,
+            2450
+          ]
+        },
+        "place_of_worship": {
+          "kind": "sheet_crop",
+          "source_index": 41,
+          "bounds": [
+            262,
+            2200,
+            512,
+            2450
+          ]
+        },
+        "post_office": {
+          "kind": "sheet_crop",
+          "source_index": 40,
+          "bounds": [
+            0,
+            2200,
+            262,
+            2450
+          ]
+        },
+        "sports": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "rectangle",
+          "cover_box": [
+            34,
+            33,
+            94,
+            94
+          ],
+          "cover_fill": "#0E0D08",
+          "ink": "#F6BB3D",
+          "accent": "#D68A19"
+        },
+        "stadium": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "rectangle",
+          "cover_box": [
+            34,
+            33,
+            94,
+            94
+          ],
+          "cover_fill": "#0E0D08",
+          "ink": "#F6BB3D",
+          "accent": "#D68A19"
+        },
+        "train_station": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "rectangle",
+          "cover_box": [
+            34,
+            33,
+            94,
+            94
+          ],
+          "cover_fill": "#0E0D08",
+          "ink": "#F6BB3D",
+          "accent": "#D68A19"
+        }
+      }
+    },
+    "far_cry": {
+      "sheet_sha256": "3194c1d2c524ae73f777d113cdd448f547d8f427fbcb841c1dfd9fefe2cb8309",
+      "column_bounds": [
+        0,
+        256,
+        498,
+        740,
+        989,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        261,
+        511,
+        764,
+        1016,
+        1269,
+        1521,
+        1770,
+        2018,
+        2265,
+        2560
+      ],
+      "overrides": {
+        "car_repair": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/far_cry__car_repair.png",
+          "source_sha256": "b59e639a9db5a8c00872c84a7c07184d5ca77bf8c1338fb4187519a3699d1edc"
+        },
+        "fire_station": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/far_cry__fire_station.png",
+          "source_sha256": "8cbe855c248bd57816c78301321b80b51a49817444dd895967ed36c91fc68dc7"
+        },
+        "office": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/far_cry__office.png",
+          "source_sha256": "e8112a445f85843c96bc0e7ed7257ad21ec1e8f202e8ffdb57d14a3ce9f1f923"
+        },
+        "police": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/far_cry__police.png",
+          "source_sha256": "1c7e02d543e1ef21781980f2b8e758afd247d616242f37e9c5968653b9405020"
+        },
+        "sports": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/far_cry__sports.png",
+          "source_sha256": "65c328d03e4e4bb7f4c0ea2c838866f7807f54fa051d59fa66ef9bbe6473a7ba"
+        },
+        "train_station": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/far_cry__train_station.png",
+          "source_sha256": "c8e3f81f5be5ccbfb6fb904f51cadc95eab512156c27733c10dd16295a87275e"
+        }
+      }
+    },
+    "field_ops": {
+      "sheet_sha256": "d32ad5056d17403a48b6bf17b9d38f620562fc72a7821c3a43ccb7a163b685e0",
+      "column_bounds": [
+        0,
+        250,
+        493,
+        742,
+        995,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        273,
+        526,
+        778,
+        1031,
+        1284,
+        1536,
+        1785,
+        2033,
+        2282,
+        2560
+      ],
+      "overrides": {
+        "office": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/field_ops__office.png",
+          "source_sha256": "88c9a8bf6275ffce734f16c31bfcd295899fef3a7419e9dd2b7277a0616e7936"
+        },
+        "train_station": {
+          "kind": "sheet_crop",
+          "source_index": 44,
+          "bounds": [
+            995,
+            2033,
+            1280,
+            2282
+          ],
+          "keep_primary_component": true
+        }
+      }
+    },
+    "ghost": {
+      "sheet_sha256": "96fe58e6abbcd01ff37472141784b6f69f389c07e6d09961664ecb464bce3e1e",
+      "column_bounds": [
+        0,
+        257,
+        511,
+        765,
+        1018,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        263,
+        523,
+        784,
+        1046,
+        1305,
+        1564,
+        1825,
+        2085,
+        2341,
+        2560
+      ],
+      "overrides": {}
+    },
+    "green_terminal": {
+      "sheet_sha256": "eec41280af2608a76d68e4fd27dda3affe7449eaa65ab08b33a1274fbbd7df64",
+      "column_bounds": [
+        0,
+        259,
+        498,
+        748,
+        992,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        276,
+        536,
+        797,
+        1058,
+        1316,
+        1571,
+        1825,
+        2077,
+        2317,
+        2560
+      ],
+      "overrides": {
+        "train_station": {
+          "kind": "sheet_crop",
+          "source_index": 44,
+          "bounds": [
+            992,
+            2077,
+            1280,
+            2317
+          ],
+          "keep_primary_component": true
+        }
+      }
+    },
+    "heat": {
+      "sheet_sha256": "c08bdbd956a65aeec63bc4d4ba6962451c573f00b1a0718d4d2862d21bb5dbe3",
+      "column_bounds": [
+        0,
+        266,
+        512,
+        760,
+        1007,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        264,
+        517,
+        771,
+        1026,
+        1280,
+        1535,
+        1785,
+        2035,
+        2283,
+        2560
+      ],
+      "overrides": {}
+    },
+    "hogwarts": {
+      "sheet_sha256": "71559f949253ef6866081a669d6f051fe53fe0fda5d032a2aa0a156226c0e59d",
+      "column_bounds": [
+        0,
+        277,
+        520,
+        756,
+        993,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        279,
+        536,
+        797,
+        1057,
+        1316,
+        1574,
+        1828,
+        2081,
+        2319,
+        2560
+      ],
+      "overrides": {}
+    },
+    "home_console": {
+      "sheet_sha256": "0ed749bb3e4cc1a6a91d36af0abbe053545d53190d120ec8390bedfe872f08cd",
+      "column_bounds": [
+        0,
+        253,
+        496,
+        745,
+        994,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        303,
+        582,
+        860,
+        1139,
+        1417,
+        1691,
+        1959,
+        2199,
+        2387,
+        2560
+      ],
+      "overrides": {
+        "fire_station": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/home_console__fire_station.png",
+          "source_sha256": "b471f73402a313e3aac1f45cac846a90da7abc638b37dcf36114231adaf3ca08"
+        },
+        "garden": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/home_console__garden.png",
+          "source_sha256": "cdd2ea3af23fcf6f0cbac457c30158b055cafaf88bd9dfbfc5691602392eef0c"
+        },
+        "monument": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/home_console__monument.png",
+          "source_sha256": "9eced48707c7f03a50d6048c96a51cdf5802c02ed76740a4e7d851b488009a9e"
+        },
+        "playground": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/home_console__playground.png",
+          "source_sha256": "42527342b1291e53994ee65c1be2a7504a23eb38d9e391af23914a49719154a9"
+        },
+        "police": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/home_console__police.png",
+          "source_sha256": "84a03902df8dd8b2745aa59b39da1d4d27479b62f468bda84f47f3a2e7531e06"
+        },
+        "train_station": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/home_console__train_station.png",
+          "source_sha256": "d893830247bac3373954d6f0ae0fdfba13dc0352b0072a7b329bea4113763dc4"
+        },
+        "university": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/home_console__university.png",
+          "source_sha256": "f8f5b8a9e05d62133bf4a9517f97949f93b35486b13b1121297431f099a8ebfc"
+        }
+      }
+    },
+    "horizon": {
+      "sheet_sha256": "e3faafd1e2ea714246bf5c5e49261c31ad35b0d974906e67fe955816d9d706c8",
+      "column_bounds": [
+        0,
+        261,
+        507,
+        752,
+        998,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        273,
+        530,
+        785,
+        1040,
+        1295,
+        1551,
+        1806,
+        2056,
+        2295,
+        2560
+      ],
+      "overrides": {
+        "office": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/horizon__office.png",
+          "source_sha256": "4d96aea1346d908e0db3d8618ac78a7163872ceec39bf81020da8546d39773a0"
+        }
+      }
+    },
+    "horizon_wilds": {
+      "sheet_sha256": "35d0b0576065cbb109351d616de33050934f7ee7be522709c1e6b013f872c0b4",
+      "column_bounds": [
+        0,
+        255,
+        506,
+        757,
+        1008,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        272,
+        539,
+        800,
+        1062,
+        1315,
+        1571,
+        1827,
+        2084,
+        2327,
+        2560
+      ],
+      "overrides": {
+        "office": {
+          "kind": "sheet_crop",
+          "source_index": 48,
+          "bounds": [
+            757,
+            2327,
+            1008,
+            2560
+          ],
+          "keep_primary_component": true
+        },
+        "sports": {
+          "kind": "sheet_crop",
+          "source_index": 43,
+          "bounds": [
+            757,
+            2084,
+            1008,
+            2327
+          ],
+          "keep_primary_component": true
+        },
+        "train_station": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "ellipse",
+          "cover_box": [
+            34,
+            31,
+            94,
+            91
+          ],
+          "cover_fill": "#24352F",
+          "ink": "#E8D8AF",
+          "accent": "#A78647"
+        }
+      }
+    },
+    "hyrule": {
+      "sheet_sha256": "f28982f0be80eee3b4034e47cc5bf199a09f59d5bec8d943aac77e018c116fd9",
+      "column_bounds": [
+        0,
+        254,
+        508,
+        764,
+        1020,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        262,
+        517,
+        772,
+        1027,
+        1282,
+        1539,
+        1794,
+        2050,
+        2300,
+        2560
+      ],
+      "overrides": {
+        "office": {
+          "kind": "sheet_crop",
+          "source_index": 48,
+          "bounds": [
+            764,
+            2300,
+            1020,
+            2560
+          ],
+          "keep_primary_component": true,
+          "component_threshold": 32,
+          "component_diagonal": false
+        }
+      }
+    },
+    "just_cause": {
+      "sheet_sha256": "940a6ec336938b518d1866f9b66470c00501d16ba6e0f5dcfd2dbe4a3f511ca6",
+      "column_bounds": [
+        0,
+        266,
+        513,
+        760,
+        1008,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        282,
+        531,
+        781,
+        1030,
+        1280,
+        1529,
+        1778,
+        2027,
+        2275,
+        2560
+      ],
+      "overrides": {
+        "train_station": {
+          "kind": "sheet_crop",
+          "source_index": 44,
+          "bounds": [
+            1008,
+            2027,
+            1280,
+            2275
+          ],
+          "keep_primary_component": true
+        }
+      }
+    },
+    "kingdom": {
+      "sheet_sha256": "6b5dcab0fbca01c80553c51b773986ed790a1f808c90a944ae5ef3dc2e839b36",
+      "column_bounds": [
+        0,
+        256,
+        503,
+        750,
+        998,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        266,
+        522,
+        779,
+        1034,
+        1288,
+        1541,
+        1793,
+        2044,
+        2289,
+        2560
+      ],
+      "overrides": {
+        "car_repair": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/kingdom__car_repair.png",
+          "source_sha256": "7624f12d6df692291528c1447bb28cf27ca169767f6412db7829d9e1624fbcb4"
+        },
+        "office": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/kingdom__office.png",
+          "source_sha256": "10c9dabbf30ee15bd02c6092a1400c7c1132cdf9388c5236e7756f414f7991b8"
+        }
+      }
+    },
+    "lands_between": {
+      "sheet_sha256": "bd04c5691ddcbfe916bbb7915b4c46aab9ea9f9bd8cf550b2aacc608a93b94f4",
+      "column_bounds": [
+        0,
+        256,
+        511,
+        766,
+        1021,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        261,
+        516,
+        772,
+        1029,
+        1287,
+        1543,
+        1799,
+        2054,
+        2308,
+        2560
+      ],
+      "overrides": {
+        "office": {
+          "kind": "sheet_crop",
+          "source_index": 48,
+          "bounds": [
+            766,
+            2308,
+            1021,
+            2560
+          ],
+          "keep_primary_component": true
+        },
+        "train_station": {
+          "kind": "sheet_crop",
+          "source_index": 44,
+          "bounds": [
+            1021,
+            2054,
+            1280,
+            2308
+          ],
+          "keep_primary_component": true
+        }
+      }
+    },
+    "liberty": {
+      "sheet_sha256": "f0dfc3add905061b63b8dac91ab2b2ec22287b32d5d2a9d310a14bd191efc0e0",
+      "column_bounds": [
+        0,
+        245,
+        491,
+        745,
+        1001,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        278,
+        555,
+        832,
+        1108,
+        1385,
+        1658,
+        1928,
+        2192,
+        2395,
+        2560
+      ],
+      "overrides": {
+        "train_station": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "polygon",
+          "cover_fill": "#252624",
+          "ink": "#E7E9E7",
+          "accent": "#C29855",
+          "cover_points": [
+            [
+              45,
+              32
+            ],
+            [
+              83,
+              32
+            ],
+            [
+              89,
+              44
+            ],
+            [
+              92,
+              55
+            ],
+            [
+              82,
+              78
+            ],
+            [
+              64,
+              99
+            ],
+            [
+              46,
+              78
+            ],
+            [
+              36,
+              55
+            ],
+            [
+              39,
+              44
+            ]
+          ],
+          "glyph_scale": 0.9
+        }
+      }
+    },
+    "los_santos": {
+      "sheet_sha256": "7f1a24cad3c318954ba5cab4a2cd8e1a6f4e727cbba6d2f950e3cf66253d5ee6",
+      "column_bounds": [
+        0,
+        259,
+        511,
+        763,
+        1015,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        261,
+        516,
+        773,
+        1030,
+        1287,
+        1542,
+        1798,
+        2054,
+        2305,
+        2560
+      ],
+      "overrides": {}
+    },
+    "mafia": {
+      "sheet_sha256": "5d65b90c2e46a57fdf7ce162cce40030b7a60c958f118b4ef8b67baf9e87fea5",
+      "column_bounds": [
+        0,
+        252,
+        506,
+        762,
+        1019,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        289,
+        575,
+        861,
+        1143,
+        1425,
+        1705,
+        1976,
+        2222,
+        2415,
+        2560
+      ],
+      "overrides": {
+        "bus_stop": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "ellipse",
+          "cover_box": [
+            34,
+            31,
+            94,
+            91
+          ],
+          "cover_fill": "#26302A",
+          "ink": "#E8C083",
+          "accent": "#AA793D"
+        },
+        "car_repair": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "ellipse",
+          "cover_box": [
+            34,
+            31,
+            94,
+            91
+          ],
+          "cover_fill": "#26302A",
+          "ink": "#E8C083",
+          "accent": "#AA793D"
+        },
+        "ferry_terminal": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "ellipse",
+          "cover_box": [
+            34,
+            31,
+            94,
+            91
+          ],
+          "cover_fill": "#26302A",
+          "ink": "#E8C083",
+          "accent": "#AA793D"
+        },
+        "office": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "ellipse",
+          "cover_box": [
+            34,
+            31,
+            94,
+            91
+          ],
+          "cover_fill": "#26302A",
+          "ink": "#E8C083",
+          "accent": "#AA793D"
+        },
+        "place_of_worship": {
+          "kind": "sheet_crop",
+          "source_index": 41,
+          "bounds": [
+            252,
+            2222,
+            506,
+            2440
+          ]
+        },
+        "post_office": {
+          "kind": "sheet_crop",
+          "source_index": 40,
+          "bounds": [
+            0,
+            2222,
+            252,
+            2440
+          ]
+        }
+      }
+    },
+    "old_west": {
+      "sheet_sha256": "fe4394cb850714d6410dc6c1c46a6f7e5ae5f2b3eb989c4d0091365e3573cf2f",
+      "column_bounds": [
+        0,
+        258,
+        504,
+        759,
+        1007,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        283,
+        556,
+        826,
+        1092,
+        1356,
+        1614,
+        1862,
+        2108,
+        2341,
+        2560
+      ],
+      "overrides": {}
+    },
+    "pixel": {
+      "sheet_sha256": "8f3fe42586c18aedb43fc1f641fbbfe282cb99de91cbabcdf7d64713e565bf36",
+      "column_bounds": [
+        0,
+        266,
+        514,
+        761,
+        1008,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        294,
+        569,
+        842,
+        1116,
+        1392,
+        1665,
+        1935,
+        2207,
+        2383,
+        2560
+      ],
+      "overrides": {
+        "bus_stop": {
+          "kind": "sheet_crop",
+          "source_index": 40,
+          "bounds": [
+            0,
+            2207,
+            266,
+            2475
+          ]
+        },
+        "car_repair": {
+          "kind": "sheet_crop",
+          "source_index": 42,
+          "bounds": [
+            514,
+            2207,
+            761,
+            2475
+          ]
+        },
+        "ferry_terminal": {
+          "kind": "sheet_crop",
+          "source_index": 41,
+          "bounds": [
+            266,
+            2207,
+            514,
+            2475
+          ]
+        },
+        "fire_station": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/pixel__fire_station.png",
+          "source_sha256": "539d5a2354044e14d1cb1bfe81c2a38dda86f249415d4aa5f16aa02d07a5e492"
+        },
+        "office": {
+          "kind": "sheet_crop",
+          "source_index": 43,
+          "bounds": [
+            761,
+            2207,
+            991,
+            2475
+          ]
+        },
+        "place_of_worship": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "rectangle",
+          "cover_box": [
+            35,
+            32,
+            93,
+            91
+          ],
+          "cover_fill": "#204520",
+          "ink": "#FFF4CC",
+          "accent": "#5DAFD7"
+        },
+        "post_office": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "rectangle",
+          "cover_box": [
+            35,
+            32,
+            93,
+            91
+          ],
+          "cover_fill": "#204520",
+          "ink": "#FFF4CC",
+          "accent": "#5DAFD7"
+        },
+        "sports": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "rectangle",
+          "cover_box": [
+            35,
+            32,
+            93,
+            91
+          ],
+          "cover_fill": "#204520",
+          "ink": "#FFF4CC",
+          "accent": "#5DAFD7"
+        },
+        "stadium": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "rectangle",
+          "cover_box": [
+            35,
+            32,
+            93,
+            91
+          ],
+          "cover_fill": "#204520",
+          "ink": "#FFF4CC",
+          "accent": "#5DAFD7"
+        },
+        "train_station": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/pixel__train_station.png",
+          "source_sha256": "ef176e1e3e5946492c9cb19024ee7a935a5e251b59c56fc81fc1f777a1874afb"
+        }
+      }
+    },
+    "retro_quest": {
+      "sheet_sha256": "20db33afdde23ff3947cfe1f0c02aa9ff8ce1203ea4512eff539f6972987d259",
+      "column_bounds": [
+        0,
+        246,
+        495,
+        747,
+        1001,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        282,
+        542,
+        801,
+        1060,
+        1319,
+        1578,
+        1837,
+        2096,
+        2350,
+        2560
+      ],
+      "overrides": {
+        "train_station": {
+          "kind": "sheet_crop",
+          "source_index": 44,
+          "bounds": [
+            1001,
+            2096,
+            1280,
+            2350
+          ],
+          "keep_primary_component": true,
+          "component_threshold": 32,
+          "component_diagonal": false
+        }
+      }
+    },
+    "rivia": {
+      "sheet_sha256": "34898322c1b19321e1dca7b6aa856b3f85d06e2e557279873b1871a5151bb4e8",
+      "column_bounds": [
+        0,
+        258,
+        512,
+        764,
+        1016,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        261,
+        520,
+        786,
+        1055,
+        1323,
+        1589,
+        1856,
+        2119,
+        2363,
+        2560
+      ],
+      "overrides": {}
+    },
+    "saints": {
+      "sheet_sha256": "c28efbc00a97c11caafc77ecd43560942335d431ca91e26ae1c37b18de134cfe",
+      "column_bounds": [
+        0,
+        256,
+        499,
+        743,
+        986,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        289,
+        568,
+        848,
+        1120,
+        1391,
+        1659,
+        1918,
+        2180,
+        2415,
+        2560
+      ],
+      "overrides": {
+        "fire_station": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/saints__fire_station.png",
+          "source_sha256": "8e2cbb8e7c02d3c1b0af1ae3f9bfc8f6d39a31ce46f00f471ab2c0cf187fda8f"
+        },
+        "garden": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/saints__garden.png",
+          "source_sha256": "384e98559668648e652c92742d453ef5cacd38ab57ba31990fd88a9a5f825f2b"
+        },
+        "hospital": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/saints__hospital.png",
+          "source_sha256": "42e7fea16c9b95d97f0c22986052f87347514fd3db9fcdd3e9b72a5b7f923745"
+        },
+        "office": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/saints__office.png",
+          "source_sha256": "b88a32cafa1f146e032a814a5d37550a854712a6b716f30728c0d6aab359dbd3"
+        },
+        "playground": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/saints__playground.png",
+          "source_sha256": "d39a492c7a5ade5724c4a485986b76c99b2bf5c17241746ffc8d013ce5898c92"
+        },
+        "sports": {
+          "kind": "sheet_crop",
+          "source_index": 43,
+          "bounds": [
+            743,
+            2180,
+            986,
+            2415
+          ],
+          "keep_primary_component": true
+        },
+        "train_station": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/saints__train_station.png",
+          "source_sha256": "04c6d950937b9fb68c7e6a86dce5ea79e6ef9e346d65a755b6044f69fbccd286"
+        }
+      }
+    },
+    "san_andreas": {
+      "sheet_sha256": "f3ca432db9f2c94b295920f1c1965999a9bccae45c2c9ac65aa8122f49c64000",
+      "column_bounds": [
+        0,
+        250,
+        492,
+        734,
+        976,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        268,
+        535,
+        804,
+        1069,
+        1329,
+        1582,
+        1834,
+        2078,
+        2308,
+        2560
+      ],
+      "overrides": {}
+    },
+    "sea_chart": {
+      "sheet_sha256": "8d43069a00deb31e226336da3d983e89952191cd6d567bdddab1cd8b4081529a",
+      "column_bounds": [
+        0,
+        266,
+        511,
+        759,
+        1007,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        263,
+        512,
+        760,
+        1009,
+        1259,
+        1509,
+        1760,
+        2009,
+        2259,
+        2560
+      ],
+      "overrides": {
+        "fire_station": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/sea_chart__fire_station.png",
+          "source_sha256": "230a234e8b157c81d177b946a1f0dedd6dd297b85bcd0ea8ce2ce73cfac7478d"
+        },
+        "garden": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/sea_chart__garden.png",
+          "source_sha256": "e0f710af5ab58e49e2b7639b3e06faf8bb8df3177074028277f1424de5381a50"
+        },
+        "hospital": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/sea_chart__hospital.png",
+          "source_sha256": "5b547fadd84034fa540f4c3755c7e2bc785affd13eb46fdf2307c04d2865d05d"
+        },
+        "monument": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/sea_chart__monument.png",
+          "source_sha256": "846e6282e5772973acf8afbb711ad2741321266480d25f6ca2e7fd420ae2ef49"
+        },
+        "sports": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/sea_chart__sports.png",
+          "source_sha256": "fa6bab1091bafb5487b415ca5ab454e52a5d3968e4d3980d922226a01b27ee8c"
+        },
+        "train_station": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/sea_chart__train_station.png",
+          "source_sha256": "c897bff3602c91331890c31768306e5bd9f50b6c310d5fc1da581076bf9d654e"
+        },
+        "university": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/sea_chart__university.png",
+          "source_sha256": "3a4875e1ad4490be640dd9293e8d51a92031bbfbb28bb1a466ad1bdf926ad121"
+        }
+      }
+    },
+    "skyrim": {
+      "sheet_sha256": "a3e6ee00fd348c9c79675179155000430dffbc3c5368368e9c2c53bb2590ffed",
+      "column_bounds": [
+        0,
+        253,
+        502,
+        754,
+        1010,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        268,
+        523,
+        780,
+        1038,
+        1293,
+        1552,
+        1807,
+        2061,
+        2306,
+        2560
+      ],
+      "overrides": {
+        "train_station": {
+          "kind": "sheet_crop",
+          "source_index": 44,
+          "bounds": [
+            1010,
+            2061,
+            1280,
+            2306
+          ],
+          "keep_primary_component": true
+        }
+      }
+    },
+    "spider": {
+      "sheet_sha256": "ebbc27facd27916e4bae9a808b58806d6464300f1dc93c88a7acb87e683fd52f",
+      "column_bounds": [
+        0,
+        259,
+        508,
+        758,
+        1010,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        270,
+        529,
+        788,
+        1047,
+        1305,
+        1563,
+        1821,
+        2076,
+        2319,
+        2560
+      ],
+      "overrides": {}
+    },
+    "stalker": {
+      "sheet_sha256": "3290fe8e6c4c7be2ecb052e030c020eae54148108e8bd7d9e295cb491b3549d1",
+      "column_bounds": [
+        0,
+        251,
+        489,
+        726,
+        962,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        266,
+        520,
+        775,
+        1030,
+        1284,
+        1537,
+        1791,
+        2043,
+        2295,
+        2560
+      ],
+      "overrides": {
+        "train_station": {
+          "kind": "sheet_crop",
+          "source_index": 44,
+          "bounds": [
+            962,
+            2043,
+            1280,
+            2295
+          ],
+          "keep_primary_component": true
+        }
+      }
+    },
+    "starfield": {
+      "sheet_sha256": "c5f1c443ec35ea2ff1dc03ab26da45131ac5309215da647fe3e7a4daa004dc89",
+      "column_bounds": [
+        0,
+        258,
+        509,
+        759,
+        1007,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        263,
+        523,
+        783,
+        1044,
+        1304,
+        1561,
+        1816,
+        2072,
+        2317,
+        2560
+      ],
+      "overrides": {}
+    },
+    "vice_coast": {
+      "sheet_sha256": "fe60a905956b50e7c534104bc868676e464087d8b9a8ba7d6c308cbe174e6414",
+      "column_bounds": [
+        0,
+        259,
+        506,
+        754,
+        1002,
+        1280
+      ],
+      "row_bounds": [
+        0,
+        325,
+        612,
+        893,
+        1172,
+        1452,
+        1727,
+        1983,
+        2240,
+        2415,
+        2560
+      ],
+      "overrides": {
+        "bus_stop": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "ellipse",
+          "cover_box": [
+            34,
+            37,
+            94,
+            92
+          ],
+          "cover_fill": "#72418F",
+          "ink": "#F8DBB8",
+          "accent": "#4BB7C8"
+        },
+        "car_repair": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/vice_coast__car_repair.png",
+          "source_sha256": "69c60c732f11329a2a693735891ad09cbbe714ac60a1289c55014bb245e903e1"
+        },
+        "ferry_terminal": {
+          "kind": "place_glyph",
+          "base_category": "place",
+          "shape": "ellipse",
+          "cover_box": [
+            34,
+            37,
+            94,
+            92
+          ],
+          "cover_fill": "#72418F",
+          "ink": "#F8DBB8",
+          "accent": "#4BB7C8"
+        },
+        "fire_station": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/vice_coast__fire_station.png",
+          "source_sha256": "53eafde1f207d7adb5b7ce5ca4403129e41d76b7485dc77f030e87530230e19e"
+        },
+        "garden": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/vice_coast__garden.png",
+          "source_sha256": "5a6c436fbd0d3d7a29c3aff04f9aeabdd292a9f62802b2fd5d15c569b3478f7f"
+        },
+        "hospital": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/vice_coast__hospital.png",
+          "source_sha256": "646af912854b6b1dcfd26735d5b037edf981babd13183f4a938ff37c3d6de6cf"
+        },
+        "monument": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/vice_coast__monument.png",
+          "source_sha256": "7a67c72a607a517a5bfdcecd532d15793cee45c2a5e9406f1b49fd8c38e457a8"
+        },
+        "office": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/vice_coast__office.png",
+          "source_sha256": "e348a9b00232c4477e68990c3f29424996ffc749bc030bcd5f67975e333cdc3e"
+        },
+        "place_of_worship": {
+          "kind": "sheet_crop",
+          "source_index": 41,
+          "bounds": [
+            259,
+            2240,
+            506,
+            2495
+          ],
+          "keep_primary_component": true
+        },
+        "police": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/vice_coast__police.png",
+          "source_sha256": "d9b7b6721e98224bee28b63e262e842c1662ad02f157a86b75942effc8e47020"
+        },
+        "post_office": {
+          "kind": "sheet_crop",
+          "source_index": 40,
+          "bounds": [
+            0,
+            2240,
+            259,
+            2495
+          ]
+        },
+        "sports": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/vice_coast__sports.png",
+          "source_sha256": "5d7eaacc852e14110d9f696732443d545dd9e6922f5a292230a191d26231d224"
+        },
+        "stadium": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/vice_coast__stadium.png",
+          "source_sha256": "08f10e96c27cc050a93b3b014e0af0434474ac47253295f4beb62cb84da03946"
+        },
+        "train_station": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/vice_coast__train_station.png",
+          "source_sha256": "50db09ee2b757287eac33f0bf2bf4f6cf2f3f003111d407b1cd67bb070af0557"
+        },
+        "university": {
+          "kind": "standalone",
+          "source": "output/imagegen/poi-cell-repairs/vice_coast__university.png",
+          "source_sha256": "e9abeff08c02e3cd8debab307813c7de2e66420912f575c2a7417454f8e3106b"
+        }
+      }
+    }
+  }
+}

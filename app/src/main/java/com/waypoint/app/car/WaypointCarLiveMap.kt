@@ -115,7 +115,7 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
         nightWatcher=scope.launch {
             var previousNight: Boolean?=null
             while(isActive && !destroyed) {
-                val night=isNightAtLocalTime()
+                val night=effectiveNightMapTheme(state.world,isNightAtLocalTime())
                 if(night!=previousNight) {
                     previousNight=night
                     val styleFile=resolveMapThemeStyleFile(state.world,night,state.tilted,availableStyles)
@@ -136,7 +136,7 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
         following=follow
         hud.postInvalidateOnAnimation()
         if(map==null)return
-        val night=isNightAtLocalTime()
+        val night=effectiveNightMapTheme(newState.world,isNightAtLocalTime())
         val styleFile=resolveMapThemeStyleFile(newState.world,night,newState.tilted,availableStyles)
         if(styleFile!=loadedStyleFile && styleFile!=requestedStyleFile) {
             requestStyle(newState.world,night,styleFile)
@@ -149,9 +149,10 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
         syncMotion()
     }
 
-    private fun requestStyle(world: World,night:Boolean=isNightAtLocalTime(),styleFile:String=resolveMapThemeStyleFile(world,night,state.tilted,availableStyles)) {
+    private fun requestStyle(world: World,night:Boolean=effectiveNightMapTheme(world,isNightAtLocalTime()),styleFile:String=resolveMapThemeStyleFile(world,night,state.tilted,availableStyles)) {
         val m=map ?: return
         if(requestedStyleFile==styleFile)return
+        val effectiveNight=effectiveNightMapTheme(world,night)
         requestedStyleFile=styleFile
         styleReady=false
         val epoch=++styleEpoch
@@ -160,18 +161,18 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
             val (json,images)=withContext(Dispatchers.Default) {
                 val source=context.assets.open("styles/$styleFile.json").bufferedReader().use { it.readText() }
                 val bitmaps=hashMapOf(
-                    "nav-arrow" to mapPlayer(world),
+                    "nav-arrow" to mapPlayer(context,world),
                     "vehicle-car" to mapVehicle(world,TravelMode.CAR),
                     "vehicle-bike" to mapVehicle(world,TravelMode.MOTORCYCLE),
                     "vehicle-bicycle" to mapVehicle(world,TravelMode.BICYCLE),
                     "position-uncertain" to mapUnknownPosition(world),
-                    "destination-marker" to mapDestination(context,world,night),
+                    "destination-marker" to mapDestination(context,world,effectiveNight),
                     "pixel-grass" to BitmapFactory.decodeResource(context.resources,R.drawable.pixel_grass),
                     "pixel-stone" to BitmapFactory.decodeResource(context.resources,R.drawable.pixel_stone),
                     "pixel-water" to BitmapFactory.decodeResource(context.resources,R.drawable.pixel_water),
                     "paper-fibre" to BitmapFactory.decodeResource(context.resources,R.drawable.paper_fibre)
                 )
-                mapMaterial(context,world,night)?.let { bitmaps["world-material"]=it }
+                mapMaterial(context,world,effectiveNight)?.let { bitmaps["world-material"]=it }
                 bitmaps.putAll(mapTextureKit(context,world))
                 // Generated markers have logical pixel dimensions. A bitmap's
                 // default density belongs to the phone, not the projected display.
@@ -188,9 +189,9 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
                 // Other ways to the same place sit quietly under the chosen line, as on the phone.
                 style.addSource(GeoJsonSource("car-route-alt",FeatureCollection.fromFeatures(emptyArray<Feature>())))
                 style.addLayer(LineLayer("car-route-alt-casing","car-route-alt").withProperties(
-                    lineColor(world.routeCasingColor(night)),lineWidth(art.routeWidth+2f),lineOpacity(.85f),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)))
+                    lineColor(world.routeCasingColor(effectiveNight)),lineWidth(art.routeWidth+2f),lineOpacity(.85f),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)))
                 style.addLayer(LineLayer("car-route-alt-line","car-route-alt").withProperties(
-                    lineColor(if(night)"#8A949A" else "#7E8A92"),lineWidth((art.routeWidth-.5f).coerceAtLeast(2f)),lineOpacity(.95f),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)))
+                    lineColor(if(effectiveNight)"#8A949A" else "#7E8A92"),lineWidth((art.routeWidth-.5f).coerceAtLeast(2f)),lineOpacity(.95f),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)))
                 style.addSource(GeoJsonSource("car-route-alt-labels",FeatureCollection.fromFeatures(emptyArray<Feature>())))
                 style.addSource(GeoJsonSource("car-route",Feature.fromGeometry(LineString.fromLngLats(emptyList()))))
                 style.addLayer(LineLayer("car-route-casing","car-route").withProperties(
@@ -276,7 +277,8 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
         val m=map ?: return
         val headingKnown=state.headingReliable || state.navigating && state.route!=null
         m.style?.getLayerAs<SymbolLayer>("car-position-marker")?.setProperties(
-            iconImage(playerMarkerImage(state.mode,headingKnown)),iconSize(if(state.mode==TravelMode.WALK).55f else .72f))
+            iconImage(playerMarkerImage(state.world,state.mode,headingKnown)),
+            iconSize(if(state.world==World.NIGHT_CITY || state.mode==TravelMode.WALK).55f else .72f))
         val now=SystemClock.elapsedRealtime()
         val bearing=if(state.navigating)carTravelBearing(state).toFloat() else if(state.headingReliable)state.bearing else 0f
         motion.update(state.fix,bearing,now,state.navigating,ValueAnimator.areAnimatorsEnabled())
