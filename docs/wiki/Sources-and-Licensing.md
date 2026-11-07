@@ -6,7 +6,7 @@ Waypoint application code is GPL-3.0-only. Fonts, map data, imagery, recordings 
 
 No live-traffic provider is configured; Ferrostar remains authoritative for navigation progress, rerouting and remaining ETA. See [`THIRD_PARTY_NOTICES.md`](../../THIRD_PARTY_NOTICES.md) for the components and material used by Waypoint.
 
-The map HUD artwork, world-specific POI icons, destination markers, materials and typography choices are authored for Waypoint. Game screenshots and game asset files are not bundled. Waypoint is independent and not affiliated with the named publishers.
+The map HUD artwork, destination markers, materials and most world-specific POI icons are authored for Waypoint. Night City's POI atlas also includes seven Cyberpunk 2077 game glyphs for directly matching place categories. Their source URLs, hashes and the maintainer's confirmation of written CD PROJEKT RED permission for public app and repository use are in [`docs/poi-icon-sources.md`](../poi-icon-sources.md#night-city); the grant itself is held privately. Game screenshots are not bundled. Waypoint is independent and not affiliated with the named publishers.
 
 ## Map data
 

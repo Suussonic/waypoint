@@ -2,6 +2,14 @@
 
 For the full notes and community acknowledgements, see [Waypoint release notes](docs/releases/current.md). Published releases are available on [GitHub Releases](https://github.com/the-geeky-couldron/waypoint/releases).
 
+## 2.5.4
+
+- Reviewed all 38 worlds' day and night place icon atlases and repaired damaged cells, including Home Console's split icons. Recorded reproducible crop mappings and added contact-sheet review and CI validation with Pillow 13.0.0.
+- Restored direct-match Cyberpunk 2077 symbols in Night City and a consistent player marker across travel modes on phone and Android Auto.
+- Restored Machine Atlas's cream palette, charcoal text, rust accent, and monochrome symbols at every hour; aligned its phone controls with the other worlds.
+- Added a camera-aware phone scale bar, persisted Compact/Standard/Large floating-control sizes and Left/Right placement, and scrolling for truncated world names.
+- Improved compact landscape route previews, guidance scale-bar clearance, and map-control and map-key spacing across all worlds.
+
 ## 2.5.3
 
 - Removed the fixed 150 MiB client-side APK download cap for users who install this version. Downloads still require enough free space and must match the release's declared size, SHA-256 digest, package, version, and signing certificate.

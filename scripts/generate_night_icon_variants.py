@@ -90,7 +90,17 @@ def night_atlas_variant(source: Image.Image, theme: dict[str, str], cell_size: i
 def generate(root: Path) -> int:
     poi_dir = root / "app/src/main/assets/poi"
     marker_dir = root / "app/src/main/assets/map-markers"
+    dedicated = {
+        "nier": "python3 scripts/generate_map_assets.py",
+        "night_city": "python3 scripts/generate_night_city_icons.py",
+    }
     for name, theme in THEMES.items():
+        if name in dedicated:
+            # These worlds author both phases together. The generic hue/glow
+            # pass would erase their deliberately different icon treatments.
+            if not (poi_dir / f"{name}_night.png").is_file() or not (marker_dir / f"{name}_night.png").is_file():
+                raise SystemExit(f"Missing {name} night art; run {dedicated[name]} first")
+            continue
         pairs = (
             (poi_dir / f"{name}.png", poi_dir / f"{name}_night.png"),
             (marker_dir / f"{name}.png", marker_dir / f"{name}_night.png"),
@@ -106,7 +116,7 @@ def generate(root: Path) -> int:
                 night_atlas_variant(source, theme).save(output_path, optimize=True)
             else:
                 night_variant(source, theme).save(output_path, optimize=True)
-    print(f"Generated night palettes for {len(THEMES)} worlds: 38 POI atlases and 38 destination markers.")
+    print(f"Generated night palettes for {len(THEMES) - len(dedicated)} worlds; retained Nier and Night City assets from their dedicated generators.")
     return 0
 
 

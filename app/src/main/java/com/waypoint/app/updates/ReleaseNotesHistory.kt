@@ -15,6 +15,7 @@ internal val publishedReleaseNotes = listOf(
     BundledReleaseNotes(2_005_001, "release-notes-2.5.1.md"),
     BundledReleaseNotes(2_005_002, "release-notes-2.5.2.md"),
     BundledReleaseNotes(2_005_003, "release-notes-2.5.3.md"),
+    BundledReleaseNotes(2_005_004, "release-notes-2.5.4.md"),
 )
 
 internal fun releaseNotesAfter(lastSeenCode: Int, installedCode: Int): List<BundledReleaseNotes> =

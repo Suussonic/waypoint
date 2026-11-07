@@ -20,30 +20,73 @@ import androidx.compose.ui.unit.sp
 @Composable internal fun AdaptiveRoutePreview(state: NavState, modifier: Modifier,
     onBack: () -> Unit, onSettings: () -> Unit, onMode: (TravelMode) -> Unit,
     onLocate: () -> Unit, onSave: () -> Unit, onRetry: () -> Unit, onStart: () -> Unit,
-    onSteps: () -> Unit, onSelectRoute: (Int) -> Unit, onQuest: () -> Unit, onShare: () -> Unit, mapError: String?) {
+    onSteps: () -> Unit, onSelectRoute: (Int) -> Unit, onQuest: () -> Unit, onShare: () -> Unit, mapError: String?,
+    compactLandscape: Boolean = false) {
     val palette=hudPalette(state.world)
-    Column(modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-        Surface(color=palette.panel,contentColor=palette.foreground,shape=hudShape(state.world)) {
-            Row(Modifier.fillMaxWidth().heightIn(min=56.dp),verticalAlignment=Alignment.CenterVertically) {
-                IconButton(onClick=onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack,"Close route preview") }
-                Text("Route",fontFamily=worldFont(state.world),style=MaterialTheme.typography.titleLarge,modifier=Modifier.weight(1f))
-                IconButton(onClick=onSettings) { Icon(Icons.Default.Tune,"Settings") }
-            }
-        }
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(12.dp)) {
-            TransportModes(state.mode,onMode,state.world)
-            if(mapError!=null)Notice(mapError,Icons.Default.CloudOff)
-            Surface(color=palette.panel,contentColor=palette.foreground,shape=hudShape(state.world)) {
-                Column(Modifier.fillMaxWidth().padding(12.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
-                    FixLabel(state)
-                    TextButton(onClick=onLocate,modifier=Modifier.heightIn(min=48.dp)) {
-                        Icon(Icons.Default.MyLocation,null,tint=palette.foreground)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Use my location",color=palette.foreground)
+    val needsFix=!state.gpsReady || state.accuracy>20 || !state.headingReliable
+    Column(modifier.padding(if(compactLandscape)8.dp else 12.dp),
+        verticalArrangement=Arrangement.spacedBy(if(compactLandscape)8.dp else 10.dp)) {
+        if(compactLandscape) {
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                val headerWidth=maxWidth
+                if(headerWidth>=304.dp) {
+                    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,
+                        horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                        ChromeButton(state.world,Icons.AutoMirrored.Filled.ArrowBack,"Close route preview",onBack)
+                        ModeSegments(state.mode,onMode,state.world,Modifier.weight(1f))
+                        ChromeButton(state.world,Icons.Default.Tune,"Settings",onSettings)
+                    }
+                } else {
+                    Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                        Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
+                            ChromeButton(state.world,Icons.AutoMirrored.Filled.ArrowBack,"Close route preview",onBack)
+                            Text("Route",fontFamily=worldFont(state.world),style=MaterialTheme.typography.titleMedium,
+                                modifier=Modifier.weight(1f))
+                            ChromeButton(state.world,Icons.Default.Tune,"Settings",onSettings)
+                        }
+                        if(headerWidth>=192.dp) ModeSegments(state.mode,onMode,state.world,Modifier.fillMaxWidth())
+                        else TransportModes(state.mode,onMode,state.world)
                     }
                 }
             }
-            DestinationCard(state,onSave,onBack,onLocate,onRetry,onStart,onSteps,onSelectRoute,onQuest=onQuest,onShare=onShare,roomyActions=true)
+        } else {
+            Surface(color=palette.panel,contentColor=palette.foreground,shape=hudShape(state.world)) {
+                Row(Modifier.fillMaxWidth().heightIn(min=56.dp),verticalAlignment=Alignment.CenterVertically) {
+                    IconButton(onClick=onBack,modifier=Modifier.semantics { contentDescription="Close route preview" }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack,null)
+                    }
+                    Text("Route",fontFamily=worldFont(state.world),style=MaterialTheme.typography.titleLarge,modifier=Modifier.weight(1f))
+                    IconButton(onClick=onSettings,modifier=Modifier.semantics { contentDescription="Settings" }) {
+                        Icon(Icons.Default.Tune,null)
+                    }
+                }
+            }
+        }
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
+            verticalArrangement=Arrangement.spacedBy(if(compactLandscape)8.dp else 12.dp)) {
+            if(!compactLandscape) TransportModes(state.mode,onMode,state.world)
+            if(mapError!=null)Notice(mapError,Icons.Default.CloudOff)
+            if(compactLandscape) {
+                Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,
+                    horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                    if(needsFix) FixLabel(state,Modifier.weight(1f))
+                    else Spacer(Modifier.weight(1f))
+                    ChromeButton(state.world,Icons.Default.MyLocation,"Use my location",onLocate)
+                }
+            } else {
+                Surface(color=palette.panel,contentColor=palette.foreground,shape=hudShape(state.world)) {
+                    Column(Modifier.fillMaxWidth().padding(12.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
+                        FixLabel(state)
+                        TextButton(onClick=onLocate,modifier=Modifier.heightIn(min=48.dp)) {
+                            Icon(Icons.Default.MyLocation,null,tint=palette.foreground)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Use my location",color=palette.foreground)
+                        }
+                    }
+                }
+            }
+            DestinationCard(state,onSave,onBack,onLocate,onRetry,onStart,onSteps,onSelectRoute,
+                compact=compactLandscape,onQuest=onQuest,onShare=onShare,roomyActions=!compactLandscape)
             Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.CenterEnd) { Attribution(state.world) }
         }
     }

@@ -18,8 +18,10 @@ distance, speed, spoken instructions, off-route recalculation, and arrival.
 
 - **Worlds:** 38 game-inspired styles, with search, Favourites and New filters. Preview before applying. All included.
 - **Saved:** bookmark a destination; navigate to it again later.
-- **Settings:** voice, metric/imperial, 2D/3D, updates, permissions,
-  and clearing saved places/history.
+- **Settings:** voice, metric/imperial, 2D/3D, Compact/Standard/Large map controls,
+  Left/Right control placement, updates, permissions, and clearing saved places/history.
+- The phone map shows a live scale bar below the controls. Long world names scroll in
+  the top-left world selector so the full name remains readable.
 - The map follows live GPS while browsing until you pan or select a destination. During navigation, a pan pauses following for eight seconds, then it resumes automatically. Tap Locate to recenter immediately. The location pointer stays centred during position animation.
 - Navigation continues through a location foreground service when the screen is
   off. Stop it in the app or from its ongoing Android notification.
@@ -176,7 +178,7 @@ Quests, notes, reminders, progress and resized character photos stay in private 
 ## Architecture
 
 - `MainActivity.kt`: native Material 3 screens, permissions and preferences.
-- `GameAtlasHud.kt`, the fantasy/modern/issue atlases, `StalkerAtlas.kt` and `NierAtlas.kt`: 38 distinct native atlas compositions.
+- `GameAtlasHud.kt` and `MapChrome.kt`: shared, aligned phone map controls with world-specific palettes, shapes and typography across all 38 worlds.
 - `GameHud.kt`: panel shapes, typography, library and shared route guidance.
 - `Cartography.kt`: per-world camera rules, player pointers and original POI icons.
 - `HeadingSensor.kt`: sensor projection, display remapping and true-north correction.
@@ -241,8 +243,14 @@ These recreate map/HUD design language; they are not pixel-perfect game asset po
 ## Regenerating and validating map assets
 
 ```sh
+python3 -m pip install -r tools/imagegen/requirements.txt  # Pillow 13.0.0 for artwork tools
 python3 scripts/generate_styles.py
 python3 scripts/generate_map_assets.py
+python3 scripts/generate_night_city_icons.py  # requires Pillow and retained source PNGs
+python3 scripts/generate_night_city_icons.py --check
+python3 scripts/check_style_parity.py nier night_city
+python3 scripts/validate_map_assets.py
+python3 scripts/import_imagegen_poi_cell_repairs.py --check
 npm ci --prefix tools/style-validation
 node scripts/validate_styles.cjs
 node scripts/generate_glyphs.cjs
@@ -256,8 +264,9 @@ disappear. A theme load also has a monotonic generation so its camera and source
 are reapplied, while pointer animation is cancelled before its native layers are replaced.
 
 The reference screenshots are research evidence only and are excluded from both the
-APK and source archive. Original runtime textures, fonts with licenses, authored map
-symbols and generated styles are included. No generated binary is needed to build from source.
+APK and source archive. Original runtime textures, licensed fonts, authored map
+symbols, the seven sourced Night City glyphs, and generated styles are included.
+The checked-in assets let Android build without the optional artwork generators.
 
 The Worlds library is reachable from every atlas, route preview and active navigation. Changing worlds preserves the current destination, transport and route. Native road labels use bundled glyphs; see `docs/map-fonts.md` for font provenance and fidelity limits. The small map-info control opens provider credits without a long footer over the map.
 

@@ -26,7 +26,7 @@ The [classic S.T.A.L.K.E.R. PDA and quest-journal screenshot](https://commons.wi
 
 ## Original transport markers — 5 November 2026
 
-The user's examples were a horse for the RDR2-inspired Old West and a minecart for Minecraft-inspired Pixel World. `VehicleMarkers.kt` contains original Canvas illustrations for all 38 worlds' Car and Motorcycle modes. Other transport interpretations include fantasy mounts, a ship/rowboat, a carriage/broom, modern vehicles and rovers. No downloaded game sprite, logo, model or image is packaged. These are themed location markers; changing the illustration does not change Car/Motorcycle route costs or turn instructions. Walking and unknown-heading indicators remain distinct.
+The user's examples were a horse for the RDR2-inspired Old West and a minecart for Minecraft-inspired Pixel World. `VehicleMarkers.kt` contains original Canvas illustrations for all 38 worlds' Car and Motorcycle modes. Other transport interpretations include fantasy mounts, a ship/rowboat, a carriage/broom, modern vehicles and rovers. These are themed location markers; changing the illustration does not change Car/Motorcycle route costs or turn instructions. Night City now uses one original directional caret in every travel mode, while its POI atlas includes the separately documented game glyphs. An unknown heading still uses a distinct uncertain-position marker.
 
 Car-display comparison used Google Maps in the official Android Auto Desktop Head Unit. Google Maps continued using the phone's real location rather than our public London fixture; a domestic destination provided a stationary guidance reference. Its visible perspective and marker hierarchy informed the implementation, but proprietary camera values and exact same-route parity were not established. Waypoint uses a 50° guidance tilt, speed/turn-dependent zoom, a lower vehicle anchor within the host's visible map area and a flat route overview. [Android's DHU documentation](https://developer.android.com/training/cars/testing/dhu) documents the simulator and sensor configuration. MapLibre's [image conversion source](https://github.com/maplibre/maplibre-native/blob/android-v11.13.5/platform/android/MapLibreAndroid/src/main/java/org/maplibre/android/maps/Style.java) establishes that bitmap density controls sprite scale.
 
@@ -77,18 +77,29 @@ Car-display comparison used Google Maps in the official Android Auto Desktop Hea
 
 The additional-game source URLs follow below; they preserve the research trail without bundling the original images. The catalogue covers all 38 game-inspired worlds; the plain Classic map was removed at the user’s request.
 
-## Original map assets and limitations
+## Map assets and limitations
 
 [`import_imagegen_poi_atlases.py`](../scripts/import_imagegen_poi_atlases.py)
-turns separately prompted, original artwork into 38 high-detail POI atlases
-and 38 destination markers, with transparent padding and night variants. The
+turns separately prompted, original artwork into 36 high-detail POI atlases
+and 36 destination markers, with transparent padding and night variants. The
 49 atlas symbols correspond to live OpenStreetMap place categories; each
-world's icon treatment and separate destination marker are distinct.
-An image-by-image crop review found neighboring fragments in 43 symbols across
-nine atlases. Their single-icon replacement prompts are kept in
-[`poi-cell-repairs.jsonl`](../tools/imagegen/poi-cell-repairs.jsonl) and the
-cell importer records how those fixes are applied. Night glows render within
-each cell independently.
+world's icon treatment and separate destination marker are distinct. Night
+City's atlas instead combines seven Cyberpunk 2077 glyph sources in ten
+directly matching categories with 39 original Waypoint glyphs; its player
+caret and destination target are original. The [map icon notes](poi-icon-sources.md)
+record the exact source pages, hashes, permission context, and
+[day](assets/poi-audit/night-city-icons.webp) and
+[night](assets/poi-audit/night-city-icons-night.webp) icon previews. Machine Atlas (NieR) is the
+other generator exception: `generate_map_assets.py` draws its original ink
+diamonds, monochrome POI glyphs, and destination targets procedurally.
+A day/night review of all 38 atlases found shifted crop lines, missing or
+reordered cells, and neighboring fragments. Reviewed bounds for the 36 ImageGen
+worlds and 92 tracked cell overrides are recorded in the
+[`crop manifest`](../tools/imagegen/poi-crop-manifest.json); 43 of those repairs
+use the isolated artwork prompted in
+[`poi-cell-repairs.jsonl`](../tools/imagegen/poi-cell-repairs.jsonl).
+The [contact sheets](poi-atlas-audit.md) show every final day/night pair. Night
+glows render within each cell independently.
 [`generate_map_assets.py`](../scripts/generate_map_assets.py) provides the
 in-house vector fallback and 76 day/night material tiles; it is not the source
 of the shipped ImageGen POI artwork. The live-place key names real OSM
@@ -96,16 +107,18 @@ categories without inventing game locations. `generate_styles.py`
 creates 38 authored day/night MapLibre styles plus two Dark Zone holographic
 variants. `scripts/validate_map_assets.py` verifies the 38-world coverage,
 transparent padding, and PNG dimensions; the MapLibre style validator reports zero schema errors across
-all 78 styles. None of the runtime assets is a game screenshot, extracted game
-sprite, imported MapLibre theme, or fictional game location. `Cartography.kt`
-draws the player, transport, destination, and education markers; the Compose
-atlas layouts are split across the fantasy, modern, tactical, NieR, and PDA
-files, with separate map-key and HUD layouts for each world.
+all 78 styles. No game screenshot, imported MapLibre theme, or fictional game
+location is used as a runtime map asset; the Night City POI exception above
+is explicitly sourced. `Cartography.kt` draws or loads player, transport,
+destination, and education markers. `MapChrome.kt` keeps the phone map controls
+aligned across worlds, while each world's palette, shape, typography, map key,
+and map artwork supply its visual identity.
 
-World-card map previews remain earlier captures. The debug-only
-`WorldPreviewCaptureActivity` now writes each generated day, night, and Dark
-Zone holographic capture to a distinct filename, but refreshing the checked-in
-gallery previews requires an Android build and capture pass.
+The Machine Atlas and Night City world-card previews were refreshed from a
+connected Android phone against their current MapLibre styles. Other cards
+remain earlier captures. The debug-only `WorldPreviewCaptureActivity` writes
+each generated day, night, and Dark Zone holographic capture to a distinct
+filename.
 
 No screenshot proves navigation accuracy. Real street connectivity, position, routes and elevations are preserved. Game-authored fictional terrain and hand-painted map illustrations are not present; selected licensed game-font families are bundled as documented in the typography notes, so this is not a pixel-exact game asset port. The sourcebook identifies observed similarities and adaptations rather than claiming identity.
 
@@ -141,7 +154,7 @@ The direct source images below were visually inspected for line endings, route p
 | Saints Row atlas | [Phone map](https://www.gameuidatabase.com/uploads/Saints-Row-The-Third09132020-111621-91368.jpg) | Purple solid route and compact left destination pane. |
 | Saints Row navigation | [Driving radar](https://www.gameuidatabase.com/uploads/Saints-Row-The-Third09132020-111621-17408.jpg) | Live guidance switches to green dots and a yellow player arrow. |
 
-The source links are retained in this document; game screenshots are not shipped inside the APK or open-source archive. Runtime textures and icons are authored in the project; full-screen pictures cannot become geographically accurate road tiles.
+The source links are retained in this document; game screenshots are not shipped inside the APK or open-source archive. Runtime textures and most icons are authored in the project, with the seven documented Night City map glyphs as the exception; full-screen pictures cannot become geographically accurate road tiles.
 
 ## Native map fonts
 
@@ -162,4 +175,4 @@ data; generation of style JSON and vector art needs no network access.
 
 Primary reference: [PlatinumGames’ UI designer Hisayoshi Kijima explains the interface](https://www.platinumgames.com/official-blog/article/9624) (25 August 2017), including original map, navigation and UI-concept images. The warm beige, charcoal type, square selections, restrained accents and score-like rules inform Waypoint’s original interpretation. Reference screenshots are inspection-only and are not shipped.
 
-Machine Atlas retains real Tokyo Station geography in its native MapLibre preview, extruded real building footprints, legible roads and a rust route with contrasting casing. Phone chrome, quest palette, car overlay, globe texture, original flight-unit/pod markers, original completion cue and nine authored voice phrases are bundled. Noto Sans is an explicitly identified readable adaptation, not a claim to the game’s original font. Cycling uses an original pedal-cycle marker in each world’s livery; it changes the route profile, unlike decorative Car/Motorcycle marker substitutions.
+Machine Atlas retains real Tokyo Station geography in its native MapLibre preview, extruded real building footprints, legible roads and a rust route with contrasting casing. Its cream, charcoal and rust phone controls use the same aligned placement as the other worlds. The quest palette, car overlay, globe texture, original flight-unit/pod markers, original completion cue and nine authored voice phrases are bundled. Noto Sans is an explicitly identified readable adaptation, not a claim to the game’s original font. Cycling uses an original pedal-cycle marker in each world’s livery; it changes the route profile, unlike decorative Car/Motorcycle marker substitutions.

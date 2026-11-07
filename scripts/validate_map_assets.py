@@ -3,24 +3,36 @@
 
 from __future__ import annotations
 
+from collections import deque
 import json
 from hashlib import sha256
 import struct
 import sys
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageChops
 
+from import_imagegen_poi_atlases import load_crop_manifest
 from map_theme_catalog import THEMES
 
 REPOSITORY = Path(__file__).resolve().parents[1]
-ROOT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else REPOSITORY
+ROOT = Path(sys.argv[1]).resolve() if __name__ == "__main__" and len(sys.argv) > 1 else REPOSITORY
 ASSETS = ROOT / "app/src/main/assets"
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 CATEGORIES = json.loads((ASSETS / "poi_categories.json").read_text())
 ATLAS_COLUMNS = 5
 ATLAS_WIDTH = ATLAS_COLUMNS * 128
 ATLAS_HEIGHT = ((len(CATEGORIES) + ATLAS_COLUMNS - 1) // ATLAS_COLUMNS) * 128
+OVERRIDE_DIR = ROOT / "tools/imagegen/poi-overrides"
+MANIFEST_PATH = ROOT / "tools/imagegen/poi-crop-manifest.json"
+INTENTIONAL_DETACHED_ART = {
+    ("aincrad", "bus_stop"),
+    ("aincrad", "ferry_terminal"),
+    ("defcon", "information"),
+    ("defcon", "bus_stop"),
+    ("saints", "ferry_terminal"),
+    ("saints", "car_repair"),
+}
 
 
 def dimensions(path: Path) -> tuple[int, int]:
@@ -81,6 +93,75 @@ def validate_transparent_sprite(
         raise ValueError(f"Opaque magenta key color remains at an outer edge: {label}")
 
 
+def horizontal_split(sprite: Image.Image) -> bool:
+    """Detect a full-width transparent cut through a mostly solid badge.
+
+    A missing source-row fragment leaves a broad empty stripe with substantial
+    art on both sides. Small interior holes and ordinary antialiasing do not.
+    """
+    alpha = sprite.convert("RGBA").getchannel("A")
+    counts = [
+        sum(alpha.getpixel((x, y)) > 32 for x in range(8, 120))
+        for y in range(8, 120)
+    ]
+    occupied = [index for index, count in enumerate(counts) if count >= 10]
+    if not occupied:
+        return False
+    first, last = occupied[0], occupied[-1]
+    start = None
+    for index in range(first + 1, last + 1):
+        if counts[index] <= 5:
+            if start is None:
+                start = index
+        elif start is not None:
+            if index - start >= 4 and sum(counts[first:start]) >= 200 and sum(counts[index:last + 1]) >= 200:
+                return True
+            start = None
+    return False
+
+
+def distant_fragment(sprite: Image.Image) -> bool:
+    """Find detached source art outside a badge's main alpha component."""
+    alpha = sprite.convert("RGBA").getchannel("A").tobytes()
+    seen = bytearray(128 * 128)
+    components = []
+    for start, value in enumerate(alpha):
+        if value <= 32 or seen[start]:
+            continue
+        queue = deque([start])
+        seen[start] = 1
+        area = 0
+        left = top = 128
+        right = bottom = 0
+        while queue:
+            pixel = queue.popleft()
+            x, y = pixel % 128, pixel // 128
+            area += 1
+            left, top = min(left, x), min(top, y)
+            right, bottom = max(right, x + 1), max(bottom, y + 1)
+            for neighbor in (
+                pixel - 1 if x else -1,
+                pixel + 1 if x < 127 else -1,
+                pixel - 128 if y else -1,
+                pixel + 128 if y < 127 else -1,
+            ):
+                if neighbor >= 0 and alpha[neighbor] > 32 and not seen[neighbor]:
+                    seen[neighbor] = 1
+                    queue.append(neighbor)
+        components.append((area, (left, top, right, bottom)))
+    if len(components) < 2:
+        return False
+    main_area, main = max(components)
+    if main_area < 300:
+        return False
+    for area, (left, top, right, bottom) in components:
+        if (area, (left, top, right, bottom)) == (main_area, main) or area < 5:
+            continue
+        if left < main[0] - 4 or top < main[1] - 4 or right > main[2] + 4 or bottom > main[3] + 4:
+            return True
+    return False
+
+
 def validate_poi_atlas(path: Path) -> None:
     with Image.open(path) as opened:
         atlas = opened.convert("RGBA")
@@ -91,11 +172,51 @@ def validate_poi_atlas(path: Path) -> None:
         # tile edge without being able to enter a neighboring sprite.
         edge = 0 if path.stem.endswith("_night") else 8
         validate_transparent_sprite(sprite, f"{path.name} category {index}", 300, safe_edge=edge)
+        # Night City's original line glyphs deliberately include detached
+        # underlines; its dedicated source-hash/pixel parity check runs in CI.
+        if edge == 8 and path.stem != "night_city" and horizontal_split(sprite):
+            raise ValueError(f"POI sprite has a transparent horizontal sever: {path.name} category {CATEGORIES[index]['id']}")
+        if edge == 8 and path.stem not in ("night_city", "nier"):
+            category = CATEGORIES[index]["id"]
+            if (path.stem, category) not in INTENTIONAL_DETACHED_ART and distant_fragment(sprite):
+                raise ValueError(f"POI sprite contains detached neighbor art: {path.name} category {category}")
     # The 50th grid slot is intentionally empty: the destination gets its own
     # full-resolution marker asset and cannot leak into the POI atlas.
     unused = atlas.crop((4 * 128, 9 * 128, 5 * 128, 10 * 128))
     if unused.getchannel("A").getbbox() is not None:
         raise ValueError(f"The unused 50th POI cell must be transparent: {path}")
+
+
+def validate_poi_overrides(poi_dir: Path) -> int:
+    """Check that every documented repair is tracked and present in the atlas."""
+    manifest = load_crop_manifest(MANIFEST_PATH)
+    expected = {
+        f"{world}__{category}.png"
+        for world, entry in manifest["worlds"].items()
+        for category in entry["overrides"]
+    }
+    actual = {path.name for path in OVERRIDE_DIR.iterdir() if path.is_file()}
+    if actual != expected:
+        raise ValueError(f"POI override coverage mismatch; missing={sorted(expected - actual)}, extra={sorted(actual - expected)}")
+    indices = {category["id"]: index for index, category in enumerate(CATEGORIES)}
+    for world, entry in manifest["worlds"].items():
+        with Image.open(poi_dir / f"{world}.png") as opened:
+            atlas = opened.convert("RGBA")
+        for category in entry["overrides"]:
+            if category not in indices:
+                raise ValueError(f"{world}: override references unknown category {category}")
+            path = OVERRIDE_DIR / f"{world}__{category}.png"
+            if dimensions(path) != (128, 128):
+                raise ValueError(f"Unexpected override dimensions: {path}")
+            with Image.open(path) as opened:
+                sprite = opened.convert("RGBA")
+            validate_transparent_sprite(sprite, path.name, 300)
+            index = indices[category]
+            x, y = index % ATLAS_COLUMNS * 128, index // ATLAS_COLUMNS * 128
+            atlas_cell = atlas.crop((x, y, x + 128, y + 128))
+            if ImageChops.difference(sprite, atlas_cell).getbbox():
+                raise ValueError(f"POI atlas does not contain its reviewed override: {world}/{category}")
+    return len(expected)
 
 
 def validate() -> None:
@@ -122,6 +243,7 @@ def validate() -> None:
         if dimensions(poi_dir / name) != (ATLAS_WIDTH, ATLAS_HEIGHT):
             raise ValueError(f"Unexpected icon atlas dimensions: {name}")
         validate_poi_atlas(poi_dir / name)
+    override_count = validate_poi_overrides(poi_dir)
     for name in expected_markers:
         if dimensions(marker_dir / name) != (128, 128):
             raise ValueError(f"Unexpected destination marker dimensions: {name}")
@@ -182,7 +304,7 @@ def validate() -> None:
     print(
         f"Verified {len(themes)} worlds, {len(expected_materials)} materials, "
         f"{len(expected_poi)} themed POI atlases, {len(expected_markers)} destination markers, "
-        f"and {len(expected_styles)} authored styles; every category sprite and night atlas/marker "
+        f"{override_count} tracked POI repairs, and {len(expected_styles)} authored styles; every category sprite and night atlas/marker "
         "is unique per world."
     )
 

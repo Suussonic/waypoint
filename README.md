@@ -28,24 +28,15 @@
 
 ---
 
-## What's new in 2.0
+## What's new in 2.5.4
 
-- **Quests, right on the main bar:** add an everyday task, optional place, reminder or focus timer. Complete it to earn personal rewards.
-- **Eleven new worlds:** nautical charts, tactical maps, an ASCII atlas, a 16-bit adventure, Exclusion Zone (S.T.A.L.K.E.R.) and Machine Atlas (NieR:Automata). Search, favourite and preview all 38 before applying one.
-- **Bicycle navigation and saved names:** use a dedicated cycling route, and rename saved destinations to Work, Home or any name you recognise.
-- **New-release alerts:** background checks are on by default. Android notification and battery-access explanations keep you in control of alerts and installation.
-- **Easier map sharing:** share an address or supported Google Maps link into Waypoint, or open a destination in another map app.
-
-🎮 Built with ideas from **@Balzamus**, **@matvejsyrygin256-dotcom**, **@6HentaiMaster9**, **@artmartins28** and **@VoidKittyKat**. Find the individual shout-outs and requests in the release notes.
+- **Clearer place symbols:** repaired damaged icons across the 38 worlds, including Home Console's split symbols.
+- **Night City restored:** game-sourced symbols for matching places, simpler glyphs elsewhere, and one Cyberpunk-inspired player indicator across travel modes.
+- **Machine Atlas restored:** cream streets, charcoal detail and rust accents stay consistent at every hour. Its controls now line up with the other worlds.
+- **A map HUD that fits:** a live scale bar, three control sizes and optional left or right placement. Long world names scroll when they need more room.
+- **Better landscape layouts:** route previews use a compact side panel where space allows; short screens keep route and guidance actions scrollable, with clearer spacing around map controls in every world.
 
 [Full release notes →](docs/releases/current.md)
-
-### Coming next: more routes, on the phone and in the car
-
-- **Choose your route.** Previews show other ways to your destination as quieter lines on the map, each labelled with how many minutes it adds or saves. Tap one to take it.
-- **Switch while you drive.** Waypoint keeps looking for fresh alternatives during guidance and offers them on the map. Pick one and guidance restarts from where you are.
-- **Same choices in Android Auto.** The car preview frames every route on offer and has a **Routes** button. During guidance an **Other routes** button lists each alternative with its time difference. Selecting one switches your phone and car together.
-- **A map key for every world.** Open the key to see that world's own place symbols, in its day or night palette.
 
 ## Your tasks, with rewards
 
@@ -59,9 +50,9 @@ Quests and pictures stay privately on your phone. Updates preserve them; uninsta
 
 Pick a world during onboarding, then explore real geography through its roads, typography, markers and navigation controls. Switch styles without losing your destination. The globe, world gallery and map are designed as one journey; the map itself remains readable while you travel.
 
-After the first run, Waypoint opens your last selected world. Thanks to [u/cuberisk](https://www.reddit.com/user/cuberisk/) for suggesting that faster return to the map.
+After the first run, Waypoint opens your last selected world.
 
-**Drawn for Waypoint:** all 38 worlds use map styles authored from scratch for this project, with their own road treatments, labels, textures, place symbols and destination markers. Day and night variants give the same place a different atmosphere. MapLibre renders the live geography; the app does not use MapLibre's sample styles or presets. [How the artwork is made →](docs/game-artwork-sources.md)
+**Cartography made for Waypoint:** all 38 worlds use map styles authored from scratch for this project, with their own road treatments, labels, textures and destination markers. Most place symbols are original Waypoint artwork; Night City's atlas also uses seven Cyberpunk 2077 glyphs under the permission documented in the [map icon notes](docs/poi-icon-sources.md#night-city). Most worlds switch between day and night variants; Machine Atlas keeps its cream palette at every hour. MapLibre renders the live geography; the app does not use MapLibre's sample styles or presets. [How the artwork is made →](docs/game-artwork-sources.md)
 
 <picture>
   <source media="(max-width: 640px)" srcset="docs/images/promo/worlds-1-mobile.jpg" />
@@ -172,7 +163,7 @@ Android Auto keeps Google Maps available in the launcher. Open Waypoint there to
 
 Installed versions check for a newer stable GitHub release on foreground entry, at most once every 30 minutes; you can check manually in Settings at any time. If an update is available, an in-app prompt appears when the idle map is visible. Review the release notes, choose **Download update**, and confirm installation in Android.
 
-The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.5.3**; see the [release notes](docs/releases/current.md) and [changelog](CHANGELOG.md).
+The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.5.4**; see the [release notes](docs/releases/current.md) and [changelog](CHANGELOG.md).
 
 ## Build from source
 
@@ -230,7 +221,7 @@ GPS and place coverage vary by device and location; real-road and long-duration 
 
 ### License and attribution
 
-Waypoint is independent and is not affiliated with the games or their publishers. The **code is GPL-3.0-only**. The [third-party notices](THIRD_PARTY_NOTICES.md) cover components and data used by this project; [font licenses](docs/licenses/), [map icon notes](docs/poi-icon-sources.md) and [artwork notes](docs/game-artwork-sources.md) record the asset details. The original map-art claim above applies to Waypoint's cartography and map assets, not to retained interface and onboarding images.
+Waypoint is an unofficial fan work, not approved or endorsed by CD PROJEKT RED or other game publishers. The **code is GPL-3.0-only**. The [third-party notices](THIRD_PARTY_NOTICES.md) cover components and data used by this project; [font licenses](docs/licenses/), [map icon notes](docs/poi-icon-sources.md) and [artwork notes](docs/game-artwork-sources.md) record the asset details, including the Night City game glyph exception.
 
 Report security concerns through [SECURITY.md](SECURITY.md).
 

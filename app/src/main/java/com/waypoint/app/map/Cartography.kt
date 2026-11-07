@@ -189,6 +189,14 @@ internal fun mapPlayer(world:World):Bitmap {
     }
     return b
 }
+
+/** Night City uses one dedicated directional caret on phone, car display, and in the map key. */
+internal fun mapPlayer(context:Context,world:World):Bitmap =
+    if(world==World.NIGHT_CITY) runCatching {
+        context.assets.open("player-markers/night_city.png").use(BitmapFactory::decodeStream)
+    }.getOrNull()?.also { it.density=android.util.DisplayMetrics.DENSITY_DEFAULT } ?: mapPlayer(world)
+    else mapPlayer(world)
+
 internal fun mapPoi(context:Context,kind:String,world:World,night:Boolean=false):Bitmap {
     PoiAtlas.icon(context,kind,world,night)?.let { return it }
     if(world.mapArt().marker==MarkerArt.PIXEL && kind in setOf("food","stay"))

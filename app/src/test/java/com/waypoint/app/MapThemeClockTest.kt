@@ -17,10 +17,19 @@ class MapThemeClockTest {
     }
 
     @Test fun eachWorldSelectsItsDayAndNightStyle() {
-        World.entries.filterNot { it == World.DIVISION }.forEach { world ->
+        World.entries.filterNot { it == World.DIVISION || it == World.NIER }.forEach { world ->
             assertEquals(world.file,mapThemeStyleFile(world,false,false))
             assertEquals("${world.file}_night",mapThemeStyleFile(world,true,false))
         }
+    }
+
+    @Test fun machineAtlasKeepsItsCreamThemeAtEveryHour() {
+        assertFalse(effectiveNightMapTheme(World.NIER,true))
+        assertFalse(effectiveNightMapTheme(World.NIER,false))
+        assertTrue(effectiveNightMapTheme(World.NIGHT_CITY,true))
+        assertEquals("nier",mapThemeStyleFile(World.NIER,false,false))
+        assertEquals("nier",mapThemeStyleFile(World.NIER,true,false))
+        assertEquals("nier",resolveMapThemeStyleFile(World.NIER,true,false,setOf("nier","nier_night")))
     }
 
     @Test fun darkZoneTiltSelectsHologramInBothPhases() {

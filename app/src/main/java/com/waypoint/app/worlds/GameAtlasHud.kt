@@ -27,7 +27,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
 import kotlin.math.roundToInt
 
-/** Each atlas has its own composition. Shared primitives carry touch and accessibility behavior. */
+/** Shared phone map chrome with themed primitives for the remaining atlas panels. */
 data class AtlasActions(val search:()->Unit,val huds:()->Unit,val saved:()->Unit,val settings:()->Unit,
     val locate:()->Unit,val tilt:()->Unit,val voice:()->Unit,val nearby:(String)->Unit,
     /** The map is panned away from the user, so the recentre control has somewhere to go. */
@@ -35,9 +35,8 @@ data class AtlasActions(val search:()->Unit,val huds:()->Unit,val saved:()->Unit
 
 @Composable fun GameAtlasChrome(state:NavState,actions:AtlasActions,modifier:Modifier=Modifier) {
     val heading=if(state.headingReliable)state.bearing else Float.NaN
-    BoxWithConstraints(modifier.fillMaxSize()) {
-        if(maxHeight<420.dp) CompactAtlas(state,heading,actions)
-        else MapChrome(state,heading,actions)
+    Box(modifier.fillMaxSize()) {
+        MapChrome(state,heading,actions)
         MapLegendControl(state)
     }
 }
@@ -62,45 +61,48 @@ internal fun atlasToolCaption(label:String)=when(label) {
     if(LocalNightMapTheme.current)hudPalette(world).foreground else dayColor
 @Suppress("UNUSED_PARAMETER")
 @Composable internal fun atlasAccentColor(world:World,dayColor:Color):Color = hudPalette(world).accent
-@Composable internal fun AtlasTool(world:World,icon:ImageVector,label:String,action:()->Unit,modifier:Modifier=Modifier,light:Boolean=false,round:Boolean=false) {
+@Composable internal fun AtlasTool(world:World,icon:ImageVector,label:String,action:()->Unit,modifier:Modifier=Modifier,light:Boolean=false,round:Boolean=false,hudSize:HudSize=HudSize.STANDARD) {
     val p=hudPalette(world)
     val background=if(light)p.foreground else p.panel
     val foreground=if(light)p.panel else p.foreground
-    val artworkIcon=waypointControlArtworkFor(label)
+    val artworkIcon=if(world==World.NIER)null else waypointControlArtworkFor(label)
     val shape=if(round)CircleShape else hudShape(world)
-    Column(modifier.padding(4.dp).width(64.dp).heightIn(min=70.dp).clickable(role=Role.Button,onClick=action).semantics(mergeDescendants=true){contentDescription=label},horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(3.dp)) {
-        Surface(color=background,contentColor=foreground,shape=shape,modifier=Modifier.size(48.dp),border=if(round)BorderStroke(1.dp,foreground) else hudBorder(world)) {
+    val targetSize=hudToolTargetSize(hudSize)
+    val visualSize=hudToolVisualSize(hudSize)
+    val toolWidth=if(hudSize==HudSize.COMPACT)56.dp else 64.dp
+    Column(modifier.padding(4.dp).width(toolWidth).heightIn(min=targetSize+22.dp).clickable(role=Role.Button,onClick=action).semantics(mergeDescendants=true){contentDescription=label},horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(3.dp)) {
+        Surface(color=background,contentColor=foreground,shape=shape,modifier=Modifier.size(visualSize),border=if(round)BorderStroke(1.dp,foreground) else hudBorder(world)) {
             Box(contentAlignment=Alignment.Center){
-                if (artworkIcon != null) Icon(painterResource(artworkIcon),null,Modifier.size(23.dp),tint=foreground)
-                else Icon(icon,null,Modifier.size(21.dp))
+                if (artworkIcon != null) Icon(painterResource(artworkIcon),null,Modifier.size(if(hudSize==HudSize.LARGE)26.dp else 23.dp),tint=foreground)
+                else Icon(icon,null,Modifier.size(when(hudSize){HudSize.COMPACT->19.dp;HudSize.STANDARD->21.dp;HudSize.LARGE->25.dp}))
             }
         }
-        Text(atlasToolCaption(label),fontFamily=PipBoyFont,fontSize=12.sp,lineHeight=16.sp,letterSpacing=0.sp,color=p.foreground,maxLines=1,softWrap=false,overflow=TextOverflow.Ellipsis,textAlign=androidx.compose.ui.text.style.TextAlign.Center,
+        Text(atlasToolCaption(label),fontFamily=if(world==World.NIER)hudFont(world) else PipBoyFont,fontSize=if(hudSize==HudSize.LARGE)13.sp else 12.sp,lineHeight=16.sp,letterSpacing=0.sp,color=p.foreground,maxLines=1,softWrap=false,overflow=TextOverflow.Ellipsis,textAlign=androidx.compose.ui.text.style.TextAlign.Center,
             modifier=Modifier.fillMaxWidth().background(p.panel,hudShape(world)).padding(horizontal=2.dp,vertical=2.dp))
     }
 }
-@Composable internal fun AtlasAction(world:World,label:String,action:()->Unit,modifier:Modifier=Modifier,active:Boolean=false) {
+@Composable internal fun AtlasAction(world:World,label:String,action:()->Unit,modifier:Modifier=Modifier,active:Boolean=false,hudSize:HudSize=HudSize.STANDARD) {
     val p=hudPalette(world)
-    Surface(onClick=action,color=if(active)p.foreground else p.panel,contentColor=if(active)p.panel else p.foreground,shape=hudShape(world),modifier=modifier.padding(4.dp).heightIn(min=48.dp)) {
-        Box(Modifier.padding(horizontal=12.dp,vertical=10.dp),contentAlignment=Alignment.Center){AtlasText(label,world,size=15,color=if(active)p.panel else p.foreground)}
+    Surface(onClick=action,color=if(active)p.foreground else p.panel,contentColor=if(active)p.panel else p.foreground,shape=hudShape(world),modifier=modifier.padding(4.dp).heightIn(min=hudToolTargetSize(hudSize))) {
+        Box(Modifier.padding(horizontal=if(hudSize==HudSize.COMPACT)10.dp else 12.dp,vertical=10.dp),contentAlignment=Alignment.Center){AtlasText(label,world,size=if(hudSize==HudSize.LARGE)17 else if(hudSize==HudSize.COMPACT)14 else 15,color=if(active)p.panel else p.foreground)}
     }
 }
-@Composable internal fun AtlasTabs(world:World,a:AtlasActions,modifier:Modifier=Modifier,activeColor:Color=hudPalette(world).foreground) {
+@Composable internal fun AtlasTabs(world:World,a:AtlasActions,modifier:Modifier=Modifier,activeColor:Color=hudPalette(world).foreground,hudSize:HudSize=HudSize.STANDARD) {
     val p=hudPalette(world)
     Row(modifier.fillMaxWidth().height(IntrinsicSize.Min).background(p.panel),verticalAlignment=Alignment.CenterVertically) {
         listOf("MAP" to a.locate,"Worlds" to a.huds,"Saved" to a.saved).forEachIndexed { i,(t,fn)->
-            Box(Modifier.weight(1f).fillMaxHeight().heightIn(min=56.dp).background(if(i==0)activeColor else Color.Transparent).clickable(onClick=fn).padding(horizontal=4.dp,vertical=12.dp),contentAlignment=Alignment.Center) {
-                AtlasText(t,world,size=14,color=if(i==0)p.panel else p.foreground)
+            Box(Modifier.weight(1f).fillMaxHeight().heightIn(min=if(hudSize==HudSize.LARGE)64.dp else 48.dp).background(if(i==0)activeColor else Color.Transparent).clickable(onClick=fn).padding(horizontal=4.dp,vertical=12.dp),contentAlignment=Alignment.Center) {
+                AtlasText(t,world,size=if(hudSize==HudSize.LARGE)16 else if(hudSize==HudSize.COMPACT)12 else 14,color=if(i==0)p.panel else p.foreground)
             }
         }
-        AtlasTool(world,Icons.Default.Tune,"Settings",a.settings)
+        AtlasTool(world,Icons.Default.Tune,"Settings",a.settings,hudSize=hudSize)
 
     }
 }
-@Composable internal fun AtlasFind(world:World,a:AtlasActions,modifier:Modifier=Modifier,label:String="Search places") {
+@Composable internal fun AtlasFind(world:World,a:AtlasActions,modifier:Modifier=Modifier,label:String="Search places",hudSize:HudSize=HudSize.STANDARD) {
     val p=hudPalette(world)
-    Surface(onClick=a.search,modifier=modifier.padding(4.dp).heightIn(min=48.dp).semantics{contentDescription="Set a destination"},color=p.panel,contentColor=p.foreground,shape=hudShape(world),border=hudBorder(world)) {
-        Row(Modifier.padding(horizontal=14.dp,vertical=12.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {Icon(painterResource(R.drawable.waypoint_search),null,Modifier.size(21.dp),tint=p.foreground);Text(label,fontFamily=hudFont(world),fontSize=16.sp,lineHeight=21.sp,color=p.foreground,modifier=Modifier.weight(1f),maxLines=2,overflow=TextOverflow.Ellipsis);Icon(Icons.Default.ChevronRight,null,Modifier.size(18.dp))}
+    Surface(onClick=a.search,modifier=modifier.padding(4.dp).heightIn(min=hudToolTargetSize(hudSize)).semantics{contentDescription="Set a destination"},color=p.panel,contentColor=p.foreground,shape=hudShape(world),border=hudBorder(world)) {
+        Row(Modifier.padding(horizontal=14.dp,vertical=if(hudSize==HudSize.LARGE)14.dp else 12.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {Icon(painterResource(R.drawable.waypoint_search),null,Modifier.size(if(hudSize==HudSize.LARGE)24.dp else 21.dp),tint=p.foreground);Text(label,fontFamily=hudFont(world),fontSize=if(hudSize==HudSize.LARGE)18.sp else if(hudSize==HudSize.COMPACT)14.sp else 16.sp,lineHeight=22.sp,color=p.foreground,modifier=Modifier.weight(1f),maxLines=2,overflow=TextOverflow.Ellipsis);Icon(Icons.Default.ChevronRight,null,Modifier.size(18.dp))}
     }
 }
 @Composable internal fun FixLabel(s:NavState,modifier:Modifier=Modifier) {
@@ -114,15 +116,20 @@ internal fun atlasToolCaption(label:String)=when(label) {
     val p=hudPalette(s.world)
     Surface(color=p.panel,modifier=modifier) {AtlasText(s.city,s.world,Modifier.padding(horizontal=12.dp,vertical=7.dp),18,font=if(serif)AtlasFont else hudFont(s.world))}
 }
-@Composable internal fun CompassRose(bearing:Float,world:World,modifier:Modifier=Modifier,ornate:Boolean=false,onRecenter:()->Unit={}) {
+@Composable internal fun CompassRose(bearing:Float,world:World,modifier:Modifier=Modifier,ornate:Boolean=false,onRecenter:()->Unit={},hudSize:HudSize=HudSize.STANDARD) {
     val p=hudPalette(world);val reliable=bearing.isFinite()
+    val diameter=when(hudSize) {
+        HudSize.COMPACT -> if(ornate)88.dp else 64.dp
+        HudSize.STANDARD -> if(ornate)100.dp else 72.dp
+        HudSize.LARGE -> if(ornate)112.dp else 80.dp
+    }
     val triangleColor=if(world in listOf(World.OLD_WEST,World.GHOST))atlasAccentColor(world,Color(0xFFE0725E)) else p.accent
     val target=if(reliable)((bearing%360)+360)%360 else 0f
     var unwrapped by remember { mutableFloatStateOf(target) }
     LaunchedEffect(target) {unwrapped+=headingDelta(unwrapped%360,target)}
     val rotation by androidx.compose.animation.core.animateFloatAsState(unwrapped,androidx.compose.animation.core.tween(120),label="Compass heading")
     val description=if(reliable)stringResource(R.string.heading_recenter, target.roundToInt()) else stringResource(R.string.heading_unavailable_recenter)
-    Box(modifier.size(if(ornate)100.dp else 72.dp).background(p.panel.copy(alpha=.96f),CircleShape)
+    Box(modifier.size(diameter).background(p.panel.copy(alpha=.96f),CircleShape)
         .clickable(role=Role.Button,onClick=onRecenter).semantics(mergeDescendants=true){contentDescription=description},contentAlignment=Alignment.Center) {
         Canvas(Modifier.fillMaxSize().padding(7.dp)) {
             val r=size.minDimension/2
@@ -263,9 +270,4 @@ internal fun atlasToolCaption(label:String)=when(label) {
     Column(Modifier.align(Alignment.TopCenter).padding(16.dp)) {Row(Modifier.background(atlasSurfaceColor(s.world,Color(0xFFF5F2F2))),verticalAlignment=Alignment.CenterVertically){AtlasAction(s.world,"WORLD MAP",a.search,Modifier.weight(1f),true);AtlasTool(s.world,Icons.Default.Layers,"Worlds",a.huds);AtlasTool(s.world,Icons.Default.Tune,"Settings",a.settings)};PlaceLabel(s)}
     Column(Modifier.align(Alignment.CenterStart).padding(start=16.dp),verticalArrangement=Arrangement.spacedBy(4.dp)){AtlasTool(s.world,Icons.Default.BookmarkBorder,"Saved",a.saved);AtlasTool(s.world,Icons.Default.ViewInAr,"Toggle 2D and 3D",a.tilt)}
     Row(Modifier.align(Alignment.BottomCenter).padding(16.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)){AtlasFind(s.world,a,Modifier.weight(1f),"Find a place");AtlasTool(s.world,Icons.Default.MyLocation,"Use my location",a.locate,light=true)}
-}
-@Composable private fun BoxScope.CompactAtlas(s:NavState,b:Float,a:AtlasActions) {
-    Column(Modifier.align(Alignment.TopStart).widthIn(max=310.dp).padding(12.dp)){AtlasTabs(s.world,a);PlaceLabel(s)}
-    Row(Modifier.align(Alignment.BottomEnd).padding(12.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)){AtlasTool(s.world,Icons.Default.Search,"Set a destination",a.search);AtlasTool(s.world,Icons.Default.MyLocation,"Use my location",a.locate)}
-    FixLabel(s,Modifier.align(Alignment.BottomStart).padding(12.dp))
 }

@@ -63,6 +63,11 @@ internal fun playerMarkerImage(mode: TravelMode,headingKnown: Boolean): String =
     else -> "nav-arrow"
 }
 
+/** Cyberpunk uses the same heading-aware caret for every travel mode. */
+internal fun playerMarkerImage(world: World,mode: TravelMode,headingKnown: Boolean): String =
+    if(world==World.NIGHT_CITY && headingKnown) "nav-arrow"
+    else playerMarkerImage(mode,headingKnown)
+
 internal fun mapVehicle(world: World,mode: TravelMode): Bitmap {
     val livery=world.vehicleLivery()
     val transport=when(mode) { TravelMode.BICYCLE -> WorldTransport.BICYCLE; TravelMode.MOTORCYCLE -> livery.bike; else -> livery.car }

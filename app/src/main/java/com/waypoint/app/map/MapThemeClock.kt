@@ -34,11 +34,18 @@ internal fun MapThemeClock(content: @Composable () -> Unit) {
 internal fun isNightAtLocalTime(time: LocalTime = LocalTime.now()): Boolean =
     mapThemeNightOverride ?: (time.hour >= 19 || time.hour < 6)
 
-internal fun mapThemeStyleFile(world: World, night: Boolean, tilted: Boolean): String = when {
-    world == World.DIVISION && tilted -> if (night) "division_holo_night" else "division_holo"
-    world == World.DIVISION -> if (night) "division_night" else "division"
-    night -> "${world.file}_night"
-    else -> world.file
+/** Machine Atlas keeps its paper palette and marker assets when the clock turns dark. */
+internal fun effectiveNightMapTheme(world: World, night: Boolean): Boolean =
+    night && world != World.NIER
+
+internal fun mapThemeStyleFile(world: World, night: Boolean, tilted: Boolean): String {
+    val effectiveNight = effectiveNightMapTheme(world, night)
+    return when {
+        world == World.DIVISION && tilted -> if (effectiveNight) "division_holo_night" else "division_holo"
+        world == World.DIVISION -> if (effectiveNight) "division_night" else "division"
+        effectiveNight -> "${world.file}_night"
+        else -> world.file
+    }
 }
 
 internal fun resolveMapThemeStyleFile(

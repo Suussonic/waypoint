@@ -1,0 +1,58 @@
+{
+  "bar": {
+    "sha256": "519a4e1f13188e52d23a2e7c443fe1d90656e3181bbb82135d311d24b26a2b69",
+    "size": 3333,
+    "source_page": "https://cyberpunk.fandom.com/wiki/File:Mappin_Bar_CP2077.png",
+    "source_sha1": "0904e7334e9e2103ddc4a5de2ddcc713749a18df",
+    "source_url": "https://static.wikia.nocookie.net/cyberpunk/images/d/de/Mappin_Bar_CP2077.png/revision/latest?cb=20220713210318&format=original",
+    "title": "File:Mappin Bar CP2077.png"
+  },
+  "clothing": {
+    "sha256": "873137b57bdab33711793744aa7aed439bea45ce9e250391e3934d1fb83bf749",
+    "size": 3236,
+    "source_page": "https://cyberpunk.fandom.com/wiki/File:Mappin_Clothing_CP2077.png",
+    "source_sha1": "a9dde43494e2b97c506e203c3eeb36d62756f6f9",
+    "source_url": "https://static.wikia.nocookie.net/cyberpunk/images/5/55/Mappin_Clothing_CP2077.png/revision/latest?cb=20220713210325&format=original",
+    "title": "File:Mappin Clothing CP2077.png"
+  },
+  "food": {
+    "sha256": "8f8df820452514b00111a6a14494a0353ed10b00ac467a1f40049ebc8ea185d5",
+    "size": 4687,
+    "source_page": "https://cyberpunk.fandom.com/wiki/File:Mappin_Food_CP2077.png",
+    "source_sha1": "440dd3afb01c0cf8a31a8219f5dd3a492999cf15",
+    "source_url": "https://static.wikia.nocookie.net/cyberpunk/images/d/d3/Mappin_Food_CP2077.png/revision/latest?cb=20220713210403&format=original",
+    "title": "File:Mappin Food CP2077.png"
+  },
+  "landmark": {
+    "sha256": "302866e2978adea23dbe00cc21999c7f5a520f126f44e703668d94a6d57a224e",
+    "size": 3112,
+    "source_page": "https://cyberpunk.fandom.com/wiki/File:Mappin_Landmark_CP2077.png",
+    "source_sha1": "0d148ad4dc37af02c41620627e2383bb21995e2c",
+    "source_url": "https://static.wikia.nocookie.net/cyberpunk/images/a/af/Mappin_Landmark_CP2077.png/revision/latest?cb=20220713221153&format=original",
+    "title": "File:Mappin Landmark CP2077.png"
+  },
+  "medpoint": {
+    "sha256": "e813ba0054c0c1b0c08e9ff120e7e39931a7bc8a1fc03cc0207d40fbf6942ce4",
+    "size": 2393,
+    "source_page": "https://cyberpunk.fandom.com/wiki/File:Mappin_Medpoint_CP2077.png",
+    "source_sha1": "4678842b47f051111e71e1e7ea0dc9e80d78d741",
+    "source_url": "https://static.wikia.nocookie.net/cyberpunk/images/d/d7/Mappin_Medpoint_CP2077.png/revision/latest?cb=20220713210502&format=original",
+    "title": "File:Mappin Medpoint CP2077.png"
+  },
+  "ncpd": {
+    "sha256": "1c13d60743ab63f8a035014e462b4799900703233ee9256c509a3af78c5aab05",
+    "size": 3276,
+    "source_page": "https://cyberpunk.fandom.com/wiki/File:Mappin_NCPD_CP2077.png",
+    "source_sha1": "312b4048a131b4ef1d41d6c724ea4307372e1104",
+    "source_url": "https://static.wikia.nocookie.net/cyberpunk/images/f/ff/Mappin_NCPD_CP2077.png/revision/latest?cb=20220713210520&format=original",
+    "title": "File:Mappin NCPD CP2077.png"
+  },
+  "place_of_interest": {
+    "sha256": "ccabe04326fdbf210953f2d0389a02866e0ddd16ac6f22e65098849577869af2",
+    "size": 2841,
+    "source_page": "https://cyberpunk.fandom.com/wiki/File:Mappin_PlaceOfInterest_CP2077.png",
+    "source_sha1": "09144fd4316e337ea381295beb4b4b631d566192",
+    "source_url": "https://static.wikia.nocookie.net/cyberpunk/images/9/94/Mappin_PlaceOfInterest_CP2077.png/revision/latest?cb=20220713221244&format=original",
+    "title": "File:Mappin PlaceOfInterest CP2077.png"
+  }
+}
