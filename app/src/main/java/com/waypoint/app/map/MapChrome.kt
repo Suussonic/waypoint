@@ -69,17 +69,22 @@ internal fun MapChrome(state: NavState, heading: Float, actions: AtlasActions, m
             ChromeButton(world, Icons.Default.Search, "Set a destination", actions.search, hudSize = size)
             ChromeButton(world, Icons.Default.Tune, "Settings", actions.settings, hudSize = size)
         }
-        Column(Modifier.align(if (toolsOnRight) Alignment.BottomEnd else Alignment.BottomStart)
+        val toolPlacement = Modifier.align(if (toolsOnRight) Alignment.BottomEnd else Alignment.BottomStart)
             .padding(start = if (toolsOnRight) 0.dp else gutter,
                 end = if (toolsOnRight) gutter else 0.dp,
-                bottom = gutter + if (toolsOnRight) 0.dp else scaleClearance),
-            verticalArrangement = Arrangement.spacedBy(gap)) {
+                bottom = gutter + if (toolsOnRight) 0.dp else scaleClearance)
+        val mapTools: @Composable () -> Unit = {
             ChromeButton(world, Icons.Default.ViewInAr, "Toggle 2D and 3D", actions.tilt, hudSize = size)
             // Highlighted while the map is centred on the user and following; otherwise a tap flies back to them.
             ChromeButton(world, Icons.Default.MyLocation, "Use my location", actions.locate,
                 highlighted = !actions.awayFromUser && state.gpsReady,
                 stateText = if (actions.awayFromUser) "Map is away from you" else if (state.gpsReady) "Centred on you" else null,
                 hudSize = size)
+        }
+        if (landscape) Row(toolPlacement, horizontalArrangement = Arrangement.spacedBy(gap)) {
+            mapTools()
+        } else Column(toolPlacement, verticalArrangement = Arrangement.spacedBy(gap)) {
+            mapTools()
         }
         val showFix = !state.gpsReady || state.accuracy > 20 || !state.headingReliable
         Column(Modifier.align(if (toolsOnRight) Alignment.BottomStart else Alignment.BottomEnd)

@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -23,7 +22,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,6 +40,7 @@ internal fun MapLegendControl(state: NavState, modifier: Modifier = Modifier) {
     val visualSize = hudToolVisualSize(state.hudSize)
     val profile = remember(world) { WorldLegendProfiles.forWorld(world) }
     var expanded by remember(world) { mutableStateOf(false) }
+    val keyLabel = if (expanded) "Close ${world.title} map key" else "Open ${world.title} map key"
     val entries = remember(context) { MapPoiCategories.all(context) }
     val sections = remember(entries, profile) {
         profile.groupOrder.mapNotNull { group ->
@@ -164,22 +163,22 @@ internal fun MapLegendControl(state: NavState, modifier: Modifier = Modifier) {
                 }
             }
         }
-        Box(Modifier.align(keyAlignment)
-            .padding(top = keyTopInset,
-                end = keyEndInset,
-                start = if (compactHeight || keyOnRight) 0.dp else 16.dp)
-            .size(targetSize)
-            .clickable(role = Role.Button) { expanded = !expanded }
-            .semantics { contentDescription = if (expanded) "Close ${world.title} map key" else "Open ${world.title} map key" },
-            contentAlignment = Alignment.Center) {
-            Surface(color = palette.panel, contentColor = palette.foreground,
-                shape = hudShape(world), border = hudBorder(world),
-                modifier = Modifier.size(visualSize)) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.Info, contentDescription = null, tint = palette.accent,
-                        modifier = Modifier.size(when (state.hudSize) {
-                            HudSize.COMPACT -> 19.dp; HudSize.STANDARD -> 24.dp; HudSize.LARGE -> 26.dp
-                        }))
+        key(keyLabel) {
+            IconButton(onClick = { expanded = !expanded },
+                modifier = Modifier.align(keyAlignment)
+                    .padding(top = keyTopInset,
+                        end = keyEndInset,
+                        start = if (compactHeight || keyOnRight) 0.dp else 16.dp)
+                    .size(targetSize)) {
+                Surface(color = palette.panel, contentColor = palette.foreground,
+                    shape = hudShape(world), border = hudBorder(world),
+                    modifier = Modifier.size(visualSize)) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.Info, contentDescription = keyLabel, tint = palette.accent,
+                            modifier = Modifier.size(when (state.hudSize) {
+                                HudSize.COMPACT -> 19.dp; HudSize.STANDARD -> 24.dp; HudSize.LARGE -> 26.dp
+                            }))
+                    }
                 }
             }
         }
