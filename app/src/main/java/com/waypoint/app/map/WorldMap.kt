@@ -9,11 +9,24 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PointF
+import android.content.res.Configuration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -35,13 +48,15 @@ import org.maplibre.android.style.expressions.Expression.*
 data class MapViewportInsets(val left:Int,val top:Int,val right:Int,val bottom:Int)
 
 @Composable
-fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit, modifier: Modifier=Modifier,active:Boolean=true,routeInsets:MapViewportInsets?=null,onBearing:(Float)->Unit={},cameraZoomOverride:Double?=null,cameraTiltOverride:Double?=null,styleFileOverride:String?=null,cameraCenterOverride:Coordinate?=null,onAwayFromUser:(Boolean)->Unit={},onSelectRoute:(Int)->Unit={}) {
+fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit, modifier: Modifier=Modifier,active:Boolean=true,routeInsets:MapViewportInsets?=null,onBearing:(Float)->Unit={},cameraZoomOverride:Double?=null,cameraTiltOverride:Double?=null,styleFileOverride:String?=null,cameraCenterOverride:Coordinate?=null,onAwayFromUser:(Boolean)->Unit={},onSelectRoute:(Int)->Unit={},showScaleBar:Boolean=false,scaleBarInsets:MapViewportInsets?=null) {
     val context=LocalContext.current
+    val density=LocalDensity.current
+    val landscape=LocalConfiguration.current.orientation==Configuration.ORIENTATION_LANDSCAPE
     val selectRoute by rememberUpdatedState(onSelectRoute)
     val owner=LocalLifecycleOwner.current
     val lifecycleState by owner.lifecycle.currentStateAsState()
     val nightTheme=LocalNightMapTheme.current
-    val mapNight=nightTheme && styleFileOverride==null
+    val mapNight=effectiveNightMapTheme(state.world,nightTheme) && styleFileOverride==null
     val availableStyles=remember(context) { mapThemeStyleFiles(context) }
     val requestedStyleFile=styleFileOverride ?: resolveMapThemeStyleFile(state.world,mapNight,state.tilted,availableStyles)
     val currentState by rememberUpdatedState(state)
@@ -59,6 +74,32 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
     val cameraGate=remember{CameraRequestGate()}
     val tiltRequestSeen=remember{intArrayOf(state.cameraRequest)}
     val reportAway by rememberUpdatedState(onAwayFromUser)
+    var mapBoundsOnScreen by remember { mutableStateOf(Rect.Zero) }
+    var scaleLineBounds by remember { mutableStateOf(Rect.Zero) }
+    var scaleTick by remember { mutableStateOf<MapScaleTick?>(null) }
+    val currentMapBounds by rememberUpdatedState(mapBoundsOnScreen)
+    val currentScaleLineBounds by rememberUpdatedState(scaleLineBounds)
+    val currentScaleImperial by rememberUpdatedState(state.imperial)
+    val currentScaleEnabled by rememberUpdatedState(showScaleBar && active)
+    val lastScaleUpdate=remember { longArrayOf(0L) }
+    fun refreshScale(m:MapLibreMap, force:Boolean=false) {
+        if(!currentScaleEnabled) { scaleTick=null;return }
+        val now=SystemClock.elapsedRealtime()
+        if(!force && now-lastScaleUpdate[0]<120L)return
+        lastScaleUpdate[0]=now
+        val outer=currentMapBounds
+        val line=currentScaleLineBounds
+        if(outer.width<=0f || line.width<=0f) { scaleTick=null;return }
+        val y=line.center.y-outer.top
+        val maxMeters=runCatching {
+            val left=m.projection.fromScreenLocation(PointF(line.left-outer.left,y))
+            val right=m.projection.fromScreenLocation(PointF(line.right-outer.left,y))
+            distance(Coordinate(left.latitude,left.longitude),Coordinate(right.latitude,right.longitude))
+        }.getOrNull()
+        val next=maxMeters?.let { chooseMapScale(it,currentScaleImperial) }
+        if(next==null || scaleTick?.label!=next.label ||
+            kotlin.math.abs((scaleTick?.widthFraction ?: -1f)-next.widthFraction)>.01f)scaleTick=next
+    }
     val motion=remember { MapMotion() }
     val renderedBearing=remember{floatArrayOf(0f)}
     val positionFrames=remember{arrayOfNulls<MapMotionFrames>(1)}
@@ -109,6 +150,7 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
         syncGlobeRotation()
         onDispose { owner.lifecycle.removeObserver(observer);globeAnimator[0]?.cancel();globeAnimator[0]=null }
     }
+    Box(modifier.onGloballyPositioned { mapBoundsOnScreen=it.boundsInRoot() }) {
     AndroidView(factory={mapView.apply {
         addOnDidFailLoadingMapListener { currentError("Map couldn't load. Check your internet connection.") }
         getMapAsync { m ->
@@ -117,13 +159,14 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
                 setAllGesturesEnabled(true)
             }
             m.cameraPosition=CameraPosition.Builder().target((cameraCenterOverride ?: PreviewCenter).latLng()).zoom(cameraZoomOverride ?: 15.2).tilt(mapCameraTilt(currentState.world,currentState.tilted,currentState.navigating,cameraTiltOverride)).bearing(-22.0).build()
-            m.addOnCameraMoveListener { currentBearing(m.cameraPosition.bearing.toFloat()) }
+            m.addOnCameraMoveListener { currentBearing(m.cameraPosition.bearing.toFloat());refreshScale(m) }
             m.addOnCameraMoveStartedListener { reason -> if(reason==MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
                 focusCameraHoldUntil[0]=0L;cameraGate.userMovedCamera();followPolicy.gestureStarted(SystemClock.elapsedRealtime());followTick++
             } }
             m.addOnCameraIdleListener {
                 if(followPolicy.gestureEnded(SystemClock.elapsedRealtime()))followTick++
                 reportAway(m.awayFromUser(currentState,followPolicy))
+                refreshScale(m,true)
             }
             m.addOnMapLongClickListener { point ->
                 if(!currentState.navigating) currentPin(Place("pin:${point.latitude},${point.longitude}","Dropped pin","%.5f, %.5f".format(point.latitude,point.longitude),Coordinate(point.latitude,point.longitude)))
@@ -152,7 +195,26 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
                 } else false
             }
         }
-    }},modifier=modifier,update={it.visibility=if(active)android.view.View.VISIBLE else android.view.View.INVISIBLE})
+    }},modifier=Modifier.fillMaxSize(),update={it.visibility=if(active)android.view.View.VISIBLE else android.view.View.INVISIBLE})
+    if(showScaleBar && active) {
+        val insets=scaleBarInsets ?: MapViewportInsets(0,0,0,0)
+        val leftInset=with(density){insets.left.toDp()}
+        val rightInset=with(density){insets.right.toDp()}
+        val bottomInset=with(density){insets.bottom.toDp()}
+        val placement=if(landscape)Modifier.align(Alignment.BottomStart)
+            .padding(start=leftInset+16.dp,bottom=bottomInset+18.dp)
+        else Modifier.align(Alignment.BottomCenter)
+            .offset(x=(leftInset-rightInset)/2)
+            .padding(bottom=bottomInset+18.dp)
+        MapScaleBar(state.world,scaleTick,landscape,placement,
+            onLineBounds={scaleLineBounds=it})
+    }
+    }
+    LaunchedEffect(map,styleReady,active,showScaleBar,state.imperial,mapBoundsOnScreen,scaleLineBounds) {
+        val m=map
+        if(m==null || !active || !showScaleBar || styleReady==0)scaleTick=null
+        else refreshScale(m,true)
+    }
     LaunchedEffect(map,state.world,active,requestedStyleFile,mapNight) {
         val m=map ?: return@LaunchedEffect
         if(!active || styleReady>0 && loadedStyleFile==requestedStyleFile)return@LaunchedEffect
@@ -169,7 +231,7 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
             val prepared=HashMap<String,Bitmap>(poiCategories.size+12).apply {
                 mapMaterial(context,requestedWorld,requestedNight)?.let { put("world-material",it) }
                 putAll(mapTextureKit(context,requestedWorld))
-                put("nav-arrow",mapPlayer(requestedWorld))
+                put("nav-arrow",mapPlayer(context,requestedWorld))
                 put("vehicle-car",mapVehicle(requestedWorld,TravelMode.CAR))
                 put("vehicle-bike",mapVehicle(requestedWorld,TravelMode.MOTORCYCLE))
                 put("vehicle-bicycle",mapVehicle(requestedWorld,TravelMode.BICYCLE))
@@ -315,8 +377,9 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
         val course=state.navigating && state.headingSource.isTravelDirection
         val heading=if(state.headingReliable)state.bearing else renderedBearing[0]
         motion.update(state.fix,heading,SystemClock.elapsedRealtime(),course,ValueAnimator.areAnimatorsEnabled())
-        layer.setProperties(iconImage(playerMarkerImage(state.mode,state.headingReliable)),
-            iconPitchAlignment(if(state.mode==TravelMode.WALK)Property.ICON_PITCH_ALIGNMENT_MAP
+        layer.setProperties(iconImage(playerMarkerImage(state.world,state.mode,state.headingReliable)),
+            iconPitchAlignment(if(state.world==World.NIGHT_CITY)Property.ICON_PITCH_ALIGNMENT_VIEWPORT
+                else if(state.mode==TravelMode.WALK)Property.ICON_PITCH_ALIGNMENT_MAP
                 else Property.ICON_PITCH_ALIGNMENT_VIEWPORT))
         val epoch=styleEpoch[0]
         // Sensor/accuracy emissions cannot reset the accepted fix's timeline.

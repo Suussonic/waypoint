@@ -4,6 +4,13 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class QuestColorsTest {
+    @Test fun machineAtlasRetainsItsRustAndPaperPaletteAtNight() {
+        val day = hudPalette(World.NIER,false)
+        assertEquals(day,hudPalette(World.NIER,true))
+        assertEquals(androidx.compose.ui.graphics.Color(0xFF793D2B),day.accent)
+        assertEquals(androidx.compose.ui.graphics.Color(0xF7D8D4BC),day.panel)
+    }
+
     @Test fun taskTextAndActionsRemainReadableInEveryWorld() {
         World.entries.forEach { world ->
             listOf(false,true).forEach { night ->

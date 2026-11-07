@@ -7,7 +7,7 @@ import math
 
 def draw_category_glyph(image, kind: str, ink, accent, family: str) -> None:
     """Draw one semantic place glyph into a 128px Waypoint atlas cell."""
-    stroke = 5 if family in {"pixel", "terminal", "pda"} else 4
+    stroke = 5 if family in {"pixel", "terminal", "pda", "machine"} else 4
     thin = max(2, stroke - 2)
 
     def line(*points, width=stroke):

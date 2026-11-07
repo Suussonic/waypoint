@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
-"""Convert original ImageGen sheets and world markers into Waypoint assets.
+"""Import reviewed ImageGen POI sheets using tracked crop and repair sources.
 
-The atlas generator uses a magenta key. Background removal is per-cell and
-edge-connected so pink artwork inside a closed badge stays opaque. Destination
-markers are generated as their own images because the atlas's last cell can be
-cropped by image generation. Pillow is required.
+The original source sheets are kept outside Git. The checked-in crop manifest
+records their checksums and nonuniform cell bounds; checked-in 128 px override
+sprites cover omitted, reordered, or contaminated cells. Nier and Night City
+have dedicated generators and are deliberately excluded. Pillow is required.
 """
 from __future__ import annotations
 
 import argparse
+from hashlib import sha256
+import json
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageDraw, ImageOps
+from PIL import Image, ImageChops, ImageDraw, ImageOps, __version__ as PILLOW_VERSION
 
 from generate_night_icon_variants import night_atlas_variant, night_variant
 from map_theme_catalog import THEMES
@@ -19,6 +21,8 @@ from map_theme_catalog import THEMES
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SOURCE = ROOT / "output/imagegen/poi-atlases-all"
 DEFAULT_MARKER_SOURCE = ROOT / "output/imagegen/world-markers"
+DEFAULT_MANIFEST = ROOT / "tools/imagegen/poi-crop-manifest.json"
+OVERRIDE_DIR = ROOT / "tools/imagegen/poi-overrides"
 POI_DIR = ROOT / "app/src/main/assets/poi"
 MARKER_DIR = ROOT / "app/src/main/assets/map-markers"
 SOURCE_COLUMNS = 5
@@ -26,6 +30,10 @@ SOURCE_ROWS = 10
 SOURCE_CELL = 256
 TARGET_CELL = 128
 SOURCE_SIZE = (SOURCE_COLUMNS * SOURCE_CELL, SOURCE_ROWS * SOURCE_CELL)
+EXCLUDED_GENERATORS = {
+    "nier": "scripts/generate_map_assets.py",
+    "night_city": "scripts/generate_night_city_icons.py",
+}
 
 
 def magenta_key_mask(image: Image.Image) -> Image.Image:
@@ -72,19 +80,11 @@ def remove_edge_background(image: Image.Image) -> Image.Image:
     return rgba
 
 
-def transparent_cell(sheet: Image.Image, index: int) -> Image.Image:
-    column = index % SOURCE_COLUMNS
-    row = index // SOURCE_COLUMNS
-    cell = sheet.crop((
-        column * SOURCE_CELL,
-        row * SOURCE_CELL,
-        (column + 1) * SOURCE_CELL,
-        (row + 1) * SOURCE_CELL,
-    ))
+def transparent_sprite_from_crop(cell: Image.Image, label: str) -> Image.Image:
     image = remove_edge_background(cell)
     bounds = image.getchannel("A").getbbox()
     if bounds is None:
-        raise ValueError(f"Generated POI sprite {index} has no visible artwork")
+        raise ValueError(f"Generated POI sprite {label} has no visible artwork")
     artwork = image.crop(bounds)
     # A few illustrated symbols reach the edge of their generated cell. Fit
     # each one inside a common transparent margin so map labels and halos never
@@ -96,6 +96,48 @@ def transparent_cell(sheet: Image.Image, index: int) -> Image.Image:
         ((TARGET_CELL - artwork.width) // 2, (TARGET_CELL - artwork.height) // 2),
     )
     return canvas
+
+
+def transparent_cell(
+    sheet: Image.Image,
+    index: int,
+    column_bounds: list[int],
+    row_bounds: list[int],
+) -> Image.Image:
+    column = index % SOURCE_COLUMNS
+    row = index // SOURCE_COLUMNS
+    cell = sheet.crop((
+        column_bounds[column], row_bounds[row],
+        column_bounds[column + 1], row_bounds[row + 1],
+    ))
+    return transparent_sprite_from_crop(cell, str(index))
+
+
+def load_crop_manifest(path: Path = DEFAULT_MANIFEST) -> dict:
+    manifest = json.loads(path.read_text())
+    expected_worlds = set(THEMES) - set(EXCLUDED_GENERATORS)
+    if manifest.get("schema") != 1 or set(manifest.get("worlds", {})) != expected_worlds:
+        raise ValueError("POI crop manifest must cover every ImageGen world exactly once")
+    if manifest.get("source_dimensions") != list(SOURCE_SIZE) or manifest.get("target_cell_pixels") != TARGET_CELL:
+        raise ValueError("POI crop manifest has unexpected source or target dimensions")
+    if manifest.get("pillow_version") != "13.0.0":
+        raise ValueError("POI crop manifest must record the pinned Pillow renderer")
+    excluded = manifest.get("excluded_worlds", {})
+    if set(excluded) != set(EXCLUDED_GENERATORS) or any(
+        not excluded[world].startswith(script)
+        for world, script in EXCLUDED_GENERATORS.items()
+    ):
+        raise ValueError("POI crop manifest must document the dedicated generators")
+    for world, entry in manifest["worlds"].items():
+        for field, last, size in (("column_bounds", 1280, 6), ("row_bounds", 2560, 11)):
+            bounds = entry.get(field)
+            if not isinstance(bounds, list) or len(bounds) != size or bounds[0] != 0 or bounds[-1] != last:
+                raise ValueError(f"{world}: invalid {field}")
+            if any(not isinstance(value, int) for value in bounds) or any(a >= b for a, b in zip(bounds, bounds[1:])):
+                raise ValueError(f"{world}: {field} must increase strictly")
+        if len(entry.get("sheet_sha256", "")) != 64:
+            raise ValueError(f"{world}: missing source sheet SHA-256")
+    return manifest
 
 
 def destination_marker(source: Image.Image) -> Image.Image:
@@ -118,46 +160,72 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-dir", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--marker-source-dir", type=Path, default=DEFAULT_MARKER_SOURCE)
+    parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
+    parser.add_argument("--world", action="append", help="Import only this ImageGen world; repeatable")
+    parser.add_argument("--poi-only", action="store_true", help="Leave destination marker assets untouched")
     args = parser.parse_args()
-    sources = sorted(args.source_dir.glob("*.png"))
-    if len(sources) != 38:
-        raise SystemExit(f"Expected 38 world atlases in {args.source_dir}, found {len(sources)}")
-    markers = {path.stem: path for path in args.marker_source_dir.glob("*.png")}
-    if set(markers) != set(THEMES):
-        raise SystemExit(
-            f"Expected one standalone marker for each of {len(THEMES)} worlds in "
-            f"{args.marker_source_dir}; found {len(markers)}"
-        )
+    manifest = load_crop_manifest(args.manifest)
+    selected = set(args.world or manifest["worlds"])
+    for world in sorted(selected & set(EXCLUDED_GENERATORS)):
+        raise SystemExit(f"{world} uses {EXCLUDED_GENERATORS[world]}, not the ImageGen atlas importer")
+    unknown = selected - set(manifest["worlds"])
+    if unknown:
+        raise SystemExit(f"Unknown ImageGen world(s): {', '.join(sorted(unknown))}")
+    if PILLOW_VERSION != manifest["pillow_version"]:
+        raise SystemExit("Source sheet rendering requires tools/imagegen/requirements.txt (Pillow 13.0.0)")
+    categories = json.loads((ROOT / "app/src/main/assets/poi_categories.json").read_text())
+    category_ids = [category["id"] for category in categories]
+    if len(category_ids) != 49 or len(set(category_ids)) != 49:
+        raise ValueError("Expected 49 unique POI categories")
+    markers = {world: args.marker_source_dir / f"{world}.png" for world in selected}
+    if not args.poi_only:
+        missing_markers = sorted(world for world, path in markers.items() if not path.is_file())
+        if missing_markers:
+            raise SystemExit(f"Missing standalone marker artwork for: {missing_markers}")
 
     POI_DIR.mkdir(parents=True, exist_ok=True)
-    MARKER_DIR.mkdir(parents=True, exist_ok=True)
-    for source in sources:
-        name = source.stem
-        if name not in THEMES:
-            raise SystemExit(f"Unknown world atlas: {source.name}")
+    if not args.poi_only:
+        MARKER_DIR.mkdir(parents=True, exist_ok=True)
+    for name in sorted(selected):
+        source = args.source_dir / f"{name}.png"
+        if not source.is_file() or sha256(source.read_bytes()).hexdigest() != manifest["worlds"][name]["sheet_sha256"]:
+            raise SystemExit(f"{name}: source sheet is missing or differs from the reviewed SHA-256")
         with Image.open(source) as opened:
             if opened.size != SOURCE_SIZE:
                 raise SystemExit(f"{source.name}: expected {SOURCE_SIZE}, found {opened.size}")
             sheet = opened.convert("RGBA")
 
+        entry = manifest["worlds"][name]
+        unknown_overrides = set(entry["overrides"]) - set(category_ids)
+        if unknown_overrides:
+            raise ValueError(f"{name}: unknown override categories: {sorted(unknown_overrides)}")
         atlas = Image.new("RGBA", (SOURCE_COLUMNS * TARGET_CELL, SOURCE_ROWS * TARGET_CELL), (0, 0, 0, 0))
-        for index in range(49):
-            atlas.alpha_composite(transparent_cell(sheet, index), (
+        for index, category in enumerate(category_ids):
+            if category in entry["overrides"]:
+                override = OVERRIDE_DIR / f"{name}__{category}.png"
+                with Image.open(override) as opened:
+                    if opened.size != (TARGET_CELL, TARGET_CELL):
+                        raise ValueError(f"Unexpected override dimensions: {override}")
+                    sprite = opened.convert("RGBA")
+            else:
+                sprite = transparent_cell(sheet, index, entry["column_bounds"], entry["row_bounds"])
+            atlas.alpha_composite(sprite, (
                 index % SOURCE_COLUMNS * TARGET_CELL,
                 index // SOURCE_COLUMNS * TARGET_CELL,
             ))
-        with Image.open(markers[name]) as opened:
-            if opened.width != opened.height or opened.width < 512:
-                raise SystemExit(
-                    f"{markers[name].name}: expected a square marker image at least 512px wide"
-                )
-            marker = destination_marker(opened)
         atlas.save(POI_DIR / f"{name}.png", optimize=True)
         night_atlas_variant(atlas, THEMES[name]).save(POI_DIR / f"{name}_night.png", optimize=True)
-        marker.save(MARKER_DIR / f"{name}.png", optimize=True)
-        night_variant(marker, THEMES[name]).save(MARKER_DIR / f"{name}_night.png", optimize=True)
+        if not args.poi_only:
+            with Image.open(markers[name]) as opened:
+                if opened.width != opened.height or opened.width < 512:
+                    raise SystemExit(
+                        f"{markers[name].name}: expected a square marker image at least 512px wide"
+                    )
+                marker = destination_marker(opened)
+            marker.save(MARKER_DIR / f"{name}.png", optimize=True)
+            night_variant(marker, THEMES[name]).save(MARKER_DIR / f"{name}_night.png", optimize=True)
 
-    print(f"Imported {len(sources)} transparent 49-icon atlases and 38 destination markers (day/night variants).")
+    print(f"Imported {len(selected)} reviewed 49-icon atlases" + ("." if args.poi_only else " and destination markers."))
     return 0
 
 

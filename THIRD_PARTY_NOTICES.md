@@ -22,4 +22,8 @@ The build's direct dependency versions are in [app/build.gradle.kts](app/build.g
 
 The first onboarding Earth image adapts NASA Earth Observatory's [Blue Marble](https://science.nasa.gov/earth/earth-observatory/the-blue-marble-true-color-global-imagery-at-1km-resolution/) imagery. Service marks used for referral choices come from [Simple Icons](https://simpleicons.org/). Font licenses are collected in [docs/licenses](docs/licenses/) and [third_party/game_fonts](third_party/game_fonts/).
 
-Waypoint's map styles, place-symbol atlases, destination markers and promotional compositions are documented in the [artwork notes](docs/game-artwork-sources.md) and [map icon notes](docs/poi-icon-sources.md). Some retained interface and onboarding images have separate origins and are outside the claim that those map assets are original.
+Waypoint's map styles, place-symbol atlases, destination markers and promotional compositions are documented in the [artwork notes](docs/game-artwork-sources.md) and [map icon notes](docs/poi-icon-sources.md). Some retained interface and onboarding images have separate origins.
+
+### Cyberpunk 2077 map glyphs in Night City
+
+Seven Cyberpunk 2077 map glyph PNGs are bundled in [third_party/cyberpunk_map_icons](third_party/cyberpunk_map_icons/) and used in the Night City POI atlas only for directly matching real-world place categories. Cyberpunk 2077 and these glyphs are CD PROJEKT RED artwork. The project maintainer has confirmed written permission covering use in the public Waypoint app and repository; the permission document is held privately. These game glyphs are separate from Waypoint's GPL-3.0-only code license. The [map icon notes](docs/poi-icon-sources.md#night-city) identify each source page, semantic mapping, and SHA-256 hash; [sources.json](third_party/cyberpunk_map_icons/sources.json) records the original download URLs and MediaWiki SHA-1 values. Waypoint is independent and is not affiliated with CD PROJEKT RED.

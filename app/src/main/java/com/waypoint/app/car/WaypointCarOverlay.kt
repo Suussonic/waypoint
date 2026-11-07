@@ -32,7 +32,7 @@ internal class WaypointCarOverlay(private val context: Context) {
     }
 
     private fun drawGuidance(canvas: Canvas,state: NavState,visible: Rect,scale: Float) {
-        val palette=hudPalette(state.world,isNightAtLocalTime())
+        val palette=hudPalette(state.world,effectiveNightMapTheme(state.world,isNightAtLocalTime()))
         val left=visible.left+12f*scale;val top=visible.top+12f*scale
         val right=min(left+350f*scale,visible.right-12f*scale);val bottom=top+106f*scale
         paint.style=Paint.Style.FILL
@@ -121,7 +121,7 @@ internal class WaypointCarOverlay(private val context: Context) {
         val left=right-panelWidth-10f*scale
         val top=bottom-panelHeight-31f*scale
         if(left<visible.left || top<visible.top+150f*scale) return
-        val palette=hudPalette(world,isNightAtLocalTime())
+        val palette=hudPalette(world,effectiveNightMapTheme(world,isNightAtLocalTime()))
         val radius=if(world in setOf(World.NIGHT_CITY,World.HEAT,World.SPIDER))9f*scale else 3f*scale
         paint.style=Paint.Style.FILL
         paint.color=palette.panel.toArgb()

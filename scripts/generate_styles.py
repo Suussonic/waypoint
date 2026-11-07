@@ -16,6 +16,7 @@ from pathlib import Path
 from cartography_profiles import PROFILES
 from map_theme_catalog import THEMES
 from map_style_recipes import RECIPES
+from style_overrides import apply_style_overrides
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_ROOT = Path(os.environ.get("WAYPOINT_ASSET_OUTPUT", ROOT)).resolve()
@@ -28,6 +29,15 @@ ROAD_GROUPS = {
     "rail": ("rail", "transit", "subway", "light_rail", "tram"),
     "ferry": ("ferry",),
 }
+# Machine Atlas's shipped road widths were broadened after the base generator
+# pass. Keep them here so build_style("nier", ...) reproduces the checked-in map.
+MACHINE_ROAD_ZOOMS = (5, 10, 13, 15, 17, 18, 19, 20)
+MACHINE_ROAD_WIDTHS = {
+    "primary": (.7, 1.4, 3.0, 5.6, 10.0, 15.0, 23.0, 34.0),
+    "secondary": (.5, 1.0, 2.2, 4.2, 7.5, 11.5, 18.0, 27.0),
+    "local": (.3, .6, 1.2, 2.6, 5.4, 9.0, 14.5, 22.0),
+}
+MACHINE_PATH_WIDTHS = (.3, .5, .8, 1.3, 2.0, 3.0, 4.5, 6.5)
 RELIEF_ATTRIBUTION = "Terrain tiles © Mapzen / data providers"
 OPENMAPTILES_ATTRIBUTION = "© OpenStreetMap contributors · © OpenMapTiles"
 
@@ -53,7 +63,7 @@ def contrast_ratio(a: str, b: str) -> float:
 
 def colors_for(theme: dict[str, str], night: bool) -> dict[str, str]:
     colors = dict(theme)
-    if night:
+    if night and theme["icon_profile"] != "machine_bracket":
         for key, amount in (
             ("ground", .60), ("land", .56), ("park", .50),
             ("water", .63), ("building", .58), ("casing", .50),
@@ -90,6 +100,31 @@ def width_expr(base: float, minzoom: float = 5.0) -> list:
         14, max(.65, round(base * .82, 2)),
         18, round(base * 2.25, 2),
     ]
+
+
+def machine_width_expr(widths: tuple[float, ...]) -> list:
+    expression = ["interpolate", ["linear"], ["zoom"]]
+    for zoom, width in zip(MACHINE_ROAD_ZOOMS, widths):
+        expression.extend((zoom, width))
+    return expression
+
+
+def apply_machine_navigation_widths(layers: list[dict]) -> None:
+    """Preserve the road hierarchy shipped with Machine Atlas's paper style."""
+    for layer in layers:
+        layer_id = layer["id"]
+        if layer_id == "waypoint-path-roads":
+            layer["paint"]["line-width"] = machine_width_expr(MACHINE_PATH_WIDTHS)
+            continue
+        for group, base_widths in MACHINE_ROAD_WIDTHS.items():
+            if layer_id == f"waypoint-{group}-casing":
+                widths = tuple(round(width * 1.18 + 1.2, 3) for width in base_widths)
+            elif layer_id in {f"waypoint-{group}-roads", f"waypoint-{group}-tunnels"}:
+                widths = base_widths
+            else:
+                continue
+            layer["paint"]["line-width"] = machine_width_expr(widths)
+            break
 
 
 def fill_layer(layer_id: str, source_layer: str, color: str, opacity: float = 1.0,
@@ -208,7 +243,8 @@ def build_layers(name: str, colors: dict[str, str], profile: dict,
                           recipe["line_cap"], recipe["line_join"])
 
     layers: list[dict] = [
-        {"id": "waypoint-ground", "type": "background", "paint": {"background-pattern": "world-material"}},
+        {"id": "waypoint-ground", "type": "background", "paint":
+            {"background-color": colors["ground"]} if name == "nier" else {"background-pattern": "world-material"}},
         fill_layer("waypoint-land-residential", "landuse", colors["land"], land_opacity[0],
                    ("residential", "suburb", "neighbourhood", "hamlet"), outline=land_edge),
         fill_layer("waypoint-land-urban", "landuse", rgba_mix(colors["land"], colors["building"], .22), land_opacity[1],
@@ -394,12 +430,24 @@ def build_layers(name: str, colors: dict[str, str], profile: dict,
                      halo_width=recipe["label_halo"]),
         symbol_layer("waypoint-region-labels", "place", font, colors["label"], colors["halo"],
                      2.0, ("country", "state", "province", "region"),
-                     size=label_size(12, 18), letter_spacing=max(.08, recipe["label_spacing"]),
+                     size=label_size(12, 18),
+                     letter_spacing=recipe["label_spacing"] if name == "nier" else max(.08, recipe["label_spacing"]),
                      transform=recipe["label_transform"], halo_width=recipe["label_halo"]),
         symbol_layer("waypoint-aerodrome-labels", "aerodrome_label", font, colors["label"], colors["halo"],
                      11.5, placement="point", size=label_size(10, 12), letter_spacing=recipe["label_spacing"],
                      transform=recipe["label_transform"], halo_width=recipe["label_halo"]),
     ])
+
+    if name == "nier":
+        # The original machine map lets city names anchor the geography while
+        # quieter town and neighbourhood names keep their smaller type.
+        city = next(layer for layer in layers if layer["id"] == "waypoint-city-labels")
+        city["layout"]["text-size"] = [
+            "interpolate", ["linear"], ["zoom"],
+            8, ["match", ["get", "class"], "city", 15, 10],
+            14, ["match", ["get", "class"], "city", 18, 11.5],
+            18, ["match", ["get", "class"], "city", 22, 15],
+        ]
 
     if name == "pixel":
         # Original 16-bit textures reinforce the pixel world while still using
@@ -415,6 +463,8 @@ def build_layers(name: str, colors: dict[str, str], profile: dict,
         for layer in layers:
             if layer.get("id") == "waypoint-landcover-woodland":
                 layer["paint"]["fill-pattern"] = "pixel-grass"
+    if name == "nier":
+        apply_machine_navigation_widths(layers)
     return order_layers(name, layers), sources
 
 
@@ -493,6 +543,7 @@ def order_layers(name: str, layers: list[dict]) -> list[dict]:
 def build_style(name: str, night: bool, holographic: bool = False) -> dict:
     colors = colors_for(THEMES[name], night)
     layers, sources = build_layers(name, colors, PROFILES[name], holographic)
+    layers = apply_style_overrides(name, night, layers)
     title = name.replace("_", " ").title()
     mode = "Dark Zone Hologram" if holographic else title
     phase = "Night" if night else "Day"

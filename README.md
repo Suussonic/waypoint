@@ -61,7 +61,7 @@ Pick a world during onboarding, then explore real geography through its roads, t
 
 After the first run, Waypoint opens your last selected world. Thanks to [u/cuberisk](https://www.reddit.com/user/cuberisk/) for suggesting that faster return to the map.
 
-**Drawn for Waypoint:** all 38 worlds use map styles authored from scratch for this project, with their own road treatments, labels, textures, place symbols and destination markers. Day and night variants give the same place a different atmosphere. MapLibre renders the live geography; the app does not use MapLibre's sample styles or presets. [How the artwork is made →](docs/game-artwork-sources.md)
+**Cartography made for Waypoint:** all 38 worlds use map styles authored from scratch for this project, with their own road treatments, labels, textures and destination markers. Most place symbols are original Waypoint artwork; Night City's atlas also uses seven Cyberpunk 2077 glyphs under the permission documented in the [map icon notes](docs/poi-icon-sources.md#night-city). Most worlds switch between day and night variants; Machine Atlas keeps its cream palette at every hour. MapLibre renders the live geography; the app does not use MapLibre's sample styles or presets. [How the artwork is made →](docs/game-artwork-sources.md)
 
 <picture>
   <source media="(max-width: 640px)" srcset="docs/images/promo/worlds-1-mobile.jpg" />
@@ -230,7 +230,7 @@ GPS and place coverage vary by device and location; real-road and long-duration 
 
 ### License and attribution
 
-Waypoint is independent and is not affiliated with the games or their publishers. The **code is GPL-3.0-only**. The [third-party notices](THIRD_PARTY_NOTICES.md) cover components and data used by this project; [font licenses](docs/licenses/), [map icon notes](docs/poi-icon-sources.md) and [artwork notes](docs/game-artwork-sources.md) record the asset details. The original map-art claim above applies to Waypoint's cartography and map assets, not to retained interface and onboarding images.
+Waypoint is independent and is not affiliated with the games or their publishers. The **code is GPL-3.0-only**. The [third-party notices](THIRD_PARTY_NOTICES.md) cover components and data used by this project; [font licenses](docs/licenses/), [map icon notes](docs/poi-icon-sources.md) and [artwork notes](docs/game-artwork-sources.md) record the asset details, including the Night City game glyph exception.
 
 Report security concerns through [SECURITY.md](SECURITY.md).
 

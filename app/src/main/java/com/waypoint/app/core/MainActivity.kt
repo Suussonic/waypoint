@@ -294,6 +294,25 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                     MapViewportInsets(edge.roundToInt(),top.roundToInt(),right.roundToInt(),bottom.roundToInt())
                 else null
             } else null
+            val scaleInsets=when {
+                routeInsets!=null -> routeInsets
+                state.navigating && !compactHeight && !mapBounds.isEmpty &&
+                    !routeHeaderBounds.isEmpty && !routePanelBounds.isEmpty -> {
+                    val top=(routeHeaderBounds.bottom-mapBounds.top+edge).coerceAtLeast(0f)
+                    val bottom=(mapBounds.bottom-routePanelBounds.top+edge).coerceAtLeast(0f)
+                    if(top+bottom+with(density){80.dp.toPx()}<mapBounds.height)
+                        MapViewportInsets(0,top.roundToInt(),0,bottom.roundToInt())
+                    else null
+                }
+                else -> null
+            }
+            val scaleFits=scaleInsets==null || mapBounds.isEmpty ||
+                (mapBounds.height-scaleInsets.top-scaleInsets.bottom>with(density){72.dp.toPx()} &&
+                    mapBounds.width-scaleInsets.left-scaleInsets.right>
+                        with(density){(if(compactHeight)160.dp else 180.dp).toPx()})
+            val scaleVisible=tab==0 && !welcomeVisible && !search && !settings && !steps && scaleFits &&
+                (!adaptivePreview || sidePreview) &&
+                (state.selected==null || scaleInsets!=null || state.navigating && compactHeight)
             Row(Modifier.fillMaxSize()) {
                 if(wide && !state.navigating && !welcomeVisible) NavigationRail(containerColor=Ink,modifier=Modifier.statusBarsPadding()) {
                     if(!compactHeight) { Spacer(Modifier.height(16.dp));Icon(Icons.Default.Navigation,"Waypoint",tint=WaypointColors.accent);Spacer(Modifier.height(32.dp)) }
@@ -309,7 +328,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 }) { padding ->
                     Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
                         // Keep the native map alive when switching destinations; hide other screens above it.
-                        if(!welcomeVisible) WorldMap(state,{choose(it)},{mapError=it},Modifier.fillMaxSize().onGloballyPositioned{mapBounds=it.boundsInRoot()},active=tab==0 && !search && !settings && !steps,routeInsets=routeInsets,onAwayFromUser={awayFromUser=it},onSelectRoute={ index -> if(state.navigating)controller.switchToAlternate(index) else controller.selectRouteOption(index) })
+                        if(!welcomeVisible) WorldMap(state,{choose(it)},{mapError=it},Modifier.fillMaxSize().onGloballyPositioned{mapBounds=it.boundsInRoot()},active=tab==0 && !search && !settings && !steps,routeInsets=routeInsets,onAwayFromUser={awayFromUser=it},onSelectRoute={ index -> if(state.navigating)controller.switchToAlternate(index) else controller.selectRouteOption(index) },showScaleBar=scaleVisible,scaleBarInsets=scaleInsets)
                         Box(Modifier.fillMaxWidth().height(36.dp).background(Brush.verticalGradient(listOf(Color.Black.copy(alpha=0.6f),Color.Transparent))))
                         if(!welcomeVisible && (tab==0 || state.navigating)) {
                             Box(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
@@ -418,6 +437,27 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 SettingRow("World voice style","Give each world its own spoken wording and delivery on your device's speech voice. Turn it off for standard instructions.",state.gameVoice,controller::toggleGameVoice)
                 SettingRow("Miles & feet","Use imperial distances",state.imperial,controller::toggleUnits)
                 SettingRow("3D perspective","Tilt the map in every world",state.tilted,controller::toggleTilt)
+                HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
+                Text("Map controls", style=MaterialTheme.typography.titleMedium)
+                Text("These presets affect controls floating over the phone map.",
+                    style=MaterialTheme.typography.bodySmall, color=Muted)
+                Text("Size", style=MaterialTheme.typography.titleSmall)
+                FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),
+                    verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                    HudSize.entries.forEach { size ->
+                        FilterChip(selected=state.hudSize==size,onClick={controller.setHudSize(size)},
+                            label={Text(size.label)},modifier=Modifier.heightIn(min=48.dp))
+                    }
+                }
+                Text("Side", style=MaterialTheme.typography.titleSmall)
+                FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),
+                    verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                    listOf<Pair<HudSide?,String>>(null to "Original", HudSide.LEFT to "Left", HudSide.RIGHT to "Right")
+                        .forEach { (side,label) ->
+                            FilterChip(selected=state.hudSide==side,onClick={controller.setHudSide(side)},
+                                label={Text(label)},modifier=Modifier.heightIn(min=48.dp))
+                        }
+                }
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 AndroidAutoSettingsPanel(state.carConnected,controller.hasLocationPermission(),state.navigating,
                     onLocation={context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))},

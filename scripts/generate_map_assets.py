@@ -105,7 +105,8 @@ def contrast(a: str, b: str) -> float:
 
 def palette_for(theme: dict[str, str], night: bool) -> dict[str, str]:
     result = dict(theme)
-    if not night:
+    if not night or theme["icon_profile"] == "machine_bracket":
+        # Machine Atlas keeps its warm paper treatment after sunset.
         return result
     for key, amount in (("ground", .60), ("land", .56), ("park", .50),
                         ("water", .63), ("building", .58), ("casing", .50)):
@@ -630,7 +631,28 @@ def draw_profile_signature(image: Raster, profile: str, accent, profile_index: i
                 image.pixel(target_x, target_y, tuple(stamp.pixels[offset:offset + 4]))
 
 
+def draw_machine_badge(kind: str, night: bool) -> Raster:
+    """Small ink diamonds and monochrome pictograms from the original machine map."""
+    art = Raster(SIZE, SIZE)
+    charcoal = rgba("#35362E")
+    rust = rgba("#844B37" if night else "#793D2B")
+    cream = rgba("#F2ECD8" if night else "#EAE5CF")
+    art.polygon(((64, 10), (118, 64), (64, 118), (10, 64)), charcoal, charcoal, 3)
+    art.polygon(((64, 14), (114, 64), (64, 114), (14, 64)), rust, None, 3)
+    if kind == "destination":
+        art.rect(54, 54, 74, 74, cream, None, 3)
+        for start, end in (((64, 35), (64, 51)), ((64, 77), (64, 93)),
+                           ((35, 64), (51, 64)), ((77, 64), (93, 64))):
+            art.line((start, end), cream, 4)
+        art.rect(61, 61, 67, 67, rust, rust)
+    else:
+        draw_category_glyph(art, kind, cream, charcoal, "machine")
+    return art
+
+
 def draw_badge(kind: str, theme: dict[str, str], world: str, index: int, night: bool) -> Raster:
+    if world == "nier":
+        return draw_machine_badge(kind, night)
     colors = palette_for(theme, night)
     background = colors["ground"]
     surface = blend(background, "#101820" if luminance(background) < .32 else "#F4F0E4", .32)
@@ -716,7 +738,7 @@ def build() -> None:
                     header = existing.read(24)
                 if len(header) == 24 and header[:8] == b"\x89PNG\r\n\x1a\n":
                     existing_size = struct.unpack(">II", header[16:24])
-            force_procedural = os.environ.get("WAYPOINT_FORCE_PROCEDURAL_POI") == "1"
+            force_procedural = name == "nier" or os.environ.get("WAYPOINT_FORCE_PROCEDURAL_POI") == "1"
             if existing_size != atlas_size or force_procedural:
                 atlas = Raster(*atlas_size)
                 for cell, kind in enumerate(KINDS):

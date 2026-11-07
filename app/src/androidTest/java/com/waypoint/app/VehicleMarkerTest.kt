@@ -66,4 +66,34 @@ class VehicleMarkerTest {
         assertEquals("nav-arrow",playerMarkerImage(TravelMode.WALK,true))
         assertEquals("position-uncertain",playerMarkerImage(TravelMode.CAR,false))
     }
+
+    @Test fun nightCityUsesOneClippedSafeCaretForEveryTravelMode() {
+        val context=InstrumentationRegistry.getInstrumentation().targetContext
+        TravelMode.entries.forEach { mode ->
+            assertEquals("$mode known heading","nav-arrow",playerMarkerImage(World.NIGHT_CITY,mode,true))
+            assertEquals("$mode unknown heading","position-uncertain",playerMarkerImage(World.NIGHT_CITY,mode,false))
+        }
+        assertEquals("vehicle-car",playerMarkerImage(World.OLD_WEST,TravelMode.CAR,true))
+
+        val bitmap=mapPlayer(context,World.NIGHT_CITY)
+        assertEquals(96,bitmap.width)
+        assertEquals(104,bitmap.height)
+        assertEquals(DisplayMetrics.DENSITY_DEFAULT,bitmap.density)
+        val pixels=IntArray(bitmap.width*bitmap.height)
+        bitmap.getPixels(pixels,0,bitmap.width,0,0,bitmap.width,bitmap.height)
+        assertTrue("Night City caret is visible",pixels.count { Color.alpha(it)>0 }>1000)
+        assertEquals("Night City caret stays open",0,Color.alpha(bitmap.getPixel(48,65)))
+        for(x in 0 until bitmap.width) {
+            assertEquals(0,Color.alpha(bitmap.getPixel(x,0)))
+            assertEquals(0,Color.alpha(bitmap.getPixel(x,bitmap.height-1)))
+        }
+        for(y in 0 until bitmap.height) {
+            assertEquals(0,Color.alpha(bitmap.getPixel(0,y)))
+            assertEquals(0,Color.alpha(bitmap.getPixel(bitmap.width-1,y)))
+        }
+        val procedural=mapPlayer(World.NIGHT_CITY)
+        assertFalse("Night City loads its dedicated asset",bitmap.sameAs(procedural))
+        procedural.recycle()
+        bitmap.recycle()
+    }
 }

@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -22,19 +23,23 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/** The key reuses this world's original POI sprites and night palette. */
+/** The key reuses this world's shipped POI sprites and effective palette. */
 @Composable
 internal fun MapLegendControl(state: NavState, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val world = state.world
-    val night = LocalNightMapTheme.current
+    val night = effectiveNightMapTheme(world, LocalNightMapTheme.current)
     val palette = hudPalette(world)
+    val keyOnRight = state.hudSide != HudSide.LEFT
+    val targetSize = hudToolTargetSize(state.hudSize)
+    val visualSize = hudToolVisualSize(state.hudSize)
     val profile = remember(world) { WorldLegendProfiles.forWorld(world) }
     var expanded by remember(world) { mutableStateOf(false) }
     val entries = remember(context) { MapPoiCategories.all(context) }
@@ -63,17 +68,44 @@ internal fun MapLegendControl(state: NavState, modifier: Modifier = Modifier) {
         }.getOrNull()
     }
     val positionIcon = remember(context, world, state.mode) {
-        (if (state.mode == TravelMode.WALK) mapPlayer(world) else mapVehicle(world, state.mode)).asImageBitmap()
+        (if (world == World.NIGHT_CITY || state.mode == TravelMode.WALK) mapPlayer(context, world)
+            else mapVehicle(world, state.mode)).asImageBitmap()
     }
     val destinationIcon = remember(context, world, night) {
         mapDestination(context, world, night).asImageBitmap()
     }
 
-    Box(modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier.fillMaxSize()) {
+        val compactHeight = maxHeight < 420.dp
+        val compactTopKey = compactHeight && maxWidth >= 600.dp
+        val mediumHeight = maxHeight < 560.dp
+        val panelOnRight = compactHeight || keyOnRight
+        val keyAlignment = when {
+            compactHeight -> Alignment.TopEnd
+            mediumHeight -> if (keyOnRight) Alignment.TopEnd else Alignment.TopStart
+            else -> if (keyOnRight) Alignment.CenterEnd else Alignment.CenterStart
+        }
+        val keyTopInset = when {
+            compactTopKey -> 12.dp
+            compactHeight -> 84.dp
+            mediumHeight -> 128.dp
+            else -> 0.dp
+        }
+        val keyEndInset = when {
+            compactTopKey -> {
+                val gutter = when (state.hudSize) { HudSize.COMPACT -> 12.dp; HudSize.STANDARD -> 16.dp; HudSize.LARGE -> 20.dp }
+                val gap = if (state.hudSize == HudSize.COMPACT) 8.dp else 12.dp
+                gutter + targetSize * 2 + gap * 2
+            }
+            compactHeight || keyOnRight -> 16.dp
+            else -> 0.dp
+        }
         if (expanded && icons != null) {
             Surface(
-                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 72.dp)
-                    .fillMaxWidth(.84f).widthIn(min = 220.dp, max = 280.dp),
+                modifier = Modifier.align(if (panelOnRight) Alignment.CenterEnd else Alignment.CenterStart)
+                    .padding(end = if (panelOnRight) targetSize + 24.dp else 0.dp,
+                        start = if (panelOnRight) 0.dp else targetSize + 24.dp)
+                    .fillMaxWidth(.84f).widthIn(max = 280.dp),
                 color = palette.panel,
                 contentColor = palette.foreground,
                 shape = hudShape(world),
@@ -91,7 +123,7 @@ internal fun MapLegendControl(state: NavState, modifier: Modifier = Modifier) {
                             Text("LIVE PLACE DATA · OSM", fontFamily = hudFont(world),
                                 color = palette.muted, fontSize = TypeScale.Caption, maxLines = 1)
                         }
-                        IconButton(onClick = { expanded = false }, modifier = Modifier.size(36.dp)) {
+                        IconButton(onClick = { expanded = false }, modifier = Modifier.size(48.dp)) {
                             Icon(Icons.Default.Close, contentDescription = "Close map key", tint = palette.foreground)
                         }
                     }
@@ -132,17 +164,23 @@ internal fun MapLegendControl(state: NavState, modifier: Modifier = Modifier) {
                 }
             }
         }
-        Surface(
-            onClick = { expanded = !expanded },
-            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp).size(48.dp)
-                .semantics { contentDescription = if (expanded) "Close ${world.title} map key" else "Open ${world.title} map key" },
-            color = palette.panel,
-            contentColor = palette.foreground,
-            shape = hudShape(world),
-            border = hudBorder(world),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.Info, contentDescription = null, tint = palette.accent)
+        Box(Modifier.align(keyAlignment)
+            .padding(top = keyTopInset,
+                end = keyEndInset,
+                start = if (compactHeight || keyOnRight) 0.dp else 16.dp)
+            .size(targetSize)
+            .clickable(role = Role.Button) { expanded = !expanded }
+            .semantics { contentDescription = if (expanded) "Close ${world.title} map key" else "Open ${world.title} map key" },
+            contentAlignment = Alignment.Center) {
+            Surface(color = palette.panel, contentColor = palette.foreground,
+                shape = hudShape(world), border = hudBorder(world),
+                modifier = Modifier.size(visualSize)) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.Info, contentDescription = null, tint = palette.accent,
+                        modifier = Modifier.size(when (state.hudSize) {
+                            HudSize.COMPACT -> 19.dp; HudSize.STANDARD -> 24.dp; HudSize.LARGE -> 26.dp
+                        }))
+                }
             }
         }
     }

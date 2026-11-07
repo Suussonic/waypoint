@@ -65,7 +65,7 @@ RECIPES = {
     "field_ops": recipe("butt", "miter", land_edges=True, case=.76, road=.96, path_dash=[1.4, 1.8], boundary_dash=[1.2, 2], labels="uppercase", spacing=.1, halo=1.5, detail="field-briefing"),
     "retro_quest": recipe("square", "miter", land_edges=True, case=1.1, road=1.06, path_dash=[1, 1], boundary_dash=[1, 1.8], spacing=.05, halo=1.3, detail="16bit-adventure"),
     "home_console": recipe("round", "round", land_edges=True, case=1.0, road=1.1, path_dash=[1.4, 1.5], labels=None, spacing=.02, halo=1.2, detail="soft-console"),
-    "nier": recipe("square", "miter", land_edges=True, case=.82, road=1.0, path_dash=[1.2, 1.8], boundary_dash=[1.1, 1.8], labels="uppercase", spacing=.13, halo=1.4, detail="machine-atlas"),
+    "nier": recipe("square", "miter", land_edges=True, case=.82, road=1.0, path_dash=[1.2, 1.8], boundary_dash=[1.1, 1.8], spacing=.02, halo=1.4, detail="machine-atlas"),
     "stalker": recipe("square", "miter", land_edges=True, case=.82, road=.95, path_dash=[1.2, 1.8], boundary_dash=[1.1, 2], labels="uppercase", spacing=.1, halo=1.65, detail="exclusion-pda"),
 }
 

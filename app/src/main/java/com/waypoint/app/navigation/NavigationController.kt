@@ -71,6 +71,9 @@ data class NavState(
     val voice: Boolean = true,
     val gameVoice: Boolean = true,
     val imperial: Boolean = false,
+    val hudSize: HudSize = HudSize.STANDARD,
+    /** Null preserves the current world-specific placement. */
+    val hudSide: HudSide? = null,
     val saved: List<Place> = emptyList(),
     val recent: List<Place> = emptyList(),
     val message: String? = null,
@@ -126,6 +129,8 @@ class NavigationController(private val app: Application, private val repository:
         world = initialWorld,
         mode = TravelMode.entries.find{it.name==prefs.getString("mode",null)} ?: TravelMode.CAR,
         voice = prefs.getBoolean("voice",true), gameVoice = prefs.getBoolean("gameVoice",true), imperial = prefs.getBoolean("imperial",false),
+        hudSize = hudSizeFromPreference(prefs.getString("hudSize",null)),
+        hudSide = hudSideFromPreference(prefs.getString("hudSide",null)),
         saved = readPlaces("saved"), recent = readPlaces("recent"),
         tilted = prefs.getBoolean("tilted",initialWorld.mapArt().tilt>0.0)
     ))
@@ -784,6 +789,16 @@ class NavigationController(private val app: Application, private val repository:
     fun toggleVoice() { _state.update{it.copy(voice=!it.voice)}; prefs.edit().putBoolean("voice",_state.value.voice).apply(); guidance.mute(!_state.value.voice) }
     fun toggleGameVoice() { _state.update { it.copy(gameVoice=!it.gameVoice) };prefs.edit().putBoolean("gameVoice",_state.value.gameVoice).apply() }
     fun toggleUnits() { _state.update{it.copy(imperial=!it.imperial)}; prefs.edit().putBoolean("imperial",_state.value.imperial).apply() }
+    fun setHudSize(size: HudSize) {
+        _state.update { it.copy(hudSize = size) }
+        prefs.edit().putString("hudSize", size.name).apply()
+    }
+    fun setHudSide(side: HudSide?) {
+        _state.update { it.copy(hudSide = side) }
+        val edit = prefs.edit()
+        if (side == null) edit.remove("hudSide") else edit.putString("hudSide", side.name)
+        edit.apply()
+    }
     // Pitch only: bumping cameraRequest here re-targets the camera at the user or destination.
     fun toggleTilt() { _state.update{it.withTiltToggled()};prefs.edit().putBoolean("tilted",_state.value.tilted).apply() }
     fun recenter() {

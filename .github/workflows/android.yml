@@ -91,6 +91,26 @@ jobs:
           npm ci --prefix tools/style-validation
           node scripts/validate_styles.cjs
 
+  assets:
+    name: 01 / Map assets
+    needs: repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate original map assets and dedicated icon generators
+        run: |
+          python3 -m venv "$RUNNER_TEMP/map-assets-venv"
+          PYTHON="$RUNNER_TEMP/map-assets-venv/bin/python"
+          "$PYTHON" -m pip install --disable-pip-version-check -r tools/imagegen/requirements.txt
+          "$PYTHON" -m unittest discover -s scripts -p 'test_validate_map_assets.py'
+          "$PYTHON" scripts/validate_map_assets.py
+          "$PYTHON" scripts/import_imagegen_poi_cell_repairs.py --check
+          "$PYTHON" scripts/check_style_parity.py nier night_city
+          "$PYTHON" scripts/generate_night_city_icons.py --check
+
   motion:
     name: 01 / Motion source
     needs: repository
@@ -202,7 +222,7 @@ jobs:
   sign:
     name: 04 / Sign release APK
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [workflow_safety, repository, styles, motion, android, device_smoke]
+    needs: [workflow_safety, repository, styles, assets, motion, android, device_smoke]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -272,7 +292,7 @@ jobs:
   ci_tree:
     name: CI tree
     if: always()
-    needs: [workflow_safety, dependency_review, repository, styles, motion, android, device_smoke, sign]
+    needs: [workflow_safety, dependency_review, repository, styles, assets, motion, android, device_smoke, sign]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
