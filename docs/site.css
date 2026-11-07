@@ -76,9 +76,23 @@ h3{font-size:clamp(1.9rem,3vw,2.9rem)}
 .route-pin::after{position:absolute;inset:0;border:2px solid var(--lime);border-radius:50%;content:"";animation:ping 2.4s ease-out infinite}
 .hero-copy{position:relative;z-index:4;margin-inline:auto}
 .hero h1{max-width:12ch;margin:0 auto 1.6rem}.hero h1 .accent{color:var(--lime)}
-.hero-lede{max-width:33rem;margin:0 auto 2rem;color:var(--muted);font-size:clamp(1.1rem,1.5vw,1.3rem);line-height:1.55}
+.hero-lede{max-width:33rem;margin:0 auto 1.4rem;color:var(--muted);font-size:clamp(1.1rem,1.5vw,1.3rem);line-height:1.55}
 .hero-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:1rem 1.8rem}
 .hero-note{max-width:34rem;margin:1.2rem auto 0;color:var(--quiet);font-size:var(--meta)}
+.hero-reach{width:fit-content;max-width:100%;margin:0 auto 1.35rem;padding:.7rem .4rem 0;border-top:1px solid var(--line-strong)}
+.hero-reach-counts{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.2rem 1rem}
+.hero-reach-counts a{display:inline-flex;min-height:2.75rem;align-items:center;gap:.4rem;color:var(--muted);font-size:var(--support);font-weight:700;text-decoration:none;white-space:nowrap;transition:color .2s ease}
+.hero-reach-counts a:hover{color:var(--paper);text-decoration:underline}
+.hero-reach-counts strong{color:var(--lime);font-family:var(--display);font-size:1.7rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.hero-reach-sep{width:1px;height:1.1rem;background:var(--line-strong)}
+.hero-reach-source{display:block;margin-top:.1rem;color:var(--quiet);font-size:var(--label);line-height:1.4}
+.hero-reach-source::before{display:inline-block;width:.35rem;height:.35rem;margin-right:.45rem;border-radius:50%;background:var(--quiet);content:"";vertical-align:.12em;transition:background-color .25s ease}
+.hero-reach-source.is-live::before{background:var(--lime)}
+@keyframes reach-ink{from{clip-path:inset(0 0 100% 0);transform:translateY(.25rem)}}
+@media(prefers-reduced-motion:no-preference){
+  .js .hero-reach.in strong{animation:reach-ink .6s var(--ease) both;animation-delay:calc(var(--d,0ms) + 160ms)}
+  .js .hero-reach.in a:nth-of-type(2) strong{animation-delay:calc(var(--d,0ms) + 250ms)}
+}
 .phones{--pw:clamp(10.5rem,21vw,18.5rem);position:relative;z-index:2;height:clamp(17rem,31vw,27rem);margin-top:clamp(2.5rem,5vw,4rem);overflow:hidden}
 .phone{position:absolute;top:0;left:50%;width:var(--pw);margin:0;transform-origin:50% 100%;transform:translateX(calc(-50% + var(--x,0px))) rotate(var(--r,0deg)) translateY(calc(var(--p,0)*var(--par,0px)))}
 .phone-in{position:relative;border-radius:2rem;overflow:hidden;background:#0a100d;box-shadow:0 0 0 1px rgba(245,249,236,.28),0 2rem 4rem rgba(0,0,0,.55)}
@@ -352,6 +366,7 @@ details[open] .world-entry{animation:rise .8s var(--ease) both;animation-delay:c
   .hero{padding-top:5.8rem}
   .hero-panel{padding-top:3.4rem}
   .hero-actions{flex-direction:column;gap:.9rem}
+  .hero-reach-counts{gap:.1rem .65rem}.hero-reach-counts a{gap:.25rem;font-size:.8125rem}.hero-reach-counts strong{font-size:1.55rem}.hero-reach-sep{display:none}
   .phone-in{border-radius:1.2rem}
   .chip{padding:.35rem .65rem .35rem .35rem;font-size:.85rem}.chip img{width:2rem;height:2rem}.chip small{display:none}
   .chip-a{bottom:5rem;left:.2rem}.chip-b{right:.2rem;bottom:8.6rem}.chip-c{display:none}
