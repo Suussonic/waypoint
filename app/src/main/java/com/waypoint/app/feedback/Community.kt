@@ -24,6 +24,9 @@ import androidx.compose.ui.unit.dp
 /** Open invite to the Waypoint Discord: a private channel for each world, release notes and bug reports. */
 const val DISCORD_INVITE_URL = "https://discord.gg/3ddSCASNUn"
 
+/** The public Waypoint website. */
+const val WAYPOINT_SITE_URL = "https://the-geeky-couldron.github.io/waypoint/"
+
 /** Settings entry that hands the invite to the browser or the Discord app. Nothing is sent from the phone. */
 @Composable
 internal fun CommunitySettingsRow() {

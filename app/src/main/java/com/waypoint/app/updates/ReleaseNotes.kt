@@ -49,25 +49,30 @@ fun ReleaseNotesContent(notes: String, modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun WhatsNewDialog(notes: String, onDismiss: () -> Unit) {
     val uri = LocalUriHandler.current
+    fun open(url: String) { runCatching { uri.openUri(url) } }
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Panel,
         title = { Text("What’s new in Waypoint") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ReleaseNotesContent(
-                    notes,
-                    Modifier.fillMaxWidth().heightIn(max = 320.dp).verticalScroll(rememberScrollState()),
-                )
-                TextButton(onClick = { runCatching { uri.openUri(DISCORD_INVITE_URL) } }, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text("Join the Waypoint Discord")
-                }
+            ReleaseNotesContent(
+                notes,
+                Modifier.fillMaxWidth().heightIn(max = 360.dp).verticalScroll(rememberScrollState()),
+            )
+        },
+        confirmButton = {
+            androidx.compose.foundation.layout.FlowRow(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp, androidx.compose.ui.Alignment.End),
+            ) {
+                TextButton(onClick = { open(DISCORD_INVITE_URL) }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Join Discord") }
+                TextButton(onClick = { open(WAYPOINT_SITE_URL) }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Visit site") }
+                TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) { Text("Explore map") }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) { Text("Explore map") } },
-        dismissButton = { TextButton(onClick = { uri.openUri(ReleaseUpdate.PAGE) }, modifier = Modifier.heightIn(min = 48.dp)) { Text("GitHub release") } },
     )
 }
