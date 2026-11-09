@@ -1,0 +1,44 @@
+name: Bug report
+description: Something in Waypoint is not working
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Say what you saw and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the Los Santos world
+        2. Start a route
+        3. ...
+  - type: input
+    id: app_version
+    attributes:
+      label: App version
+      description: Settings > About
+      placeholder: "2.6.0"
+  - type: input
+    id: device
+    attributes:
+      label: Device and Android version
+      placeholder: "Pixel 8, Android 15"
+  - type: dropdown
+    id: android_auto
+    attributes:
+      label: Does it involve Android Auto?
+      options:
+        - "No"
+        - "Yes"
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots or anything else
+      description: Drag images in here. Do not share personal location history.
