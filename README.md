@@ -145,6 +145,9 @@ Android Auto keeps Google Maps available in the launcher. Open Waypoint there to
 - **Keep your bearings.** Locate recentres on your actual position; the map follows movement and can recalculate after a confirmed wrong turn. A 2D/3D control changes the camera tilt.
 - **Find useful places.** Search destinations, drop a pin, and see world-specific blips for food, pubs, shops, schools, hospitals and other mapped places. Icons appear progressively as you zoom so dense streets stay legible.
 - **Pick up where you left off.** Save places, revisit recent destinations and switch worlds during a trip. Shared `geo:` and `google.navigation:` links ask for confirmation before Waypoint looks up or previews the imported destination.
+- **Stay under the limit.** While you drive, the phone HUD shows the posted speed limit beside your speed, turns your speed red when you pass it and speaks one gentle alert. Limits come from OpenStreetMap `maxspeed` tags, so they appear only where mappers have recorded one. Switch it off in Settings.
+- **See which bus to take.** Choose a destination, then **Bus & transit** to list the next buses, trams, metro and trains with the line, direction, boarding stop and live times where operators share them. Coverage depends on open timetable data and this first version is a trip list, not stop-by-stop guidance.
+- **Join the community.** The [Waypoint Discord](https://discord.gg/3ddSCASNUn) has a private channel for each of the 38 worlds, release notes and bug reports; Settings and What's New link to it.
 - **Send feedback in context.** Settings opens a draft GitHub issue with the current world and app version. You review it in your browser before submitting; a GitHub account is needed to post the issue.
 
 <img src="docs/images/promo/identity.jpg" width="100%" alt="Waypoint's launcher emblem and compact navigation identity." />
@@ -202,6 +205,8 @@ Waypoint has no app-owned account, analytics backend or recorded route history. 
 
 ### Practical limits
 
+Speed limits and transit trips are best-effort: many roads have no `maxspeed` tag, the public Overpass and Transitous services can be slow or busy, and transit coverage varies by city. Android Auto does not show the speed-limit sign yet.
+
 The public map, search and routing endpoints require internet access and can be unavailable or rate-limited. Live traffic is not available in this build; Ferrostar remains authoritative for route progress, rerouting and remaining ETA using the selected routing response. Waypoint has no offline routing or lane guidance.
 
 GPS and place coverage vary by device and location; real-road and long-duration testing are still needed. Read the [service and privacy guide](docs/guide.md#location-and-privacy) and [validation record](docs/validation.md) for the practical limits.
@@ -219,6 +224,7 @@ GPS and place coverage vary by device and location; real-road and long-duration 
 | [Development layout](docs/development/architecture.md) | Source structure, assets and checks |
 | [Security review](docs/security.md) | Reviewed boundaries, source fixes and remaining validation |
 | [Contributing](CONTRIBUTING.md) | Tests, public examples and repository hygiene |
+| [Discord](https://discord.gg/3ddSCASNUn) | Community channels for each world, release notes and bug reports |
 
 ### License and attribution
 

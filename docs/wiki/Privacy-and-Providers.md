@@ -17,10 +17,14 @@ Precise location is requested when you use the GPS control. Foreground location 
 | Supported Google Maps link import / destination handoff | Google Maps, only when you choose either action |
 | Motorcycle, bicycle and walking geometry | Valhalla public demo |
 | Guidance and rerouting | Ferrostar consuming the selected route |
+| Posted speed limits (car guidance, optional) | Overpass API reading OpenStreetMap `maxspeed` tags |
+| Bus and transit trips (only when opened) | Transitous (MOTIS) |
 | Elevation / terrain data | Mapzen public service |
 | Release check and optional APK download | GitHub Releases |
 
 Tile providers receive requested map tiles. Search providers receive the search text and may receive location bias. OSRM or Valhalla receives route origin and destination coordinates with the selected profile. No traffic provider is configured, so Waypoint makes no live-traffic requests and sends no in-trip position to Google for traffic. User-initiated Google Maps link import and destination handoff remain available. GitHub release checks do not include location or saved-place data. An APK download starts only after you choose an update.
+
+While Speed limit warning is on and you guide by car, Overpass receives your current position about once a minute; turn the setting off to stop it. Transitous receives your position and the destination only when you open **Bus & transit**. The Discord invite opens in your browser or the Discord app and sends nothing from Waypoint.
 
 ## Limits
 
