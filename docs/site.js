@@ -182,6 +182,17 @@
       }, { threshold: 0.6 });
       seen.observe(t);
     }
+    // World switcher: swap in the other world's real day and night captures.
+    $$('.dn-pick', b).forEach((btn) => btn.addEventListener('click', () => {
+      $$('.dn-pick', b).forEach((x) => x.setAttribute('aria-pressed', String(x === btn)));
+      ['day', 'night'].forEach((m) => {
+        const im = b.querySelector('.dn-map[data-dn="' + m + '"]');
+        im.src = 'assets/landing/daynight/' + btn.dataset.world + '-' + m + '.webp';
+        im.alt = btn.dataset[m];
+      });
+      const note = d.getElementById('dn-place');
+      if (note) note.textContent = 'Shown: ' + btn.textContent + ' world, ' + btn.dataset.place + '.';
+    }));
     t.addEventListener('pointerdown', (e) => { t.setPointerCapture(e.pointerId); t.classList.add('drag'); at(e); });
     t.addEventListener('pointermove', (e) => { if (t.classList.contains('drag')) at(e); });
     ['pointerup', 'pointercancel'].forEach((n) => t.addEventListener(n, () => t.classList.remove('drag')));
@@ -193,6 +204,44 @@
       else if (e.key === 'Home') { set(1); e.preventDefault(); }
       else if (e.key === 'End') { set(0); e.preventDefault(); }
     });
+  });
+
+  /* 3c. Discord channel demo: tapping a world opens its channel. On first sight, three worlds pick themselves one by one. */
+  $$('[data-channels]').forEach((box) => {
+    const chips = $$('.cd-chip', box);
+    const count = box.querySelector('[data-cd-count]');
+    const total = () => { if (count) count.textContent = chips.filter((c) => c.getAttribute('aria-pressed') === 'true').length; };
+    let touched = false;
+    chips.forEach((c) => c.addEventListener('click', () => {
+      touched = true;
+      c.setAttribute('aria-pressed', String(c.getAttribute('aria-pressed') !== 'true'));
+      total();
+    }));
+    if (calm) return;
+    const finale = chips.filter((c) => c.getAttribute('aria-pressed') === 'true');
+    chips.forEach((c) => c.setAttribute('aria-pressed', 'false'));
+    total();
+    const seen = new IntersectionObserver((es) => {
+      if (!es[0].isIntersecting) return;
+      seen.disconnect();
+      finale.forEach((c, i) => setTimeout(() => {
+        if (touched) return;
+        c.setAttribute('aria-pressed', 'true');
+        total();
+      }, 700 + i * 650));
+    }, { threshold: 0.5 });
+    seen.observe(box);
+  });
+
+  /* 3d. The three community points draw their rules and unmask one after another (CSS owns the timing). */
+  $$('.community-list').forEach((ul) => {
+    [...ul.children].forEach((li, i) => li.style.setProperty('--i', i));
+    const seen = new IntersectionObserver((es) => {
+      if (!es[0].isIntersecting) return;
+      seen.disconnect();
+      ul.classList.add('in');
+    }, { threshold: 0.3 });
+    seen.observe(ul);
   });
 
   /* 4. Pointer-driven polish (mouse and trackpad only, never under reduced motion). */

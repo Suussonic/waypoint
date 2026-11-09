@@ -2,6 +2,14 @@
 
 For the full notes and community acknowledgements, see [Waypoint release notes](docs/releases/current.md). Published releases are available on [GitHub Releases](https://github.com/the-geeky-couldron/waypoint/releases).
 
+## 2.6.0
+
+- Added a speed-limit warning for car guidance on the phone. The HUD shows the posted limit from OpenStreetMap `maxspeed` data, turns your speed red when you pass it by more than 3 km/h or mph, and says the limit once through the guidance voice with a one-minute gap between alerts. It can be switched off in Settings.
+- Added a first version of bus and transit directions ([#51](https://github.com/the-geeky-couldron/waypoint/issues/51)). A destination's **Bus & transit** button lists the next trips with the line, direction, boarding stop, stops, walking time and live times where the operator supplies them, using Transitous open timetable data.
+- Added the Waypoint Discord invite to Settings and to the What's New window.
+- The website's day and night section now compares real map captures of the same place with a slider and a world switcher, and the site gained a Discord section and the new Upstar Riser of the Week badge.
+- Documented the Overpass and Transitous requests in the privacy and services tables.
+
 ## 2.5.4
 
 - Reviewed all 38 worlds' day and night place icon atlases and repaired damaged cells, including Home Console's split icons. Recorded reproducible crop mappings and added contact-sheet review and CI validation with Pillow 13.0.0.

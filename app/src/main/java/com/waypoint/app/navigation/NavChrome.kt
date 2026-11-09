@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -426,14 +427,19 @@ internal fun NavSideControls(state: NavState, onMute: () -> Unit, onLocate: () -
     val heading = if (state.headingReliable) state.bearing else Float.NaN
     Row(modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.Bottom) {
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Surface(color = p.panel, contentColor = p.foreground, shape = CircleShape, border = hudBorder(world),
-                modifier = Modifier.size(64.dp).semantics { contentDescription = "Speed" }) {
+            val over = state.overSpeedLimit && state.speedWarning
+            val overColor = Color(0xFFFF5A4D)
+            Surface(color = p.panel, contentColor = if (over) overColor else p.foreground, shape = CircleShape,
+                border = if (over) androidx.compose.foundation.BorderStroke(3.dp, overColor) else hudBorder(world),
+                modifier = Modifier.size(64.dp).semantics { contentDescription = if (over) "Speed, over the limit" else "Speed" }) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                     Text(if (state.gpsReady) (state.speed * if (state.imperial) 2.23694 else 3.6).roundToInt().toString() else "—",
                         fontFamily = hudFont(world), fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 26.sp)
-                    Text(if (state.imperial) "mph" else "km/h", fontFamily = hudFont(world), fontSize = TypeScale.Caption, lineHeight = 14.sp, color = p.muted)
+                    Text(if (state.imperial) "mph" else "km/h", fontFamily = hudFont(world), fontSize = TypeScale.Caption, lineHeight = 14.sp, color = if (over) overColor else p.muted)
                 }
             }
+            val limit = state.speedLimitKmh
+            if (state.speedWarning && limit != null && state.navigating) SpeedLimitSign(speedLimitForDisplay(limit, state.imperial), over)
             ChromeButton(world, Icons.Default.Layers, "Worlds", onWorlds)
         }
         Spacer(Modifier.weight(1f))
@@ -442,6 +448,22 @@ internal fun NavSideControls(state: NavState, onMute: () -> Unit, onLocate: () -
             ChromeButton(world, if (state.voice) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
                 if (state.voice) "Mute guidance" else "Unmute guidance", onMute)
             ChromeButton(world, Icons.Default.MyLocation, "Use my location", onLocate)
+        }
+    }
+}
+
+/** The posted limit as a round road sign; it grows a little and its ring brightens while the car is over it. */
+@Composable
+internal fun SpeedLimitSign(limit: Int, over: Boolean, modifier: Modifier = Modifier) {
+    val scale = androidx.compose.animation.core.animateFloatAsState(if (over) 1.12f else 1f,
+        androidx.compose.animation.core.tween(220), label = "speedLimitScale").value
+    val ring = if (over) Color(0xFFFF2D1F) else Color(0xFFD81E14)
+    Surface(color = Color.White, contentColor = Color(0xFF111111), shape = CircleShape,
+        border = androidx.compose.foundation.BorderStroke(6.dp, ring),
+        modifier = modifier.size(56.dp).scale(scale)
+            .semantics { contentDescription = "Speed limit $limit" }) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(limit.toString(), fontWeight = FontWeight.ExtraBold, fontSize = if (limit >= 100) 18.sp else 22.sp, lineHeight = 24.sp)
         }
     }
 }

@@ -138,6 +138,8 @@ No private signing material is included in the source.
 - Driving routes and steps: [OSRM public demo](https://project-osrm.org/).
 - Live traffic and traffic-adjusted ETA: no provider is configured. Ferrostar uses the selected OSRM or Valhalla route for guidance progress, rerouting and remaining ETA.
 - Motorcycle and walking routes: Valhalla public demo.
+- Posted speed limits: [Overpass API](https://overpass-api.de/) reading OpenStreetMap `maxspeed` tags near the car, only while guiding by car with Speed limit warning on.
+- Bus and transit trips: [Transitous](https://transitous.org/), a MOTIS service built on open timetable feeds, only when you open Bus & transit for a destination.
 - Guidance progress, maneuvers, rerouting and spoken cue selection: [Ferrostar](https://stadiamaps.github.io/ferrostar/) 0.59.0. Ferrostar consumes routes from the providers above; it does not provide the basemap, search or routing server.
 - Voice: Android's installed text-to-speech engine, with selected recorded prompts for Skyrim, Forza Horizon and DOS Atlas and TTS fallback for full instructions.
 
@@ -169,7 +171,7 @@ The optional fused-location dependency uses Google Play services and its device
 location settings. Native GNSS/network fallback supports devices without it.
 
 Map providers receive the tiles requested. Photon and, when used, the Android geocoder backend receive search terms and location
-bias; OSRM or Valhalla receives route origin/destination coordinates and the selected routing profile. No traffic provider is configured, so Waypoint makes no live-traffic requests and sends no in-trip position to Google for traffic. User-initiated Google Maps link import and destination handoff remain available. Saved/recent places and
+bias; OSRM or Valhalla receives route origin/destination coordinates and the selected routing profile. While guiding by car with Speed limit warning on, the Overpass API receives the current position about once a minute; Transitous receives your position and the destination only when you open Bus & transit. No traffic provider is configured, so Waypoint makes no live-traffic requests and sends no in-trip position to Google for traffic. User-initiated Google Maps link import and destination handoff remain available. Saved/recent places and
 settings remain in device preferences, excluded from cloud backup/device transfer.
 You can clear those places in Settings. Location history is not recorded. The small search-result cache lives only in memory and is bounded to 40 queries. Confirmed spelling aliases change the search text; they never supply invented destination coordinates.
 

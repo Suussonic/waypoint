@@ -87,6 +87,11 @@ data class NavState(
     /** A request the map raised itself (first fix, GPS enabled); it never overrides a pan the user already made. */
     val passiveCameraRequest: Int = -1,
     val tilted: Boolean = true,
+    /** Settings switch for the posted-limit sign and over-speed alert (car mode only). */
+    val speedWarning: Boolean = true,
+    /** Posted limit for the road the car is on, in km/h; null when unknown or not guiding by car. */
+    val speedLimitKmh: Int? = null,
+    val overSpeedLimit: Boolean = false,
 )
 
 class WaypointApplication : Application() {
@@ -111,7 +116,7 @@ class WaypointApplication : Application() {
     val quests by lazy { QuestController(this) }
 }
 
-class NavigationController(private val app: Application, private val repository: NavigationRepository = MapRepository(), preferencesName: String = "waypoint", fallbackSearch: PlaceSearchProvider? = AndroidPlaceSearch(app)) {
+class NavigationController(private val app: Application, private val repository: NavigationRepository = MapRepository(), preferencesName: String = "waypoint", fallbackSearch: PlaceSearchProvider? = AndroidPlaceSearch(app), private val speedLimits: SpeedLimitSource = OverpassSpeedLimitSource()) {
     private val prefs = app.getSharedPreferences(preferencesName,Context.MODE_PRIVATE)
     private val createPlaceSearch = { PlaceSearch(PlaceSearchProvider(repository::search),fallbackSearch,SearchAliases(readSearchAliases())) }
     private var placeSearch = createPlaceSearch()
@@ -132,7 +137,8 @@ class NavigationController(private val app: Application, private val repository:
         hudSize = hudSizeFromPreference(prefs.getString("hudSize",null)),
         hudSide = hudSideFromPreference(prefs.getString("hudSide",null)),
         saved = readPlaces("saved"), recent = readPlaces("recent"),
-        tilted = prefs.getBoolean("tilted",initialWorld.mapArt().tilt>0.0)
+        tilted = prefs.getBoolean("tilted",initialWorld.mapArt().tilt>0.0),
+        speedWarning = prefs.getBoolean("speedWarning",true)
     ))
     val state = _state.asStateFlow()
     private val manager = app.getSystemService(LocationManager::class.java)
@@ -552,9 +558,51 @@ class NavigationController(private val app: Application, private val repository:
         if(!reliable) return
         lastAcceptedLocation=Location(location)
         guidance.acceptLocation(location)
+        updateSpeedLimit(fix,speed,now)
         val s = _state.value
         if(!s.navigating && s.selected!=null && !s.routing && !s.arrived && s.routeError==null &&
             (s.route==null || (routeOrigin?.let{distance(it,fix)} ?: 0.0)>100.0)) requestRoute()
+    }
+    private val speedTracker = SpeedWarningTracker()
+    private var speedLimitJob: Job? = null
+    private var speedLimitAskedAt = 0L
+    private var speedLimitAskedFrom: Coordinate? = null
+    private var speedLimitKnownAt: Coordinate? = null
+    private fun clearSpeedLimit() {
+        speedLimitJob?.cancel();speedLimitJob=null
+        speedLimitAskedFrom=null;speedLimitKnownAt=null;speedLimitAskedAt=0L
+        speedTracker.reset()
+        if(_state.value.speedLimitKmh!=null || _state.value.overSpeedLimit) _state.update{it.copy(speedLimitKmh=null,overSpeedLimit=false)}
+    }
+    /** Looks up the posted limit every minute or so (sooner after moving) while guiding by car, and warns when over it. */
+    private fun updateSpeedLimit(fix: Coordinate,speed: Float,now: Long) {
+        val s=_state.value
+        if(!s.navigating || !s.speedWarning || s.mode!=TravelMode.CAR) { if(s.speedLimitKmh!=null || speedLimitJob!=null)clearSpeedLimit();return }
+        val moved=speedLimitAskedFrom?.let{distance(it,fix)} ?: Double.MAX_VALUE
+        val sinceAsk=now-speedLimitAskedAt
+        if(speedLimitJob?.isActive!=true && ((moved>=60.0 && sinceAsk>=8_000L) || sinceAsk>=45_000L)) {
+            speedLimitAskedFrom=fix;speedLimitAskedAt=now
+            speedLimitJob=scope.launch {
+                val result=try { Result.success(speedLimits.limitAt(fix)) } catch(e: CancellationException) { throw e } catch(e: Exception) { Result.failure(e) }
+                _state.update{ current ->
+                    when {
+                        result.isSuccess -> { speedLimitKnownAt=if(result.getOrNull()!=null)fix else null;current.copy(speedLimitKmh=result.getOrNull()) }
+                        speedLimitKnownAt?.let{distance(it,fix)>300.0} ?: true -> current.copy(speedLimitKmh=null)
+                        else -> current
+                    }
+                }
+            }
+        }
+        val limit=_state.value.speedLimitKmh
+        val alert=speedTracker.update(speed,limit,now)
+        if(_state.value.overSpeedLimit!=speedTracker.over) _state.update{it.copy(overSpeedLimit=speedTracker.over)}
+        if(alert && limit!=null && s.voice) guidance.speak("Speed limit ${speedLimitForDisplay(limit,s.imperial)}. Slow down.")
+    }
+    fun toggleSpeedWarning() {
+        val next=!_state.value.speedWarning
+        prefs.edit().putBoolean("speedWarning",next).apply()
+        _state.update{it.copy(speedWarning=next)}
+        if(!next)clearSpeedLimit()
     }
     fun select(place: Place) {
         invalidateImport()
@@ -710,6 +758,7 @@ class NavigationController(private val app: Application, private val repository:
         routeGeneration++
         routeJob?.cancel(); routeJob=null; guidance.stop()
         driveAltJob?.cancel(); driveAltJob=null; switchJob?.cancel(); switchJob=null
+        clearSpeedLimit()
         _state.update{it.copy(navigating=false,routing=false,offRoute=false,driveAlternatives=emptyList(),arrived=if(clear) false else it.arrived,
             tilted=if(prefs.contains("tilted"))it.tilted else it.world.mapArt().tilt>0.0)}
         app.stopService(Intent(app,NavigationService::class.java)); updateTracking()

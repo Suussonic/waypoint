@@ -57,10 +57,15 @@ fun WhatsNewDialog(notes: String, onDismiss: () -> Unit) {
         containerColor = Panel,
         title = { Text("What’s new in Waypoint") },
         text = {
-            ReleaseNotesContent(
-                notes,
-                Modifier.fillMaxWidth().heightIn(max = 360.dp).verticalScroll(rememberScrollState()),
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ReleaseNotesContent(
+                    notes,
+                    Modifier.fillMaxWidth().heightIn(max = 320.dp).verticalScroll(rememberScrollState()),
+                )
+                TextButton(onClick = { runCatching { uri.openUri(DISCORD_INVITE_URL) } }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text("Join the Waypoint Discord")
+                }
+            }
         },
         confirmButton = { TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) { Text("Explore map") } },
         dismissButton = { TextButton(onClick = { uri.openUri(ReleaseUpdate.PAGE) }, modifier = Modifier.heightIn(min = 48.dp)) { Text("GitHub release") } },

@@ -28,6 +28,7 @@
           <a href="#voice">Voice</a>
           <a href="#car-screen">Android Auto</a>
           <a href="#milestones">Milestones</a>
+          <a href="#community">Discord</a>
           <a class="nav-download" href="https://github.com/the-geeky-couldron/waypoint/releases/latest">Get APK <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a>
         </nav>
       </div>
@@ -340,14 +341,18 @@
             <div class="dn-board">
               <div class="dn-tile fx">
                 <span class="dn-hint" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 7l-5 5 5 5"/></svg>Drag to compare<svg viewBox="0 0 24 24"><path d="M15 7l5 5-5 5"/></svg></span>
-                <div class="dn-layer dn-day" style="--map-texture:url('assets/landing/materials/stalker_day.png')"><img src="assets/landing/markers/stalker.png" width="64" height="64" alt="" /></div>
-                <div class="dn-layer dn-night" style="--map-texture:url('assets/landing/materials/stalker_night.png')"><img src="assets/landing/markers/stalker_night.png" width="64" height="64" alt="" /></div>
+                <div class="dn-layer dn-day"><img class="dn-map" data-dn="day" src="assets/landing/daynight/old-west-day.webp" width="960" height="464" alt="Old West map of Jaisalmer by day: sand-coloured paper with dark brown streets" loading="lazy" decoding="async" /></div>
+                <div class="dn-layer dn-night"><img class="dn-map" data-dn="night" src="assets/landing/daynight/old-west-night.webp" width="960" height="464" alt="The same Jaisalmer map by night: dark umber ground with pale sand streets" loading="lazy" decoding="async" /></div>
                 <span class="dn-handle" aria-hidden="true"></span>
               </div>
               <div class="dn-labels"><span>DAY / 06:00–18:59</span><span>NIGHT / 19:00–05:59</span></div>
+              <div class="dn-worlds" role="group" aria-label="Choose a world to compare">
+                <button type="button" class="dn-pick" data-world="old-west" data-place="Jaisalmer, India" data-day="Old West map of Jaisalmer by day: sand-coloured paper with dark brown streets" data-night="The same Jaisalmer map by night: dark umber ground with pale sand streets" aria-pressed="true">Old West</button>
+                <button type="button" class="dn-pick" data-world="pixel" data-place="Jaipur, India" data-day="Pixel map of Jaipur by day: grass-green ground with dark brown roads" data-night="The same Jaipur map by night: deep forest green with near-black roads" aria-pressed="false">Pixel</button>
+              </div>
             </div>
             <div class="dn-copy">
-              <p class="dn-world rv">Shown: Exclusion Zone map material and marker.</p>
+              <p class="dn-world rv" id="dn-place" aria-live="polite">Shown: Old West world, Jaisalmer, India.</p>
               <h3 data-split>Dark Zone also has a 3D view.</h3>
               <p class="rv" style="--d:200ms">Use the map tilt control to switch between a flat tactical map and a holographic 3D view. Both show the same real streets and route.</p>
               <a class="text-link rv" style="--d:300ms" href="https://github.com/the-geeky-couldron/waypoint/blob/dev/docs/game-catalogue.md">See all map themes <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a>
@@ -410,7 +415,7 @@
           <details class="proof-source" name="waypoint-proof" open>
             <summary>
               <span class="proof-source-name">Upstar</span>
-              <span class="proof-source-summary">Android chart · No. 13 in the November 7 capture</span>
+              <span class="proof-source-summary">No. 10 Riser of the Week in Kotlin, November 2026 · Android chart No. 13 in the November 7 capture</span>
               <svg class="proof-chevron ico" viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7 5 5 5-5"/></svg>
             </summary>
             <div class="proof-source-content">
@@ -492,6 +497,35 @@
         </ol>
       </section>
 
+      <section class="community-section section-wrap" id="community" aria-labelledby="community-title">
+        <div class="community-copy">
+          <h2 id="community-title" data-split>Find your world’s channel.</h2>
+          <p class="rv" style="--d:250ms">The Waypoint Discord gives each of the 38 worlds its own channel. Pick your worlds when you join and those channels open for you.</p>
+          <div class="community-actions rv" style="--d:400ms">
+            <a class="button button-primary" data-mag href="https://discord.gg/3ddSCASNUn" rel="noopener">Join the Discord <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a>
+            <p>Free to join. Opens discord.gg/3ddSCASNUn.</p>
+          </div>
+        </div>
+        <div class="cd" data-channels>
+          <p class="cd-label" id="cd-label">Tap a world. Its channel opens.</p>
+          <ul class="cd-rows" aria-labelledby="cd-label">
+            <li class="cd-row"><button type="button" class="cd-chip" aria-pressed="true">Old West</button><span class="cd-wire" aria-hidden="true"></span><span class="cd-ch"><svg class="cd-lock" viewBox="0 0 20 20" aria-hidden="true"><rect x="4.5" y="9" width="11" height="8" rx="1.5"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg><b aria-hidden="true">#</b>Old West</span></li>
+            <li class="cd-row"><button type="button" class="cd-chip" aria-pressed="false">Sheikah Slate</button><span class="cd-wire" aria-hidden="true"></span><span class="cd-ch"><svg class="cd-lock" viewBox="0 0 20 20" aria-hidden="true"><rect x="4.5" y="9" width="11" height="8" rx="1.5"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg><b aria-hidden="true">#</b>Sheikah Slate</span></li>
+            <li class="cd-row"><button type="button" class="cd-chip" aria-pressed="true">Night City</button><span class="cd-wire" aria-hidden="true"></span><span class="cd-ch"><svg class="cd-lock" viewBox="0 0 20 20" aria-hidden="true"><rect x="4.5" y="9" width="11" height="8" rx="1.5"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg><b aria-hidden="true">#</b>Night City</span></li>
+            <li class="cd-row"><button type="button" class="cd-chip" aria-pressed="false">Skyrim</button><span class="cd-wire" aria-hidden="true"></span><span class="cd-ch"><svg class="cd-lock" viewBox="0 0 20 20" aria-hidden="true"><rect x="4.5" y="9" width="11" height="8" rx="1.5"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg><b aria-hidden="true">#</b>Skyrim</span></li>
+            <li class="cd-row"><button type="button" class="cd-chip" aria-pressed="true">Pixel World</button><span class="cd-wire" aria-hidden="true"></span><span class="cd-ch"><svg class="cd-lock" viewBox="0 0 20 20" aria-hidden="true"><rect x="4.5" y="9" width="11" height="8" rx="1.5"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg><b aria-hidden="true">#</b>Pixel World</span></li>
+            <li class="cd-row"><button type="button" class="cd-chip" aria-pressed="false">Exclusion Zone</button><span class="cd-wire" aria-hidden="true"></span><span class="cd-ch"><svg class="cd-lock" viewBox="0 0 20 20" aria-hidden="true"><rect x="4.5" y="9" width="11" height="8" rx="1.5"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg><b aria-hidden="true">#</b>Exclusion Zone</span></li>
+            <li class="cd-row"><button type="button" class="cd-chip" aria-pressed="false">Tsushima</button><span class="cd-wire" aria-hidden="true"></span><span class="cd-ch"><svg class="cd-lock" viewBox="0 0 20 20" aria-hidden="true"><rect x="4.5" y="9" width="11" height="8" rx="1.5"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg><b aria-hidden="true">#</b>Tsushima</span></li>
+          </ul>
+          <p class="cd-foot" aria-live="polite"><span data-cd-count>3</span> of 38 worlds opened</p>
+        </div>
+        <ul class="community-list">
+          <li><h3>One channel per world</h3><p>Choose your worlds during onboarding. Each world’s private channel shows only to the people who picked it.</p></li>
+          <li><h3>Releases and bug reports</h3><p>New versions, release notes and a place to report what broke on your phone or in the car.</p></li>
+          <li><h3>Roles for how you use it</h3><p>Android Auto drivers, quest hunters and beta testers can each take a role.</p></li>
+        </ul>
+      </section>
+
       <section class="download-section" id="download" aria-labelledby="download-title" data-scrub>
         <div class="download-inner">
           <div>
@@ -519,11 +553,12 @@
       <div class="footer-main">
         <a class="brand" href="#top"><img src="images/waypoint-icon.png" width="36" height="36" alt="" /><span>WAYPOINT</span></a>
         <p>Made in India · Open to the world</p>
-        <a href="https://upstar.dev/r/the-geeky-couldron/waypoint"><img class="upstar-badge" src="images/promo/upstar-badge.svg" width="178" height="38" alt="Discover Waypoint on Upstar" loading="lazy" /></a>
+        <a href="https://upstar.dev/r/the-geeky-couldron/waypoint"><picture><source media="(prefers-color-scheme: dark)" srcset="https://upstar.dev/badge/the-geeky-couldron/waypoint/award/kotlin-dark.svg"><img class="upstar-badge" alt="Upstar: #10 Riser Of The Week in Kotlin, November 2026" src="https://upstar.dev/badge/the-geeky-couldron/waypoint/award/kotlin.svg" width="250" height="55" loading="lazy"></picture></a>
       </div>
       <div class="footer-links">
         <a href="https://github.com/the-geeky-couldron/waypoint">Source</a>
         <a href="https://github.com/the-geeky-couldron/waypoint/wiki">Wiki</a>
+        <a href="https://discord.gg/3ddSCASNUn" rel="noopener">Discord</a>
         <a href="https://github.com/the-geeky-couldron/waypoint/issues">Issues</a>
         <a href="https://github.com/the-geeky-couldron/waypoint/blob/dev/docs/images/promo/README.md">Capture and artwork notes</a>
         <a href="https://github.com/the-geeky-couldron/waypoint/blob/dev/docs/visual-sourcebook.md">Map references and sources</a>

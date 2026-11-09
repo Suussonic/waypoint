@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.sp
     onBack: () -> Unit, onSettings: () -> Unit, onMode: (TravelMode) -> Unit,
     onLocate: () -> Unit, onSave: () -> Unit, onRetry: () -> Unit, onStart: () -> Unit,
     onSteps: () -> Unit, onSelectRoute: (Int) -> Unit, onQuest: () -> Unit, onShare: () -> Unit, mapError: String?,
-    compactLandscape: Boolean = false) {
+    compactLandscape: Boolean = false, onTransit: (() -> Unit)? = null) {
     val palette=hudPalette(state.world)
     val needsFix=!state.gpsReady || state.accuracy>20 || !state.headingReliable
     Column(modifier.padding(if(compactLandscape)8.dp else 12.dp),
@@ -86,7 +86,7 @@ import androidx.compose.ui.unit.sp
                 }
             }
             DestinationCard(state,onSave,onBack,onLocate,onRetry,onStart,onSteps,onSelectRoute,
-                compact=compactLandscape,onQuest=onQuest,onShare=onShare,roomyActions=!compactLandscape)
+                compact=compactLandscape,onQuest=onQuest,onShare=onShare,roomyActions=!compactLandscape,onTransit=onTransit)
             Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.CenterEnd) { Attribution(state.world) }
         }
     }
@@ -94,7 +94,7 @@ import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable internal fun DestinationActions(state: NavState,onSave: () -> Unit,
-    onQuest: (() -> Unit)?,onShare: (() -> Unit)?,expanded: Boolean) {
+    onQuest: (() -> Unit)?,onShare: (() -> Unit)?,expanded: Boolean,onTransit: (() -> Unit)? = null) {
     val palette=hudPalette(state.world)
     val saved=state.saved.any { it.id==state.selected?.id }
     var more by remember { mutableStateOf(false) }
@@ -112,7 +112,7 @@ import androidx.compose.ui.unit.sp
         }
     }
     @Composable fun More() {
-        if(onQuest!=null || onShare!=null) Box {
+        if(onQuest!=null || onShare!=null || onTransit!=null) Box {
             TextButton(onClick={more=true},contentPadding=if(expanded)PaddingValues(horizontal=12.dp,vertical=8.dp) else PaddingValues(2.dp),
                 modifier=(if(expanded)Modifier else Modifier.width(48.dp)).heightIn(min=56.dp)) {
                 if(expanded) {
@@ -122,6 +122,7 @@ import androidx.compose.ui.unit.sp
                 }
             }
             DropdownMenu(expanded=more,onDismissRequest={more=false}) {
+                onTransit?.let { DropdownMenuItem(text={Text("Bus & transit options")},onClick={more=false;it()},leadingIcon={Icon(Icons.Default.DirectionsBus,null)}) }
                 onQuest?.let { DropdownMenuItem(text={Text("Add a quest here")},onClick={more=false;it()},leadingIcon={Icon(Icons.Default.Assignment,null)}) }
                 onShare?.let { DropdownMenuItem(text={Text("Open in another map app")},onClick={more=false;it()},leadingIcon={Icon(Icons.Default.OpenInNew,null)}) }
             }
