@@ -233,7 +233,7 @@
     seen.observe(box);
   });
 
-  /* 3d. The three community points draw their rules and unmask one after another (CSS owns the timing). */
+  /* 3d. The community steps draw their rules and unmask one after another (CSS owns the timing). */
   $$('.community-list').forEach((ul) => {
     [...ul.children].forEach((li, i) => li.style.setProperty('--i', i));
     const seen = new IntersectionObserver((es) => {

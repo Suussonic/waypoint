@@ -472,6 +472,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 SettingRow("Miles & feet","Use imperial distances",state.imperial,controller::toggleUnits)
                 SettingRow("Speed limit warning","Show the posted limit and warn when you go over it while driving. Looks up the limit on OpenStreetMap through Overpass, sending your position only while guiding by car.",state.speedWarning,controller::toggleSpeedWarning)
                 SettingRow("3D perspective","Tilt the map in every world",state.tilted,controller::toggleTilt)
+                CursorModelSettings(state,controller)
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 Text("Map controls", style=MaterialTheme.typography.titleMedium)
                 Text("These presets affect controls floating over the phone map.",

@@ -9,9 +9,9 @@
     <link rel="icon" href="images/waypoint-icon.png" type="image/png" />
     <link rel="preload" href="fonts/barlow_condensed_bold_site.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="images/landing/old-west-heath-screen.jpg" as="image" fetchpriority="high" />
-    <link rel="stylesheet" href="site.css?v=20261107-r11" />
+    <link rel="stylesheet" href="site.css?v=20261109-r1" />
     <script>document.documentElement.className+=' js';setTimeout(function(){window.__wp||(document.documentElement.className=document.documentElement.className.replace(' js',''))},3000)</script>
-    <script src="site.js?v=20261106-r6" defer></script>
+    <script src="site.js?v=20261109-r1" defer></script>
     <script src="github-metrics.js?v=20261107-r1" defer></script>
   </head>
   <body>
@@ -28,6 +28,7 @@
           <a href="#voice">Voice</a>
           <a href="#car-screen">Android Auto</a>
           <a href="#milestones">Milestones</a>
+          <a href="#install">Install</a>
           <a href="#community">Discord</a>
           <a class="nav-download" href="https://github.com/the-geeky-couldron/waypoint/releases/latest">Get APK <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a>
         </nav>
@@ -97,11 +98,11 @@
       <section class="run-sec" id="world-room" aria-labelledby="world-title">
         <div class="run-head">
           <h2 id="world-title" data-split>Five worlds. One route.</h2>
-          <p class="rv" style="--d:300ms">Scroll to drive it. The line runs through our five best-looking worlds, all captured on a phone at public London demonstration points. The streets and place data stay real, and only the atlas around them changes.</p>
+          <p class="rv" style="--d:300ms">Scroll to drive it. The line runs through five distinct worlds, all captured on a phone at public London demonstration points. The streets and place data stay real, and only the atlas around them changes.</p>
         </div>
         <div class="run" data-run>
           <svg class="run-line" aria-hidden="true" focusable="false"><path class="run-guide" /><path class="run-trace" /><g class="run-car"><path d="M0-15 11 12 0 6-11 12z" /></g></svg>
-          <ol class="stops" aria-label="The five best-looking worlds, in order">
+          <ol class="stops" aria-label="Five distinct worlds, in order">
           <li class="stop" data-stop>
             <span class="dot stop-dot" aria-hidden="true"><img src="assets/landing/markers/old_west.png" width="64" height="64" alt="" loading="lazy" decoding="async" /></span>
             <div class="stop-copy"><h3>Old West</h3><p class="game">Red Dead Redemption 2 inspired</p><p>Parchment streets, hand-lettered labels and western controls, with woods and meadows drawn in ink and stipple.</p></div>
@@ -408,11 +409,34 @@
       <section class="ms-sec" id="milestones" aria-labelledby="ms-title">
         <div class="ms-head">
           <h2 id="ms-title" data-split>Where Waypoint stands.</h2>
-          <p class="rv" style="--d:300ms">Independent listings, with dated captures and links to the live pages.</p>
+          <p class="rv" style="--d:300ms">38 worlds, Android Auto, community requests, and open code.</p>
         </div>
 
-        <div class="proof-source-list" role="group" aria-label="Independent project listings">
-          <details class="proof-source" name="waypoint-proof" open>
+        <div class="ms-run" data-run data-car="off">
+          <svg class="run-line" aria-hidden="true" focusable="false"><path class="run-guide" /><path class="run-trace" /></svg>
+          <ol class="ms-list" aria-label="Milestones">
+          <li class="ms" data-stop>
+            <span class="dot ms-dot" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m4.5 10.5 3.6 3.6 7.4-8"/></svg></span>
+            <div class="ms-body"><h3>38 worlds, all drawn from scratch</h3><p>Every map style is authored for Waypoint, with its own roads, labels, textures, place symbols and destination markers. Eleven arrived in 2.0, from nautical charts to a 16-bit adventure.</p><a class="text-link" href="https://github.com/the-geeky-couldron/waypoint/blob/dev/docs/game-artwork-sources.md">How the artwork is made <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a></div>
+          </li>
+          <li class="ms" data-stop>
+            <span class="dot ms-dot" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m4.5 10.5 3.6 3.6 7.4-8"/></svg></span>
+            <div class="ms-body"><h3>Shaped by the people who use it</h3><p>Ideas from Balzamus, matvejsyrygin256-dotcom, 6HentaiMaster9, artmartins28 and VoidKittyKat became quests, new worlds, bicycle navigation and personal place names in 2.0.</p><a class="text-link" href="https://github.com/the-geeky-couldron/waypoint/blob/dev/docs/releases/current.md">Read the release notes <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a></div>
+          </li>
+          <li class="ms" data-stop>
+            <span class="dot ms-dot" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m4.5 10.5 3.6 3.6 7.4-8"/></svg></span>
+            <div class="ms-body"><h3>On the dashboard too</h3><p>Android Auto projects your selected world with a full route line, turn cues and a camera that follows travel, and now offers other routes on the car screen.</p><a class="text-link" href="https://github.com/the-geeky-couldron/waypoint/blob/dev/docs/guide.md#android-auto">Android Auto setup <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a></div>
+          </li>
+          <li class="ms" data-stop>
+            <span class="dot ms-dot" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m4.5 10.5 3.6 3.6 7.4-8"/></svg></span>
+            <div class="ms-body"><h3>Free, open and private</h3><p>No ads, no paywall and no Waypoint account. The code is GPL-3.0-only, made in India and open to the world.</p><a class="text-link" href="https://github.com/the-geeky-couldron/waypoint">View the source <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a></div>
+          </li>
+          </ol>
+        </div>
+
+        <h3 class="proof-heading" id="proof-heading">Independent project listings</h3>
+        <div class="proof-source-list" role="group" aria-labelledby="proof-heading">
+          <details class="proof-source" name="waypoint-proof">
             <summary>
               <span class="proof-source-name">Upstar</span>
               <span class="proof-source-summary">No. 10 Riser of the Week in Kotlin, November 2026 · Android chart No. 13 in the November 7 capture</span>
@@ -461,28 +485,6 @@
           </details>
         </div>
         <p class="proof-verify"><a href="https://github.com/the-geeky-couldron/waypoint/blob/dev/docs/recognition-evidence.md">How these listings were verified <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a></p>
-
-        <div class="ms-run" data-run data-car="off">
-          <svg class="run-line" aria-hidden="true" focusable="false"><path class="run-guide" /><path class="run-trace" /></svg>
-          <ol class="ms-list" aria-label="Milestones">
-          <li class="ms" data-stop>
-            <span class="dot ms-dot" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m4.5 10.5 3.6 3.6 7.4-8"/></svg></span>
-            <div class="ms-body"><h3>38 worlds, all drawn from scratch</h3><p>Every map style is authored for Waypoint, with its own roads, labels, textures, place symbols and destination markers. Eleven arrived in 2.0, from nautical charts to a 16-bit adventure.</p><a class="text-link" href="https://github.com/the-geeky-couldron/waypoint/blob/dev/docs/game-artwork-sources.md">How the artwork is made <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a></div>
-          </li>
-          <li class="ms" data-stop>
-            <span class="dot ms-dot" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m4.5 10.5 3.6 3.6 7.4-8"/></svg></span>
-            <div class="ms-body"><h3>Shaped by the people who use it</h3><p>Ideas from Balzamus, matvejsyrygin256-dotcom, 6HentaiMaster9, artmartins28 and VoidKittyKat became quests, new worlds, bicycle navigation and personal place names in 2.0.</p><a class="text-link" href="https://github.com/the-geeky-couldron/waypoint/blob/dev/docs/releases/current.md">Read the release notes <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a></div>
-          </li>
-          <li class="ms" data-stop>
-            <span class="dot ms-dot" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m4.5 10.5 3.6 3.6 7.4-8"/></svg></span>
-            <div class="ms-body"><h3>On the dashboard too</h3><p>Android Auto projects your selected world with a full route line, turn cues and a camera that follows travel, and now offers other routes on the car screen.</p><a class="text-link" href="https://github.com/the-geeky-couldron/waypoint/blob/dev/docs/guide.md#android-auto">Android Auto setup <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a></div>
-          </li>
-          <li class="ms" data-stop>
-            <span class="dot ms-dot" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m4.5 10.5 3.6 3.6 7.4-8"/></svg></span>
-            <div class="ms-body"><h3>Free, open and private</h3><p>No ads, no paywall and no Waypoint account. The code is GPL-3.0-only, made in India and open to the world.</p><a class="text-link" href="https://github.com/the-geeky-couldron/waypoint">View the source <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a></div>
-          </li>
-          </ol>
-        </div>
       </section>
 
       <section class="install-section section-wrap" id="install" aria-labelledby="install-title">
@@ -495,19 +497,24 @@
           <li style="--n:1"><h3>Download the APK.</h3><p>Under Assets, download Waypoint.apk.</p></li>
           <li style="--n:2"><h3>Install on Android.</h3><p>Open the APK and follow Android’s prompts. Saved places and settings stay on your device.</p></li>
         </ol>
+        <a class="button button-primary install-action" data-mag href="https://github.com/the-geeky-couldron/waypoint/releases/latest">Open latest release <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a>
       </section>
 
       <section class="community-section section-wrap" id="community" aria-labelledby="community-title">
         <div class="community-copy">
           <h2 id="community-title" data-split>Find your world’s channel.</h2>
-          <p class="rv" style="--d:250ms">The Waypoint Discord gives each of the 38 worlds its own channel. Pick your worlds when you join and those channels open for you.</p>
+          <p class="rv" style="--d:250ms">The Waypoint Discord has a channel for each of its 38 worlds, plus release news and bug reports.</p>
           <div class="community-actions rv" style="--d:400ms">
-            <a class="button button-primary" data-mag href="https://discord.gg/3ddSCASNUn" rel="noopener">Join the Discord <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a>
-            <p>Free to join. Opens discord.gg/3ddSCASNUn.</p>
+            <a class="button button-primary" data-mag href="https://discord.gg/TQ9cEx6rsu" rel="noopener">Join the Waypoint Discord <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a>
+            <p>Free to join. You’ll land in #👋│welcome.</p>
           </div>
         </div>
+        <ol class="community-list" aria-label="How to join the Waypoint Discord">
+          <li><h3>Read the rules</h3><p>Check #📜│rules before posting.</p></li>
+          <li><h3>Pick your roles</h3><p>Choose your worlds and interests in #🎯│pick-your-roles. Their channels open for you.</p></li>
+        </ol>
         <div class="cd" data-channels>
-          <p class="cd-label" id="cd-label">Tap a world. Its channel opens.</p>
+          <p class="cd-label" id="cd-label">Select a world to preview its channel.</p>
           <ul class="cd-rows" aria-labelledby="cd-label">
             <li class="cd-row"><button type="button" class="cd-chip" aria-pressed="true">Old West</button><span class="cd-wire" aria-hidden="true"></span><span class="cd-ch"><svg class="cd-lock" viewBox="0 0 20 20" aria-hidden="true"><rect x="4.5" y="9" width="11" height="8" rx="1.5"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg><b aria-hidden="true">#</b>Old West</span></li>
             <li class="cd-row"><button type="button" class="cd-chip" aria-pressed="false">Sheikah Slate</button><span class="cd-wire" aria-hidden="true"></span><span class="cd-ch"><svg class="cd-lock" viewBox="0 0 20 20" aria-hidden="true"><rect x="4.5" y="9" width="11" height="8" rx="1.5"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg><b aria-hidden="true">#</b>Sheikah Slate</span></li>
@@ -517,13 +524,8 @@
             <li class="cd-row"><button type="button" class="cd-chip" aria-pressed="false">Exclusion Zone</button><span class="cd-wire" aria-hidden="true"></span><span class="cd-ch"><svg class="cd-lock" viewBox="0 0 20 20" aria-hidden="true"><rect x="4.5" y="9" width="11" height="8" rx="1.5"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg><b aria-hidden="true">#</b>Exclusion Zone</span></li>
             <li class="cd-row"><button type="button" class="cd-chip" aria-pressed="false">Tsushima</button><span class="cd-wire" aria-hidden="true"></span><span class="cd-ch"><svg class="cd-lock" viewBox="0 0 20 20" aria-hidden="true"><rect x="4.5" y="9" width="11" height="8" rx="1.5"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg><b aria-hidden="true">#</b>Tsushima</span></li>
           </ul>
-          <p class="cd-foot" aria-live="polite"><span data-cd-count>3</span> of 38 worlds opened</p>
+          <p class="cd-foot" aria-live="polite"><span data-cd-count>3</span> of 38 worlds previewed</p>
         </div>
-        <ul class="community-list">
-          <li><h3>One channel per world</h3><p>Choose your worlds during onboarding. Each world’s private channel shows only to the people who picked it.</p></li>
-          <li><h3>Releases and bug reports</h3><p>New versions, release notes and a place to report what broke on your phone or in the car.</p></li>
-          <li><h3>Roles for how you use it</h3><p>Android Auto drivers, quest hunters and beta testers can each take a role.</p></li>
-        </ul>
       </section>
 
       <section class="download-section" id="download" aria-labelledby="download-title" data-scrub>
@@ -558,7 +560,7 @@
       <div class="footer-links">
         <a href="https://github.com/the-geeky-couldron/waypoint">Source</a>
         <a href="https://github.com/the-geeky-couldron/waypoint/wiki">Wiki</a>
-        <a href="https://discord.gg/3ddSCASNUn" rel="noopener">Discord</a>
+        <a href="https://discord.gg/TQ9cEx6rsu" rel="noopener">Discord</a>
         <a href="https://github.com/the-geeky-couldron/waypoint/issues">Issues</a>
         <a href="https://github.com/the-geeky-couldron/waypoint/blob/dev/docs/images/promo/README.md">Capture and artwork notes</a>
         <a href="https://github.com/the-geeky-couldron/waypoint/blob/dev/docs/visual-sourcebook.md">Map references and sources</a>
