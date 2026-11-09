@@ -37,3 +37,6 @@ docs/images/captures/
 .env.*
 *.pem
 *.p12
+
+# Local assistant tooling stays on this machine
+.claude/
