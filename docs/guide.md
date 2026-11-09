@@ -138,6 +138,8 @@ No private signing material is included in the source.
 - Driving routes and steps: [OSRM public demo](https://project-osrm.org/).
 - Live traffic and traffic-adjusted ETA: no provider is configured. Ferrostar uses the selected OSRM or Valhalla route for guidance progress, rerouting and remaining ETA.
 - Motorcycle and walking routes: Valhalla public demo.
+- Posted speed limits: [Overpass API](https://overpass-api.de/) reading OpenStreetMap `maxspeed` tags near the car, only while guiding by car with Speed limit warning on.
+- Bus and transit trips: [Transitous](https://transitous.org/), a MOTIS service built on open timetable feeds, only when you open Bus & transit for a destination.
 - Guidance progress, maneuvers, rerouting and spoken cue selection: [Ferrostar](https://stadiamaps.github.io/ferrostar/) 0.59.0. Ferrostar consumes routes from the providers above; it does not provide the basemap, search or routing server.
 - Voice: Android's installed text-to-speech engine, with selected recorded prompts for Skyrim, Forza Horizon and DOS Atlas and TTS fallback for full instructions.
 
@@ -145,6 +147,22 @@ The public endpoints are suitable for evaluation and can be throttled or unavail
 For a public release, self-host or contract services with suitable capacity and
 availability; the endpoints are isolated in `MapRepository.kt` and the style JSON.
 No live-traffic source is configured, and the app makes no traffic requests. Ferrostar uses the OSRM or Valhalla route for progress, rerouting and remaining ETA. No location is written to logs. Waypoint does not provide closure guarantees, speed-limit enforcement, lane guidance or offline routing. GPS accuracy and map coverage vary. Road testing is still required. The app is a working prototype, not a claim of production navigation quality.
+
+## Speed limit warning
+
+While you navigate by car on the phone, Waypoint looks up the posted limit for the road you are on and shows it as a round sign beside your speed, in km/h or mph to match **Miles & feet**. If you go more than 3 km/h or mph over, your speed turns red, the sign grows and guidance says the limit once. Further spoken alerts wait at least a minute, and muting guidance mutes them.
+
+The limit comes from the OpenStreetMap `maxspeed` tag on the nearest road within about 30 m, read through the public Overpass API roughly once a minute (sooner after you travel about 60 m). Values such as "signals", "none" or "walk" are ignored, so a road without a usable tag shows no sign. Switch the feature off in **Settings → Speed limit warning**; nothing is requested while it is off, and it never runs for motorcycle, bicycle or walking routes. Android Auto does not show it yet.
+
+## Bus and transit
+
+Select a destination, then tap **Bus & transit** beside Steps (or choose it from **More**). Waypoint asks [Transitous](https://transitous.org/) for the next trips from your current position and lists, for each, the departure and arrival times, total minutes, the walking involved and every ride: line, direction, boarding stop and time, getting-off stop and time, and the number of stops. Times marked live come from the operator's real-time feed.
+
+Transitous combines open timetable feeds, so coverage differs by city and some areas return nothing; Waypoint then says so. This version plans a trip only. It does not draw the transit leg on the map or guide you stop by stop, and it needs GPS for the starting point. Only your position and the chosen destination are sent, and only when you open the sheet.
+
+## Community
+
+Settings has **Join the Waypoint Discord**, and the What's New window after an update has **Join Discord** and **Visit site** buttons. The invite is https://discord.gg/3ddSCASNUn: each of the 38 worlds has a private channel that opens when you pick the world, alongside release notes and bug reports. Nothing is sent from the phone; the link opens in your browser or the Discord app.
 
 ## Search matching
 
@@ -169,7 +187,7 @@ The optional fused-location dependency uses Google Play services and its device
 location settings. Native GNSS/network fallback supports devices without it.
 
 Map providers receive the tiles requested. Photon and, when used, the Android geocoder backend receive search terms and location
-bias; OSRM or Valhalla receives route origin/destination coordinates and the selected routing profile. No traffic provider is configured, so Waypoint makes no live-traffic requests and sends no in-trip position to Google for traffic. User-initiated Google Maps link import and destination handoff remain available. Saved/recent places and
+bias; OSRM or Valhalla receives route origin/destination coordinates and the selected routing profile. While guiding by car with Speed limit warning on, the Overpass API receives the current position about once a minute; Transitous receives your position and the destination only when you open Bus & transit. No traffic provider is configured, so Waypoint makes no live-traffic requests and sends no in-trip position to Google for traffic. User-initiated Google Maps link import and destination handoff remain available. Saved/recent places and
 settings remain in device preferences, excluded from cloud backup/device transfer.
 You can clear those places in Settings. Location history is not recorded. The small search-result cache lives only in memory and is bounded to 40 queries. Confirmed spelling aliases change the search text; they never supply invented destination coordinates.
 
@@ -197,6 +215,9 @@ Quests, notes, reminders, progress and resized character photos stay in private 
 - `WaypointCarService.kt`, `WaypointCarMenus.kt`: projected Android Auto templates and controls.
 - `WaypointCarLiveMap.kt`, `WaypointCarOverlay.kt`: live themed car map, route, markers and HUD.
 - `MapRepository.kt`: HTTPS search, reverse geocoding, OSRM car routes and Valhalla motorcycle/bicycle/walking routes.
+- `SpeedLimit.kt`: `maxspeed` parsing, nearest-road selection, over-limit tracking and the Overpass lookup.
+- `Transit.kt` and `TransitSheet.kt`: Transitous trip parsing and the Bus & transit sheet.
+- `Community.kt`: the Discord invite and site URLs used by Settings and What's New.
 - `assets/styles/`: generated vector styles, with per-world road hierarchy, building treatment and relief.
 - `scripts/cartography_profiles.py`: explicit road, casing, label and building rules.
 

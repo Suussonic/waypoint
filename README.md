@@ -9,11 +9,11 @@
     <a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="https://img.shields.io/github/v/release/the-geeky-couldron/waypoint?label=latest%20release&amp;color=497c6f" alt="Latest Waypoint release version" /></a>
     <a href="https://github.com/the-geeky-couldron/waypoint/releases"><img src="https://img.shields.io/github/downloads/the-geeky-couldron/waypoint/total?label=Downloads&amp;color=497c6f" alt="Waypoint Downloads" /></a>
     <a href="https://github.com/the-geeky-couldron/waypoint/stargazers"><img src="https://img.shields.io/github/stars/the-geeky-couldron/waypoint?label=GitHub%20stars&amp;color=497c6f" alt="Waypoint GitHub stars" /></a>
-    <a href="https://upstar.dev/r/the-geeky-couldron/waypoint" title="Upstar ranks the fastest-rising GitHub projects by topic. Reached number 12 in Android on November 7, 2026."><img src="https://img.shields.io/badge/Upstar-Reached%20%2312%20in%20Android-497c6f" alt="Reached number 12 in Android on Upstar" /></a>
   </p>
   <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="docs/images/promo/download.jpg" width="340" alt="Download Waypoint for Android from GitHub Releases" /></a></p>
   <p><strong>Android 8.0+</strong> · No ads or paywall · No Waypoint account<br />Every world included · Made in India, open to the world</p>
-  <p><a href="https://upstar.dev/r/the-geeky-couldron/waypoint"><img src="docs/images/promo/upstar-badge.svg" height="38" alt="Discover Waypoint on Upstar" /></a></p>
+  <p><a href="https://upstar.dev/r/the-geeky-couldron/waypoint"><picture><source media="(prefers-color-scheme: dark)" srcset="https://upstar.dev/badge/the-geeky-couldron/waypoint/award/kotlin-dark.svg"><img alt="Upstar: #10 Riser Of The Week in Kotlin, November 2026" src="https://upstar.dev/badge/the-geeky-couldron/waypoint/award/kotlin.svg" width="250" height="55"></picture></a></p>
+  <p><a href="https://discord.gg/3ddSCASNUn"><strong>Join the Waypoint Discord</strong></a> · a channel for each of the 38 worlds</p>
   <p><a href="https://repolode.com/en/repo/the-geeky-couldron/waypoint"><img src="https://repolode.com/badge/the-geeky-couldron/waypoint" alt="Featured on Repolode" height="30" /></a></p>
 </div>
 
@@ -28,13 +28,12 @@
 
 ---
 
-## What's new in 2.5.4
+## What's new in 2.6.0
 
-- **Clearer place symbols:** repaired damaged icons across the 38 worlds, including Home Console's split symbols.
-- **Night City restored:** game-sourced symbols for matching places, simpler glyphs elsewhere, and one Cyberpunk-inspired player indicator across travel modes.
-- **Machine Atlas restored:** cream streets, charcoal detail and rust accents stay consistent at every hour. Its controls now line up with the other worlds.
-- **A map HUD that fits:** a live scale bar, three control sizes and optional left or right placement. Long world names scroll when they need more room.
-- **Better landscape layouts:** route previews use a compact side panel where space allows; short screens keep route and guidance actions scrollable, with clearer spacing around map controls in every world.
+- **Speed limit warning:** the posted limit appears beside your speed while you drive, turns your speed red when you pass it and speaks one gentle alert. Switch it off in Settings.
+- **Bus & transit:** pick a destination and see which bus, tram, metro or train to take, where to board and when it leaves, where open timetable data exists.
+- **Join the Discord:** a channel for each world, release notes and bug reports, linked from Settings and What's New.
+- **A website that shows the light:** the day and night section compares real maps of the same place.
 
 [Full release notes →](docs/releases/current.md)
 
@@ -146,6 +145,9 @@ Android Auto keeps Google Maps available in the launcher. Open Waypoint there to
 - **Keep your bearings.** Locate recentres on your actual position; the map follows movement and can recalculate after a confirmed wrong turn. A 2D/3D control changes the camera tilt.
 - **Find useful places.** Search destinations, drop a pin, and see world-specific blips for food, pubs, shops, schools, hospitals and other mapped places. Icons appear progressively as you zoom so dense streets stay legible.
 - **Pick up where you left off.** Save places, revisit recent destinations and switch worlds during a trip. Shared `geo:` and `google.navigation:` links ask for confirmation before Waypoint looks up or previews the imported destination.
+- **Stay under the limit.** While you drive, the phone HUD shows the posted speed limit beside your speed, turns your speed red when you pass it and speaks one gentle alert. Limits come from OpenStreetMap `maxspeed` tags, so they appear only where mappers have recorded one. Switch it off in Settings.
+- **See which bus to take.** Choose a destination, then **Bus & transit** to list the next buses, trams, metro and trains with the line, direction, boarding stop and live times where operators share them. Coverage depends on open timetable data and this first version is a trip list, not stop-by-stop guidance.
+- **Join the community.** The [Waypoint Discord](https://discord.gg/3ddSCASNUn) has a private channel for each of the 38 worlds, release notes and bug reports; Settings and What's New link to it.
 - **Send feedback in context.** Settings opens a draft GitHub issue with the current world and app version. You review it in your browser before submitting; a GitHub account is needed to post the issue.
 
 <img src="docs/images/promo/identity.jpg" width="100%" alt="Waypoint's launcher emblem and compact navigation identity." />
@@ -163,7 +165,7 @@ Android Auto keeps Google Maps available in the launcher. Open Waypoint there to
 
 Installed versions check for a newer stable GitHub release on foreground entry, at most once every 30 minutes; you can check manually in Settings at any time. If an update is available, an in-app prompt appears when the idle map is visible. Review the release notes, choose **Download update**, and confirm installation in Android.
 
-The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.5.4**; see the [release notes](docs/releases/current.md) and [changelog](CHANGELOG.md).
+The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.6.0**; see the [release notes](docs/releases/current.md) and [changelog](CHANGELOG.md).
 
 ## Build from source
 
@@ -192,6 +194,8 @@ Waypoint has no app-owned account, analytics backend or recorded route history. 
 | Search and reverse geocoding | Photon; Android Geocoder when available |
 | Car routes | OSRM |
 | Motorcycle, bicycle and walking routes | Valhalla |
+| Posted speed limits (car guidance, can be switched off) | Overpass API using OpenStreetMap `maxspeed` tags; sends your position about once a minute while guiding |
+| Bus and transit trips (only when you open Bus & transit) | Transitous (MOTIS); sends your position and the destination |
 | Terrain | Mapzen |
 | Google Maps link import and destination handoff | Google Maps, only when you choose either action |
 | New-release checks | GitHub Releases, automatically in the background and when checking in Settings; no location data |
@@ -200,6 +204,8 @@ Waypoint has no app-owned account, analytics backend or recorded route history. 
 | Live traffic and traffic-adjusted ETA | Not configured; remaining ETA is based on the selected OSRM or Valhalla route through Ferrostar |
 
 ### Practical limits
+
+Speed limits and transit trips are best-effort: many roads have no `maxspeed` tag, the public Overpass and Transitous services can be slow or busy, and transit coverage varies by city. Android Auto does not show the speed-limit sign yet.
 
 The public map, search and routing endpoints require internet access and can be unavailable or rate-limited. Live traffic is not available in this build; Ferrostar remains authoritative for route progress, rerouting and remaining ETA using the selected routing response. Waypoint has no offline routing or lane guidance.
 
@@ -218,6 +224,7 @@ GPS and place coverage vary by device and location; real-road and long-duration 
 | [Development layout](docs/development/architecture.md) | Source structure, assets and checks |
 | [Security review](docs/security.md) | Reviewed boundaries, source fixes and remaining validation |
 | [Contributing](CONTRIBUTING.md) | Tests, public examples and repository hygiene |
+| [Discord](https://discord.gg/3ddSCASNUn) | Community channels for each world, release notes and bug reports |
 
 ### License and attribution
 

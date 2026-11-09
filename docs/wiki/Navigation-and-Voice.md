@@ -16,6 +16,14 @@ The default spoken voice comes from the Android text-to-speech engine and voice 
 
 Recorded packs contain only common maneuver and distance prompts. Waypoint uses a recording only when it can preserve the complete route instruction; named roads, unsupported wording or distances fall back to Android TTS with the original instruction intact. The recording player does not own route selection, timing, rerouting or ETA; Ferrostar remains in charge of those. The packs currently provide English clips. See [[Sources and Licensing]] for their sources and license notes.
 
+## Speed limit warning
+
+On the phone, car guidance shows the posted limit as a round sign beside your speed, in the units you chose. Passing it by more than 3 km/h or mph turns your speed red and speaks the limit once; later alerts wait at least a minute and follow the voice mute switch. Limits come from OpenStreetMap `maxspeed` tags through Overpass, so a road with no tag shows no sign. Turn it off in **Settings → Speed limit warning**. Android Auto does not show it yet.
+
+## Bus and transit
+
+**Bus & transit** on a destination lists the next buses, trams, metro and trains from where you are: line, direction, boarding stop, times, stops and walking, with live times where operators share them. It uses Transitous open timetable data, so coverage varies by city. It is a trip planner only, without a map line or stop-by-stop guidance.
+
 ## Route safety
 
 Use the spoken turn, route line and real-world signs together. Estimated arrival, location accuracy and place coverage can vary. Public demo routing servers can be throttled or unavailable, and no live-traffic data is included.

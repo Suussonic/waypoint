@@ -18,6 +18,8 @@ class ReleaseNotesHistoryTest {
             releaseNotesAfter(2_005_001, 2_005_003).map { it.asset })
         assertEquals(listOf("release-notes-2.5.3.md", "release-notes-2.5.4.md"),
             releaseNotesAfter(2_005_002, 2_005_004).map { it.asset })
+        assertEquals(listOf("release-notes-2.5.4.md", "release-notes-2.6.0.md"),
+            releaseNotesAfter(2_005_003, 2_006_000).map { it.asset })
         assertEquals(emptyList<String>(), releaseNotesAfter(2_005_000, 2_005_000).map { it.asset })
     }
 }

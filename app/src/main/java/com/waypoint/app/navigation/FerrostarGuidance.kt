@@ -149,6 +149,8 @@ internal class FerrostarGuidance(
     fun isAutoDriving()=autoDriveEnabled
     fun acceptLocation(location: Location) { locationProvider.accept(location) }
     fun mute(muted: Boolean) { voice.setMuted(muted) }
+    /** A one-off spoken notice (such as the speed warning) through the same voice and mute switch as turn prompts. */
+    fun speak(text: String) { voice.onSpokenInstructionTrigger(uniffi.ferrostar.SpokenInstruction(text,null,0.0,java.util.UUID.randomUUID())) }
     fun voiceStatus(): GuidanceVoiceStatus=voice.status
     fun stop() {
         sessions.transition {

@@ -194,6 +194,8 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
     var pendingQuestId by rememberSaveable { mutableStateOf<String?>(null) }
     var questEntry by rememberSaveable { mutableIntStateOf(0) }
     var externalPlace by remember { mutableStateOf<Place?>(null) }
+    var transitFor by remember { mutableStateOf<Place?>(null) }
+    val transitPlanner = remember { TransitousPlanner() }
     val uiScope = rememberCoroutineScope()
     var landing by rememberSaveable { mutableStateOf(controller.shouldShowLanding()) }
     val welcomeVisible=landing && !state.navigating
@@ -360,7 +362,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                                         onSelectRoute=controller::selectRouteOption,
                                         onQuest={if(!state.carConnected){questSeed=state.selected;questEntry++};selectTab(3)},
                                         onShare={externalPlace=state.selected},mapError=mapError,
-                                        compactLandscape=sidePreview)
+                                        compactLandscape=sidePreview,onTransit={transitFor=state.selected})
                                 } else if(state.navigating && landscape) {
                                     AtlasFrame(state.world)
                                     Column(Modifier.align(Alignment.TopStart)
@@ -413,7 +415,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                                             if(Build.VERSION.SDK_INT>=33) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                                         },{steps=true},compact=compactHeight,
                                             onSelectRoute=controller::selectRouteOption,
-                                            onQuest={if(!state.carConnected){questSeed=state.selected;questEntry++};selectTab(3)},onShare={externalPlace=state.selected})
+                                            onQuest={if(!state.carConnected){questSeed=state.selected;questEntry++};selectTab(3)},onShare={externalPlace=state.selected},onTransit={transitFor=state.selected})
                                     }
                                 }
 
@@ -468,6 +470,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 SettingRow("Voice guidance","Spoken turn instructions",state.voice,controller::toggleVoice)
                 SettingRow("World voice style","Give each world its own spoken wording and delivery on your device's speech voice. Turn it off for standard instructions.",state.gameVoice,controller::toggleGameVoice)
                 SettingRow("Miles & feet","Use imperial distances",state.imperial,controller::toggleUnits)
+                SettingRow("Speed limit warning","Show the posted limit and warn when you go over it while driving. Looks up the limit on OpenStreetMap through Overpass, sending your position only while guiding by car.",state.speedWarning,controller::toggleSpeedWarning)
                 SettingRow("3D perspective","Tilt the map in every world",state.tilted,controller::toggleTilt)
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 Text("Map controls", style=MaterialTheme.typography.titleMedium)
@@ -507,6 +510,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 TextButton(onClick={clearConfirm=true}) { Text("Clear saved places and history",color=MaterialTheme.colorScheme.error) }
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 FeedbackSettingsRow(onClick={feedbackOpen=true})
+                CommunitySettingsRow()
                 Text("WAYPOINT",style=MaterialTheme.typography.headlineMedium,color=WaypointColors.accent)
                 Text("Made in India · Open to the world",style=MaterialTheme.typography.bodySmall,color=Muted)
                 Text("Open source. Every world included. No ads or subscriptions.",style=MaterialTheme.typography.bodyMedium)
@@ -542,6 +546,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
             confirmButton={TextButton(onClick={search=false;tab=0;controller.acceptPendingNavigationImport(sharedDestinationId)}){Text("Open destination")}},
             dismissButton={TextButton(onClick={controller.dismissPendingNavigationImport(sharedDestinationId)}){Text("Cancel")}},
         )
+        transitFor?.let { place -> TransitSheet(place,state.fix,state.world,transitPlanner) { transitFor=null } }
         externalPlace?.let { place -> AlertDialog(onDismissRequest={externalPlace=null},title={Text("Open in another map app?")},
             text={Text(if(state.navigating)"Waypoint’s voice guidance will stop. The other app will calculate its own route to ${place.name}." else "Choose an app to open ${place.name}. It will calculate its own route.")},
             confirmButton={TextButton(onClick={
@@ -654,7 +659,7 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
     else -> Icons.Default.Place to "Place"
 }
 @OptIn(ExperimentalLayoutApi::class)
-@Composable fun DestinationCard(state: NavState,onSave:()->Unit,onClose:()->Unit,onLocate:()->Unit,onRetry:()->Unit,onStart:()->Unit,onSteps:()->Unit,onSelectRoute:(Int)->Unit,compact:Boolean=false,onQuest:(()->Unit)?=null,onShare:(()->Unit)?=null,roomyActions:Boolean=false) {
+@Composable fun DestinationCard(state: NavState,onSave:()->Unit,onClose:()->Unit,onLocate:()->Unit,onRetry:()->Unit,onStart:()->Unit,onSteps:()->Unit,onSelectRoute:(Int)->Unit,compact:Boolean=false,onQuest:(()->Unit)?=null,onShare:(()->Unit)?=null,roomyActions:Boolean=false,onTransit:(()->Unit)?=null) {
     val place=state.selected ?: return
     val palette=hudPalette(state.world)
     val (categoryIcon,categoryLabel)=placeCategory(place.kind)
@@ -666,9 +671,9 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
                 Surface(color=palette.accent.copy(alpha=.15f),shape=hudShape(state.world)) {Icon(categoryIcon,categoryLabel,Modifier.padding(10.dp).size(22.dp),tint=palette.accent)}
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) { Text(if(state.arrived)"YOU HAVE ARRIVED" else place.name,style=if(compact)MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,maxLines=2,overflow=TextOverflow.Ellipsis);Text(if(state.arrived)place.name else detail,style=MaterialTheme.typography.bodySmall,color=palette.muted,maxLines=if(compact)1 else 2,overflow=TextOverflow.Ellipsis) }
-                if(!expandedActions) DestinationActions(state,onSave,onQuest,onShare,false)
+                if(!expandedActions) DestinationActions(state,onSave,onQuest,onShare,false,onTransit)
             }
-            if(expandedActions) DestinationActions(state,onSave,onQuest,onShare,true)
+            if(expandedActions) DestinationActions(state,onSave,onQuest,onShare,true,onTransit)
             when {
                 state.arrived -> Button(onClick=onClose,modifier=Modifier.fillMaxWidth()) { Text("Done") }
                 state.routing -> { LinearProgressIndicator(modifier=Modifier.fillMaxWidth());Text("Finding a ${state.mode.routeDescription} route…",style=MaterialTheme.typography.bodySmall,color=palette.muted) }
@@ -681,6 +686,7 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
                         }
                         Text("· ${formatDistance(state.route.meters,state.imperial)}",color=palette.muted,style=MaterialTheme.typography.bodyMedium,modifier=Modifier.align(Alignment.CenterVertically))
                         TextButton(onClick=onSteps,modifier=Modifier.align(Alignment.CenterVertically)){Text("Steps",color=palette.accent)}
+                        if(onTransit!=null && !state.navigating) TextButton(onClick=onTransit,modifier=Modifier.align(Alignment.CenterVertically).heightIn(min=48.dp)){Icon(Icons.Default.DirectionsBus,null,Modifier.size(18.dp),tint=palette.accent);Spacer(Modifier.width(6.dp));Text("Bus & transit",color=palette.accent)}
                     }
                     if(!state.navigating && state.routeOptions.size>1) {
                         RouteChipRow(state,onSelectRoute)

@@ -20,6 +20,14 @@ Waypoint uses the device's local clock and checks the phase every minute. Day tr
 
 Waypoint and other apps can use different route providers and profiles. Waypoint has no live-traffic provider configured; its remaining ETA uses the selected OSRM or Valhalla route through Ferrostar. Review the route before you start; ETA is not a guaranteed arrival time.
 
+## The speed limit sign does not appear
+
+The sign shows only while guiding by car on the phone with **Speed limit warning** on, and only where OpenStreetMap has a usable `maxspeed` on the road you are on. Many roads have none, and the public Overpass service can be slow or busy; the sign returns when a later lookup succeeds. Android Auto does not show it yet.
+
+## Bus & transit shows no trips
+
+Transitous covers cities where open timetable feeds exist, so some areas have no results. Check that GPS has a fix (the trip starts from your position) and that you are online, then try again. Results are a trip list, not live stop-by-stop guidance.
+
 ## Waypoint is not in Android Auto's launcher
 
 An APK installed from GitHub may not satisfy Android's trusted distribution requirement for Car App Library apps. See [[Android Auto]]; enabling **Unknown sources** does not solve launcher eligibility.
