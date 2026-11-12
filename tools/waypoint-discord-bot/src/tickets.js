@@ -3,7 +3,7 @@ import { GUILD_ID, STAFF_ROLE, SUPPORT_CATEGORY_ID, TICKET_LOG_ID } from './conf
 import { createIssueOnce } from './githubIssues.js';
 import { loadState, saveState } from './store.js';
 
-const marker = /^atlas-ticket owner=(\d+) type=(bug|feature|general) status=(open|closed)$/;
+const marker = /^atlas-ticket owner=(\d+) type=(bug|feature|general) status=(open|closed)(?: legacy=ticket-tool)?$/;
 const ticketLocks = new Map();
 
 function ticketMeta(channel) {
@@ -101,4 +101,20 @@ export async function closeTicket(channel, actor) {
   await channel.permissionOverwrites.edit(meta.ownerId, { ViewChannel: false }, { reason: 'A.T.L.A.S. ticket closed' });
   await channel.setName(`closed-${meta.type}-${meta.ownerId.slice(-6)}`, 'A.T.L.A.S. ticket closed');
   await logTicket(channel.guild, `Closed ${meta.type} ticket ${channel} for <@${meta.ownerId}> by ${actor.tag}.`);
+}
+
+export async function adoptLegacyTicket(channel, actor, ownerId) {
+  if (channel.guildId !== GUILD_ID || channel.parentId !== SUPPORT_CATEGORY_ID || !channel.name.startsWith('ticket-')) {
+    throw new Error('Run this only in an open legacy support ticket.');
+  }
+  if (actor.id !== channel.guild.ownerId) throw new Error('Only the server owner can adopt a legacy ticket.');
+  if (ticketMeta(channel)) throw new Error('A.T.L.A.S. already manages this ticket.');
+  const member = await channel.guild.members.fetch(ownerId);
+  if (!channel.permissionsFor(member)?.has(PermissionFlagsBits.ViewChannel)) {
+    throw new Error('The selected member cannot view this ticket.');
+  }
+  await channel.setTopic(`atlas-ticket owner=${ownerId} type=general status=open legacy=ticket-tool`,
+    'A.T.L.A.S. adopted an open Ticket Tool channel');
+  await logTicket(channel.guild, `Adopted legacy ticket ${channel} for <@${ownerId}>; prior messages stay private.`);
+  return channel;
 }

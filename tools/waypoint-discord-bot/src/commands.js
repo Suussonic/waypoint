@@ -3,9 +3,9 @@ import {
   SlashCommandBuilder, TextInputBuilder, TextInputStyle,
 } from 'discord.js';
 import { GUILD_ID } from './config.js';
-import { leaderboard, rankFor, setXpByOwner } from './leveling.js';
+import { leaderboard, rankFor, setXpByOwner, welcomePayload } from './leveling.js';
 import { applyRoleSelection, roleMenuRows } from './selfRoles.js';
-import { closeTicket, openTicket, syncTicketIssue } from './tickets.js';
+import { adoptLegacyTicket, closeTicket, openTicket, syncTicketIssue } from './tickets.js';
 import { helpButtons } from './panels.js';
 
 const privateReply = (content, extras = {}) => ({ content, flags: MessageFlags.Ephemeral, ...extras });
@@ -28,10 +28,13 @@ const commands = [
         { name: 'General help', value: 'general' },
       )),
   new SlashCommandBuilder().setName('close').setDescription('Close this A.T.L.A.S. support ticket'),
+  new SlashCommandBuilder().setName('adopt-ticket').setDescription('Owner only: let A.T.L.A.S. manage an open Ticket Tool channel')
+    .addUserOption((option) => option.setName('member').setDescription('Original ticket requester').setRequired(true)),
   new SlashCommandBuilder().setName('sync-issue').setDescription('Staff only: retry GitHub issue creation for this ticket'),
   new SlashCommandBuilder().setName('xp-set').setDescription('Owner only: migrate or correct community XP')
     .addUserOption((option) => option.setName('member').setDescription('Member').setRequired(true))
     .addIntegerOption((option) => option.setName('xp').setDescription('Total XP').setMinValue(0).setRequired(true)),
+  new SlashCommandBuilder().setName('welcome-preview').setDescription('Owner only: preview the next A.T.L.A.S. welcome card'),
 ];
 
 function ticketModal(type) {
@@ -122,7 +125,7 @@ async function handle(interaction) {
     }
     case 'quests': {
       const rank = await rankFor(interaction.user.id);
-      await interaction.reply(privateReply(`**Community quests**\n• Chat with members: 20 points per eligible message, at most once a minute.\n• React to someone else's message: 5 points, at most once every 5 minutes and 20 times a day.\n• Start a helpful bug, feature, or world-idea post: 35 points, up to 3 a day.\nYour points today: **${rank.today}**. The daily leaderboard resets at midnight IST; your all-time level keeps growing.`));
+      await interaction.reply(privateReply(`**Community quests**\n• Chat with members: 15–40 points per eligible message, at most once a minute.\n• React to someone else's message: 25 points for you and its author, at most once every 5 minutes and 20 awards a day.\n• Start a helpful bug, feature, or world-idea post: 35 points, up to 3 a day.\nYour points today: **${rank.today}**. The daily leaderboard resets at midnight IST; your all-time level keeps growing.`));
       break;
     }
     case 'ticket': {
@@ -135,6 +138,13 @@ async function handle(interaction) {
       await closeTicket(interaction.channel, interaction.user);
       await interaction.editReply('Ticket closed. Staff can still read its history.');
       break;
+    case 'adopt-ticket': {
+      const user = interaction.options.getUser('member', true);
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+      await adoptLegacyTicket(interaction.channel, interaction.user, user.id);
+      await interaction.editReply('A.T.L.A.S. now manages this existing private ticket. Its past messages remain here; no GitHub issue was created.');
+      break;
+    }
     case 'sync-issue': {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
       const issue = await syncTicketIssue(interaction.channel, interaction.user);
@@ -148,6 +158,14 @@ async function handle(interaction) {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
       await setXpByOwner(interaction.guild, user.id, xp);
       await interaction.editReply(`Set ${user}'s community XP to ${xp}.`);
+      break;
+    }
+    case 'welcome-preview': {
+      if (interaction.user.id !== interaction.guild.ownerId) throw new Error('Only the server owner can preview welcomes.');
+      const member = await interaction.guild.members.fetch(interaction.user.id);
+      await interaction.reply(privateReply('This is how A.T.L.A.S. welcomes a new explorer.', {
+        embeds: welcomePayload(member).embeds,
+      }));
       break;
     }
     default:

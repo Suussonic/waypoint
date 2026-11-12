@@ -2,7 +2,7 @@
 
 A.T.L.A.S. is Waypoint's single Discord community bot. It handles welcomes, a base member role, 38 self-serve world roles, lane roles, activity-based quest points, level roles, a daily leaderboard, private support tickets, GitHub issues for bug and feature tickets, and owner-only role request decisions.
 
-The existing Moderator request was already granted to its author, tagged Approved, and closed manually. Old reactions are deliberately not replayed on bot startup.
+The existing Moderator request was already granted to its author and tagged Approved. On startup, A.T.L.A.S. checks owner reactions on still-pending role requests so decisions made while it was offline are not lost.
 
 The Discord application is private: **Public Bot** is off, its install link is **None**, and User Install is off. Only the application owner can invite it. Commands and events are limited to the Waypoint guild, and the bot leaves any other guild if it is added there. Discord app verification requires an install link and would prevent turning Public Bot off later, so this bot remains unverified while it is private.
 
@@ -17,10 +17,14 @@ The Discord application is private: **Public Bot** is off, its install link is *
 | `/leaderboard [period]` | Daily IST board by default, or all-time board |
 | `/ticket type` | Structured ticket form; bug and feature forms create public GitHub issues |
 | `/close` | Requester or staff closes an A.T.L.A.S. ticket |
+| `/adopt-ticket member` | Owner moves an existing Ticket Tool channel under A.T.L.A.S. without publishing its history |
 | `/sync-issue` | Staff retries GitHub issue creation if it failed |
 | `/xp-set member xp` | Server owner migrates or corrects prior Arcane XP |
+| `/welcome-preview` | Owner previews A.T.L.A.S.'s personalized welcome card privately |
 
-Messages earn 20 points at most once a minute. Reacting to someone else's message earns 5 points at most once every five minutes and 20 times a day. A new bug, feature, or world idea forum post earns 35 points, capped at three per day. Private ticket messages do not earn points. The daily board resets at midnight Asia/Kolkata; a summary is posted in `⚔️│quests-and-xp`. All-time points continue accumulating. Level roles unlock at 5, 10, 20, and 35. This Discord score is separate from private quest XP in the Android app.
+Messages earn 15–40 points at most once a minute. Reacting to someone else's message earns 25 points for both people, at most once every five minutes and 20 awards a day per person. A new bug, feature, or world idea forum post earns 35 points, capped at three per day. Private ticket messages and role-picker reactions do not earn points. The daily board resets at midnight Asia/Kolkata; a summary is posted in `⚔️│quests-and-xp`. All-time points continue accumulating. A.T.L.A.S. uses Arcane's former linear level curve so migrated ranks stay consistent. Level roles unlock at 5, 10, 20, and 35. This Discord score is separate from private quest XP in the Android app.
+
+The pinned A.T.L.A.S. button in `🎯│pick-your-roles` opens menus for all 38 world clubs and both activity lanes. Existing role assignments stay in place. New members get a themed, personalized welcome card with their avatar and first steps in `👋│welcome`; existing welcome messages stay in place.
 
 `🙏│role-requests` permits one pending post per member. A duplicate is marked Declined, closed, and linked to the first pending post. Only a ✅ or ❌ from the **server owner** on the first message counts. The bot removes those reactions from other members. Owner ✅ grants the role named by the exact post title to the **post author**, marks Approved, and closes the post; ❌ marks Declined and closes it. The allowlist is in `src/rules.js`. The bot refuses roles with Administrator permission or roles above its own role.
 
@@ -44,12 +48,14 @@ For a container deployment, mount a persistent disk at `/data`. The entrypoint f
 
 For a zero-subscription VM option, follow the [Oracle Always Free deployment guide](deploy/oracle/README.md). It installs the container as a restartable system service and stores the state on the VM's persistent boot volume. An Oracle Cloud account and an Always Free VM in the account's home region are required.
 
-## Cutover checks
+## Waypoint cutover
 
-1. Verify a new member gets Certified Explorer and one A.T.L.A.S. welcome. Preserve OG Day-Ones for existing launch members; stop assigning it to new members.
-2. Test `/roles`, `/rank`, `/quests`, daily `/leaderboard`, and all four level thresholds. Use `/xp-set` to migrate any Arcane totals worth preserving before turning Arcane off.
-3. Test bug, feature, and general tickets. Bug and feature forms should create correctly titled GitHub issues; general help should not. Test `/close` and `/sync-issue`.
-4. Test a role request with a non-owner ✅, owner ✅, owner ❌, and a duplicate pending post. Confirm that only owner decisions alter roles and statuses.
-5. Once the replacement is running continuously and tested, disable or remove Welcomer, Carl-bot, Arcane, Ticket Tool, and any unused Zapier integration. Replace old Ticket Tool panel messages with A.T.L.A.S. `/ticket` instructions or panels first. Keep existing ticket channels and their history.
+A.T.L.A.S. runs on the Oracle Always Free VM as a system service. Welcomer, Carl-bot, Arcane, Ticket Tool, and Zapier were removed from the Discord server after A.T.L.A.S. was tested; the old Zap was turned off. A.T.L.A.S. is the only installed bot or app. A separate `Waypoint GitHub Announcements` webhook remains for repository announcements.
+
+The 17 Arcane leaderboard totals were migrated to persistent VM state. The 37 existing human members were given the permissionless `🌍 Certified Explorer` base role; future members receive it on join. The pinned A.T.L.A.S. button replaced the old emoji posts, and adding and removing a lane role was verified live. `/rank` and the daily `/leaderboard` were verified after migration. The owner-only `/welcome-preview` displayed a personalized card; a new-member join has not yet been observed since cutover.
+
+An A.T.L.A.S. bug ticket created a correctly titled public GitHub issue with the submitted description, and general help stays private. The open `ticket-0005` was adopted by A.T.L.A.S. as private general help without publishing its old report. Existing welcome messages, member conversations, and ticket channels were preserved. The already approved Moderator request retained its original title, Approved tag, and Mod Squad assignment.
+
+For future checks, verify a real new join, a new role request decision by the owner, and the next midnight IST leaderboard post. The bot's unit tests cover the issue mapping, role request rules, level thresholds, and welcome card content.
 
 Run `npm test` for the points, role, and issue mapping rules. Syntax-check with `node --check src/index.js`. Startup checks the forum tags and registers its slash commands for Waypoint. The bot scans active and archived role-request posts when a new post is made, so the one-pending rule survives restarts.

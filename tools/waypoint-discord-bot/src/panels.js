@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType } from 'discord.js';
-import { BUG_FORUM_ID, FEATURE_FORUM_ID, HELP_CHANNEL_ID } from './config.js';
+import { BUG_FORUM_ID, FEATURE_FORUM_ID, HELP_CHANNEL_ID, ROLE_PICK_CHANNEL_ID } from './config.js';
 import { loadState, saveState } from './store.js';
 
 export function helpButtons() {
@@ -28,6 +28,40 @@ async function ensureHelpPanel(client, state) {
   const sent = await channel.send({ content, components: helpButtons() });
   state.helpPanelId = sent.id;
   await saveState();
+}
+
+async function ensureRolePanel(client, state) {
+  const channel = await client.channels.fetch(ROLE_PICK_CHANNEL_ID);
+  if (!channel?.isTextBased()) throw new Error('Role selection channel is unavailable.');
+  const content = '**Choose your Waypoint roles with A.T.L.A.S.**\nPick the world clubs you want to visit and your activity lanes. You can change them any time. Level rewards and staff roles are assigned separately; request a staff role in the role-requests forum.';
+  const components = [new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('atlas:help:roles').setLabel('Pick or change roles').setStyle(ButtonStyle.Primary),
+  )];
+  const existing = state.rolePanelId ? await channel.messages.fetch(state.rolePanelId).catch(() => null) : null;
+  if (existing?.author.id === client.user.id) {
+    await existing.edit({ content, components });
+    if (!existing.pinned) await existing.pin('Keep A.T.L.A.S. role selection visible').catch((error) => {
+      console.warn('[A.T.L.A.S. role panel pin]', error.message);
+    });
+    return;
+  }
+  const recent = await channel.messages.fetch({ limit: 30 });
+  const prior = recent.find((message) => message.author.id === client.user.id && message.content.startsWith('**Choose your Waypoint roles with A.T.L.A.S.**'));
+  if (prior) {
+    await prior.edit({ content, components });
+    state.rolePanelId = prior.id;
+    await saveState();
+    if (!prior.pinned) await prior.pin('Keep A.T.L.A.S. role selection visible').catch((error) => {
+      console.warn('[A.T.L.A.S. role panel pin]', error.message);
+    });
+    return;
+  }
+  const sent = await channel.send({ content, components });
+  state.rolePanelId = sent.id;
+  await saveState();
+  await sent.pin('Keep A.T.L.A.S. role selection visible').catch((error) => {
+    console.warn('[A.T.L.A.S. role panel pin]', error.message);
+  });
 }
 
 async function ensureForumPanel(client, state, type, forumId) {
@@ -68,6 +102,7 @@ export async function ensurePanels(client) {
   const state = await loadState();
   for (const task of [
     () => ensureHelpPanel(client, state),
+    () => ensureRolePanel(client, state),
     () => ensureForumPanel(client, state, 'bug', BUG_FORUM_ID),
     () => ensureForumPanel(client, state, 'feature', FEATURE_FORUM_ID),
   ]) {
