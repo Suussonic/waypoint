@@ -281,7 +281,9 @@ jobs:
       - name: Verify release package and legacy updater size
         run: |
           python3 scripts/check_packaged_manifest.py release
-          python3 scripts/check_update_size.py app/build/outputs/apk/release/app-release.apk
+          release_apk="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          test -n "$release_apk" || { echo 'Release preflight did not produce an APK'; exit 1; }
+          python3 scripts/check_update_size.py "$release_apk"
       - name: Save release preflight reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

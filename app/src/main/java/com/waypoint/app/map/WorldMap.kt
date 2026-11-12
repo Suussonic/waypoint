@@ -586,7 +586,10 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
         if(!active || styleReady==0 || orientationRequestSeen[0]==state.orientationRequest)return@LaunchedEffect
         orientationRequestSeen[0]=state.orientationRequest
         val following=followPolicy.shouldFollow(state.navigating,state.selected!=null,SystemClock.elapsedRealtime())
-        if(!following || state.fix==null) {
+        // Browsing the live position is still a following camera. The compass must rotate it
+        // without changing its centre or zoom; only a moving navigation camera is left to the
+        // position-frame interpolator to avoid two competing camera animations.
+        if(!state.navigating || !following || state.fix==null) {
             val bearing=mapCameraBearing(state,m.cameraPosition.bearing.toFloat())
             m.easeCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder(m.cameraPosition).bearing(bearing.toDouble()).build()),350)
         }
