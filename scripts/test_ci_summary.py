@@ -51,11 +51,20 @@ class CiSummaryTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             required_gates("workflow_dispatch", "refs/heads/dev")
 
-    def test_published_release_has_one_discord_announcement_path(self):
+    def test_release_publisher_announces_only_when_it_creates_a_release(self):
         publisher = (ROOT / ".github/workflows/release.yml").read_text()
+        self.assertIn("id: publish_release", publisher)
+        self.assertIn('echo "created=true" >> "$GITHUB_OUTPUT"', publisher)
+        self.assertIn('echo "created=false" >> "$GITHUB_OUTPUT"', publisher)
+        self.assertIn("if: steps.publish_release.outputs.created == 'true'", publisher)
+        self.assertIn(".github/scripts/announce_discord_release.py", publisher)
+
+    def test_published_release_announcer_has_event_and_recovery_paths(self):
         announcer = (ROOT / ".github/workflows/discord-release-announcement.yml").read_text()
-        self.assertNotIn("Announce the release in Discord", publisher)
         self.assertIn("types: [published]", announcer)
+        self.assertIn("workflow_dispatch:", announcer)
+        self.assertIn("inputs.tag", announcer)
+        self.assertIn("github.ref == 'refs/heads/main'", announcer)
         self.assertIn(".github/scripts/announce_discord_release.py", announcer)
 
 

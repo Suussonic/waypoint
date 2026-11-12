@@ -3,21 +3,62 @@ name: Discord release announcement
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published release tag to announce
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: discord-release-${{ github.event.release.id }}
+  group: discord-release-${{ github.event.release.id || inputs.tag || github.run_id }}
   cancel-in-progress: false
 
 jobs:
   announce:
-    if: github.repository == 'the-geeky-couldron/waypoint'
+    if: >-
+      github.repository == 'the-geeky-couldron/waypoint' &&
+      (github.event_name == 'release' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     environment: release
     timeout-minutes: 5
     steps:
+      - name: Resolve the published release details
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = release ]; then
+            tag="$(jq -r '.release.tag_name // empty' "$GITHUB_EVENT_PATH")"
+          else
+            tag="$INPUT_TAG"
+          fi
+          if [[ ! "$tag" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$ ]]; then
+            echo 'The release tag contains unsupported characters.' >&2
+            exit 1
+          fi
+
+          release_json="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${tag}")"
+          test "$(jq -r '.draft' <<<"$release_json")" = false || {
+            echo "Release $tag is still a draft." >&2
+            exit 1
+          }
+          url="$(jq -r '.html_url' <<<"$release_json")"
+          notes="$(jq -r '.body // ""' <<<"$release_json")"
+          delimiter="$(openssl rand -hex 16)"
+          {
+            echo "tag=$tag"
+            echo "url=$url"
+            echo "notes<<$delimiter"
+            printf '%s\n' "$notes"
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
       - name: Check out the trusted default-branch announcer
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -27,7 +68,7 @@ jobs:
         env:
           DISCORD_RELEASES_WEBHOOK_URL: ${{ secrets.DISCORD_RELEASES_WEBHOOK_URL }}
           DISCORD_ANNOUNCEMENTS_WEBHOOK_URL: ${{ secrets.DISCORD_ANNOUNCEMENTS_WEBHOOK_URL }}
-          WAYPOINT_RELEASE_TAG: ${{ github.event.release.tag_name }}
-          WAYPOINT_RELEASE_URL: ${{ github.event.release.html_url }}
-          WAYPOINT_RELEASE_NOTES: ${{ github.event.release.body }}
+          WAYPOINT_RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          WAYPOINT_RELEASE_URL: ${{ steps.release.outputs.url }}
+          WAYPOINT_RELEASE_NOTES: ${{ steps.release.outputs.notes }}
         run: python3 .github/scripts/announce_discord_release.py
