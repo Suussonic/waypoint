@@ -34,9 +34,13 @@ async function ensureForumPanel(client, state, type, forumId) {
   state.forumPanels ??= {};
   const forum = await client.channels.fetch(forumId);
   if (forum?.type !== ChannelType.GuildForum) throw new Error(`${type} forum is unavailable.`);
+  const initialTagName = type === 'bug' ? '🆕 New' : '💡 Proposed';
+  const initialTag = forum.availableTags.find((tag) => tag.name === initialTagName);
+  if (!initialTag) throw new Error(`${type} forum needs the ${initialTagName} tag.`);
   const oldId = state.forumPanels[type];
   const old = oldId ? await forum.threads.fetch(oldId).catch(() => null) : null;
   if (old?.ownerId === client.user.id) {
+    if (!old.appliedTags.includes(initialTag.id)) await old.setAppliedTags([initialTag.id], 'Mark A.T.L.A.S. entry post');
     if (old.archived) await old.setArchived(false, 'Keep A.T.L.A.S. ticket entry visible');
     return;
   }
@@ -46,6 +50,7 @@ async function ensureForumPanel(client, state, type, forumId) {
     : 'For a public discussion, click New Post in this forum. For a private feature ticket, use the button below. The title and description you submit in the form will become a public GitHub issue; your private ticket replies stay in Discord.';
   const thread = await forum.threads.create({
     name: title,
+    appliedTags: [initialTag.id],
     message: {
       content,
       components: [new ActionRowBuilder().addComponents(

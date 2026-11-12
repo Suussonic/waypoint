@@ -24,6 +24,8 @@ Messages earn 20 points at most once a minute. Reacting to someone else's messag
 
 For bug and feature tickets, the form labels the title and description as public. Only those submitted fields, plus optional steps and device information, are copied to [the Waypoint GitHub repository](https://github.com/the-geeky-couldron/waypoint/issues). Private replies are never copied. General help tickets stay entirely in Discord. GitHub issue creation is idempotent by ticket ID and can be retried by staff.
 
+The public bug and feature forums require a starting status tag on New Posts: **🆕 New** for bugs and **💡 Proposed** for features. Staff can then apply the moderated Investigating/Fixed/Duplicate/Won’t fix or Planned/In progress/Shipped/Declined tags. A.T.L.A.S. tags its own start-here posts, and the existing “Google maps API” post is marked Proposed.
+
 ## Installation
 
 The [A.T.L.A.S. Discord application](https://discord.com/developers/applications/1570323716204658781/) already exists. Its avatar and banner are in `assets/`.
