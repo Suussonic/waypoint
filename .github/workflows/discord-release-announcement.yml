@@ -66,7 +66,6 @@ jobs:
           ref: ${{ github.event.repository.default_branch }}
       - name: Announce the published release
         env:
-          DISCORD_RELEASES_WEBHOOK_URL: ${{ secrets.DISCORD_RELEASES_WEBHOOK_URL }}
           DISCORD_ANNOUNCEMENTS_WEBHOOK_URL: ${{ secrets.DISCORD_ANNOUNCEMENTS_WEBHOOK_URL }}
           WAYPOINT_RELEASE_TAG: ${{ steps.release.outputs.tag }}
           WAYPOINT_RELEASE_URL: ${{ steps.release.outputs.url }}

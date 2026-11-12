@@ -210,7 +210,6 @@ jobs:
       - name: Announce the newly published release in Discord
         if: steps.publish_release.outputs.created == 'true'
         env:
-          DISCORD_RELEASES_WEBHOOK_URL: ${{ secrets.DISCORD_RELEASES_WEBHOOK_URL }}
           DISCORD_ANNOUNCEMENTS_WEBHOOK_URL: ${{ secrets.DISCORD_ANNOUNCEMENTS_WEBHOOK_URL }}
           WAYPOINT_RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
           WAYPOINT_RELEASE_URL: https://github.com/${{ github.repository }}/releases/tag/${{ needs.prepare.outputs.tag }}

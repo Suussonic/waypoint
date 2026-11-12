@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Post a published Waypoint release to the configured Discord channels."""
+"""Post a published Waypoint release to the configured Discord announcements channel."""
 
 from __future__ import annotations
 
@@ -114,28 +114,17 @@ def main() -> int:
         release_url = required("WAYPOINT_RELEASE_URL")
         validate_release(tag, release_url)
         payload = release_payload(tag, release_url, os.environ.get("WAYPOINT_RELEASE_NOTES", ""))
-        releases_webhook = validate_webhook(
-            required("DISCORD_RELEASES_WEBHOOK_URL"), "DISCORD_RELEASES_WEBHOOK_URL"
-        )
         announcements_webhook = validate_webhook(
             required("DISCORD_ANNOUNCEMENTS_WEBHOOK_URL"), "DISCORD_ANNOUNCEMENTS_WEBHOOK_URL"
         )
-        if releases_webhook == announcements_webhook:
-            raise ValueError("Configure separate Discord webhooks for Releases and Announcements.")
-
         opener = build_opener(NoRedirectHandler())
-        failures = []
-        for label, webhook_url in (
-            ("releases", releases_webhook),
-            ("announcements", announcements_webhook),
-        ):
-            try:
-                post(opener, label, webhook_url, payload)
-                print(f"Posted the {tag} announcement to Discord #{label}.")
-            except RuntimeError as error:
-                print(str(error), file=sys.stderr)
-                failures.append(label)
-        return 1 if failures else 0
+        try:
+            post(opener, "announcements", announcements_webhook, payload)
+            print(f"Posted the {tag} announcement to Discord #announcements.")
+            return 0
+        except RuntimeError as error:
+            print(str(error), file=sys.stderr)
+            return 1
     except ValueError as error:
         print(str(error), file=sys.stderr)
         return 2
