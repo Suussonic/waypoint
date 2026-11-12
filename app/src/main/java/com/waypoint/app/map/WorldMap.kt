@@ -567,16 +567,22 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
         val navPose=if(state.navigating)navigationPose(m,cameraState) else null
         val desiredCameraZoom=navPose?.zoom ?: m.cameraPosition.zoom
         val desiredTilt=navPose?.tilt ?: mapCameraTilt(state.world,state.tilted,state.navigating,cameraTiltOverride)
-        if(motion.remainingMillis(SystemClock.elapsedRealtime())>0)return@LaunchedEffect
+        val motionRemaining=motion.remainingMillis(SystemClock.elapsedRealtime())
+        // The position-frame interpolator normally owns course rotation. If a map gesture or a
+        // camera hold prevented those frames from applying it, recheck once the short interpolation
+        // window has elapsed and let the follow camera correct the bearing without fighting it.
+        if(motionRemaining>0)delay(motionRemaining+48L)
+        val desiredBearing=navPose?.bearing ?: m.cameraPosition.bearing
         val zoomChanged=state.navigating && (cameraMemory.zoom.isNaN() || kotlin.math.abs(cameraMemory.zoom-desiredCameraZoom)>.2)
+        val bearingChanged=state.navigating && kotlin.math.abs(headingDelta(m.cameraPosition.bearing.toFloat(),desiredBearing.toFloat()))>2f
         if(SystemClock.elapsedRealtime()>=focusCameraHoldUntil[0] && following && displayPosition!=null &&
             (cameraMemory.fix==null || distance(cameraMemory.fix!!,displayPosition)>1.5 ||
             distance(Coordinate(m.cameraPosition.target!!.latitude,m.cameraPosition.target!!.longitude),displayPosition)>20 ||
-            kotlin.math.abs(m.cameraPosition.tilt-desiredTilt)>1.0 || zoomChanged)) {
+            kotlin.math.abs(m.cameraPosition.tilt-desiredTilt)>1.0 || zoomChanged || bearingChanged)) {
             cameraMemory.fix=displayPosition;cameraMemory.zoom=desiredCameraZoom
             focusCameraHoldUntil[0]=SystemClock.elapsedRealtime()+500L
             m.easeCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder(m.cameraPosition).padding(drivePadding(m,state.navigating)).target(displayPosition.latLng())
-                .zoom(desiredCameraZoom).bearing(m.cameraPosition.bearing)
+                .zoom(desiredCameraZoom).bearing(if(state.navigating)desiredBearing else m.cameraPosition.bearing)
                 .tilt(desiredTilt).build()),500)
         }
     }
