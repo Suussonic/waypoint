@@ -4,6 +4,13 @@ on:
   push:
     branches: [main]
     tags: ['v*']
+    # Bot-only main pushes must not publish a new Android release. GitHub does
+    # not evaluate path filters for tag pushes, so explicit v* tags still work.
+    paths-ignore:
+      - 'tools/waypoint-discord-bot/**'
+      - '.github/workflows/discord-ticket-issue.yml'
+      - '.github/workflows/android.yml'
+      - '.github/workflows/release.yml'
 
 permissions:
   contents: read
