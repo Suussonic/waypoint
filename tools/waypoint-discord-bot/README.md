@@ -4,6 +4,8 @@ A.T.L.A.S. is Waypoint's single Discord community bot. It handles welcomes, a ba
 
 The existing Moderator request was already granted to its author, tagged Approved, and closed manually. Old reactions are deliberately not replayed on bot startup.
 
+The Discord application is private: **Public Bot** is off, its install link is **None**, and User Install is off. Only the application owner can invite it. Commands and events are limited to the Waypoint guild, and the bot leaves any other guild if it is added there. Discord app verification requires an install link and would prevent turning Public Bot off later, so this bot remains unverified while it is private.
+
 ## Commands and behavior
 
 | Command | What it does |

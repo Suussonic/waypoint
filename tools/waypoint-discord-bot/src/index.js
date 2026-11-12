@@ -26,6 +26,22 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
+const leavingGuilds = new Set();
+async function leaveOtherGuild(guild) {
+  if (guild.id === GUILD_ID || leavingGuilds.has(guild.id)) return;
+  leavingGuilds.add(guild.id);
+  try {
+    console.warn(`[A.T.L.A.S.] Leaving unauthorized server ${guild.id}`);
+    await guild.leave();
+  } finally {
+    leavingGuilds.delete(guild.id);
+  }
+}
+
+client.on(Events.GuildCreate, (guild) => {
+  leaveOtherGuild(guild).catch((error) => console.error('[A.T.L.A.S. guild restriction]', error));
+});
+
 registerCommands(client);
 
 client.on(Events.MessageCreate, (message) => {
@@ -163,9 +179,13 @@ client.on(Events.MessageReactionAdd, (reaction, user) => {
 
 client.once(Events.ClientReady, async () => {
   try {
+    const departures = await Promise.allSettled([...client.guilds.cache.values()].map(leaveOtherGuild));
+    for (const departure of departures) {
+      if (departure.status === 'rejected') console.error('[A.T.L.A.S. guild restriction]', departure.reason);
+    }
     const channel = await forum();
     statusTags(channel);
-    console.log(`Waypoint role bot ready as ${client.user.tag}; owner ${channel.guild.ownerId}`);
+    console.log(`A.T.L.A.S. ready in Waypoint as ${client.user.tag}; owner ${channel.guild.ownerId}`);
     console.log('Existing reactions are intentionally not replayed.');
     serial(() => postDailyLeaderboard(client));
     serial(() => ensurePanels(client));
