@@ -3,8 +3,9 @@
 
 This generator deliberately has no preset-style input. It authors every layer,
 filter, zoom range, label rule, road hierarchy and material reference below.
-OpenMapTiles supplies geographic features only; no MapLibre theme or sprite sheet
-is downloaded or copied.
+OpenMapTiles supplies vector geography, while a fading Natural Earth II raster
+keeps the entire planet legible before detailed vector features appear. No
+MapLibre theme or sprite sheet is downloaded or copied.
 """
 
 from __future__ import annotations
@@ -29,6 +30,14 @@ ROAD_GROUPS = {
     "rail": ("rail", "transit", "subway", "light_rail", "tram"),
     "ferry": ("ferry",),
 }
+LIBERTY_ROAD_COLORS = {
+    "primary": "#F2F2F2",
+    "secondary": "#D5D5D5",
+    "local": "#A6A6A6",
+    "path": "#777777",
+    "rail": "#A0A0A0",
+    "ferry": "#858585",
+}
 # Machine Atlas's shipped road widths were broadened after the base generator
 # pass. Keep them here so build_style("nier", ...) reproduces the checked-in map.
 MACHINE_ROAD_ZOOMS = (5, 10, 13, 15, 17, 18, 19, 20)
@@ -40,6 +49,8 @@ MACHINE_ROAD_WIDTHS = {
 MACHINE_PATH_WIDTHS = (.3, .5, .8, 1.3, 2.0, 3.0, 4.5, 6.5)
 RELIEF_ATTRIBUTION = "Terrain tiles © Mapzen / data providers"
 OPENMAPTILES_ATTRIBUTION = "© OpenStreetMap contributors · © OpenMapTiles"
+NATURAL_EARTH_ATTRIBUTION = "© Natural Earth"
+WORLD_OVERVIEW_TILES = "https://tiles.openfreemap.org/natural_earth/ne2sr/{z}/{x}/{y}.png"
 
 
 def rgba_mix(a: str, b: str, amount: float) -> str:
@@ -63,6 +74,15 @@ def contrast_ratio(a: str, b: str) -> float:
 
 def colors_for(theme: dict[str, str], night: bool) -> dict[str, str]:
     colors = dict(theme)
+    if theme["icon_profile"] == "metro_roundel":
+        if night:
+            colors.update({
+                "ground": "#000000", "land": "#222222", "park": "#191919",
+                "water": "#030303", "building": "#1A1A1A", "road": "#EAEAEA",
+                "casing": "#050505", "label": "#F2F2F2", "halo": "#000000",
+                "outline": "#777777",
+            })
+        return colors
     if night and theme["icon_profile"] != "machine_bracket":
         for key, amount in (
             ("ground", .60), ("land", .56), ("park", .50),
@@ -224,6 +244,7 @@ def build_layers(name: str, colors: dict[str, str], profile: dict,
     font = theme["font"]
     buildings = "extrude" if holographic else ("flat" if name == "division" else profile["building"])
     land_edge = colors["outline"] if recipe["land_edges"] else None
+    overview_opacity = .28 if linear_luminance(colors["ground"]) < .12 else .42
     land_opacity = {
         "municipal": (.88, .82, .62), "monochrome-city": (.82, .76, .52),
         "neon": (.72, .82, .58), "phosphor": (.54, .68, .46),
@@ -244,7 +265,22 @@ def build_layers(name: str, colors: dict[str, str], profile: dict,
 
     layers: list[dict] = [
         {"id": "waypoint-ground", "type": "background", "paint":
-            {"background-color": colors["ground"]} if name == "nier" else {"background-pattern": "world-material"}},
+            {"background-color": colors["ground"]} if name in {"nier", "liberty"} else {"background-pattern": "world-material"}},
+        {
+            "id": "waypoint-world-overview",
+            "type": "raster",
+            "source": "waypoint-world-overview",
+            "maxzoom": 7,
+            "paint": {
+                "raster-opacity": [
+                    "interpolate", ["linear"], ["zoom"],
+                    0, overview_opacity,
+                    3, round(overview_opacity * .72, 3),
+                    5, round(overview_opacity * .34, 3),
+                    6.5, 0,
+                ],
+            },
+        },
         fill_layer("waypoint-land-residential", "landuse", colors["land"], land_opacity[0],
                    ("residential", "suburb", "neighbourhood", "hamlet"), outline=land_edge),
         fill_layer("waypoint-land-urban", "landuse", rgba_mix(colors["land"], colors["building"], .22), land_opacity[1],
@@ -263,6 +299,13 @@ def build_layers(name: str, colors: dict[str, str], profile: dict,
     ]
 
     sources: dict[str, dict] = {
+        "waypoint-world-overview": {
+            "type": "raster",
+            "tiles": [WORLD_OVERVIEW_TILES],
+            "tileSize": 256,
+            "maxzoom": 6,
+            "attribution": NATURAL_EARTH_ATTRIBUTION,
+        },
         "openmaptiles": {
             "type": "vector",
             "url": "https://tiles.openfreemap.org/planet",
@@ -296,8 +339,9 @@ def build_layers(name: str, colors: dict[str, str], profile: dict,
         fill_layer("waypoint-aeroway", "aeroway", rgba_mix(colors["land"], colors["road"], .12), .88,
                    ("apron", "helipad", "taxiway")),
     ])
-    waterway_width = 1.6 if detail in {"strategic-vector", "phosphor", "amber-terminal", "survey-grid"} else 2.4
-    layers.append(themed_line("waypoint-waterways", "waterway", colors["water"], waterway_width,
+    waterway_width = 1.25 if name == "liberty" else 1.6 if detail in {"strategic-vector", "phosphor", "amber-terminal", "survey-grid"} else 2.4
+    waterway_color = "#191919" if name == "liberty" else colors["water"]
+    layers.append(themed_line("waypoint-waterways", "waterway", waterway_color, waterway_width,
                              ("river", "canal", "stream", "ditch", "drain"), brunnel="surface", opacity=.92))
     layers.append(themed_line("waypoint-aeroway-runways", "aeroway", colors["road"], 3.2,
                              ("runway", "taxiway"), brunnel=None, opacity=.74))
@@ -373,7 +417,8 @@ def build_layers(name: str, colors: dict[str, str], profile: dict,
             dash = [1.6, 1.8]
         if group == "rail":
             dash = [3.2, 1.6]
-        layers.append(themed_line(f"waypoint-{group}-roads", "transportation", road_color,
+        group_road_color = LIBERTY_ROAD_COLORS[group] if name == "liberty" else road_color
+        layers.append(themed_line(f"waypoint-{group}-roads", "transportation", group_road_color,
                                  base * road_scale * priority, classes,
                                  "surface",
                                  .84 if group == "ferry" else 1.0, dash=dash))
@@ -472,7 +517,7 @@ def order_layers(name: str, layers: list[dict]) -> list[dict]:
     """Apply the world-specific geography, network, and label hierarchy."""
     recipe = RECIPES[name]
     buckets: dict[str, list[dict]] = {
-        "background": [], "terrain": [], "landuse": [], "landcover": [], "park": [],
+        "background": [], "world": [], "terrain": [], "landuse": [], "landcover": [], "park": [],
         "hydro": [], "aeroway": [], "buildings": [], "boundaries": [],
         "hologram": [], "roads": [], "labels": [],
     }
@@ -491,6 +536,8 @@ def order_layers(name: str, layers: list[dict]) -> list[dict]:
         layer_id = layer["id"]
         if layer_id == "waypoint-ground":
             buckets["background"].append(layer)
+        elif layer_id == "waypoint-world-overview":
+            buckets["world"].append(layer)
         elif layer_id == "waypoint-terrain-relief":
             buckets["terrain"].append(layer)
         elif layer_id.startswith("waypoint-landcover-"):
@@ -524,6 +571,7 @@ def order_layers(name: str, layers: list[dict]) -> list[dict]:
     if sorted(label_names) != sorted(recipe["label_order"]):
         raise ValueError(f"Invalid label priority for {name}")
     result = list(buckets["background"])
+    result.extend(buckets["world"])
     result.extend(buckets["terrain"])
     for group in recipe["land_order"]:
         result.extend(buckets[group])

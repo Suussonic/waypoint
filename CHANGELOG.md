@@ -1,6 +1,14 @@
 # Changelog
 
-For the full notes and community acknowledgements, see [Waypoint release notes](docs/releases/current.md). Published releases are available on [GitHub Releases](https://github.com/the-geeky-couldron/waypoint/releases).
+For the full notes and community acknowledgements, see the [Waypoint release page](docs/releases/current.html) or [Markdown release notes](docs/releases/current.md). Published releases are available on [GitHub Releases](https://github.com/the-geeky-couldron/waypoint/releases).
+
+## 2.6.5
+
+- Stabilized navigation camera behavior at a stop and after guidance ends; improved heading filtering, road alignment and route following through turns.
+- Tuned Android Auto camera direction, tilt, zoom and viewport sizing for split-screen use.
+- Added optional Google Maps web suggestions, place details and photos alongside open place search, plus region downloads with offline open-place names and search.
+- Restored Liberty City landmark blips, improved full-world zoom-out rendering and adjusted the 3D building/route layer order in Night City.
+- Refined updater progress hierarchy and scrolling, and expanded release, workflow, artifact and emulator checks.
 
 ## 2.6.0
 

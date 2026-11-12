@@ -2,6 +2,7 @@
   "day": {
     "order": [
       "waypoint-ground",
+      "waypoint-world-overview",
       "waypoint-land-residential",
       "waypoint-land-urban",
       "waypoint-land-amenities",
@@ -798,6 +799,7 @@
   "night": {
     "order": [
       "waypoint-ground",
+      "waypoint-world-overview",
       "waypoint-land-residential",
       "waypoint-land-urban",
       "waypoint-land-amenities",

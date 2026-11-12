@@ -6,6 +6,7 @@ import android.app.Presentation
 import android.graphics.Rect
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
+import android.util.DisplayMetrics
 import android.view.Surface
 import android.os.SystemClock
 import androidx.car.app.*
@@ -74,8 +75,7 @@ internal class WaypointCarSession : Session() {
 
 internal fun waypointHostValidator(context: Context): HostValidator = HostValidator.Builder(context)
     .addAllowedHosts(androidx.car.app.R.array.hosts_allowlist_sample)
-    // Current Play-signed Android Auto on the connected device (17.9.664044).
-    // The sample AndroidX list predates this signing certificate.
+    // Allow the Play-signed Android Auto host alongside AndroidX's sample allowlist.
     .addAllowedHost("com.google.android.projection.gearhead", "1ca8dcc0bed3cbd872d2cb791200c0292ca9975768a82d676b8b424fb65b5295")
     .build()
 
@@ -87,7 +87,11 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
     private var presentation: Presentation?=null
     private var liveMap: WaypointCarLiveMap?=null
     private var width=800; private var height=480
+    // Camera geometry must use the projected surface's density. CarContext's
+    // resources describe the phone display and can be several times denser.
+    private var surfaceDensity=1.0
     private var visibleArea=Rect(0,0,800,480)
+    private var stableArea: Rect?=null
     private var mapFirstVisibleAt=0L
     private var mapCenter: LatLng?=null
     private var zoomOffset=0.0
@@ -139,8 +143,10 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
         }
         closeSurface(surface !== container.surface)
         surface=container.surface; width=container.width; height=container.height
+        surfaceDensity=container.dpi.toDouble()/DisplayMetrics.DENSITY_DEFAULT
         mapFirstVisibleAt=SystemClock.elapsedRealtime()
         visibleArea=Rect(0,0,width,height)
+        stableArea=null
         val display=try {
             carContext.getSystemService(DisplayManager::class.java)
                 .createVirtualDisplay("Waypoint Android Auto map",width,height,container.dpi,
@@ -158,17 +164,34 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
             }
             view.start()
             updateMap()
+            invalidate()
             creditRefreshJob=scope.launch { delay(5000);updateMap() }
         } catch(_: RuntimeException) {
             closeSurface(true)
         }
     }
     override fun onVisibleAreaChanged(visibleArea: Rect) {
-        val left=visibleArea.left.coerceIn(0,width)
-        val top=visibleArea.top.coerceIn(0,height)
-        this.visibleArea=Rect(left,top,visibleArea.right.coerceIn(left,width),
-            visibleArea.bottom.coerceIn(top,height))
+        this.visibleArea=clipToSurface(visibleArea) ?: Rect(0,0,width,height)
         updateMap()
+        invalidate()
+    }
+    override fun onStableAreaChanged(stableArea: Rect) {
+        // Stable bounds account for persistent host chrome and split-pane layouts.
+        // An empty rectangle means the host has not provided a usable value yet.
+        this.stableArea=clipToSurface(stableArea)
+        updateMap()
+        invalidate()
+    }
+    private fun clipToSurface(area: Rect): Rect? {
+        val clipped=Rect(area)
+        return clipped.takeIf { it.intersect(0,0,width,height) && !it.isEmpty }
+    }
+    private fun mapViewport(): Rect {
+        val visible=clipToSurface(visibleArea) ?: Rect(0,0,width,height)
+        val stable=stableArea?.let(::clipToSurface) ?: return visible
+        return Rect(visible).apply {
+            if(!intersect(stable) || isEmpty) set(visible)
+        }
     }
     override fun onSurfaceDestroyed(container: SurfaceContainer) {
         if(container.surface !== surface)return
@@ -212,9 +235,17 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
     private fun mapIconAction(icon: Int, click: () -> Unit) = Action.Builder()
         .setIcon(CarIcon.Builder(IconCompat.createWithResource(carContext,icon)).build())
         .setOnClickListener { if(screenActive())click() }.build()
-    private fun adjustedCamera(s: NavState): CameraPosition {
-        val camera=carCamera(s,width,height,CarMapViewport(visibleArea.left,visibleArea.top,
-            visibleArea.right,visibleArea.bottom))
+    /**
+     * Keep the compact split-screen action row recognizable without losing its label.
+     * Android Auto selects the shortest CarText variant that fits its current action slot.
+     */
+    private fun settingsAction(onClick: () -> Unit) = Action.Builder()
+        .setIcon(CarIcon.Builder(IconCompat.createWithResource(carContext,R.drawable.ic_car_settings)).build())
+        .setTitle("Settings")
+        .setOnClickListener { if(screenActive())onClick() }.build()
+    private fun adjustedCamera(s: NavState,viewport: Rect=mapViewport()): CameraPosition {
+        val camera=carCamera(s,width,height,CarMapViewport(viewport.left,viewport.top,
+            viewport.right,viewport.bottom),surfaceDensity)
         return CameraPosition.Builder(camera)
             .target(mapCenter ?: camera.target)
             .zoom((camera.zoom+zoomOffset).coerceIn(2.0,19.0))
@@ -317,8 +348,9 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
                     }.build())
                     .addAction(Action.Builder().setTitle(if(s.voice)"Mute" else "Voice")
                         .setOnClickListener { if(screenActive() && controller.acceptsNavigationSession(tripId))controller.toggleVoice() }.build())
-                    .addAction(Action.Builder().setTitle("Settings")
-                        .setOnClickListener { if(screenActive() && controller.acceptsNavigationSession(tripId))screenManager.push(WaypointCarSettingsScreen(carContext)) }.build())
+                    .addAction(settingsAction {
+                        if(controller.acceptsNavigationSession(tripId))screenManager.push(WaypointCarSettingsScreen(carContext))
+                    })
                     .apply {
                         // Fresh ways to the same place, offered while guiding as on the phone map.
                         if(s.driveAlternatives.isNotEmpty() && !s.routing && !s.offRoute)
@@ -367,19 +399,22 @@ internal class WaypointCarScreen(context: CarContext): Screen(context), SurfaceC
                 .setActionStrip(actions.build()).build()
         }
         return NavigationTemplate.Builder()
-            .setNavigationInfo(MessageInfo.Builder(s.world.title).setText("Choose a destination").build())
             .setMapActionStrip(mapActionStrip())
             .setPanModeListener { }
             .setActionStrip(ActionStrip.Builder()
-                .addAction(Action.Builder().setTitle("Search").setOnClickListener{if(screenActive() && controller.state.value.selected==null)screenManager.push(WaypointCarSearchScreen(carContext))}.build())
-                .addAction(Action.Builder().setTitle("Destinations").setOnClickListener{if(screenActive() && controller.state.value.selected==null)screenManager.push(WaypointCarDestinationsScreen(carContext))}.build())
-                .addAction(Action.Builder().setTitle("Settings").setOnClickListener{if(screenActive())screenManager.push(WaypointCarSettingsScreen(carContext))}.build())
+                .addAction(Action.Builder().setTitle("Search")
+                    .setFlags(Action.FLAG_IS_PERSISTENT)
+                    .setOnClickListener{if(screenActive() && controller.state.value.selected==null)screenManager.push(WaypointCarSearchScreen(carContext))}.build())
+                .addAction(Action.Builder().setTitle("Places")
+                    .setOnClickListener{if(screenActive() && controller.state.value.selected==null)screenManager.push(WaypointCarDestinationsScreen(carContext))}.build())
+                .addAction(settingsAction { screenManager.push(WaypointCarSettingsScreen(carContext)) })
                 .build()).build()
     }
     private fun updateMap() {
         if(surface?.isValid!=true)return
         val s=controller.state.value
-        liveMap?.update(s,adjustedCamera(s),visibleArea,
+        val viewport=mapViewport()
+        liveMap?.update(s,adjustedCamera(s,viewport),viewport,
             SystemClock.elapsedRealtime()-mapFirstVisibleAt<5000,mapCenter==null)
     }
     private fun carManeuverType(m: Maneuver?): Int = when {
@@ -426,9 +461,12 @@ internal fun carDistance(meters: Double, imperial: Boolean = false): Distance {
 
 internal data class CarMapViewport(val left: Int,val top: Int,val right: Int,val bottom: Int)
 
+/** Fixed Android Auto guidance pitch, matched to the forward perspective used by Google Maps. */
+internal const val CAR_NAVIGATION_TILT=45.0
+
 /** Frame the route and driver within the map area left by the car host's panels. */
 internal fun carCamera(s: NavState, width: Int, height: Int,
-    viewport: CarMapViewport=CarMapViewport(0,0,width,height)): CameraPosition {
+    viewport: CarMapViewport=CarMapViewport(0,0,width,height),density: Double=1.0): CameraPosition {
     val world=s.world
     val builder=CameraPosition.Builder()
     val area=viewport.takeIf { it.left>=0 && it.top>=0 && it.right<=width && it.bottom<=height &&
@@ -463,28 +501,43 @@ internal fun carCamera(s: NavState, width: Int, height: Int,
     val center=s.fix ?: (if(s.navigating)carLookAhead(s) else null) ?: PreviewCenter
     if(s.navigating)builder.padding(area.left+mapWidth*.18,area.top+mapHeight*.50,
         (width-area.right).toDouble(),(height-area.bottom).toDouble())
+    val travelBearing=if(s.navigating)carTravelBearing(s).toFloat() else 0f
+    // In-car guidance keeps its pitched road view at a stop too. A saved flat
+    // browse preference should not turn the live guidance camera into a plan view.
+    val wantedTilt=if(s.navigating)CAR_NAVIGATION_TILT
+        else mapCameraTilt(world,s.tilted,false)
+    val pose=if(s.navigating)navigationCameraPose(
+        state=s,
+        currentBearing=travelBearing,
+        mapHeightPx=mapHeight,
+        density=density,
+        // The turn card sits over the upper part of the projected map.
+        chromeBottomPx=mapHeight*.30,
+        wantedTilt=wantedTilt,
+        headingOverride=travelBearing,
+    ) else null
+    // Android Auto can keep the map surface's original size while its stable/visible
+    // rectangle narrows for a second app. Pull back with that pane so the road and
+    // vehicle remain framed instead of cropping the route at the sides.
+    val paneWidthRatio=(mapWidth.toDouble()/width.coerceAtLeast(1)).coerceIn(.35,1.0)
+    val navigationZoom=pose?.zoom?.plus(if(s.navigating)log2(paneWidthRatio).coerceAtLeast(-1.5) else 0.0)
+    // Keep the Android Auto guidance pitch fixed while zoom changes for speed,
+    // turns, or a split-screen pane. Tying pitch to zoom made a stopped driver
+    // and distant maneuver fall back toward a flat plan view.
+    val navigationTilt=if(s.navigating)wantedTilt else null
     return builder.target(LatLng(center.lat,center.lon))
-        .zoom(if(s.navigating) carGuidanceZoom(s.speed,s.progress?.toTurn) else world.mapArt().zoom)
-        .tilt(if(s.navigating) 50.0 else mapCameraTilt(world,s.tilted,false))
-        .bearing(if(s.navigating) carTravelBearing(s) else 0.0)
+        .zoom(navigationZoom ?: world.mapArt().zoom)
+        .tilt(navigationTilt ?: pose?.tilt ?: mapCameraTilt(world,s.tilted,false))
+        .bearing(pose?.bearing ?: if(s.navigating)travelBearing.toDouble() else 0.0)
         .build()
-}
-
-/** Discrete zoom tiers avoid camera pulses from noisy speed estimates. */
-internal fun carGuidanceZoom(speedMetersPerSecond: Float,toTurnMeters: Double?): Double {
-    val kmh=speedMetersPerSecond.coerceAtLeast(0f)*3.6f
-    val cruise=when {
-        kmh>=90f -> 15.6
-        kmh>=60f -> 16.1
-        kmh>=30f -> 16.6
-        else -> 17.1
-    }
-    return if((toTurnMeters ?: Double.POSITIVE_INFINITY)<180.0)cruise.coerceAtLeast(17.3) else cruise
 }
 
 /** Use the road ahead when the phone has no reliable driving course. */
 internal fun carTravelBearing(state: NavState): Double {
-    if(state.headingReliable && state.headingSource==HeadingSource.COURSE && state.speed>=2.5f)
+    // HeadingArbiter owns the speed entry/exit thresholds and hysteresis. Rechecking
+    // its entry threshold here made Android Auto fall back to the route tangent
+    // while the arbiter was deliberately retaining a valid course during slowdown.
+    if(state.headingReliable && state.headingSource==HeadingSource.COURSE)
         return state.bearing.toDouble()
     val ahead=state.route?.remainingPoints(state.progress)
     val origin=ahead?.firstOrNull()

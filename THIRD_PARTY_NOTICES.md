@@ -12,11 +12,18 @@ Waypoint's application code is distributed under GPL-3.0-only; the full text is 
 | Network client | OkHttp |
 | Map tiles and labels | OpenFreeMap, using OpenMapTiles data derived from OpenStreetMap |
 | Place search | Photon and the Android Geocoder when available |
+| Nearby place archive | Vela regional PMTiles release; Overture, AllThePlaces and OpenStreetMap records |
+| Optional nearby images | Wikimedia Commons, with item-level attribution and license |
+| Optional Google search/details/photos | Undocumented Google Maps web endpoints and a hidden WebView; off by default |
 | Routes | OSRM for car routes; Valhalla for motorcycle, bicycle and walking routes |
 | Terrain | Mapzen terrain data |
 | Release checks | GitHub Releases |
 
 The build's direct dependency versions are in [app/build.gradle.kts](app/build.gradle.kts). Hosted services are accessed at runtime; their application code is not bundled in Waypoint. OpenStreetMap attribution is displayed in the app's Map info panel.
+
+Waypoint adapts Vela code from [PimpinPumpkin/Vela](https://github.com/PimpinPumpkin/Vela), distributed under GPL-3.0-or-later. Adapted files are `app/src/main/java/com/waypoint/app/places/PmtilesReader.kt`, `VelaNearbyPlaces.kt`, `VelaSearchPb.kt` and `VelaMapSuggestions.kt`; `GooglePlaceLookup.kt` follows Vela's keyless Maps request and hidden-WebView photo pattern. Vela's license is compatible with Waypoint's GPL-3.0-only distribution; see [LICENSE](LICENSE). Place datasets and Commons images have separate licenses and attribution requirements; see [Sources and Licensing](docs/wiki/Sources-and-Licensing.md#nearby-places-and-photos).
+
+The Google web integration is not Google's supported Places API. It uses undocumented web endpoints, may change without notice, and Google's published terms restrict scraping. It is optional and disabled by default. It does not use a Places API key or incur Places API SKU billing; see [Privacy and Providers](docs/wiki/Privacy-and-Providers.md#network-services) for its data flow and limitations.
 
 ## Images, fonts and marks
 

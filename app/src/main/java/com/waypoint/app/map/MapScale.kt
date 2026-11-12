@@ -6,19 +6,21 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Locale
@@ -64,27 +66,28 @@ internal fun MapScaleBar(
     onLineBounds: (Rect) -> Unit,
 ) {
     val palette = hudPalette(world)
-    Surface(
-        modifier = modifier.graphicsLayer { alpha = if (tick == null) 0f else 1f }
+    val density = LocalDensity.current
+    val outline = palette.panel.copy(alpha = .96f)
+    Column(
+        modifier.graphicsLayer { alpha = if (tick == null) 0f else 1f }
             .semantics { if (tick != null) contentDescription = "Map scale: ${tick.label}" },
-        color = palette.panel,
-        contentColor = palette.foreground,
-        shape = hudShape(world),
-        border = hudBorder(world),
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(1.dp),
     ) {
-        Column(Modifier.padding(horizontal = 12.dp, vertical = 7.dp)) {
-            Text(tick?.label ?: "Scale", color = palette.foreground, fontFamily = hudFont(world),
-                fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(2.dp))
-            Canvas(Modifier.width(if (landscape) 120.dp else 136.dp).height(9.dp)
-                .onGloballyPositioned { onLineBounds(it.boundsInRoot()) }) {
-                val end = size.width * (tick?.widthFraction ?: 1f)
-                val y = size.height * .5f
-                val stroke = 2.dp.toPx()
-                drawLine(palette.foreground, Offset(0f, y), Offset(end, y), stroke, cap = StrokeCap.Square)
-                drawLine(palette.foreground, Offset(0f, 0f), Offset(0f, size.height), stroke)
-                drawLine(palette.foreground, Offset(end, 0f), Offset(end, size.height), stroke)
-            }
+        Text(tick?.label ?: "Scale", color = palette.foreground, fontFamily = hudFont(world),
+            fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold,
+            style = TextStyle(shadow = Shadow(outline, Offset(0f, with(density) { 1.dp.toPx() }), with(density) { 2.dp.toPx() })))
+        Canvas(Modifier.width(if (landscape) 92.dp else 104.dp).height(8.dp)
+            .onGloballyPositioned { onLineBounds(it.boundsInRoot()) }) {
+            val end = size.width * (tick?.widthFraction ?: 1f)
+            val y = size.height * .5f
+            val outlineStroke = 4.dp.toPx()
+            val lineStroke = 1.75.dp.toPx()
+            drawLine(outline, Offset(0f, y), Offset(end, y), outlineStroke, cap = StrokeCap.Square)
+            drawLine(palette.foreground, Offset(0f, y), Offset(end, y), lineStroke, cap = StrokeCap.Square)
+            drawLine(outline, Offset(0f, 0f), Offset(0f, size.height), outlineStroke, cap = StrokeCap.Square)
+            drawLine(palette.foreground, Offset(0f, 0f), Offset(0f, size.height), lineStroke)
+            drawLine(outline, Offset(end, 0f), Offset(end, size.height), outlineStroke, cap = StrokeCap.Square)
+            drawLine(palette.foreground, Offset(end, 0f), Offset(end, size.height), lineStroke)
         }
     }
 }

@@ -28,14 +28,16 @@
 
 ---
 
-## What's new in 2.6.0
+## What's new in 2.6.5
 
-- **Speed limit warning:** the posted limit appears beside your speed while you drive, turns your speed red when you pass it and speaks one gentle alert. Switch it off in Settings.
-- **Bus & transit:** pick a destination and see which bus, tram, metro or train to take, where to board and when it leaves, where open timetable data exists.
-- **Join the Discord:** a channel for each world, release notes and bug reports, linked from Settings and What's New.
-- **A website that shows the light:** the day and night section compares real maps of the same place.
+- **A steadier navigation camera:** heading changes are filtered while stopped, turns stay tied to the route, and the vehicle marker is kept on the road path.
+- **A clearer Android Auto view:** orientation, tilt and zoom are tuned for driving, with a more stable map when another app shares the display.
+- **Offline areas include place names:** downloaded open-map records remain available for nearby discovery and name search without a network connection.
+- **Richer place discovery:** optional Google suggestions, place details and photos join open-data search; online Google lookups remain separate from offline packs.
+- **More legible worlds:** Liberty City landmarks return, zoomed-out maps load more completely, and Cyberpunk buildings and route paint use a clearer layer order.
+- **A calmer updater:** download progress stays visible while release details scroll.
 
-[Full release notes →](docs/releases/current.md)
+[Full release notes →](docs/releases/current.html)
 
 ## Your tasks, with rewards
 
@@ -165,7 +167,7 @@ Android Auto keeps Google Maps available in the launcher. Open Waypoint there to
 
 Installed versions check for a newer stable GitHub release on foreground entry, at most once every 30 minutes; you can check manually in Settings at any time. If an update is available, an in-app prompt appears when the idle map is visible. Review the release notes, choose **Download update**, and confirm installation in Android.
 
-The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.6.0**; see the [release notes](docs/releases/current.md) and [changelog](CHANGELOG.md).
+The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.6.5**; see the [release notes](docs/releases/current.html) and [changelog](CHANGELOG.md).
 
 ## Build from source
 

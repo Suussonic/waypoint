@@ -11,8 +11,10 @@ internal object MapGlyphs {
     private val names=setOf("Waypoint Condensed","Waypoint Technical","Waypoint Pixel","Waypoint Retro","Waypoint Borda","Waypoint Stratum","Waypoint Futura","Waypoint Terminal","Waypoint Atlas","Waypoint Classic","Waypoint Western")
     fun install(context:Context) {
         org.maplibre.android.MapLibre.getInstance(context)
-        HttpRequestUtil.setOkHttpClient(OkHttpClient.Builder().addInterceptor { chain ->
-            val request=chain.request();val url=request.url;val parts=url.pathSegments
+        val dispatcher=Dispatcher().apply { maxRequests=4;maxRequestsPerHost=4 }
+        val userAgent="Waypoint/${BuildConfig.VERSION_NAME} (Android; https://github.com/the-geeky-couldron/waypoint)"
+        HttpRequestUtil.setOkHttpClient(OkHttpClient.Builder().dispatcher(dispatcher).addInterceptor { chain ->
+            val request=chain.request().newBuilder().header("User-Agent",userAgent).build();val url=request.url;val parts=url.pathSegments
             if(url.host!="tiles.openfreemap.org" || parts.size!=3 || parts[0]!="fonts" || parts[1] !in names) return@addInterceptor chain.proceed(request)
             val range=parts[2]
             if(!range.matches(Regex("[0-9]+-[0-9]+\\.pbf")))return@addInterceptor chain.proceed(request)

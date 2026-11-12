@@ -32,6 +32,36 @@ class MapMotionTest {
         assertEquals(next,motion.sample(2000).point)
     }
 
+    @Test fun cameraOrientationTakesTheShortestArcAndFinishesAtItsTarget() {
+        val motion=MapMotion()
+        motion.update(start,350f,0,false,false,cameraBearing=350f,currentCameraBearing=350f)
+        motion.update(start,10f,100,false,true,cameraBearing=10f,currentCameraBearing=350f)
+        assertEquals(0f,motion.sample(220).cameraBearing,.01f)
+        assertEquals(10f,motion.sample(340).cameraBearing,.01f)
+        assertEquals(0L,motion.remainingMillis(340))
+    }
+
+    @Test fun smallCompassNoiseDoesNotRetargetTheFollowCamera() {
+        val motion=MapMotion()
+        motion.update(start,0f,0,false,false,cameraBearing=0f,currentCameraBearing=0f)
+        for((time,bearing) in listOf(100L to .7f,200L to 1.1f,300L to .4f,400L to 1.3f))
+            motion.update(start,0f,time,false,true,cameraBearing=bearing,currentCameraBearing=0f)
+        assertEquals(0f,motion.sample(700).cameraBearing,.01f)
+        motion.update(start,0f,800,false,true,cameraBearing=2f,currentCameraBearing=0f)
+        assertEquals(2f,motion.sample(1040).cameraBearing,.01f)
+        assertEquals(0L,motion.remainingMillis(1040))
+    }
+
+    @Test fun smallCompassNoiseDoesNotWobbleThePositionPointer() {
+        val motion=MapMotion()
+        motion.update(start,90f,0,false,false,cameraBearing=0f,currentCameraBearing=0f)
+        for((time,bearing) in listOf(100L to 90.2f,200L to 90.4f,300L to 89.9f,400L to 90.5f))
+            motion.update(start,bearing,time,false,true,cameraBearing=0f,currentCameraBearing=0f)
+        assertEquals(90f,motion.sample(700).bearing,.01f)
+        motion.update(start,91f,800,false,true,cameraBearing=0f,currentCameraBearing=0f)
+        assertEquals(91f,motion.sample(980).bearing,.01f)
+    }
+
     @Test fun lostFixLongGapAndRemoveAnimationsNeverInventTravel() {
         val motion=MapMotion()
         motion.update(start,0f,0,true)

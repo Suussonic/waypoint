@@ -29,6 +29,7 @@ import org.json.JSONObject
 import uniffi.ferrostar.RouteDeviation
 import uniffi.ferrostar.TripState
 import com.stadiamaps.ferrostar.core.NavigationState
+import com.waypoint.app.places.OfflineFirstPlaceSearchProvider
 
 val PreviewCenter = Coordinate(22.5726,88.3639)
 
@@ -86,6 +87,10 @@ data class NavState(
     val focusUserCameraRequest: Int = -1,
     /** A request the map raised itself (first fix, GPS enabled); it never overrides a pan the user already made. */
     val passiveCameraRequest: Int = -1,
+    /** Compass tap requests a camera rotation without changing its centre or zoom. */
+    val orientationRequest: Int = 0,
+    /** Heading-up is the default; true keeps the map aligned to north. */
+    val keepMapNorthUp: Boolean = false,
     val tilted: Boolean = true,
     /** Settings switch for the posted-limit sign and over-speed alert (car mode only). */
     val speedWarning: Boolean = true,
@@ -118,7 +123,13 @@ class WaypointApplication : Application() {
 
 class NavigationController(private val app: Application, private val repository: NavigationRepository = MapRepository(), preferencesName: String = "waypoint", fallbackSearch: PlaceSearchProvider? = AndroidPlaceSearch(app), private val speedLimits: SpeedLimitSource = OverpassSpeedLimitSource()) {
     private val prefs = app.getSharedPreferences(preferencesName,Context.MODE_PRIVATE)
-    private val createPlaceSearch = { PlaceSearch(PlaceSearchProvider(repository::search),fallbackSearch,SearchAliases(readSearchAliases())) }
+    private val createPlaceSearch = {
+        PlaceSearch(
+            OfflineFirstPlaceSearchProvider(app, PlaceSearchProvider(repository::search)),
+            fallbackSearch,
+            SearchAliases(readSearchAliases()),
+        )
+    }
     private var placeSearch = createPlaceSearch()
     private fun readSearchAliases():Map<String,String> = runCatching {
         val raw=prefs.getString("searchAliases",null) ?: return emptyMap()
@@ -138,6 +149,7 @@ class NavigationController(private val app: Application, private val repository:
         hudSide = hudSideFromPreference(prefs.getString("hudSide",null)),
         saved = readPlaces("saved"), recent = readPlaces("recent"),
         tilted = prefs.getBoolean("tilted",initialWorld.mapArt().tilt>0.0),
+        keepMapNorthUp = prefs.getBoolean("keepMapNorthUp",false),
         speedWarning = prefs.getBoolean("speedWarning",true)
     ))
     val state = _state.asStateFlow()
@@ -390,7 +402,7 @@ class NavigationController(private val app: Application, private val repository:
                     _state.update{it.copy(locationProvider="Fused location · GNSS / Wi-Fi / cell")}
                     val request=LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY,1000L)
                         .setMinUpdateIntervalMillis(500L).setMaxUpdateDelayMillis(0L)
-                        .setWaitForAccurateLocation(false).build()
+                        .setWaitForAccurateLocation(true).build()
                     fused.requestLocationUpdates(request,fusedCallback,app.mainLooper)
                         .addOnSuccessListener{if(!listening)fused.removeLocationUpdates(fusedCallback)}
                         .addOnFailureListener{if(listening)startPlatformLocation()}
@@ -779,6 +791,14 @@ class NavigationController(private val app: Application, private val repository:
             _state.update { it.copy(query=query.take(4096), searching=false, searchResults=emptyList(), searchError=null, searchNote="Tap Search places to open this shared location.") }
         } else searchPlaces(query,false)
     }
+    /** Update the search field without contacting the normal geocoder while optional live autocomplete is active. */
+    fun updateSearchQuery(query: String) {
+        searchJob?.cancel()
+        val value=query.take(4096)
+        val link=value.trim().startsWith("https:") || value.trim().startsWith("geo:")
+        _state.update { it.copy(query=value, searching=false, searchResults=emptyList(), searchError=null,
+            searchNote=if(link) "Tap Search places to open this shared location." else null) }
+    }
     fun submitSearch() {
         val query = _state.value.query.trim()
         if (query.startsWith("https:") || query.startsWith("geo:")) handleNavigationIntent(Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_TEXT,query))
@@ -850,6 +870,12 @@ class NavigationController(private val app: Application, private val repository:
     }
     // Pitch only: bumping cameraRequest here re-targets the camera at the user or destination.
     fun toggleTilt() { _state.update{it.withTiltToggled()};prefs.edit().putBoolean("tilted",_state.value.tilted).apply() }
+
+    /** Toggle heading-up/north-up without recentering the user's map. */
+    fun toggleMapOrientation() {
+        _state.update { it.copy(keepMapNorthUp = !it.keepMapNorthUp, orientationRequest = it.orientationRequest + 1) }
+        prefs.edit().putBoolean("keepMapNorthUp",_state.value.keepMapNorthUp).apply()
+    }
     fun recenter() {
         if(_state.value.fix==null || !_state.value.gpsReady) { userFocusPending=true;return }
         userFocusPending=false

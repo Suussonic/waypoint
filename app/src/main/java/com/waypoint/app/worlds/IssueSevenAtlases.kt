@@ -36,7 +36,7 @@ import java.util.Locale
         Row { AtlasTool(s.world, Icons.Default.Layers, "Worlds", a.huds); AtlasTool(s.world, Icons.Default.BookmarkBorder, "Saved", a.saved); AtlasTool(s.world, Icons.Default.Tune, "Settings", a.settings) }
     }
     Column(Modifier.align(Alignment.BottomEnd).padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        CompassRose(if (s.headingReliable) s.bearing else Float.NaN, s.world, onRecenter = a.locate)
+        CompassRose(if (s.headingReliable) s.bearing else Float.NaN, s.world, onRecenter = a.locate, northUp = s.keepMapNorthUp, onToggleOrientation = a.toggleMapOrientation)
         AtlasAction(s.world, "Locate", a.locate)
     }
 }
@@ -55,7 +55,7 @@ import java.util.Locale
     }
     Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.SpaceBetween) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            CompassRose(heading, s.world, ornate = true, onRecenter = a.locate)
+            CompassRose(heading, s.world, ornate = true, onRecenter = a.locate, northUp = s.keepMapNorthUp, onToggleOrientation = a.toggleMapOrientation)
             AtlasAction(s.world, "Locate", a.locate)
         }
         Surface(color = p.panel, border = hudBorder(s.world)) {
@@ -112,7 +112,7 @@ import java.util.Locale
         }
     }
     Column(Modifier.align(Alignment.BottomEnd).padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        CompassRose(heading, s.world, ornate = true, onRecenter = a.locate)
+        CompassRose(heading, s.world, ornate = true, onRecenter = a.locate, northUp = s.keepMapNorthUp, onToggleOrientation = a.toggleMapOrientation)
         AtlasAction(s.world, "Locate", a.locate)
     }
 }
@@ -120,7 +120,7 @@ import java.util.Locale
 @Composable internal fun BoxScope.CounterStrikeAtlas(s: NavState, heading: Float, a: AtlasActions) {
     val p = hudPalette(s.world)
     Row(Modifier.align(Alignment.TopStart).fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        CompassRose(heading, s.world, onRecenter = a.locate)
+        CompassRose(heading, s.world, onRecenter = a.locate, northUp = s.keepMapNorthUp, onToggleOrientation = a.toggleMapOrientation)
         Surface(color = p.panel, modifier = Modifier.weight(1f)) {
             Column(Modifier.padding(12.dp)) {
                 AtlasText("TACTICAL RADAR", s.world, size = 18, color = p.accent)
@@ -170,7 +170,7 @@ import java.util.Locale
             Surface(color = p.panel, shape = hudShape(s.world), modifier = Modifier.weight(1f)) {
                 Column(Modifier.padding(12.dp)) { AtlasText("FIELD OPS", s.world, size = 26); AtlasText(s.city, s.world, size = 14, color = p.muted) }
             }
-            Spacer(Modifier.width(12.dp)); CompassRose(heading, s.world, onRecenter = a.locate)
+            Spacer(Modifier.width(12.dp)); CompassRose(heading, s.world, onRecenter = a.locate, northUp = s.keepMapNorthUp, onToggleOrientation = a.toggleMapOrientation)
         }
         AtlasFind(s.world, a, label = "Choose your destination")
     }

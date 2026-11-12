@@ -16,6 +16,12 @@ assert notes == Path('app/src/main/assets/release-notes.md').read_bytes(), 'Bund
 assert notes.startswith(f'# Waypoint {name}\n'.encode()), 'Release notes must start with the current VERSION_NAME.'
 assert notes == (Path('docs/releases') / f'{name}.md').read_bytes(), 'Versioned release page differs from current release notes.'
 assert notes == (Path('app/src/main/assets') / f'release-notes-{name}.md').read_bytes(), 'Archived in-app release notes differ from current release notes.'
+web_release = Path('docs/releases') / f'{name}.html'
+assert web_release.is_file(), 'Add the designed public HTML release page for VERSION_NAME.'
+web_source = web_release.read_text(encoding='utf-8')
+assert f'Waypoint {name}' in web_source, 'The public HTML release page must identify VERSION_NAME.'
+current_web = Path('docs/releases/current.html').read_text(encoding='utf-8')
+assert f'url={name}.html' in current_web and f'href="{name}.html"' in current_web, 'The current HTML release link must point to VERSION_NAME.'
 
 release_versions = [
     (tuple(map(int, path.stem.split('.'))), path)

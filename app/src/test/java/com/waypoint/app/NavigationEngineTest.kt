@@ -12,6 +12,46 @@ class NavigationEngineTest {
         Maneuver(points[1],"turn","left","Second Street",1112.0,100.0),
         Maneuver(points.last(),"arrive","","",0.0,0.0)),2224.0,200.0)
     @Test fun `distance uses meters`() { assertEquals(1112.0,distance(a,b),2.0) }
+    @Test fun `navigation display follows a nearby accepted road match`() {
+        val gps=Coordinate(0.00012,0.004)
+        val road=Coordinate(0.0,0.004)
+        val progress=RouteProgress(400.0,1800.0,160.0,13.0,1,700.0,road)
+        assertEquals(road,navigationDisplayPosition(gps,progress,false,5f))
+    }
+    @Test fun `navigation display keeps raw fix when off route or match is too far`() {
+        val gps=Coordinate(0.00012,0.004)
+        val road=Coordinate(0.0,0.004)
+        val far=RouteProgress(400.0,1800.0,160.0,55.0,1,700.0,road)
+        val near=far.copy(offRoute=10.0)
+        assertEquals(gps,navigationDisplayPosition(gps,near,true,5f))
+        assertEquals(gps,navigationDisplayPosition(gps,far,false,5f))
+        assertNull(navigationDisplayPosition(null,near,false,5f))
+    }
+    @Test fun `navigation display keeps a lane-close match during rerouting`() {
+        val road=Coordinate(0.0,0.004)
+        val gps=Coordinate(0.00002,0.004)
+        val progress=RouteProgress(400.0,1800.0,160.0,2.3,1,700.0,road)
+        assertEquals(road,navigationDisplayPosition(gps,progress,true,5f))
+    }
+    @Test fun `navigation display rejects a stale road match far from the current fix`() {
+        val gps=Coordinate(0.002,0.004)
+        val stale=RouteProgress(400.0,1800.0,160.0,10.0,1,700.0,Coordinate(0.0,0.004))
+        assertEquals(gps,navigationDisplayPosition(gps,stale,false,5f))
+    }
+    @Test fun `route heading stays on the incoming road until a sharp turn`() {
+        val start=Coordinate(0.0,0.0)
+        val corner=Coordinate(0.001,0.0)
+        val end=Coordinate(0.001,0.001)
+        val route=listOf(start,corner,end)
+        val firstLeg=distance(start,corner)
+        val total=firstLeg+distance(corner,end)
+        val beforeTurn=routeBearingAt(route,total,firstLeg-8.0)
+        val afterTurn=routeBearingAt(route,total,firstLeg+8.0)
+        assertNotNull(beforeTurn)
+        assertNotNull(afterTurn)
+        assertTrue(kotlin.math.abs(headingDelta(beforeTurn!!,0f))<5f)
+        assertTrue(kotlin.math.abs(headingDelta(afterTurn!!,90f))<5f)
+    }
     @Test fun `projects onto segment between sparse vertices`() {
         val p=NavigationEngine(route()).update(Coordinate(0.0,0.005))
         assertEquals(556.0,p.traveled,2.0);assertEquals(0.0,p.offRoute,0.1);assertEquals(1,p.nextStep)

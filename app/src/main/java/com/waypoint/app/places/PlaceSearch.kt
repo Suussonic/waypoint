@@ -1,5 +1,6 @@
 package com.waypoint.app
 
+import com.waypoint.app.places.DOWNLOADED_PLACE_SOURCE_PREFIX
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -53,14 +54,16 @@ object PlaceMatcher {
         if(wantsStation && place.kind !in setOf("station","halt","train_station","geocoder") && !normalize(place.name).contains("station"))score*=.35
         return score
     }
-    fun ranked(query:String,near:Coordinate,places:List<Place>):List<Place> {
+    fun ranked(query:String,near:Coordinate?,places:List<Place>):List<Place> {
         val scored=places.filter{it.point.isValid()}.map{it to score(query,it)}
         val best=scored.maxOfOrNull{it.second} ?: 0.0
         // Once a strong match exists, don't pad the list with similarly spelled places
         // on another continent. Weak-only results remain available as suggestions.
         val cutoff=if(best>=.88)maxOf(.52,best-.12) else .52
         return scored.filter{it.second>=cutoff}
-            .sortedWith(compareByDescending<Pair<Place,Double>>{it.second}.thenBy{distance(near,it.first.point)})
+            .sortedWith(compareByDescending<Pair<Place,Double>>{it.second}
+                .thenBy{match -> near?.let { center -> distance(center,match.first.point) } ?: Double.POSITIVE_INFINITY}
+                .thenBy{match -> normalize(match.first.name)})
             .map{it.first}.fold(mutableListOf<Place>()) { out,p ->
                 if(out.none{it.id==p.id || normalize(it.name)==normalize(p.name) && distance(it.point,p.point)<100})out.add(p)
                 out
@@ -108,6 +111,10 @@ class PlaceSearch(private val primary:PlaceSearchProvider,private val fallback:P
         coordinateSearchResult(query, local)?.let { return@withLock it }
         val effectiveQuery=aliases.resolve(query)
         val aliasNote=if(effectiveQuery!=query)"Searching for $effectiveQuery" else null
+        val localMatches=PlaceMatcher.ranked(effectiveQuery,near,local)
+        if(localMatches.any { PlaceMatcher.score(effectiveQuery,it)>=.88 }) {
+            return@withLock PlaceSearchResult(localMatches,aliasNote)
+        }
         val variants=PlaceMatcher.variants(effectiveQuery)
         val key="${PlaceMatcher.normalize(query)}:${(near.lat*100).roundToInt()}:${(near.lon*100).roundToInt()}:$expanded"
         cache[key]?.let{return@withLock PlaceSearchResult(PlaceMatcher.ranked(effectiveQuery,near,it+local),aliasNote)}
@@ -126,13 +133,23 @@ class PlaceSearch(private val primary:PlaceSearchProvider,private val fallback:P
         }
         lookup(primary,variants.first())
         val primaryMatches=PlaceMatcher.ranked(effectiveQuery,near,candidates)
-        if(fallback!=null && (expanded || primaryMatches.none{PlaceMatcher.score(effectiveQuery,it)>=.88})) {
+        val strongDownloadedMatch=primaryMatches.any {
+            it.source.startsWith(DOWNLOADED_PLACE_SOURCE_PREFIX) && PlaceMatcher.score(effectiveQuery,it)>=.88
+        }
+        if(fallback!=null && !strongDownloadedMatch && (expanded || primaryMatches.none{PlaceMatcher.score(effectiveQuery,it)>=.88})) {
             lookup(fallback,variants.first())
             if(variants.size>1 && PlaceMatcher.ranked(effectiveQuery,near,candidates).isEmpty())lookup(fallback,variants.last())
         }
         val results=PlaceMatcher.ranked(effectiveQuery,near,candidates)
         // Saved/recent matches are supplied afresh: deleting one must not leave a cached copy.
-        if(failures==0) { cache[key]=remote;while(cache.size>40)cache.remove(cache.keys.first()) }
+        // A place snapshot is scoped to its downloaded rectangle. Keep it out of the
+        // coarse coordinate-keyed cache so it cannot bleed into a nearby unsaved area.
+        if(failures==0 && remote.none {
+                it.source.startsWith("Vela open places") || it.source.startsWith(DOWNLOADED_PLACE_SOURCE_PREFIX)
+            }) {
+            cache[key]=remote
+            while(cache.size>40)cache.remove(cache.keys.first())
+        }
         val note=when {
             failures>0 && results.isEmpty() -> "Search service unavailable. Check your connection and try again."
             failures>0 -> "Some search services are unavailable. Showing the matches found."
