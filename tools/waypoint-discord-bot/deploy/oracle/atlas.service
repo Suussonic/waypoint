@@ -1,0 +1,17 @@
+[Unit]
+Description=A.T.L.A.S. Waypoint Discord bot
+Wants=network-online.target
+After=network-online.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+TimeoutStopSec=30
+ExecStartPre=-/usr/bin/docker rm -f atlas-waypoint
+ExecStart=/usr/bin/docker run --name atlas-waypoint --user 1000:1000 --entrypoint /usr/local/bin/node --env-file /etc/atlas/atlas.env --mount type=bind,src=/var/lib/atlas,dst=/data --read-only --tmpfs /tmp:rw,nosuid,nodev,size=16m --cap-drop=ALL --pids-limit=64 --memory=384m --cpus=0.5 --security-opt=no-new-privileges atlas-waypoint:current src/index.js
+ExecStop=/usr/bin/docker stop atlas-waypoint
+
+[Install]
+WantedBy=multi-user.target

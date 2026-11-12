@@ -4,9 +4,8 @@ name: Discord ticket to issue
 #
 # Trigger: POST https://api.github.com/repos/<owner>/<repo>/dispatches
 #   {"event_type": "discord-ticket", "client_payload": {...}}
-# Payload fields (all strings; only ticket_id is required):
-#   ticket_id, category, subject, description, reporter,
-#   app_version, device, android_version, transcript_url
+# Payload fields: ticket_id, category (bug or feature), subject, description,
+# app_version, device, android_version. Only the submitted form is public.
 #
 # repository_dispatch only runs the workflow file on the default branch.
 
@@ -32,11 +31,9 @@ jobs:
       T_CATEGORY: ${{ github.event.client_payload.category }}
       T_SUBJECT: ${{ github.event.client_payload.subject }}
       T_DESCRIPTION: ${{ github.event.client_payload.description }}
-      T_REPORTER: ${{ github.event.client_payload.reporter }}
       T_APP_VERSION: ${{ github.event.client_payload.app_version }}
       T_DEVICE: ${{ github.event.client_payload.device }}
       T_ANDROID: ${{ github.event.client_payload.android_version }}
-      T_TRANSCRIPT: ${{ github.event.client_payload.transcript_url }}
     steps:
       - name: Create the issue once per ticket
         shell: python3 {0}
@@ -53,50 +50,40 @@ jobs:
           if not re.fullmatch(r"[0-9A-Za-z_-]{1,20}", ticket_id):
               sys.exit("ticket_id is missing or not a plain ticket number")
 
-          subject = re.sub(r"\s+", " ", clean("T_SUBJECT", 80)) or "Support ticket"
-          title = f"[Discord ticket #{ticket_id}] {subject}"
+          category = os.environ.get("T_CATEGORY", "").strip().lower()
+          if category not in {"bug", "feature"}:
+              sys.exit("Only bug and feature tickets may create a public issue")
+
+          subject = re.sub(r"\s+", " ", clean("T_SUBJECT", 80))
+          description = clean("T_DESCRIPTION", 4000)
+          if len(subject) < 5 or len(description) < 10:
+              sys.exit("A clear ticket subject and description are required")
+          title = f"[Discord {category}] {subject}"
 
           # One issue per ticket, even if the bridge retries.
           found = subprocess.run(
               ["gh", "issue", "list", "--state", "all", "--limit", "100",
-               "--search", f'"Discord ticket #{ticket_id}]" in:title',
-               "--json", "number,title"],
+               "--search", f'"atlas-ticket:{ticket_id}" in:body',
+               "--json", "number,body"],
               check=True, capture_output=True, text=True).stdout
-          prefix = f"[Discord ticket #{ticket_id}]"
           for issue in json.loads(found):
-              if issue["title"].startswith(prefix):
+              if f"<!-- atlas-ticket:{ticket_id} -->" in (issue.get("body") or ""):
                   print(f"Ticket {ticket_id} already has issue #{issue['number']}")
                   sys.exit(0)
 
-          category = os.environ.get("T_CATEGORY", "").strip().lower()
-          label_for = {
-              "bug": "bug",
-              "feature": "enhancement",
-              "question": "question",
-              "accessibility": "accessibility",
-          }
-          labels = ["discord-ticket"]
-          if category in label_for:
-              labels.append(label_for[category])
+          labels = ["discord-ticket", "bug" if category == "bug" else "enhancement"]
 
           def row(label, value):
               return f"| {label} | {value or '-'} |\n"
 
-          transcript = os.environ.get("T_TRANSCRIPT", "").strip()
-          if not re.fullmatch(r"https://[^\s)]+", transcript):
-              transcript = ""
-
           body = "## What was reported\n\n"
-          body += clean("T_DESCRIPTION", 4000) or "_No description given._"
+          body += description
           body += "\n\n## Details\n\n| | |\n|---|---|\n"
-          body += row("Reported by (Discord)", clean("T_REPORTER", 60))
           body += row("App version", clean("T_APP_VERSION", 40))
           body += row("Device", clean("T_DEVICE", 80))
           body += row("Android version", clean("T_ANDROID", 40))
           body += row("Category", category[:30])
-          if transcript:
-              body += row("Transcript", transcript)
-          body += "\n---\nRaised automatically from the Waypoint Discord ticket system.\n"
+          body += f"\n---\nRaised automatically from a Waypoint Discord ticket. Private replies are not copied.\n<!-- atlas-ticket:{ticket_id} -->\n"
 
           subprocess.run(
               ["gh", "label", "create", "discord-ticket", "--color", "5865F2",
