@@ -11,6 +11,7 @@ import { GUILD_ID, ROLE_FORUM_ID } from './config.js';
 import { registerCommands } from './commands.js';
 import { awardForumPostXp, awardMessageXp, awardReactionXp, postDailyLeaderboard, welcomeMember } from './leveling.js';
 import { ensurePanels } from './panels.js';
+import { loadState, saveState } from './store.js';
 
 const token = process.env.DISCORD_BOT_TOKEN;
 
@@ -85,6 +86,10 @@ function statusTags(channel) {
   if (Object.values(tags).some((id) => !id)) {
     throw new Error('Role forum needs Pending, Approved and Declined tags.');
   }
+  if (channel.availableTags.some((tag) =>
+    [tags.approved, tags.declined].includes(tag.id) && !tag.moderated)) {
+    throw new Error('Approved and Declined role-request tags must be moderator-only.');
+  }
   return tags;
 }
 
@@ -116,6 +121,26 @@ async function rejectDuplicate(thread, first, tags) {
   await thread.setArchived(true, 'Duplicate pending request');
 }
 
+async function ensureApprovalCard(thread) {
+  const state = await loadState();
+  state.roleRequestApprovals ??= {};
+  if (state.roleRequestApprovals[thread.id]) return state.roleRequestApprovals[thread.id];
+  if (thread.archived) await thread.setArchived(false, 'Prepare owner approval card');
+  const roleName = requestedRole(thread.name);
+  if (!roleName) {
+    await thread.send('Rename this post to the exact role name you want before requesting approval. A.T.L.A.S. will then post an owner approval card.');
+    return null;
+  }
+  const card = await thread.send({
+    content: `**Owner approval: ${roleName}** for <@${thread.ownerId}>. Only the server owner's ✅ or ❌ on this A.T.L.A.S. message will decide this request. This role stays fixed even if the post title changes.`,
+    allowedMentions: { parse: [] },
+  });
+  const record = { ownerId: thread.ownerId, roleName, messageId: card.id };
+  state.roleRequestApprovals[thread.id] = record;
+  await saveState();
+  return record;
+}
+
 client.on(Events.ThreadCreate, (thread, newlyCreated) => {
   if (!newlyCreated || thread.parentId !== ROLE_FORUM_ID || thread.guildId !== GUILD_ID) return;
   serial(async () => {
@@ -124,9 +149,20 @@ client.on(Events.ThreadCreate, (thread, newlyCreated) => {
     const pending = oldestPending(await allForumThreads(channel), tags);
     const first = pending.get(thread.ownerId);
     if (first && first.id !== thread.id) await rejectDuplicate(thread, first, tags);
-    else if (statusOf(thread, tags) === 'pending' && !thread.appliedTags.includes(tags.pending)) {
-      await thread.setAppliedTags(withStatus(thread, tags, 'pending'), 'New role request');
+    else if (statusOf(thread, tags) === 'pending') {
+      if (!thread.appliedTags.includes(tags.pending)) {
+        await thread.setAppliedTags(withStatus(thread, tags, 'pending'), 'New role request');
+      }
+      await ensureApprovalCard(thread);
     }
+  });
+});
+
+client.on(Events.ThreadUpdate, (oldThread, thread) => {
+  if (thread.parentId !== ROLE_FORUM_ID || thread.guildId !== GUILD_ID || oldThread.name === thread.name) return;
+  serial(async () => {
+    const channel = await forum();
+    if (statusOf(thread, statusTags(channel)) === 'pending') await ensureApprovalCard(thread);
   });
 });
 
@@ -135,21 +171,18 @@ async function resolveRoleRequest(thread, emoji) {
   const guild = channel.guild;
   const tags = statusTags(channel);
   if (statusOf(thread, tags) !== 'pending') return;
+  const record = (await loadState()).roleRequestApprovals?.[thread.id];
+  if (!record || record.ownerId !== thread.ownerId) return;
   if (thread.archived) await thread.setArchived(false, 'Resolve owner reaction on role request');
   if (emoji === '✅') {
-    const roleName = requestedRole(thread.name);
-    if (!roleName) {
-      await thread.send('Approval paused: rename this post to the exact requestable role name, then add ✅ again.');
-      const starter = await thread.fetchStarterMessage();
-      await starter.reactions.resolve('✅')?.users.remove(guild.ownerId);
-      return;
-    }
+    const roleName = record.roleName;
     const roles = await guild.roles.fetch();
     const role = roles.find((item) => item.name === roleName);
     if (!role || !role.editable || role.permissions.has(PermissionFlagsBits.Administrator)) {
       await thread.send('Approval paused: the requested role is missing, above the bot, or has Administrator permission. The server owner must check the role hierarchy.');
-      const starter = await thread.fetchStarterMessage();
-      await starter.reactions.resolve('✅')?.users.remove(guild.ownerId);
+      const card = await thread.messages.fetch(record.messageId);
+      if (card.author.id !== client.user.id) throw new Error('Approval card was not authored by A.T.L.A.S.');
+      await card.reactions.resolve('✅')?.users.remove(guild.ownerId);
       return;
     }
     const member = await guild.members.fetch(thread.ownerId);
@@ -170,8 +203,8 @@ client.on(Events.MessageReactionAdd, (reaction, user) => {
     if (reaction.partial) reaction = await reaction.fetch();
     const thread = await client.channels.fetch(reaction.message.channelId);
     if (!thread?.isThread() || thread.parentId !== ROLE_FORUM_ID || thread.guildId !== GUILD_ID) return;
-    const starter = await thread.fetchStarterMessage();
-    if (!starter || reaction.message.id !== starter.id) return;
+    const record = (await loadState()).roleRequestApprovals?.[thread.id];
+    if (!record || reaction.message.id !== record.messageId) return;
     if (user.id !== thread.guild.ownerId) {
       // Discord cannot natively make an existing emoji reaction owner-only.
       await reaction.users.remove(user.id);
@@ -186,10 +219,12 @@ async function reconcileOwnerReactions(channel) {
   for (const thread of await allForumThreads(channel)) {
     if (statusOf(thread, tags) !== 'pending') continue;
     try {
-      const starter = await thread.fetchStarterMessage();
-      if (!starter) continue;
+      const record = await ensureApprovalCard(thread);
+      if (!record) continue;
+      const card = await thread.messages.fetch(record.messageId);
+      if (card.author.id !== client.user.id) continue;
       for (const emoji of ['✅', '❌']) {
-        const reaction = starter.reactions.resolve(emoji);
+        const reaction = card.reactions.resolve(emoji);
         if (!reaction) continue;
         const users = await reaction.users.fetch({ limit: 100 });
         if (users.has(channel.guild.ownerId)) {

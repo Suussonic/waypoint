@@ -5,6 +5,8 @@ import { loadState, saveState } from './store.js';
 
 const marker = /^atlas-ticket owner=(\d+) type=(bug|feature|general) status=(open|closed)(?: legacy=ticket-tool)?$/;
 const ticketLocks = new Map();
+const TICKET_WINDOW_MS = 24 * 60 * 60 * 1000;
+const MAX_TICKETS_PER_WINDOW = 3;
 
 function ticketMeta(channel) {
   const match = channel?.topic?.match(marker);
@@ -35,6 +37,13 @@ async function createTicket(guild, user, type, fields) {
   const channels = await guild.channels.fetch();
   const existing = channels.find((channel) => ticketMeta(channel)?.ownerId === user.id && ticketMeta(channel)?.status === 'open');
   if (existing) return { channel: existing, created: false };
+  const state = await loadState();
+  state.ticketCreateEvents ??= {};
+  const now = Date.now();
+  const recent = (state.ticketCreateEvents[user.id] ?? []).filter((time) => now - time < TICKET_WINDOW_MS);
+  if (user.id !== guild.ownerId && recent.length >= MAX_TICKETS_PER_WINDOW) {
+    throw new Error('You can open at most three tickets in 24 hours. Please continue in an existing ticket or ask staff for help.');
+  }
   const staff = (await guild.roles.fetch()).find((role) => role.name === STAFF_ROLE);
   if (!staff) throw new Error('Mod Squad role is missing.');
   const bot = await guild.members.fetchMe();
@@ -51,13 +60,14 @@ async function createTicket(guild, user, type, fields) {
     ],
     reason: `A.T.L.A.S. ${type} support ticket for ${user.id}`,
   });
+  state.ticketCreateEvents[user.id] = [...recent, now];
+  await saveState();
   await channel.send({
     content: `**${type.toUpperCase()} ticket: ${fields.title.trim().slice(0, 100)}**\n${fields.description.trim().slice(0, 2000)}\n\n${user}, staff can continue the discussion here. Use /close when it is resolved.`,
     allowedMentions: { users: [user.id] },
   });
   await logTicket(guild, `Opened ${type} ticket ${channel} for ${user.tag}.`);
   if (type === 'general') return { channel, created: true };
-  const state = await loadState();
   state.ticketDrafts ??= {};
   state.ticketDrafts[channel.id] = { type, fields };
   await saveState();
