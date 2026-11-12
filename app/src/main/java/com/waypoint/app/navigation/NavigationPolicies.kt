@@ -44,8 +44,18 @@ class MapFollowPolicy {
     private var gestureAt: Long? = null
     private var gesturing = false
     fun gestureStarted(now: Long) { gesturing = true; gestureAt = now }
-    fun gestureEnded(now: Long):Boolean { val ended=gesturing;gesturing=false;if(ended)gestureAt=now;return ended }
+    fun gestureEnded(now: Long,keepFollowing:Boolean=false):Boolean {
+        val ended=gesturing
+        gesturing=false
+        if(ended)gestureAt=if(keepFollowing)null else now
+        return ended
+    }
     fun resume() { gestureAt = null; gesturing = false }
+    fun shouldFollowHeading(navigating:Boolean,now:Long):Boolean {
+        if(gesturing)return false
+        if(gestureAt!=null && navigating && now-gestureAt!!>=8000)resume()
+        return gestureAt==null
+    }
     fun shouldFollow(navigating: Boolean, hasDestination: Boolean, now: Long): Boolean {
         if(gesturing) return false
         if(gestureAt != null && navigating && now - gestureAt!! >= 8000) resume()

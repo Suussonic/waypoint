@@ -12,11 +12,40 @@ class CarGuidanceCameraTest {
             CarMapViewport(0,0,1100,600))
         assertEquals(fix.lat,camera.target!!.latitude,0.000001)
         assertEquals(fix.lon,camera.target!!.longitude,0.000001)
-        assertEquals(50.0,camera.tilt,0.001)
+        assertEquals(CAR_NAVIGATION_TILT,camera.tilt,0.001)
         val padding=camera.padding!!
         val anchorX=(padding[0]+1280-padding[2])/2
         val anchorY=(padding[1]+720-padding[3])/2
         assertTrue("Driver must remain within unobscured map",anchorX in 100.0..1000.0 && anchorY in 350.0..550.0)
+    }
+
+    @Test fun stationaryGuidanceKeepsPitchEvenWhenBrowseMapPreferenceIsFlat() {
+        val fix=Coordinate(51.5081,-.1280)
+        val route=RoadRoute(listOf(fix,Coordinate(51.5081,-.1270)),emptyList(),70.0,20.0)
+        val camera=carCamera(NavState(fix=fix,route=route,navigating=true,speed=0f,tilted=false),1280,720)
+        assertEquals(CAR_NAVIGATION_TILT,camera.tilt,0.001)
+    }
+
+    @Test fun androidAutoKeepsTheSameRoadPitchAtAStopWhenZoomingOutForASplitPaneTurn() {
+        val fix=Coordinate(0.0,0.0)
+        val turn=Coordinate(0.0,.45)
+        val route=RoadRoute(listOf(fix,turn,Coordinate(.1,.45)),
+            listOf(Maneuver(turn,"turn","left","Road ahead",50_000.0,900.0)),55_000.0,900.0)
+        val state=NavState(fix=fix,route=route,navigating=true,speed=0f,tilted=false,
+            progress=RouteProgress(0.0,55_000.0,900.0,0.0,0,50_000.0,fix))
+        val full=carCamera(state,1280,720)
+        val split=carCamera(state,1280,720,CarMapViewport(0,0,448,720))
+        assertTrue("the split pane still pulls back for a distant turn",split.zoom<full.zoom)
+        assertEquals(CAR_NAVIGATION_TILT,full.tilt,0.001)
+        assertEquals(CAR_NAVIGATION_TILT,split.tilt,0.001)
+    }
+
+    @Test fun guidanceFacesRoadAheadUnlessNorthUpWasSelected() {
+        val fix=Coordinate(0.0,0.0)
+        val route=RoadRoute(listOf(fix,Coordinate(0.0,.001)),emptyList(),111.0,20.0)
+        val state=NavState(fix=fix,route=route,navigating=true,speed=0f,tilted=false)
+        assertEquals(90.0,carCamera(state,1280,720).bearing,0.01)
+        assertEquals(0.0,carCamera(state.copy(keepMapNorthUp=true),1280,720).bearing,0.01)
     }
 
     @Test fun narrowerHostMapAreaZoomsOutToPreserveBothRouteEndpoints() {
@@ -30,12 +59,34 @@ class CarGuidanceCameraTest {
         assertEquals(full.zoom,invalid.zoom,0.001)
     }
 
-    @Test fun guidanceZoomOpensRoadAheadAtSpeedAndClosesOnTurns() {
-        assertEquals(17.1,carGuidanceZoom(0f,1000.0),0.001)
-        assertEquals(16.6,carGuidanceZoom(10f,1000.0),0.001)
-        assertEquals(16.1,carGuidanceZoom(20f,1000.0),0.001)
-        assertEquals(15.6,carGuidanceZoom(30f,1000.0),0.001)
-        assertEquals(17.3,carGuidanceZoom(30f,70.0),0.001)
+    @Test fun guidanceCameraPullsBackForSpeedAndPreviewsARoundabout() {
+        val start=Coordinate(51.5081,-.1280)
+        val roundabout=Coordinate(51.5027,-.1525)
+        val route=RoadRoute(
+            listOf(start,Coordinate(51.5060,-.1400),roundabout,Coordinate(51.5018,-.1533)),
+            listOf(
+                Maneuver(start,"depart","straight","Demo Road",0.0,0.0),
+                Maneuver(roundabout,"roundabout","right","Demo Circle",1500.0,90.0,exit=2),
+                Maneuver(Coordinate(51.5018,-.1533),"turn","left","Exit Road",80.0,20.0),
+            ),1580.0,120.0)
+        val far=NavState(fix=start,route=route,navigating=true,mode=TravelMode.CAR,speed=12f,
+            progress=RouteProgress(0.0,1580.0,120.0,0.0,1,1500.0,start))
+        val farCamera=carCamera(far,1280,720,density=1.5)
+        val straight=far.copy(route=route.copy(steps=emptyList()))
+        val slowCamera=carCamera(straight,1280,720,density=1.5)
+        val fastCamera=carCamera(straight.copy(speed=25f),1280,720,density=1.5)
+        val nearFix=Coordinate(51.5032,-.1520)
+        val near=far.copy(fix=nearFix,progress=far.progress!!.copy(traveled=1450.0,remaining=130.0,
+            toTurn=130.0,snapped=nearFix))
+        val nearCamera=carCamera(near,1280,720,density=1.5)
+        assertTrue("speed eases the projected camera out",fastCamera.zoom<slowCamera.zoom)
+        assertTrue("a distant roundabout opens the view",farCamera.zoom<nearCamera.zoom)
+        assertEquals(CAR_NAVIGATION_TILT,farCamera.tilt,0.001)
+        assertEquals(CAR_NAVIGATION_TILT,slowCamera.tilt,0.001)
+        assertEquals(CAR_NAVIGATION_TILT,fastCamera.tilt,0.001)
+        assertEquals(CAR_NAVIGATION_TILT,nearCamera.tilt,0.001)
+        assertEquals(start.lat,farCamera.target!!.latitude,0.000001)
+        assertEquals(start.lon,farCamera.target!!.longitude,0.000001)
     }
 
     @Test fun routeAheadSetsDirectionUntilDrivingCourseIsReliable() {
@@ -43,6 +94,13 @@ class CarGuidanceCameraTest {
         val state=NavState(route=route,navigating=true,headingReliable=false)
         assertEquals(90.0,carTravelBearing(state),0.01)
         assertEquals(270.0,carTravelBearing(state.copy(headingReliable=true,headingSource=HeadingSource.COURSE,speed=3f,bearing=270f)),0.01)
+    }
+
+    @Test fun androidAutoKeepsArbitratedCourseThroughTheSlowdownHysteresisBand() {
+        val route=RoadRoute(listOf(Coordinate(0.0,0.0),Coordinate(0.0,.0002)),emptyList(),22.2,20.0)
+        val state=NavState(route=route,navigating=true,headingReliable=true,
+            headingSource=HeadingSource.COURSE,speed=1.8f,bearing=270f)
+        assertEquals(270.0,carTravelBearing(state),0.01)
     }
 
     @Test fun vehicleFollowsCurrentSegmentThroughATightUTurnInsteadOfCuttingTheCorner() {

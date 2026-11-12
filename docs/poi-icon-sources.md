@@ -49,6 +49,18 @@ held privately and is not published here. Cyberpunk 2077 and its game artwork
 remain the property of their rights holder; the public source pages document
 where these exact files came from, not a general grant to reuse other artwork.
 
+## Liberty City (GTA IV)
+
+The 31 64×64 radar PNGs supplied with Waypoint Discord ticket `ticket-0002` are
+preserved under
+[`app/src/main/assets/poi/liberty_blips`](../app/src/main/assets/poi/liberty_blips).
+The Liberty City map and key use the supplied marks for the closest matching
+live OSM categories; categories without an equivalent use the nearest available
+mark.
+[`Cartography.kt`](../app/src/main/java/com/waypoint/app/map/Cartography.kt)
+maps each OSM category, and the map key calls the same lookup so its symbols
+match the map in day and night styles.
+
 ## Machine Atlas and other worlds
 
 Machine Atlas (NieR) uses deterministic original ink diamonds and monochrome
@@ -56,7 +68,7 @@ category glyphs drawn by [`generate_map_assets.py`](../scripts/generate_map_asse
 Its day/night icons and destination targets are procedural rather than
 ImageGen imports.
 
-The remaining 36 daytime atlases and destination markers are original Waypoint
+The remaining 35 daytime atlases and destination markers are original Waypoint
 artwork generated from [dedicated world prompts](../tools/imagegen/poi-atlases-all.jsonl)
 and imported by
 [`import_imagegen_poi_atlases.py`](../scripts/import_imagegen_poi_atlases.py).

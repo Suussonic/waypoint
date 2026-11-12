@@ -162,7 +162,7 @@ Transitous combines open timetable feeds, so coverage differs by city and some a
 
 ## Community
 
-Settings has **Join the Waypoint Discord**, and the What's New window after an update has **Join Discord** and **Visit site** buttons. The invite is https://discord.gg/3ddSCASNUn: each of the 38 worlds has a private channel that opens when you pick the world, alongside release notes and bug reports. Nothing is sent from the phone; the link opens in your browser or the Discord app.
+Settings has **Join the Waypoint Discord**, and the What's New window after an update has **Join Discord** and **Visit site** buttons. The invite is https://discord.gg/TQ9cEx6rsu: each of the 38 worlds has a private channel that opens when you pick the world, alongside release notes and bug reports. Nothing is sent from the phone; the link opens in your browser or the Discord app.
 
 ## Search matching
 

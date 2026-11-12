@@ -51,19 +51,23 @@ internal fun MapLegendControl(state: NavState, modifier: Modifier = Modifier) {
     }
     val icons = remember(context, world, night, entries) {
         runCatching {
-            val suffix = if (night) "_night" else ""
-            val atlas = context.assets.open("poi/${world.file}$suffix.png").use(BitmapFactory::decodeStream)
-                ?: error("Missing POI atlas")
-            require(atlas.width == MapPoiCategories.atlasWidth() && atlas.height >= MapPoiCategories.atlasHeight(entries.size))
-            val tiles = entries.indices.map { index ->
-                val tile = Bitmap.createBitmap(atlas,
-                    (index % MapPoiCategories.columns()) * MapPoiCategories.cellSize(),
-                    (index / MapPoiCategories.columns()) * MapPoiCategories.cellSize(),
-                    MapPoiCategories.cellSize(), MapPoiCategories.cellSize())
-                Bitmap.createScaledBitmap(tile, 64, 64, true).also { tile.recycle() }.asImageBitmap()
+            if (world == World.LIBERTY) {
+                entries.map { mapPoi(context, it.id, world, night).asImageBitmap() }
+            } else {
+                val suffix = if (night) "_night" else ""
+                val atlas = context.assets.open("poi/${world.file}$suffix.png").use(BitmapFactory::decodeStream)
+                    ?: error("Missing POI atlas")
+                require(atlas.width == MapPoiCategories.atlasWidth() && atlas.height >= MapPoiCategories.atlasHeight(entries.size))
+                val tiles = entries.indices.map { index ->
+                    val tile = Bitmap.createBitmap(atlas,
+                        (index % MapPoiCategories.columns()) * MapPoiCategories.cellSize(),
+                        (index / MapPoiCategories.columns()) * MapPoiCategories.cellSize(),
+                        MapPoiCategories.cellSize(), MapPoiCategories.cellSize())
+                    Bitmap.createScaledBitmap(tile, 64, 64, true).also { tile.recycle() }.asImageBitmap()
+                }
+                atlas.recycle()
+                tiles
             }
-            atlas.recycle()
-            tiles
         }.getOrNull()
     }
     val positionIcon = remember(context, world, state.mode) {

@@ -1,9 +1,14 @@
 package com.waypoint.app
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 
 import android.Manifest
@@ -75,6 +80,22 @@ import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.currentCoroutineContext
+import com.waypoint.app.places.NearbyPlace
+import com.waypoint.app.places.NearbyCategory
+import com.waypoint.app.places.GoogleMapSuggestResult
+import com.waypoint.app.places.GoogleMapSuggestions
+import com.waypoint.app.places.OfflinePlacesStore
+import com.waypoint.app.places.VelaNearbyPlacesRepository
+import com.waypoint.app.offline.OfflineMapArea
+import com.waypoint.app.offline.OfflineMapDownloads
+import com.waypoint.app.offline.OfflineMapAreaPicker
+import com.waypoint.app.offline.OfflineMapsPanel
 
 val Ink=Color(0xFF151815)
 val Panel=Color(0xFF20241F)
@@ -181,13 +202,15 @@ class MainActivity : ComponentActivity() {
     override fun onStop() { configurationRestartPending=isChangingConfigurations;getSystemService(DisplayManager::class.java).unregisterDisplayListener(displayListener);controller.setVisible(false); super.onStop() }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class,ExperimentalSharedTransitionApi::class)
 @Composable
 fun WaypointApp(controller: NavigationController,state: NavState,destinationLaunch:Int=0,foregroundEntry:Int=0,openQuestId:String?=null,questLaunch:Int=0,updateLaunch:Int=0) {
     val context=LocalContext.current
     val carSettingsUnavailable=stringResource(R.string.car_settings_unavailable)
     val application=context.applicationContext as WaypointApplication
     val updater=application.updater
+    val offlineMapDownloads=remember(context.applicationContext) { OfflineMapDownloads(context.applicationContext) }
+    val offlineMapState by offlineMapDownloads.state.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableIntStateOf(0) }
     val worldsStateHolder=rememberSaveableStateHolder()
     var questSeed by remember { mutableStateOf<Place?>(null) }
@@ -203,14 +226,94 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
     val bundledReleaseNotes=remember { application.bundledReleaseNotes() }
     LaunchedEffect(destinationLaunch){if(destinationLaunch>0 && !controller.shouldShowLanding()){controller.markMapOpened();landing=false}}
     var search by rememberSaveable { mutableStateOf(false) }
+    var nearbyOpen by rememberSaveable { mutableStateOf(false) }
+    var nearbyCenter by remember { mutableStateOf<Coordinate?>(null) }
+    var nearbyCenterIsExplicit by remember { mutableStateOf(false) }
+    var nearbyResults by remember { mutableStateOf<List<NearbyPlace>>(emptyList()) }
+    var nearbySelectedPlace by remember { mutableStateOf<NearbyPlace?>(null) }
+    val privacyPreferences = remember(context) { context.getSharedPreferences("waypoint-privacy", android.content.Context.MODE_PRIVATE) }
+    var googleWebLookupsEnabled by remember(privacyPreferences) {
+        mutableStateOf(privacyPreferences.getBoolean("google-place-details", false))
+    }
+    var commonsPlacePhotosEnabled by remember(privacyPreferences) {
+        mutableStateOf(privacyPreferences.getBoolean("commons-place-photos", false))
+    }
+    fun setGoogleWebLookupsEnabled(enabled: Boolean) {
+        googleWebLookupsEnabled = enabled
+        privacyPreferences.edit().putBoolean("google-place-details", enabled).apply()
+    }
+    fun setCommonsPlacePhotosEnabled(enabled: Boolean) {
+        commonsPlacePhotosEnabled = enabled
+        privacyPreferences.edit().putBoolean("commons-place-photos", enabled).apply()
+    }
     LaunchedEffect(state.carConnected,tab) { if (state.carConnected && tab == 3) tab = 0 }
     LaunchedEffect(questLaunch) { if (questLaunch > 0 && !controller.isDriving) { landing=false;tab=3;questEntry++;questSeed=null;pendingQuestId=openQuestId } }
     LaunchedEffect(state.sharedImportError) { if (state.sharedImportError) { landing=false;search=true;controller.dismissSharedImportError() } }
     var settings by rememberSaveable { mutableStateOf(false) }
+    var offlineMapsPage by rememberSaveable { mutableStateOf(false) }
+    var offlineAreaPicking by rememberSaveable { mutableStateOf(false) }
+    var offlineAreaName by rememberSaveable { mutableStateOf("Saved area") }
+    var visibleMapArea by remember { mutableStateOf<OfflineMapArea?>(null) }
+    var browseMapCamera by remember { mutableStateOf<Pair<Coordinate, Double>?>(null) }
+    LaunchedEffect(nearbyOpen, browseMapCamera?.first, state.fix, nearbyCenterIsExplicit) {
+        if (nearbyOpen && !nearbyCenterIsExplicit) {
+            nearbyCenter = browseMapCamera?.first ?: state.fix ?: PreviewCenter
+        }
+    }
+    var mapBrowsePlaces by remember { mutableStateOf<List<NearbyPlace>>(emptyList()) }
+    var lastMapPlacesCenter by remember { mutableStateOf<Coordinate?>(null) }
+    var lastMapPlacesZoom by remember { mutableDoubleStateOf(Double.NaN) }
+    val mapPreferences = remember(context) { context.getSharedPreferences("waypoint-map", android.content.Context.MODE_PRIVATE) }
+    var mapPlacePinsEnabled by remember(mapPreferences) {
+        mutableStateOf(mapPreferences.getBoolean("open-place-pins", true))
+    }
+    val mapPlacesRepository = remember(context.applicationContext) {
+        VelaNearbyPlacesRepository(offlinePlaces = OfflinePlacesStore(context.applicationContext))
+    }
+    var offlineIncludePlaces by rememberSaveable { mutableStateOf(true) }
+    fun setMapPlacePinsEnabled(enabled: Boolean) {
+        mapPlacePinsEnabled = enabled
+        mapPreferences.edit().putBoolean("open-place-pins", enabled).apply()
+    }
     LaunchedEffect(updateLaunch) { if(updateLaunch>0 && !controller.isDriving) { landing=false;settings=true } }
     var feedbackOpen by rememberSaveable { mutableStateOf(false) }
     var clearConfirm by remember { mutableStateOf(false) }
     var steps by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(
+        browseMapCamera?.first, browseMapCamera?.second, mapPlacePinsEnabled, nearbyOpen,
+        state.navigating, state.routing, state.selected, tab, search, settings, steps, welcomeVisible, state.carConnected,
+    ) {
+        val camera = browseMapCamera
+        if (!mapPlacePinsEnabled || state.navigating || state.routing || state.selected != null ||
+            tab != 0 || search || settings || steps || welcomeVisible || state.carConnected || camera == null) {
+            mapBrowsePlaces = emptyList()
+            return@LaunchedEffect
+        }
+        // Let the Nearby sheet own the map symbols while it is open.
+        if (nearbyOpen) return@LaunchedEffect
+        val (center, zoom) = camera
+        if (zoom < 13.6) {
+            mapBrowsePlaces = emptyList()
+            return@LaunchedEffect
+        }
+        val previous = lastMapPlacesCenter
+        if (previous != null && mapBrowsePlaces.isNotEmpty() &&
+            distance(previous, center) < 1_600.0 && kotlin.math.abs(lastMapPlacesZoom - zoom) < .8) {
+            return@LaunchedEffect
+        }
+        delay(380)
+        try {
+            val places = mapPlacesRepository.nearby(center, NearbyCategory.ALL)
+            currentCoroutineContext().ensureActive()
+            mapBrowsePlaces = places
+            lastMapPlacesCenter = center
+            lastMapPlacesZoom = zoom
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
+            mapBrowsePlaces = emptyList()
+        }
+    }
     var mapError by remember { mutableStateOf<String?>(null) }
     var mapBounds by remember { mutableStateOf(Rect.Zero) }
     var routeHeaderBounds by remember { mutableStateOf(Rect.Zero) }
@@ -235,6 +338,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
     }
 
     val snackbar=remember { SnackbarHostState() }
+    LaunchedEffect(settings,offlineMapsPage) { if(settings && offlineMapsPage) offlineMapDownloads.refresh() }
     var pageSystemBarSurface by remember { mutableStateOf<Color?>(null) }
     val navigationScope=rememberCoroutineScope()
     fun selectTab(destination:Int) {
@@ -261,17 +365,32 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
             LocateAction.NONE -> Unit
         }
     }
-    fun choose(place: Place) { controller.markMapOpened();controller.select(place); search=false;tab=0;landing=false }
+    fun openNearby(center: Coordinate? = null) {
+        nearbyCenterIsExplicit = center != null
+        nearbyCenter = center ?: browseMapCamera?.first ?: state.fix ?: PreviewCenter
+        nearbyOpen = true
+    }
+    fun closeNearby() { nearbyOpen=false;nearbySelectedPlace=null;nearbyCenterIsExplicit=false;nearbyCenter=null }
+    fun choose(place: Place) { controller.markMapOpened();controller.select(place); search=false;closeNearby();tab=0;landing=false }
     val showWhatsNew=whatsNewVisible && !welcomeVisible && !state.navigating && state.selected==null && state.pendingSharedDestination==null &&
-        tab==0 && !search && !settings && !steps
+        tab==0 && !search && !nearbyOpen && !settings && !steps
     val showUpdatePrompt=pendingRelease!=null && !updatePromptDismissed && !whatsNewVisible && !welcomeVisible && !state.navigating && state.selected==null && state.pendingSharedDestination==null &&
-        tab==0 && !search && !settings && !steps
+        tab==0 && !search && !nearbyOpen && !settings && !steps
     MaterialTheme(colorScheme=darkColorScheme(primary=WaypointColors.accent,onPrimary=Ink,primaryContainer=WaypointColors.accent.copy(alpha=0.18f),onPrimaryContainer=WaypointColors.accent,
         background=Ink,surface=Ink,surfaceVariant=Panel,onSurface=Cream,onSurfaceVariant=Muted,outline=Color(0xFF51594B),secondary=WaypointColors.accent,
         secondaryContainer=WaypointColors.accent.copy(alpha=.18f),onSecondaryContainer=Cream),typography=AppTypography) {
         UpdateAlertPermissions(application.updateAlerts,ready=!welcomeVisible && !showWhatsNew && !showUpdatePrompt && !settings && !search && tab==0 && !state.navigating && !state.carConnected && state.pendingSharedDestination==null)
-        BackHandler(search || settings || steps || tab!=0 || (!welcomeVisible && state.selected!=null)) {
-            when { search->search=false; feedbackOpen->feedbackOpen=false; settings->settings=false; steps->steps=false; tab!=0->tab=0; state.selected!=null->controller.clearDestination() }
+        BackHandler(offlineAreaPicking || search || nearbyOpen || settings || steps || tab!=0 || (!welcomeVisible && state.selected!=null)) {
+            when {
+                offlineAreaPicking->{offlineAreaPicking=false;settings=true;offlineMapsPage=true}
+                search->search=false
+                nearbyOpen->closeNearby()
+                feedbackOpen->feedbackOpen=false
+                settings->{settings=false;offlineMapsPage=false}
+                steps->steps=false
+                tab!=0->tab=0
+                state.selected!=null->controller.clearDestination()
+            }
         }
         LaunchedEffect(state.message) { state.message?.let{snackbar.showSnackbar(it);controller.dismissMessage()} }
         CompositionLocalProvider(LocalPageSystemBarSurface provides { pageSystemBarSurface=it }) {
@@ -317,7 +436,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 (mapBounds.height-scaleInsets.top-scaleInsets.bottom>with(density){72.dp.toPx()} &&
                     mapBounds.width-scaleInsets.left-scaleInsets.right>
                         with(density){(if(compactHeight)160.dp else 180.dp).toPx()})
-            val scaleVisible=tab==0 && !welcomeVisible && !search && !settings && !steps && scaleFits &&
+            val scaleVisible=tab==0 && !welcomeVisible && !search && !nearbyOpen && !settings && !steps && !offlineAreaPicking && !state.navigating && scaleFits &&
                 (!adaptivePreview || sidePreview) &&
                 (state.selected==null || scaleInsets!=null || state.navigating && landscape)
             Row(Modifier.fillMaxSize()) {
@@ -335,7 +454,22 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 }) { padding ->
                     Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
                         // Keep the native map alive when switching destinations; hide other screens above it.
-                        if(!welcomeVisible) WorldMap(state,{choose(it)},{mapError=it},Modifier.fillMaxSize().onGloballyPositioned{mapBounds=it.boundsInRoot()},active=tab==0 && !search && !settings && !steps,routeInsets=routeInsets,onAwayFromUser={awayFromUser=it},onSelectRoute={ index -> if(state.navigating)controller.switchToAlternate(index) else controller.selectRouteOption(index) },showScaleBar=scaleVisible,scaleBarInsets=scaleInsets)
+                        if(!welcomeVisible) WorldMap(
+                            state,{choose(it)},{mapError=it},Modifier.fillMaxSize().onGloballyPositioned{mapBounds=it.boundsInRoot()},
+                            active=tab==0 && !search && !settings && !steps,routeInsets=routeInsets,onAwayFromUser={awayFromUser=it},
+                            onSelectRoute={ index -> if(state.navigating)controller.switchToAlternate(index) else controller.selectRouteOption(index) },
+                            showScaleBar=scaleVisible,scaleBarInsets=scaleInsets,
+                            nearbyPlaces=if(nearbyOpen)nearbyResults else mapBrowsePlaces,
+                            onVisibleMapArea={ visibleMapArea=it },
+                            onBrowseMapCamera={ center, zoom -> browseMapCamera=center to zoom },
+                            onNearbyPlaceClick={ place ->
+                                nearbySelectedPlace=place
+                                openNearby(place.point)
+                                search=false
+                                tab=0
+                                landing=false
+                            },
+                        )
                         Box(Modifier.fillMaxWidth().height(36.dp).background(Brush.verticalGradient(listOf(Color.Black.copy(alpha=0.6f),Color.Transparent))))
                         if(!welcomeVisible && (tab==0 || state.navigating)) {
                             BoxWithConstraints(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
@@ -343,8 +477,24 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                                 val overlayHeight=maxHeight
                                 val atlasActions=AtlasActions({search=true},{tab=1},{tab=2},{settings=true},
                                     {locate()},controller::toggleTilt,controller::toggleVoice,
-                                    {query->search=true;controller.search(query)},awayFromUser=awayFromUser)
-                                if(!state.navigating && state.selected==null) {
+                                    {query->if(query.isBlank()){openNearby();tab=0}else{search=true;controller.search(query)}},awayFromUser=awayFromUser,
+                                    toggleMapOrientation=controller::toggleMapOrientation)
+                                if(offlineAreaPicking) {
+                                    OfflineMapAreaPicker(
+                                        area=visibleMapArea,
+                                        name=offlineAreaName,
+                                        includePlaces=offlineIncludePlaces,
+                                        notice=offlineMapState.notice,
+                                        onNameChange={offlineAreaName=it},
+                                        onIncludePlacesChange={offlineIncludePlaces=it},
+                                        onBack={offlineAreaPicking=false;settings=true;offlineMapsPage=true},
+                                        onSave={
+                                            visibleMapArea?.let { offlineMapDownloads.download(it,offlineAreaName,offlineIncludePlaces) }
+                                            offlineAreaPicking=false;settings=true;offlineMapsPage=true
+                                        },
+                                        modifier=Modifier.fillMaxSize(),
+                                    )
+                                } else if(!state.navigating && state.selected==null) {
                                     GameAtlasChrome(state,atlasActions,Modifier.padding(bottom=if(landscape)0.dp else 48.dp))
                                     if(mapError!=null)Notice(mapError!!,Icons.Default.CloudOff)
                                 } else if(adaptivePreview) {
@@ -384,38 +534,62 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                                         .onGloballyPositioned { routePanelBounds=it.boundsInRoot() }
                                         .padding(end=16.dp,bottom=12.dp)) {
                                         CompactLandscapeNavFooter(state,{steps=true},{controller.stopNavigation()},
-                                            controller::toggleVoice,atlasActions.locate,Modifier.fillMaxWidth())
+                                            controller::toggleVoice,atlasActions.locate,atlasActions.toggleMapOrientation,Modifier.fillMaxWidth())
                                     }
                                 } else {
                                     AtlasFrame(state.world)
-                                    Column(Modifier.align(Alignment.TopStart).fillMaxWidth(if(compactHeight)0.5f else 1f).onGloballyPositioned{routeHeaderBounds=it.boundsInRoot()}.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
-                                        if(state.navigating)ManeuverBanner(state,{steps=true}) else {
-                                            RoutePreviewHeader(state,controller::clearDestination,controller::changeMode)
-                                        }
-                                        if(mapError!=null)Notice(mapError!!,Icons.Default.CloudOff)
-                                        if(state.navigating && !state.gpsReady)Notice(state.gpsStatus,Icons.Default.GpsOff)
-                                        if(state.navigating && state.routeError!=null)Notice("Reroute unavailable. ${state.routeError}",Icons.Default.CloudOff)
-                                    }
-                                    Column(Modifier.align(if(compactHeight)Alignment.BottomEnd else Alignment.BottomCenter).fillMaxWidth(if(compactHeight)0.48f else 1f).onGloballyPositioned{routePanelBounds=it.boundsInRoot()}.padding(horizontal=if(state.navigating)0.dp else 16.dp).padding(bottom=if(state.navigating)0.dp else 56.dp).then(if(compactHeight)Modifier.heightIn(max=300.dp).verticalScroll(rememberScrollState()) else Modifier),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                                        if(state.navigating && awayFromUser) Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.Center) { RecentrePill(state.world,atlasActions.locate) }
-                                        if(state.navigating) NavSideControls(state,controller::toggleVoice,atlasActions.locate,{selectTab(1)})
-                                        if(!state.navigating && !state.gpsReady) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.Bottom) {
-                                            FixLabel(state,Modifier.weight(1f))
-                                            if(state.navigating) AtlasTool(state.world,if(state.voice)Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,if(state.voice)"Mute guidance" else "Unmute guidance",controller::toggleVoice)
-                                            if(compactHeight && !state.navigating) {
-                                                TextButton(onClick=atlasActions.locate,modifier=Modifier.heightIn(min=48.dp).background(hudPalette(state.world).panel,hudShape(state.world)).semantics{contentDescription="Use my location"}) {
-                                                    Icon(Icons.Default.MyLocation,null,Modifier.size(18.dp),tint=hudPalette(state.world).foreground)
-                                                    Spacer(Modifier.width(8.dp));Text("Locate",fontFamily=PipBoyFont,fontSize=12.sp,color=hudPalette(state.world).foreground)
+                                    SharedTransitionLayout {
+                                        val sharedScope=this
+                                        val navigationSurface=rememberSharedContentState("route-start-to-guidance")
+                                        AnimatedContent(
+                                            targetState=state.navigating,
+                                            modifier=Modifier.fillMaxSize(),
+                                            transitionSpec={fadeIn(tween(220,delayMillis=40)) togetherWith fadeOut(tween(160))},
+                                            label="Route start to live guidance"
+                                        ) { navigating ->
+                                            val visibilityScope=this
+                                            val routeEntryModifier=with(sharedScope) {
+                                                Modifier.sharedBounds(
+                                                    sharedContentState=navigationSurface,
+                                                    animatedVisibilityScope=visibilityScope,
+                                                    enter=fadeIn(tween(180)),
+                                                    exit=fadeOut(tween(120)),
+                                                    boundsTransform={ _,_ -> tween(420,easing=FastOutSlowInEasing) },
+                                                    resizeMode=SharedTransitionScope.ResizeMode.RemeasureToBounds
+                                                )
+                                            }
+                                            Box(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+                                                Column(Modifier.align(Alignment.TopStart).fillMaxWidth(if(compactHeight)0.5f else 1f).onGloballyPositioned{routeHeaderBounds=it.boundsInRoot()}.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                                                    if(navigating)ManeuverBanner(state,{steps=true},routeEntryModifier) else {
+                                                        RoutePreviewHeader(state,controller::clearDestination,controller::changeMode)
+                                                    }
+                                                    if(mapError!=null)Notice(mapError!!,Icons.Default.CloudOff)
+                                                    if(navigating && !state.gpsReady)Notice(state.gpsStatus,Icons.Default.GpsOff)
+                                                    if(navigating && state.routeError!=null)Notice("Reroute unavailable. ${state.routeError}",Icons.Default.CloudOff)
                                                 }
-                                            } else AtlasTool(state.world,Icons.Default.MyLocation,"Use my location",atlasActions.locate)
+                                                Column(Modifier.align(if(compactHeight)Alignment.BottomEnd else Alignment.BottomCenter).fillMaxWidth(if(compactHeight)0.48f else 1f).onGloballyPositioned{routePanelBounds=it.boundsInRoot()}.padding(horizontal=if(navigating)0.dp else 16.dp).padding(bottom=if(navigating)0.dp else 12.dp).then(if(compactHeight)Modifier.heightIn(max=300.dp).verticalScroll(rememberScrollState()) else Modifier),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                                                    if(navigating && awayFromUser) Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.Center) { RecentrePill(state.world,atlasActions.locate) }
+                                                    if(navigating) NavSideControls(state,controller::toggleVoice,atlasActions.locate,{selectTab(1)},atlasActions.toggleMapOrientation)
+                                                    if(!navigating && !state.gpsReady) Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.Bottom) {
+                                                        FixLabel(state,Modifier.weight(1f))
+                                                        if(compactHeight) {
+                                                            TextButton(onClick=atlasActions.locate,modifier=Modifier.heightIn(min=48.dp).background(hudPalette(state.world).panel,hudShape(state.world)).semantics{contentDescription="Use my location"}) {
+                                                                Icon(Icons.Default.MyLocation,null,Modifier.size(18.dp),tint=hudPalette(state.world).foreground)
+                                                                Spacer(Modifier.width(8.dp));Text("Locate",fontFamily=PipBoyFont,fontSize=12.sp,color=hudPalette(state.world).foreground)
+                                                            }
+                                                        } else AtlasTool(state.world,Icons.Default.MyLocation,"Use my location",atlasActions.locate)
+                                                    }
+                                                    if(navigating) NavigationFooter(state,{steps=true},{controller.stopNavigation()})
+                                                    else DestinationCard(state,{controller.toggleSaved(state.selected!!)},{controller.clearDestination()},{locate()},{controller.requestRoute()},{
+                                                        controller.startNavigation()
+                                                        if(Build.VERSION.SDK_INT>=33) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                                    },{steps=true},compact=compactHeight,
+                                                        onSelectRoute=controller::selectRouteOption,
+                                                        onQuest={if(!state.carConnected){questSeed=state.selected;questEntry++};selectTab(3)},onShare={externalPlace=state.selected},onTransit={transitFor=state.selected},
+                                                        startActionModifier=routeEntryModifier)
+                                                }
+                                            }
                                         }
-                                        if(state.navigating) NavigationFooter(state,{steps=true},{controller.stopNavigation()})
-                                        else DestinationCard(state,{controller.toggleSaved(state.selected!!)},{controller.clearDestination()},{locate()},{controller.requestRoute()},{
-                                            controller.startNavigation()
-                                            if(Build.VERSION.SDK_INT>=33) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                        },{steps=true},compact=compactHeight,
-                                            onSelectRoute=controller::selectRouteOption,
-                                            onQuest={if(!state.carConnected){questSeed=state.selected;questEntry++};selectTab(3)},onShare={externalPlace=state.selected},onTransit={transitFor=state.selected})
                                     }
                                 }
 
@@ -445,7 +619,13 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                                 else -> Box(Modifier.fillMaxSize())
                             }
                         }
-                        if(search) SearchScreen(state,controller::search,::choose,{search=false},controller::changeMode,controller::submitSearch)
+                        if(search) SearchScreen(state,
+                            onQuery={ query ->
+                                val isSharedLink=query.trim().startsWith("https:") || query.trim().startsWith("geo:")
+                                if(googleWebLookupsEnabled && !isSharedLink) controller.updateSearchQuery(query) else controller.search(query)
+                            },
+                            onSelect=::choose,onBack={search=false},onMode=controller::changeMode,onSubmit=controller::submitSearch,
+                            googleSuggestionsEnabled=googleWebLookupsEnabled,onFallbackSearch=controller::search)
                     }
                 }
             }
@@ -459,19 +639,44 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 allowed=!welcomeVisible && !state.navigating && !state.carConnected && state.selected==null && !search && !settings && !showWhatsNew && state.pendingSharedDestination==null,
                 onOpen={tab=3})
         }
-        if(settings) ModalBottomSheet(onDismissRequest={feedbackOpen=false;settings=false},containerColor=Ink) {
+        if(settings) ModalBottomSheet(onDismissRequest={feedbackOpen=false;settings=false;offlineMapsPage=false},containerColor=Ink) {
             if(feedbackOpen) {
                 FeedbackSheet(state.world,onBack={feedbackOpen=false},onLeaveApp={feedbackOpen=false;settings=false})
+            } else if(offlineMapsPage) {
+                OfflineMapsPanel(
+                    state=offlineMapState,
+                    canChooseArea=!state.navigating && state.selected==null,
+                    onBack={offlineMapsPage=false},
+                    onChooseArea={
+                        offlineAreaName="Saved area"
+                        offlineMapDownloads.clearNotice()
+                        offlineAreaPicking=true;settings=false;offlineMapsPage=false
+                    },
+                    onPause=offlineMapDownloads::pause,
+                    onResume=offlineMapDownloads::resume,
+                    onDelete=offlineMapDownloads::delete,
+                )
             } else {
             Column(Modifier.padding(horizontal=24.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(16.dp)) {
                 Text("Make it your own",style=MaterialTheme.typography.headlineLarge)
                 UpdatePanel((context.applicationContext as WaypointApplication).updater, state.navigating)
+                ListItem(
+                    headlineContent={Text("Offline maps")},
+                    supportingContent={Text("Save map areas on this device · ${offlineMapState.regions.size} saved")},
+                    leadingContent={Icon(Icons.Default.Download,"Offline maps",tint=WaypointColors.accent)},
+                    trailingContent={Icon(Icons.AutoMirrored.Filled.ArrowForward,null,tint=Muted)},
+                    modifier=Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable { offlineMapsPage=true },
+                    colors=ListItemDefaults.colors(containerColor=Panel,headlineColor=Cream,supportingColor=Muted),
+                )
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 SettingRow("Voice guidance","Spoken turn instructions",state.voice,controller::toggleVoice)
                 SettingRow("World voice style","Give each world its own spoken wording and delivery on your device's speech voice. Turn it off for standard instructions.",state.gameVoice,controller::toggleGameVoice)
                 SettingRow("Miles & feet","Use imperial distances",state.imperial,controller::toggleUnits)
                 SettingRow("Speed limit warning","Show the posted limit and warn when you go over it while driving. Looks up the limit on OpenStreetMap through Overpass, sending your position only while guiding by car.",state.speedWarning,controller::toggleSpeedWarning)
+                SettingRow("Google search suggestions, details and photos","Optional keyless Google web lookups. Google receives partial search text and a location bias while you type, then the selected place name and coordinates when you open its details. These undocumented endpoints can change and are subject to Google’s terms; no Places API key or Places API billing is used.",googleWebLookupsEnabled,{setGoogleWebLookupsEnabled(!googleWebLookupsEnabled)})
+                SettingRow("Open place pins","Show Vela open-data pins while browsing. Vela matches archive names on-device; GitHub gets nearby tile ranges, not search text. With Google off, searches start after 700 ms; on a saved-snapshot miss, Photon gets text and location bias, and Android Geocoder may be used for weak matches. Google gets partial text and location bias only when suggestions are on. This switch hides pins only.",mapPlacePinsEnabled,{setMapPlacePinsEnabled(!mapPlacePinsEnabled)})
                 SettingRow("3D perspective","Tilt the map in every world",state.tilted,controller::toggleTilt)
+                SettingRow("North-up map","When off, follow your phone heading while still and travel direction while moving.",state.keepMapNorthUp,controller::toggleMapOrientation)
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 Text("Map controls", style=MaterialTheme.typography.titleMedium)
                 Text("These presets affect controls floating over the phone map.",
@@ -514,7 +719,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 Text("WAYPOINT",style=MaterialTheme.typography.headlineMedium,color=WaypointColors.accent)
                 Text("Made in India · Open to the world",style=MaterialTheme.typography.bodySmall,color=Muted)
                 Text("Open source. Every world included. No ads or subscriptions.",style=MaterialTheme.typography.bodyMedium)
-                Text("OpenStreetMap with OSRM routes cars; Valhalla routes motorcycles, bicycles and walks. Ferrostar provides navigation guidance, rerouting and remaining ETA. Live traffic is not currently configured. Your location is shared with the selected routing and search providers when needed. Saved places stay on this phone.",style=MaterialTheme.typography.bodySmall,color=Muted)
+                Text("OpenStreetMap with OSRM routes cars; Valhalla routes motorcycles, bicycles and walks. Ferrostar provides navigation guidance, rerouting and remaining ETA. Nearby discovery streams Vela’s Overture, AllThePlaces and OpenStreetMap place archive. Optional Wikimedia Commons photos are off until enabled and shown with source and license credits. Optional Google suggestions, place details and photos use undocumented keyless web endpoints when enabled; Google receives search text and a location bias while you type, then the selected place name and coordinates when you open its details. No Places API key or Places API billing is used. Saved places stay on this phone.",style=MaterialTheme.typography.bodySmall,color=Muted)
                 Text("Satellite imagery in the Elden Ring, Zelda and Hogwarts maps: Esri, Maxar, Earthstar Geographics, and the GIS User Community. Those maps ask Esri for imagery of the area on screen.",style=MaterialTheme.typography.bodySmall,color=Muted)
                 Text("Map data and credits",style=MaterialTheme.typography.titleSmall)
                 val creditsUri=LocalUriHandler.current
@@ -526,6 +731,22 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
             }
             }
         }
+        if(nearbyOpen && !state.navigating && !state.carConnected) NearbyPlacesSheet(
+            state = state,
+            center = nearbyCenter,
+            initialSelection = nearbySelectedPlace,
+            googleEnabled = googleWebLookupsEnabled,
+            commonsPhotosEnabled = commonsPlacePhotosEnabled,
+            savedIds = state.saved.mapTo(hashSetOf()) { it.id },
+            onGoogleEnabledChange = ::setGoogleWebLookupsEnabled,
+            onCommonsPhotosEnabledChange = ::setCommonsPlacePhotosEnabled,
+            onPlacesChanged = { nearbyResults = it },
+            onSelect = { place -> nearbyOpen=false;choose(place.asWaypointPlace()) },
+            onSave = { place -> controller.toggleSaved(place.asWaypointPlace()) },
+            onLocate = ::locate,
+            onClose = ::closeNearby,
+            onSelectionDismissed = { nearbySelectedPlace=null },
+        )
         if(showWhatsNew) WhatsNewDialog(bundledReleaseNotes) { application.markWhatsNewSeen();whatsNewVisible=false }
         if(showUpdatePrompt) UpdatePromptDialog(
             release=requireNotNull(pendingRelease),
@@ -642,7 +863,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
 @Composable fun SettingRow(title:String,subtitle:String,checked:Boolean,action:()->Unit) { Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) { Column(Modifier.weight(1f)){Text(title,style=MaterialTheme.typography.titleMedium);Text(subtitle,style=MaterialTheme.typography.bodySmall,color=Muted)};Switch(checked,onCheckedChange={action()},modifier=Modifier.semantics { contentDescription=title }) } }
 fun maneuverIcon(step: Maneuver?): ImageVector = when { step==null->Icons.Default.North; step.type=="arrive"->Icons.Default.Flag; step.type.contains("roundabout")||step.type.contains("rotary")->Icons.Default.RoundaboutRight; step.modifier=="uturn"->if(step.uTurnRight)Icons.Default.UTurnRight else Icons.Default.UTurnLeft; step.modifier.contains("left")->Icons.Default.TurnLeft;step.modifier.contains("right")->Icons.Default.TurnRight;else->Icons.Default.Straight }
 
-@Composable fun ManeuverBanner(state: NavState,onClick:()->Unit) = NavBanner(state,onClick)
+@Composable fun ManeuverBanner(state: NavState,onClick:()->Unit,modifier:Modifier=Modifier) = NavBanner(state,onClick,modifier)
 @Composable fun NavigationFooter(state: NavState,onSteps:()->Unit,onStop:()->Unit) = NavBottomBar(state,onSteps,onStop)
 private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowercase(Locale.ROOT)) {
     "restaurant","fast_food","ice_cream","food" -> Icons.Default.Restaurant to "Food"
@@ -659,13 +880,14 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
     else -> Icons.Default.Place to "Place"
 }
 @OptIn(ExperimentalLayoutApi::class)
-@Composable fun DestinationCard(state: NavState,onSave:()->Unit,onClose:()->Unit,onLocate:()->Unit,onRetry:()->Unit,onStart:()->Unit,onSteps:()->Unit,onSelectRoute:(Int)->Unit,compact:Boolean=false,onQuest:(()->Unit)?=null,onShare:(()->Unit)?=null,roomyActions:Boolean=false,onTransit:(()->Unit)?=null) {
+@Composable fun DestinationCard(state: NavState,onSave:()->Unit,onClose:()->Unit,onLocate:()->Unit,onRetry:()->Unit,onStart:()->Unit,onSteps:()->Unit,onSelectRoute:(Int)->Unit,compact:Boolean=false,onQuest:(()->Unit)?=null,onShare:(()->Unit)?=null,roomyActions:Boolean=false,onTransit:(()->Unit)?=null,startActionModifier:Modifier=Modifier) {
     val place=state.selected ?: return
     val palette=hudPalette(state.world)
     val (categoryIcon,categoryLabel)=placeCategory(place.kind)
     val detail=if(place.address=="Selected on map")"$categoryLabel · Selected on map" else place.address
     val expandedActions=roomyActions || LocalDensity.current.fontScale>1.3f
-    Surface(color=palette.panel,contentColor=palette.foreground,shape=hudShape(state.world),border=hudBorder(state.world),modifier=Modifier.fillMaxWidth()) {
+    Surface(color=palette.panel,contentColor=palette.foreground,shape=hudShape(state.world),border=hudBorder(state.world),
+        modifier=Modifier.fillMaxWidth().animateContentSize(animationSpec=tween(280,easing=FastOutSlowInEasing))) {
         Column(Modifier.padding(if(compact)12.dp else 16.dp),verticalArrangement=Arrangement.spacedBy(if(compact)8.dp else 12.dp)) {
             Row(verticalAlignment=Alignment.CenterVertically) {
                 Surface(color=palette.accent.copy(alpha=.15f),shape=hudShape(state.world)) {Icon(categoryIcon,categoryLabel,Modifier.padding(10.dp).size(22.dp),tint=palette.accent)}
@@ -691,7 +913,22 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
                     if(!state.navigating && state.routeOptions.size>1) {
                         RouteChipRow(state,onSelectRoute)
                     }
-                    Button(onClick=onStart,enabled=state.gpsReady,modifier=Modifier.fillMaxWidth().heightIn(min=50.dp),shape=hudShape(state.world)) { Icon(Icons.Default.Navigation,null,Modifier.size(18.dp));Spacer(Modifier.width(10.dp));Text(if(state.gpsReady)"Start navigation" else "Waiting for GPS…",fontWeight=FontWeight.Bold) }
+                    Button(onClick=onStart,enabled=state.gpsReady,
+                        modifier=startActionModifier.fillMaxWidth().heightIn(min=if(compact)56.dp else 64.dp),
+                        shape=hudShape(state.world),contentPadding=PaddingValues(horizontal=16.dp,vertical=10.dp)) {
+                        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(12.dp),verticalAlignment=Alignment.CenterVertically) {
+                            Icon(Icons.Default.Navigation,null,Modifier.size(22.dp))
+                            Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(1.dp)) {
+                                Text(if(state.gpsReady)"Start navigation" else "Waiting for GPS…",
+                                    style=if(compact)MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
+                                    fontWeight=FontWeight.Bold,maxLines=2,overflow=TextOverflow.Ellipsis)
+                                if(!compact)Text(if(state.gpsReady)"Turn-by-turn directions ready" else "Waiting for a GPS fix",
+                                    style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onPrimary.copy(alpha=.84f),
+                                    maxLines=2,overflow=TextOverflow.Ellipsis)
+                            }
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward,null,Modifier.size(18.dp))
+                        }
+                    }
                 }
                 else -> { Text("Use your precise location to get ${state.mode.routeDescription} directions.",style=MaterialTheme.typography.bodySmall,color=palette.muted);Button(onClick=onLocate,modifier=Modifier.fillMaxWidth()){Text("Enable GPS for directions")} }
             }
@@ -754,10 +991,57 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
     }
 }
 
-@Composable fun SearchScreen(state: NavState,onQuery:(String)->Unit,onSelect:(Place)->Unit,onBack:()->Unit,onMode:(TravelMode)->Unit,onSubmit:()->Unit={onQuery(state.query)}) {
+@Composable fun SearchScreen(state: NavState,onQuery:(String)->Unit,onSelect:(Place)->Unit,onBack:()->Unit,onMode:(TravelMode)->Unit,onSubmit:()->Unit={onQuery(state.query)},googleSuggestionsEnabled:Boolean=false,onFallbackSearch:(String)->Unit=onQuery) {
     val keyboard=LocalSoftwareKeyboardController.current
+    val context=LocalContext.current
     fun submit(){keyboard?.hide();onSubmit()}
     val palette=hudPalette(state.world)
+    val suggestionProvider=remember { GoogleMapSuggestions() }
+    val offlinePlaces=remember(context.applicationContext) { OfflinePlacesStore(context.applicationContext) }
+    var liveSuggestions by remember { mutableStateOf(GoogleMapSuggestResult(emptyList(),emptyList())) }
+    var offlineSuggestions by remember { mutableStateOf<List<Place>>(emptyList()) }
+    var liveSuggestionsLoading by remember { mutableStateOf(false) }
+    LaunchedEffect(state.query,state.fix) {
+        val term=state.query.trim()
+        val near=state.fix ?: PreviewCenter
+        offlineSuggestions=emptyList()
+        if(term.length>=2) {
+            delay(320)
+            offlineSuggestions=withContext(Dispatchers.IO) { offlinePlaces.search(term,near) }
+        }
+    }
+    LaunchedEffect(state.query, googleSuggestionsEnabled) {
+        val term=state.query.trim()
+        val sharedLink=term.startsWith("https:",true) || term.startsWith("geo:",true)
+        val directCoordinates=Regex("^[+-]?[0-9.]+\\s*,\\s*[+-]?[0-9.]*\\s*(?:\\([^()]*\\))?$").matches(term)
+        if(!googleSuggestionsEnabled || term.length<2 || sharedLink || directCoordinates) {
+            liveSuggestions=GoogleMapSuggestResult(emptyList(),emptyList())
+            liveSuggestionsLoading=false
+            if(googleSuggestionsEnabled && directCoordinates) onFallbackSearch(term)
+        } else {
+            liveSuggestionsLoading=true
+            delay(320)
+            val center=state.fix
+            liveSuggestions=if(center==null) GoogleMapSuggestResult(emptyList(),emptyList()) else try {
+                suggestionProvider.suggest(term,center)
+            } catch(e:CancellationException) { throw e }
+            catch(_:Exception) { GoogleMapSuggestResult(emptyList(),emptyList()) }
+            currentCoroutineContext().ensureActive()
+            liveSuggestionsLoading=false
+            if(liveSuggestions.places.isEmpty() && liveSuggestions.queries.isEmpty()) onFallbackSearch(term)
+        }
+    }
+    val searchTerm=state.query.trim().lowercase(Locale.ROOT)
+    val personalSuggestions=if(searchTerm.length<2) emptyList() else (state.recent+state.saved)
+        .filter { it.name.lowercase(Locale.ROOT).contains(searchTerm) || it.address.lowercase(Locale.ROOT).contains(searchTerm) }
+        .filterNot { saved -> offlineSuggestions.any { offline ->
+            offline.id==saved.id || offline.name.equals(saved.name,true) && distance(offline.point,saved.point)<120.0
+        } }
+        .distinctBy { it.id }.take(6)
+    val localSuggestions=(offlineSuggestions.take(6)+personalSuggestions).distinctBy { it.id }.take(12)
+    val placeSuggestions=liveSuggestions.places.filterNot { suggestion ->
+        localSuggestions.any { it.id==suggestion.id || it.name.equals(suggestion.name,true) && distance(it.point,suggestion.point)<120.0 }
+    }
     Surface(color=palette.panel,contentColor=palette.foreground,modifier=Modifier.fillMaxSize()) { Column(Modifier.fillMaxSize().statusBarsPadding().imePadding()) {
         Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically) {
             IconButton(onClick=onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Back to map")}
@@ -767,7 +1051,7 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
             Icon(painterResource(R.drawable.waypoint_search),null,Modifier.size(20.dp));Spacer(Modifier.width(8.dp));Text("Search places")
         }
         ModeSegments(state.mode,onMode,state.world,Modifier.padding(horizontal=24.dp).fillMaxWidth())
-        Text(if(state.fix==null)"Search worldwide · preview near Kolkata" else "Search near your location",style=MaterialTheme.typography.bodySmall,color=palette.muted,modifier=Modifier.padding(horizontal=24.dp,vertical=12.dp))
+        Text(if(state.fix==null)"Downloaded-map names and saved places search offline; live Google suggestions need a connection" else "Downloaded-map names and saved places search offline first; live Google suggestions need a connection",style=MaterialTheme.typography.bodySmall,color=palette.muted,modifier=Modifier.padding(horizontal=24.dp,vertical=12.dp))
         if(state.searchNote!=null)Text(state.searchNote,style=MaterialTheme.typography.bodySmall,color=palette.muted,modifier=Modifier.padding(horizontal=24.dp,vertical=8.dp))
         if(state.searching) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal=24.dp))
         if(state.searchError!=null) { Notice(state.searchError,Icons.Default.CloudOff);TextButton(onClick={submit()}){Text("Retry search")} }
@@ -777,11 +1061,65 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
                 items(state.recent,key={it.id}){PlaceRow(it,state,onSelect)}
                 if(state.recent.isEmpty()) item { Text("Find an address, a landmark, or your next coffee stop. You can also press and hold the map to drop a pin.",color=palette.muted,style=MaterialTheme.typography.bodyMedium,modifier=Modifier.padding(horizontal=24.dp)) }
             } else {
-                items(state.searchResults,key={it.id}){PlaceRow(it,state,onSelect)}
-                if(!state.searching && state.searchResults.isEmpty() && state.searchError==null && state.searchNote==null) item{Text("No places found. Try a street, city, or fuller address.",modifier=Modifier.padding(24.dp),color=palette.muted)}
+                val hasGoogleSuggestions=googleSuggestionsEnabled && (placeSuggestions.isNotEmpty() || liveSuggestions.queries.isNotEmpty())
+                if(googleSuggestionsEnabled) item {
+                    Text("Google Maps suggestions · search text and location bias are sent while you type",style=MaterialTheme.typography.labelSmall,
+                        color=palette.muted,modifier=Modifier.fillMaxWidth().padding(horizontal=24.dp,vertical=8.dp))
+                }
+                if(liveSuggestionsLoading && liveSuggestions.places.isEmpty() && liveSuggestions.queries.isEmpty()) item {
+                    Text("Finding nearby names…",style=MaterialTheme.typography.bodySmall,color=palette.muted,modifier=Modifier.padding(horizontal=24.dp,vertical=8.dp))
+                }
+                if(offlineSuggestions.isNotEmpty()) {
+                    item { Text("Downloaded map places",style=MaterialTheme.typography.titleSmall,color=palette.accent,modifier=Modifier.padding(start=24.dp,top=8.dp,bottom=4.dp)) }
+                    items(offlineSuggestions.take(6),key={"offline:${it.id}"}) { PlaceRow(it,state,onSelect) }
+                }
+                if(personalSuggestions.isNotEmpty()) {
+                    item { Text("Your places",style=MaterialTheme.typography.titleSmall,color=palette.accent,modifier=Modifier.padding(start=24.dp,top=8.dp,bottom=4.dp)) }
+                    items(personalSuggestions,key={"local:${it.id}"}) { PlaceRow(it,state,onSelect) }
+                }
+                if(hasGoogleSuggestions) {
+                    item { Text("Suggestions",style=MaterialTheme.typography.titleSmall,color=palette.accent,modifier=Modifier.padding(start=24.dp,top=8.dp,bottom=4.dp)) }
+                    items(placeSuggestions,key={"google:${it.id}"}) { place ->
+                        GoogleSuggestionRow(place,state,onSelect,{ onQuery(place.name) })
+                    }
+                    items(liveSuggestions.queries,key={"query:$it"}) { suggestion ->
+                        ListItem(
+                            headlineContent={Text(suggestion,maxLines=1,overflow=TextOverflow.Ellipsis)},
+                            supportingContent={Text("Search for this phrase",style=MaterialTheme.typography.bodySmall)},
+                            leadingContent={Icon(Icons.Default.Search,null,tint=palette.accent)},
+                            trailingContent={Icon(Icons.AutoMirrored.Filled.ArrowForward,"Search $suggestion",tint=palette.muted)},
+                            modifier=Modifier.clickable { onQuery(suggestion);submit() },
+                            colors=hudPalette(state.world).let { ListItemDefaults.colors(containerColor=Color.Transparent,headlineColor=it.foreground,supportingColor=it.muted,trailingIconColor=it.muted) },
+                        )
+                    }
+                }
+                val fallbackResults=state.searchResults.filterNot { fallback ->
+                    localSuggestions.any { it.id==fallback.id || it.name.equals(fallback.name,true) && distance(it.point,fallback.point)<120.0 } ||
+                        hasGoogleSuggestions && placeSuggestions.any { it.id==fallback.id || it.name.equals(fallback.name,true) && distance(it.point,fallback.point)<120.0 }
+                }
+                if(fallbackResults.isNotEmpty() && hasGoogleSuggestions) item {
+                    Text("More matches",style=MaterialTheme.typography.titleSmall,color=palette.muted,modifier=Modifier.padding(start=24.dp,top=10.dp,bottom=4.dp))
+                }
+                items(fallbackResults,key={"fallback:${it.id}"}){PlaceRow(it,state,onSelect)}
+                if(!liveSuggestionsLoading && !state.searching && localSuggestions.isEmpty() && placeSuggestions.isEmpty() && liveSuggestions.queries.isEmpty() && state.searchResults.isEmpty() && state.searchError==null && state.searchNote==null)
+                    item{Text("No places found. Try a street, city, or fuller address.",modifier=Modifier.padding(24.dp),color=palette.muted)}
             }
         }
     } }
+}
+
+@Composable private fun GoogleSuggestionRow(place:Place,state:NavState,onSelect:(Place)->Unit,onFill:()->Unit) {
+    val palette=hudPalette(state.world)
+    ListItem(
+        headlineContent={Text(place.name,maxLines=1,overflow=TextOverflow.Ellipsis)},
+        supportingContent={Text(place.address.ifBlank { "Google Maps place suggestion" },maxLines=1,overflow=TextOverflow.Ellipsis)},
+        leadingContent={Icon(painterResource(R.drawable.waypoint_map_pin),null,Modifier.size(24.dp),tint=palette.accent)},
+        trailingContent={IconButton(onClick=onFill,modifier=Modifier.size(48.dp).semantics { contentDescription="Put ${place.name} in the search field" }) {
+            Icon(Icons.Default.ArrowUpward,"Use ${place.name} as search text",tint=palette.muted)
+        }},
+        modifier=Modifier.clickable { onSelect(place) },
+        colors=ListItemDefaults.colors(containerColor=Color.Transparent,headlineColor=palette.foreground,supportingColor=palette.muted,trailingIconColor=palette.muted),
+    )
 }
 @Composable fun PlaceRow(place: Place,state: NavState,onSelect:(Place)->Unit) {
     ListItem(headlineContent={Text(place.name,maxLines=2,overflow=TextOverflow.Ellipsis)},supportingContent={Column { Text(place.address,maxLines=3,overflow=TextOverflow.Ellipsis);if(place.source.isNotEmpty())Text(place.source,style=MaterialTheme.typography.labelSmall,color=hudPalette(state.world).muted) }},leadingContent={Icon(painterResource(R.drawable.waypoint_map_pin),null,Modifier.size(24.dp),tint=Color(0xFF9CCB83))},trailingContent={state.fix?.let{Text(formatDistance(distance(it,place.point),state.imperial),style=MaterialTheme.typography.labelSmall,color=hudPalette(state.world).muted)}},modifier=Modifier.clickable{onSelect(place)},colors=hudPalette(state.world).let{ListItemDefaults.colors(containerColor=Color.Transparent,headlineColor=it.foreground,supportingColor=it.muted,trailingIconColor=it.muted)})

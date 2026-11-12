@@ -1,5 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />
     <application android:label="Waypoint Preview" tools:replace="android:label">
         <activity android:name=".WorldPreviewCaptureActivity" android:exported="false" />
+        <service android:name=".MockRouteProviderService" android:exported="true"
+            android:permission="android.permission.DUMP"
+            android:foregroundServiceType="location" />
     </application>
 </manifest>

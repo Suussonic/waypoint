@@ -22,7 +22,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
 /** Open invite to the Waypoint Discord: a private channel for each world, release notes and bug reports. */
-const val DISCORD_INVITE_URL = "https://discord.gg/3ddSCASNUn"
+const val DISCORD_INVITE_URL = "https://discord.gg/TQ9cEx6rsu"
 
 /** The public Waypoint website. */
 const val WAYPOINT_SITE_URL = "https://the-geeky-couldron.github.io/waypoint/"

@@ -13,7 +13,7 @@ PROFILES={
 'heat':profile(.7,.7,'flat',11,.75,.45),
 'rivia':profile(.45,.52,'ink',12,.7,.65,True),
 'vice_coast':profile(1.2,1.3,'flat',12,1),
-'liberty':profile(.75,.8,'flat',11,.45),
+'liberty':profile(.75,.8,'hidden',11,.45),
 'ctos':profile(1.15,.8,'flat',11,1),
 'hyrule':profile(.38,.3,'outline',11,.4,.75),
 'skyrim':profile(.3,.34,'hidden',12,.65,.9),

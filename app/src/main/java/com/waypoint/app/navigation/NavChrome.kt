@@ -1,5 +1,7 @@
 package com.waypoint.app
 
+import android.content.Context
+import android.text.format.DateFormat as AndroidDateFormat
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -12,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Route
@@ -21,7 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.scale
@@ -42,7 +45,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.text.SimpleDateFormat
 import java.util.Date
 import kotlin.math.ceil
 import kotlin.math.roundToInt
@@ -136,23 +138,36 @@ internal fun formatTripTime(seconds: Double): String {
     return if (minutes < 60) "$minutes min" else "${minutes / 60} hr ${minutes % 60} min"
 }
 
+internal fun formatArrivalTime(context: Context, secondsUntilArrival: Double): String {
+    val seconds = secondsUntilArrival.takeIf { it.isFinite() }?.coerceAtLeast(0.0) ?: 0.0
+    val arrival = Date(System.currentTimeMillis() + (seconds * 1000).toLong())
+    return AndroidDateFormat.getTimeFormat(context).format(arrival)
+}
+
+private fun navigationDistanceLabel(state: NavState): String = when {
+    !state.gpsReady -> "Finding GPS"
+    state.routing -> "Rerouting…"
+    state.offRoute -> "Off route"
+    state.progress == null -> "Starting"
+    else -> formatDistance(state.progress.toTurn, state.imperial)
+}
+
+private fun navigationInstructionLabel(state: NavState, guidance: RouteGuidance): String = when {
+    !state.gpsReady -> "Waiting for a fresh, accurate location"
+    state.routing -> "Updating the route from your position"
+    state.offRoute -> if (state.routeError != null) "Route unavailable · check connection and keep moving"
+        else "Checking your position for a new route"
+    else -> guidance.instruction
+}
+
 /** The banner: maneuver arrow, distance to the turn, instruction, and a "Then" tab for the next turn. */
 @Composable
-internal fun NavBanner(state: NavState, onClick: () -> Unit) {
+internal fun NavBanner(state: NavState, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val p = hudPalette(state.world)
     val guidance = routeGuidance(state.route, state.progress)
-    val distanceText = when {
-        !state.gpsReady -> "Finding GPS"
-        state.routing -> "Rerouting…"
-        state.offRoute -> "Off route"
-        else -> formatDistance(state.progress?.toTurn ?: 0.0, state.imperial)
-    }
-    val instructionText = when {
-        !state.gpsReady -> "Waiting for a fresh, accurate location"
-        state.routing -> "Updating the route from your position"
-        state.offRoute -> if (state.routeError != null) "Route unavailable · check connection and keep moving" else "Checking your position for a new route"
-        else -> guidance.instruction
-    }
+    val distanceText = navigationDistanceLabel(state)
+    val instructionText = navigationInstructionLabel(state, guidance)
+    val announceStatus = !state.gpsReady || state.routing || state.offRoute
     val steps = state.route?.steps.orEmpty()
     val index = state.progress?.nextStep ?: 0
     val after = steps.getOrNull(index + 1)?.takeIf { !guidance.continuingToArrival && guidance.maneuver?.type != "arrive" && state.gpsReady && !state.offRoute }
@@ -160,9 +175,9 @@ internal fun NavBanner(state: NavState, onClick: () -> Unit) {
     Column(Modifier.fillMaxWidth()) {
         Surface(
             onClick = onClick, color = p.panel, contentColor = p.foreground, shape = shape, border = hudBorder(state.world),
-            modifier = Modifier.fillMaxWidth().semantics {
+            modifier = modifier.fillMaxWidth().semantics {
                 contentDescription = "$distanceText. $instructionText. Show route steps"
-                liveRegion = LiveRegionMode.Polite
+                if (announceStatus) liveRegion = LiveRegionMode.Polite
             },
         ) {
             Row(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically,
@@ -196,7 +211,7 @@ internal fun NavBottomBar(state: NavState, onSteps: () -> Unit, onStop: () -> Un
     val p = hudPalette(state.world)
     val seconds = state.progress?.seconds ?: state.route?.seconds ?: 0.0
     val meters = state.progress?.remaining ?: state.route?.meters ?: 0.0
-    val arrival = SimpleDateFormat("h:mm a", LocalConfiguration.current.locales[0]).format(Date(System.currentTimeMillis() + (seconds * 1000).toLong()))
+    val arrival = formatArrivalTime(LocalContext.current, seconds)
     Surface(color = p.panel, contentColor = p.foreground, shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         modifier = Modifier.fillMaxWidth().pointerInput(Unit) {
             detectVerticalDragGestures { _, drag -> if (drag < -18f) onSteps() }
@@ -228,18 +243,9 @@ internal fun CompactLandscapeNavBanner(
 ) {
     val p = hudPalette(state.world)
     val guidance = routeGuidance(state.route, state.progress)
-    val distanceText = when {
-        !state.gpsReady -> "Finding GPS"
-        state.routing -> "Rerouting…"
-        state.offRoute -> "Off route"
-        else -> formatDistance(state.progress?.toTurn ?: 0.0, state.imperial)
-    }
-    val instructionText = when {
-        !state.gpsReady -> "Waiting for a fresh, accurate location"
-        state.routing -> "Updating the route from your position"
-        state.offRoute -> if (state.routeError != null) "Route unavailable · check connection and keep moving" else "Checking your position for a new route"
-        else -> guidance.instruction
-    }
+    val distanceText = navigationDistanceLabel(state)
+    val instructionText = navigationInstructionLabel(state, guidance)
+    val announceStatus = !state.gpsReady || state.routing || state.offRoute
     val largeText = LocalDensity.current.fontScale >= 1.75f
     BoxWithConstraints(modifier) {
         val visibleInstruction = if (largeText && maxWidth < 280.dp) when {
@@ -254,7 +260,7 @@ internal fun CompactLandscapeNavBanner(
             Surface(onClick = onSteps, color = p.panel, contentColor = p.foreground, shape = hudShape(state.world),
                 border = hudBorder(state.world), modifier = Modifier.weight(1f).heightIn(min = 48.dp).semantics {
                     contentDescription = "$distanceText. $instructionText. Show route steps"
-                    liveRegion = LiveRegionMode.Polite
+                if (announceStatus) liveRegion = LiveRegionMode.Polite
                 }) {
                 Row(Modifier.padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -303,32 +309,32 @@ internal fun CompactLandscapeNavFooter(
     onStop: () -> Unit,
     onMute: () -> Unit,
     onLocate: () -> Unit,
+    onToggleMapOrientation: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val seconds = state.progress?.seconds ?: state.route?.seconds ?: 0.0
     val meters = state.progress?.remaining ?: state.route?.meters ?: 0.0
-    val arrival = SimpleDateFormat("h:mm a", LocalConfiguration.current.locales[0])
-        .format(Date(System.currentTimeMillis() + (seconds * 1000).toLong()))
+    val arrival = formatArrivalTime(LocalContext.current, seconds)
     val time = formatTripTime(seconds)
     val remaining = formatDistance(meters, state.imperial)
     val largeText = LocalDensity.current.fontScale >= 1.75f
     BoxWithConstraints(modifier) {
         val stacked = largeText || maxWidth < 356.dp
-        val actionsInTwoRows = maxWidth < 216.dp
+        val actionsInTwoRows = maxWidth < 280.dp
         val splitTripText = largeText && maxWidth < 240.dp
         if (stacked) {
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 CompactLandscapeTripSummary(state.world, time, remaining, arrival, onSteps,
                     largeText = largeText, splitTripText = splitTripText, modifier = Modifier.fillMaxWidth())
-                CompactLandscapeNavActions(state, onSteps, onStop, onMute, onLocate, actionsInTwoRows)
+                CompactLandscapeNavActions(state, onSteps, onStop, onMute, onLocate, onToggleMapOrientation, actionsInTwoRows)
             }
         } else {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 CompactLandscapeTripSummary(state.world, time, remaining, arrival, onSteps,
                     largeText = false, splitTripText = false, modifier = Modifier.weight(1f))
-                CompactLandscapeNavActions(state, onSteps, onStop, onMute, onLocate, actionsInTwoRows)
+                CompactLandscapeNavActions(state, onSteps, onStop, onMute, onLocate, onToggleMapOrientation, actionsInTwoRows)
             }
         }
     }
@@ -382,29 +388,42 @@ private fun CompactLandscapeNavActions(
     onStop: () -> Unit,
     onMute: () -> Unit,
     onLocate: () -> Unit,
+    onToggleMapOrientation: () -> Unit,
     twoRows: Boolean,
 ) {
-    val controls: List<Triple<ImageVector, String, () -> Unit>> = listOf(
-        Triple(Icons.Default.Close, "End navigation", onStop),
-        Triple(Icons.Default.Route, "Route steps", onSteps),
-        Triple(if (state.voice) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
+    val controls = listOf(
+        CompactNavAction(Icons.Default.Close, "End navigation", onStop),
+        CompactNavAction(Icons.Default.Route, "Route steps", onSteps),
+        CompactNavAction(if (state.voice) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
             if (state.voice) "Mute guidance" else "Unmute guidance", onMute),
-        Triple(Icons.Default.MyLocation, "Use my location", onLocate),
+        CompactNavAction(Icons.Default.MyLocation, "Use my location", onLocate),
+        CompactNavAction(Icons.Default.Explore, mapOrientationAction(state.keepMapNorthUp), onToggleMapOrientation,
+            highlighted = state.keepMapNorthUp, stateText = mapOrientationState(state.keepMapNorthUp)),
     )
     if (twoRows) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             controls.chunked(2).forEach { pair ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    pair.forEach { (icon, label, action) -> ChromeButton(state.world, icon, label, action) }
+                    pair.forEach { action -> ChromeButton(state.world, action.icon, action.label, action.onClick,
+                        highlighted = action.highlighted, stateText = action.stateText) }
                 }
             }
         }
     } else {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            controls.forEach { (icon, label, action) -> ChromeButton(state.world, icon, label, action) }
+            controls.forEach { action -> ChromeButton(state.world, action.icon, action.label, action.onClick,
+                highlighted = action.highlighted, stateText = action.stateText) }
         }
     }
 }
+
+private data class CompactNavAction(
+    val icon: ImageVector,
+    val label: String,
+    val onClick: () -> Unit,
+    val highlighted: Boolean = false,
+    val stateText: String? = null,
+)
 
 @Composable
 private fun NavRoundButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
@@ -421,7 +440,8 @@ private fun LocalContentColorFor(): Color = androidx.compose.material3.LocalCont
 /** Speed and Worlds on the left; compass, mute and re-centre on the right. */
 @Composable
 internal fun NavSideControls(state: NavState, onMute: () -> Unit, onLocate: () -> Unit,
-                             onWorlds: () -> Unit, modifier: Modifier = Modifier) {
+                             onWorlds: () -> Unit, onToggleMapOrientation: () -> Unit,
+                             modifier: Modifier = Modifier) {
     val world = state.world
     val p = hudPalette(world)
     val heading = if (state.headingReliable) state.bearing else Float.NaN
@@ -444,7 +464,8 @@ internal fun NavSideControls(state: NavState, onMute: () -> Unit, onLocate: () -
         }
         Spacer(Modifier.weight(1f))
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (heading.isFinite()) CompassRose(heading, world, onRecenter = onLocate)
+            CompassRose(heading, world, onRecenter = onLocate, northUp = state.keepMapNorthUp,
+                onToggleOrientation = onToggleMapOrientation)
             ChromeButton(world, if (state.voice) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
                 if (state.voice) "Mute guidance" else "Unmute guidance", onMute)
             ChromeButton(world, Icons.Default.MyLocation, "Use my location", onLocate)

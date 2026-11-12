@@ -26,7 +26,7 @@ sealed interface UpdateStatus {
     data class Available(val release: ReleaseUpdate) : UpdateStatus
     data class Downloading(val release: ReleaseUpdate, val percent: Int) : UpdateStatus
     data class Ready(val release: ReleaseUpdate, val file: File) : UpdateStatus
-    data class Failed(val message: String) : UpdateStatus
+    data class Failed(val message: String, val release: ReleaseUpdate? = null) : UpdateStatus
 }
 
 class UpdateFileProvider : FileProvider()
@@ -114,7 +114,7 @@ class AppUpdater(private val context: Context) {
                 }
                 mutable.value = UpdateStatus.Ready(release, target)
             } catch (e: CancellationException) { throw e }
-            catch (e: Exception) { currentCoroutineContext().ensureActive(); mutable.value = UpdateStatus.Failed(friendlyError(e)) }
+            catch (e: Exception) { currentCoroutineContext().ensureActive(); mutable.value = UpdateStatus.Failed(friendlyError(e), release) }
             finally { partial.delete(); call = null }
         }
     }

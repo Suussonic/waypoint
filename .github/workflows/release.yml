@@ -136,6 +136,7 @@ jobs:
     permissions:
       actions: read
       contents: write
+      attestations: read
     steps:
       - name: Check out the verified release source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -151,6 +152,10 @@ jobs:
           path: release
       - name: Verify downloaded release artifact
         run: (cd release && sha256sum --check --strict SHA256SUMS)
+      - name: Verify signed APK build provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh attestation verify release/Waypoint.apk --repo "$GITHUB_REPOSITORY"
       - name: Create an annotated version tag if needed
         env:
           GH_TOKEN: ${{ github.token }}
@@ -192,3 +197,14 @@ jobs:
           gh release create "$RELEASE_TAG" release/Waypoint.apk release/SHA256SUMS \
             --verify-tag --title "Waypoint $RELEASE_TAG" \
             --notes-file docs/releases/current.md --latest
+      - name: Announce the release in Discord
+        env:
+          DISCORD_RELEASES_WEBHOOK_URL: ${{ secrets.DISCORD_RELEASES_WEBHOOK_URL }}
+          DISCORD_ANNOUNCEMENTS_WEBHOOK_URL: ${{ secrets.DISCORD_ANNOUNCEMENTS_WEBHOOK_URL }}
+          WAYPOINT_RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          WAYPOINT_RELEASE_URL: https://github.com/${{ github.repository }}/releases/tag/${{ needs.prepare.outputs.tag }}
+        run: |
+          set -euo pipefail
+          WAYPOINT_RELEASE_NOTES="$(cat docs/releases/current.md)"
+          export WAYPOINT_RELEASE_NOTES
+          python3 .github/scripts/announce_discord_release.py

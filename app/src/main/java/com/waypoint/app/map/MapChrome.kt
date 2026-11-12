@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.ViewInAr
@@ -44,7 +45,7 @@ import androidx.compose.ui.unit.Dp
  *   top start   world pill (emblem, name, place) opens Worlds
  *   top end     Search, Settings
  *   right rail  map key (MapLegendControl, centre), then Tilt and Locate at the bottom
- *   bottom start  compass when the heading is known; GPS chip only when the fix needs attention
+ *   bottom start  compass orientation toggle; GPS chip only when the fix needs attention
  *
  * Saved and Quests live in the bottom bar, so they are not repeated on the map.
  */
@@ -61,12 +62,13 @@ internal fun MapChrome(state: NavState, heading: Float, actions: AtlasActions, m
     BoxWithConstraints(modifier.fillMaxSize()) {
         val compactTopKey = maxHeight < 420.dp && maxWidth >= 600.dp
         val keySpace = if (compactTopKey) buttonSize + gap else 0.dp
-        val pillMax = (maxWidth - gutter * 2 - buttonSize * 2 - gap - keySpace - 12.dp).coerceAtLeast(120.dp)
+        val pillMax = (maxWidth - gutter * 2 - buttonSize * 3 - gap * 2 - keySpace - 12.dp).coerceAtLeast(120.dp)
         WorldPill(state, actions.huds,
             Modifier.align(Alignment.TopStart).padding(start = gutter, top = 12.dp).widthIn(max = pillMax))
         Row(Modifier.align(Alignment.TopEnd).padding(end = gutter, top = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(gap)) {
             ChromeButton(world, Icons.Default.Search, "Set a destination", actions.search, hudSize = size)
+            ChromeButton(world, Icons.Default.Explore, "Explore nearby places", { actions.nearby("") }, hudSize = size)
             ChromeButton(world, Icons.Default.Tune, "Settings", actions.settings, hudSize = size)
         }
         val toolPlacement = Modifier.align(if (toolsOnRight) Alignment.BottomEnd else Alignment.BottomStart)
@@ -75,7 +77,7 @@ internal fun MapChrome(state: NavState, heading: Float, actions: AtlasActions, m
                 bottom = gutter + if (toolsOnRight) 0.dp else scaleClearance)
         val mapTools: @Composable () -> Unit = {
             ChromeButton(world, Icons.Default.ViewInAr, "Toggle 2D and 3D", actions.tilt, hudSize = size)
-            // Highlighted while the map is centred on the user and following; otherwise a tap flies back to them.
+            // Recenter remains separate from the compass orientation toggle.
             ChromeButton(world, Icons.Default.MyLocation, "Use my location", actions.locate,
                 highlighted = !actions.awayFromUser && state.gpsReady,
                 stateText = if (actions.awayFromUser) "Map is away from you" else if (state.gpsReady) "Centred on you" else null,
@@ -92,8 +94,8 @@ internal fun MapChrome(state: NavState, heading: Float, actions: AtlasActions, m
                 end = if (toolsOnRight) 0.dp else gutter,
                 bottom = gutter + if (toolsOnRight) scaleClearance else 0.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (heading.isFinite()) CompassRose(heading, world, onRecenter = actions.locate,
-                hudSize = size)
+            CompassRose(heading, world, onRecenter = actions.locate, hudSize = size,
+                northUp = state.keepMapNorthUp, onToggleOrientation = actions.toggleMapOrientation)
             if (showFix) FixLabel(state, Modifier.clip(hudShape(world)))
         }
     }

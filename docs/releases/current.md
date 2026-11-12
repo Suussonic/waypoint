@@ -1,33 +1,55 @@
-# Waypoint 2.6.0
+# Waypoint 2.6.5
 
-This update adds a speed-limit warning while you drive, a first version of bus and transit directions, and a way into the Waypoint Discord from inside the app.
+This release steadies navigation on the phone and in Android Auto, brings offline place names into downloaded regions, and makes place discovery and map rendering more complete.
 
-### Speed limit warning
+## Navigation that holds its line
 
-- While you navigate by car, the phone HUD shows the posted limit as a round sign beside your speed, in km/h or mph to match your units setting.
-- Go more than 3 km/h or mph over and your speed turns red and the sign grows. Waypoint also says the limit and "Slow down" once through the guidance voice, then stays quiet for at least a minute so it never nags. Muting guidance mutes the alert too.
-- The limit comes from the `maxspeed` tag on OpenStreetMap roads, so it appears only where mappers have recorded one. Where there is no tag, nothing is shown rather than a guess.
-- Turn it off any time in Settings under **Speed limit warning**. It runs only while guiding by car on the phone; Android Auto does not show it yet.
-- To look up the limit, Waypoint sends your current position to the public Overpass API about once a minute while guiding. Nothing is sent when the setting is off.
+- The camera now settles when the vehicle is stationary, filters noisy heading changes, and stops the world from jittering as you move the phone or end guidance.
+- Turn guidance uses a steadier course and road-position estimate so the vehicle marker stays with the selected route through bends and roundabouts.
+- Navigation camera framing is tuned for closer road context, smoother turns and a clearer forward view. The start-navigation action transitions into guidance with less visual interruption.
+- The map scale indicator has moved away from the center of the route.
 
-### Bus and transit directions
+## Places that work offline
 
-- Pick a destination, then tap **Bus & transit** next to Steps, or choose it from More. Waypoint lists the next trips from where you are now: departure and arrival times, which line to take, its direction, where to board and where to get off, how many stops, and the walking between.
-- Buses, trams, metro and trains are included where open timetable data exists. Times marked "live" come from the operator's real-time feed.
-- Timetables come from Transitous, which merges open transit feeds. Coverage depends on the city, so some places have no results yet; Waypoint says so plainly instead of showing an empty list.
-- This first version is a trip planner. It does not draw the transit leg on the map or guide you stop by stop.
-- Planning a trip sends your position and the chosen destination to api.transitous.org.
+- Downloaded map regions can include nearby open-place records. Their place names remain available for local search and nearby discovery without a network connection, including when you are elsewhere.
+- Search can offer optional Google Maps web suggestions while you type. Opening a nearby place can load Google business details and photos, with open-data results and Commons imagery available as alternatives.
+- Google web lookups are experimental and off by default. They use undocumented Maps endpoints rather than the supported Places API, have no Places API key or Places API billing, and may change or stop working. Google's published terms restrict automated scraping. Offline place snapshots contain open-data records, not Google suggestions, details or photos.
 
-### Join the Waypoint Discord
+## More readable worlds
 
-- Settings now has **Join the Waypoint Discord**, and the What's New window shown after you update has **Join Discord** and **Visit site** buttons beside **Explore map**. The server has a private channel for each of the 38 worlds, plus release notes and bug reports. Open invite: https://discord.gg/3ddSCASNUn
+- Liberty City regains its landmark blips and place references, with repaired icon assets.
+- Full zoom-out rendering now preserves map content across the worlds instead of leaving large areas incomplete.
+- In Night City, 3D buildings and the highlighted route now use a clearer draw order, so routes remain legible around raised geometry.
+- World styles, map symbols, and day/night artwork receive another consistency pass.
 
-### Website
+## Android Auto and the updater
 
-The day and night section on the Waypoint site now compares real map captures of the same place, Jaisalmer in Old West and Jaipur in Pixel, with a slider and a world switcher. The site also has a Discord section and the new Upstar badge.
+- Android Auto now holds a more useful forward camera direction, tilt and zoom while stationary and while moving.
+- The car map adapts its viewport and guidance layout when Android Auto shares screen space with another app.
+- The updater keeps its download progress visible while the release details scroll, and its loading and download states have clearer feedback.
 
-### Thanks for the reports and ideas
+## A longer route through CI
 
-- **[@YS0008](https://github.com/YS0008)** asked for bus routes and which bus to take in [#51](https://github.com/the-geeky-couldron/waypoint/issues/51).
+The Android Actions workflow now runs on pull requests and pushes to both `dev` and `main`. Separate gates validate workflow security, dependency changes, the release page, map styles and assets, motion source, debug and release builds, JVM tests, lint and emulator coverage. Main builds sign the APK and attach GitHub build-provenance attestation before the release workflow can publish it.
 
-Compatible updates preserve your saved places, quests, and settings. Maps, search, routes and transit still need an internet connection. Android Auto availability in a real vehicle still depends on Google's trusted installation requirements.
+## Credits for the route
+
+Thank you to the people who reported these issues and helped shape the fixes.
+
+**GitHub**
+
+- **[@TheNoob1703](https://github.com/TheNoob1703)** — map rotation and compass behavior in [#54](https://github.com/the-geeky-couldron/waypoint/issues/54).
+- **[@harrydbarnes](https://github.com/harrydbarnes)** — the updater's download progress in [#63](https://github.com/the-geeky-couldron/waypoint/issues/63).
+- **[@Balzamus](https://github.com/Balzamus)** — the Cyberpunk map's 3D presentation in [#55](https://github.com/the-geeky-couldron/waypoint/issues/55).
+- **[@lakshvin](https://github.com/lakshvin)** — richer Google place discovery in [#21](https://github.com/the-geeky-couldron/waypoint/issues/21).
+
+**Discord**
+
+- **@ForgotMyИame_124** — Liberty City landmarks and blips in ticket-0002.
+- **@Aleksandyr** — compass behavior in ticket-0003.
+- **@shaurya124** — Android Auto split-screen sizing in ticket-0003.
+- **@Nomad** — map rotation through turns and slowdowns in ticket-0004.
+
+Discord ticket channels are private, so their names are credited here without exposing ticket links.
+
+Downloaded regions keep their map data and open-place snapshots available offline. Route calculation and live Google suggestions, details and photos still need an internet connection. Compatible updates preserve saved places, quests and settings. Android Auto availability in a real vehicle still depends on Google's trusted installation requirements.

@@ -2,7 +2,7 @@
 
 ## The map is blank or has missing features
 
-Waypoint needs internet access for live tiles, search and public routing endpoints. Check the connection and try again later if an endpoint is unavailable or rate-limited. Zooming can reveal additional POI symbols. Waypoint has no offline map package.
+Saved offline areas keep their downloaded map tiles and open place names searchable without a connection. Routes, live Google suggestions, photos and current place details still need internet. For live search or routing failures, check the connection and try again later if a public endpoint is unavailable or rate-limited. Zooming can reveal additional POI symbols.
 
 ## My location is missing or inaccurate
 

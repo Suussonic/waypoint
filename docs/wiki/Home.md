@@ -22,7 +22,7 @@ Waypoint is independent and is not affiliated with game publishers. The app uses
 - [Source repository](https://github.com/the-geeky-couldron/waypoint)
 - [Issues and feature requests](https://github.com/the-geeky-couldron/waypoint/issues)
 - [Upstar profile](https://upstar.dev/r/the-geeky-couldron/waypoint)
-- [Waypoint Discord](https://discord.gg/3ddSCASNUn) — a channel for each world, release notes and bug reports
+- [Waypoint Discord](https://discord.gg/TQ9cEx6rsu) — a channel for each world, release notes and bug reports
 
 ## What to expect
 

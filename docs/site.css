@@ -206,7 +206,8 @@ h3{font-size:clamp(1.9rem,3vw,2.9rem)}
 .proof-actions{display:flex;flex-wrap:wrap;align-items:center;gap:.35rem 1.2rem}
 .proof-capture-link{display:inline-flex;min-height:2.75rem;align-items:center;gap:.4rem;color:var(--paper);font-size:var(--support);font-weight:700;text-decoration:none;transition:color .2s ease}
 .proof-capture-link:hover{color:var(--lime)}
-.proof-verify{margin:1.1rem 0 clamp(4rem,7vw,6rem);text-align:right}
+.proof-heading{margin:clamp(4rem,7vw,6rem) 0 1rem;font-size:clamp(2rem,3.5vw,3rem)}
+.proof-verify{margin:1.1rem 0 0;text-align:right}
 .proof-verify a{display:inline-flex;min-height:2.75rem;align-items:center;gap:.5rem;color:var(--muted);font-size:var(--support);font-weight:700;text-decoration:none;transition:color .2s ease}
 .proof-verify a:hover{color:var(--lime)}
 @media(max-width:55rem){
@@ -309,7 +310,7 @@ details[open] .world-entry{animation:rise .8s var(--ease) both;animation-delay:c
 .car-copy h3{max-width:14ch;line-height:1.02}.car-copy>p{max-width:36rem;margin-bottom:1.5rem;color:var(--muted)}
 
 /* ───────── Install ───────── */
-.install-section{padding-bottom:clamp(9rem,14vw,13rem)}
+.install-section{padding-bottom:clamp(6rem,10vw,9rem)}
 .install-steps{--fill:clamp(0,calc((var(--p,1) - .3)*2.6),1);position:relative;display:grid;margin:0;padding:3.2rem 0 0;grid-template-columns:repeat(3,minmax(0,1fr));gap:2.5rem;list-style:none;counter-reset:install}
 .install-steps::before,.install-steps::after{position:absolute;top:.55rem;left:0;width:100%;height:2px;background:var(--line-strong);content:""}
 .install-steps::after{background:var(--lime);transform:scaleX(var(--fill));transform-origin:0 50%}
@@ -318,6 +319,7 @@ details[open] .world-entry{animation:rise .8s var(--ease) both;animation-delay:c
 .install-steps li::after{position:absolute;top:-2.95rem;left:.25rem;width:.65rem;height:.65rem;border-radius:50%;background:var(--lime);content:"";opacity:clamp(0,calc((var(--fill) - var(--n)*.5)*14),1);scale:clamp(.2,calc((var(--fill) - var(--n)*.5)*14),1)}
 .install-steps h3{margin-bottom:.6rem;font-size:2.1rem}.install-steps h3::before{margin-right:.7rem;color:var(--lime);content:"0" counter(install);font-variant-numeric:tabular-nums}
 .install-steps p{max-width:26rem;color:var(--muted)}
+.install-action{margin-top:clamp(2rem,4vw,3.5rem)}
 
 /* ───────── Download ───────── */
 .download-section{position:relative;padding-inline:var(--gutter);background:var(--lime);color:#182317}
@@ -362,9 +364,9 @@ details[open] .world-entry{animation:rise .8s var(--ease) both;animation-delay:c
 @media (prefers-reduced-motion:reduce){.cd-chip,.cd-wire{transition:background-color .15s ease,color .15s ease,border-color .15s ease}.cd-row:has([aria-pressed="true"]) .cd-ch{animation:cd-fade .25s ease backwards}@keyframes cd-fade{from{opacity:.4}to{opacity:1}}.cd-wire{transform:none;opacity:0}.cd-row:has([aria-pressed="true"]) .cd-wire{opacity:1;transform:none}}
 .community-copy>p{max-width:34rem;color:var(--muted)}
 .community-actions{margin-top:1.6rem}.community-actions p{margin:.8rem 0 0;color:var(--quiet);font-size:var(--meta)}
-.community-list{display:grid;margin:0;padding:0;list-style:none;border-top:1px solid var(--line-strong)}
-.community-list li{padding:1.3rem 0;border-bottom:1px solid var(--line-strong)}
-.community-list h3{margin:0 0 .4rem;font-size:1.5rem}.community-list p{margin:0;max-width:34rem;color:var(--muted)}
+.community-list{display:grid;margin:0;padding:0;list-style:none;border-top:1px solid var(--line-strong);counter-reset:join-step}
+.community-list li{padding:1.3rem 0;border-bottom:1px solid var(--line-strong);counter-increment:join-step}
+.community-list h3{margin:0 0 .4rem;font-size:1.5rem}.community-list h3::before{display:inline-block;min-width:2.2rem;margin-right:.4rem;color:var(--lime);content:"0" counter(join-step);font-variant-numeric:tabular-nums}.community-list p{margin:0;max-width:34rem;color:var(--muted)}
 @media (prefers-reduced-motion:no-preference){
   .js .community-list{position:relative;border-top-color:transparent}
   .js .community-list::before,.js .community-list li::after{position:absolute;left:0;right:0;height:1px;background:var(--line-strong);content:"";transform:scaleX(0);transform-origin:0 50%;transition:transform .9s var(--ease) calc(var(--i,0)*140ms)}
@@ -377,7 +379,7 @@ details[open] .world-entry{animation:rise .8s var(--ease) both;animation-delay:c
   .js .community-list.in h3{clip-path:inset(0 0 -25% 0);translate:0 0}
   .js .community-list.in p{opacity:1;translate:0 0}
 }
-@media (max-width:48rem){.community-section{grid-template-columns:minmax(0,1fr);grid-template-areas:"copy" "demo" "list"}}
+@media (max-width:48rem){.community-section{grid-template-columns:minmax(0,1fr);grid-template-areas:"copy" "list" "demo"}}
 @media (max-width:26rem){.cd-chip,.cd-ch{font-size:.85rem;padding-inline:.6rem}.cd-ch{gap:.3rem}}
 .footer-links{display:flex;flex-wrap:wrap;align-items:center;margin-top:2rem;padding-block:1.2rem;border-block:1px solid var(--line);gap:.7rem 1.6rem}
 .footer-links a{color:var(--muted);font-size:.88rem;font-weight:700;text-decoration:none;transition:color .2s ease}.footer-links a:hover{color:var(--lime)}
