@@ -558,7 +558,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                                                     resizeMode=SharedTransitionScope.ResizeMode.RemeasureToBounds
                                                 )
                                             }
-                                            BoxWithConstraints(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+                                            Box(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
                                                 Column(Modifier.align(Alignment.TopStart).fillMaxWidth(if(compactHeight)0.5f else 1f).onGloballyPositioned{routeHeaderBounds=it.boundsInRoot()}.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
                                                     if(navigating)ManeuverBanner(state,{steps=true},routeEntryModifier) else {
                                                         RoutePreviewHeader(state,controller::clearDestination,controller::changeMode)
