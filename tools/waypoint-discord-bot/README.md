@@ -38,6 +38,8 @@ The bot persists XP, daily totals, and GitHub issue links in `data/state.json`, 
 
 For a container deployment, mount a persistent disk at `/data`. The entrypoint fixes volume ownership and then runs Node as the unprivileged `node` user. Set `WAYPOINT_DATA_DIR=/data` (already set in the image). Keep exactly one running replica, and include both `DISCORD_BOT_TOKEN` and `GITHUB_ISSUES_TOKEN` in the host's secret variables. Never upload `.env.local` to the host or repository.
 
+For a zero-subscription VM option, follow the [Oracle Always Free deployment guide](deploy/oracle/README.md). It installs the container as a restartable system service and stores the state on the VM's persistent boot volume. An Oracle Cloud account and an Always Free VM in the account's home region are required.
+
 ## Cutover checks
 
 1. Verify a new member gets Certified Explorer and one A.T.L.A.S. welcome. Preserve OG Day-Ones for existing launch members; stop assigning it to new members.
