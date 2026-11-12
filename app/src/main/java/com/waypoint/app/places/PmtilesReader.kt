@@ -274,7 +274,11 @@ object PmtilesReader {
                     if (offset < 0 || length !in 1..MAX_HTTP_RANGE_BYTES || offset > f.length() - length) null
                     else runCatching { ByteArray(length).also { f.seek(offset); f.readFully(it) } }.getOrNull()
                 }
-                return Archive("${file.absolutePath}|${file.length()}|${file.lastModified()}", reader) { runCatching { f.close() } }
+                return Archive(
+                    "${file.absolutePath}|${file.length()}|${file.lastModified()}",
+                    reader,
+                    onClose = { runCatching { f.close() } },
+                )
             }
 
             /** An archive served over HTTP (the places archives on the release host): each read is

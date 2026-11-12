@@ -44,12 +44,11 @@ def main() -> int:
                 failed = True
                 continue
             generated = build_style(world, night)
-            generated_text = json.dumps(generated, separators=(",", ":")) + "\n"
             checked_text = path.read_text()
-            if checked_text == generated_text:
+            checked = json.loads(checked_text)
+            if checked == generated:
                 print(f"{path.name}: matches generator")
                 continue
-            checked = json.loads(checked_text)
             print(f"{path.name}: differs from generator ({drift_summary(checked, generated)})")
             failed = True
     return 1 if failed else 0

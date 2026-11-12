@@ -1033,7 +1033,7 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
     }
     val searchTerm=state.query.trim().lowercase(Locale.ROOT)
     val personalSuggestions=if(searchTerm.length<2) emptyList() else (state.recent+state.saved)
-        .filter { it.name.lowercase(Locale.ROOT).contains(searchTerm) || it.address.lowercase(Locale.ROOT).contains(searchTerm) })
+        .filter { it.name.lowercase(Locale.ROOT).contains(searchTerm) || it.address.lowercase(Locale.ROOT).contains(searchTerm) }
         .filterNot { saved -> offlineSuggestions.any { offline ->
             offline.id==saved.id || offline.name.equals(saved.name,true) && distance(offline.point,saved.point)<120.0
         } }
