@@ -1,8 +1,11 @@
 """Regression tests for branch-specific Actions release gates."""
 
 import unittest
+from pathlib import Path
 
 from ci_summary import COMMON_GATES, build_summary, required_gates
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class CiSummaryTests(unittest.TestCase):
@@ -47,6 +50,13 @@ class CiSummaryTests(unittest.TestCase):
     def test_unknown_event_is_rejected(self):
         with self.assertRaises(ValueError):
             required_gates("workflow_dispatch", "refs/heads/dev")
+
+    def test_published_release_has_one_discord_announcement_path(self):
+        publisher = (ROOT / ".github/workflows/release.yml").read_text()
+        announcer = (ROOT / ".github/workflows/discord-release-announcement.yml").read_text()
+        self.assertNotIn("Announce the release in Discord", publisher)
+        self.assertIn("types: [published]", announcer)
+        self.assertIn(".github/scripts/announce_discord_release.py", announcer)
 
 
 if __name__ == "__main__":
