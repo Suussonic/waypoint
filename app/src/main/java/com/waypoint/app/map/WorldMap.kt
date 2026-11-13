@@ -101,7 +101,6 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
     val followPolicy=remember{MapFollowPolicy()}
     var followTick by remember { mutableIntStateOf(0) }
     val cameraMemory=remember { MapCameraMemory() }
-    val cameraGestureStart=remember { arrayOfNulls<CameraPosition>(1) }
     val cameraGate=remember{CameraRequestGate()}
     val tiltRequestSeen=remember{intArrayOf(state.cameraRequest)}
     val orientationRequestSeen=remember{intArrayOf(state.orientationRequest)}
@@ -215,19 +214,11 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
             m.cameraPosition=CameraPosition.Builder().target((cameraCenterOverride ?: PreviewCenter).latLng()).zoom(initialZoom).tilt(if(currentState.navigating)navigationTiltAtZoom(initialZoom,initialTilt) else initialTilt).bearing(-22.0).build()
             m.addOnCameraMoveListener { currentBearing(m.cameraPosition.bearing.toFloat());refreshScale(m) }
             m.addOnCameraMoveStartedListener { reason -> if(reason==MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
-                cameraGestureStart[0]=m.cameraPosition
                 focusCameraHoldUntil[0]=0L;cameraGate.userMovedCamera();followPolicy.gestureStarted(SystemClock.elapsedRealtime());followTick++
             } }
             m.addOnCameraIdleListener {
                 val now=SystemClock.elapsedRealtime()
-                val start=cameraGestureStart[0];cameraGestureStart[0]=null
-                val end=m.cameraPosition
-                val centerShift=start?.target?.let { before -> end.target?.let { after ->
-                    distance(Coordinate(before.latitude,before.longitude),Coordinate(after.latitude,after.longitude))
-                } } ?: Double.MAX_VALUE
-                val metersPerPixel=m.projection.getMetersPerPixelAtLatitude(end.target?.latitude ?: 0.0)
-                val zoomOnly=start?.let { zoomGestureKeepsFollowing(it.zoom,end.zoom,centerShift,metersPerPixel) } ?: false
-                if(followPolicy.gestureEnded(now,keepFollowing=zoomOnly))followTick++
+                if(followPolicy.gestureEnded(now))followTick++
                 cameraMemory.zoom=m.cameraPosition.zoom
                 reportAway(m.awayFromUser(currentState,followPolicy))
                 refreshScale(m,true)

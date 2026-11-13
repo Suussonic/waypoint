@@ -21,17 +21,6 @@ internal fun mapCameraBearing(state: NavState, currentBearing: Float): Float = w
 internal fun mapCameraBearingIsControlled(state: NavState): Boolean =
     state.keepMapNorthUp || state.headingReliable
 
-/** Keep location-follow active after a pinch zoom; a pan or rotation remains a user camera takeover. */
-internal fun zoomGestureKeepsFollowing(
-    startZoom:Double,endZoom:Double,centerShiftMeters:Double,metersPerPixel:Double,
-):Boolean {
-    if(!startZoom.isFinite() || !endZoom.isFinite() || !centerShiftMeters.isFinite() ||
-        !metersPerPixel.isFinite() || metersPerPixel<=0.0)return false
-    val changed=abs(endZoom-startZoom)>=.15
-    val zoomAnchorShift=maxOf(50.0,metersPerPixel.coerceAtMost(5000.0)*40.0)
-    return changed && centerShiftMeters<=zoomAnchorShift
-}
-
 /** Smallest pitch change worth animating; below this the camera is already at the requested tilt. */
 private const val TILT_EPSILON = 0.5
 
