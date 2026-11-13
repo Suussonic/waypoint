@@ -101,16 +101,30 @@ export async function syncTicketIssue(channel, actor, initial = false) {
 
 export async function closeTicket(channel, actor) {
   const meta = ticketMeta(channel);
-  if (!meta || meta.status !== 'open') throw new Error('This is not an open A.T.L.A.S. ticket.');
+  if (!meta) throw new Error('This is not an A.T.L.A.S. ticket.');
   const member = await channel.guild.members.fetch(actor.id);
   const staff = member.roles.cache.some((role) => role.name === STAFF_ROLE);
   if (actor.id !== meta.ownerId && actor.id !== channel.guild.ownerId && !staff) {
     throw new Error('Only the requester or staff can close this ticket.');
   }
-  await channel.setTopic(`atlas-ticket owner=${meta.ownerId} type=${meta.type} status=closed`, 'A.T.L.A.S. ticket closed');
-  await channel.permissionOverwrites.edit(meta.ownerId, { ViewChannel: false }, { reason: 'A.T.L.A.S. ticket closed' });
-  await channel.setName(`closed-${meta.type}-${meta.ownerId.slice(-6)}`, 'A.T.L.A.S. ticket closed');
+  const reason = 'A.T.L.A.S. ticket closed';
+  const closedName = `closed-${meta.type}-${meta.ownerId.slice(-6)}`;
+  const ownerOverwrite = channel.permissionOverwrites.cache.get(meta.ownerId);
+  const ownerCanNoLongerView = ownerOverwrite?.deny.has(PermissionFlagsBits.ViewChannel) === true;
+  if (meta.status === 'closed' && channel.name === closedName && ownerCanNoLongerView) return false;
+
+  // Keep closed tickets resumable: a failed Discord API call must not strand a ticket
+  // after its topic was updated but before its permissions and name were finalized.
+  if (channel.name !== closedName) await channel.setName(closedName, reason);
+  if (meta.status !== 'closed') {
+    await channel.setTopic(`atlas-ticket owner=${meta.ownerId} type=${meta.type} status=closed`, reason);
+  }
+  if (!ownerCanNoLongerView) {
+    const owner = await channel.guild.members.fetch(meta.ownerId);
+    await channel.permissionOverwrites.edit(owner.user, { ViewChannel: false }, { reason });
+  }
   await logTicket(channel.guild, `Closed ${meta.type} ticket ${channel} for <@${meta.ownerId}> by ${actor.tag}.`);
+  return true;
 }
 
 export async function adoptLegacyTicket(channel, actor, ownerId) {

@@ -206,11 +206,14 @@ async function handle(interaction) {
       }
       await interaction.showModal(announcementModal());
       break;
-    case 'close':
+    case 'close': {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-      await closeTicket(interaction.channel, interaction.user);
-      await interaction.editReply('Ticket closed. Staff can still read its history.');
+      const closedNow = await closeTicket(interaction.channel, interaction.user);
+      await interaction.editReply(closedNow
+        ? 'Ticket closed. Staff can still read its history.'
+        : 'This ticket is already closed. Staff can still read its history.');
       break;
+    }
     case 'adopt-ticket': {
       const user = interaction.options.getUser('member', true);
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
