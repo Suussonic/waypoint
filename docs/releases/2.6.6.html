@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#101711" />
+    <meta name="description" content="Waypoint 2.6.6 improves map motion on low-memory car displays and keeps manual zoom from snapping back to your location." />
+    <title>Waypoint 2.6.6 — The map stays yours</title>
+    <link rel="stylesheet" href="../site.css" />
+    <link rel="stylesheet" href="release.css" />
+  </head>
+  <body class="release-page release-v266">
+    <a class="skip-link" href="#main-content">Skip to release notes</a>
+    <header class="release-nav">
+      <a class="release-brand" href="../index.html" aria-label="Waypoint home">
+        <img src="../images/waypoint-icon.png" width="38" height="38" alt="" />
+        <span>WAYPOINT</span>
+      </a>
+      <nav aria-label="Release navigation">
+        <a href="#android-auto">Car displays</a>
+        <a href="#map-camera">Map control</a>
+        <a href="#credits">Credits</a>
+        <a class="release-nav-cta" href="https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.6.6">Get 2.6.6 <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+
+    <main id="main-content" class="release-main">
+      <section class="release-hero" aria-labelledby="release-title">
+        <div class="hero-map" aria-hidden="true">
+          <svg viewBox="0 0 1200 620" preserveAspectRatio="xMidYMid slice">
+            <path class="map-road" d="M760 455 C870 455 850 220 930 220 S1030 470 1100 390 1180 160 1280 320" />
+            <path class="map-road" d="M790 105 C920 130 940 340 990 350 S1060 210 1120 245 1180 470 1280 500" />
+            <path class="map-road" d="M900 -60 C955 100 980 105 1020 220 S1070 445 1110 700" />
+            <path class="map-route-halo" d="M760 455 C870 455 850 220 930 220 S1030 470 1100 390 1180 160 1280 320" />
+            <path class="map-route" pathLength="1" d="M760 455 C870 455 850 220 930 220 S1030 470 1100 390 1180 160 1280 320" />
+            <circle class="map-node" cx="930" cy="220" r="8" /><circle class="map-node" cx="1100" cy="390" r="8" /><circle class="map-node" cx="1180" cy="160" r="8" />
+          </svg>
+        </div>
+        <div class="hero-copy">
+          <h1 id="release-title">The map<br /><span>stays yours.</span></h1>
+          <p class="release-lede">Smoother map motion on low-memory displays, with zoom that stays where you put it.</p>
+          <div class="hero-actions">
+            <a class="release-button" href="https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.6.6">Download Waypoint 2.6.6 <span aria-hidden="true">↗</span></a>
+            <a class="release-text-link" href="https://github.com/the-geeky-couldron/waypoint/blob/dev/CHANGELOG.md">Read the changelog <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+        <div class="hero-stamp" aria-hidden="true"><span>FIELD</span><strong>26.6</strong><span>RELEASE</span></div>
+      </section>
+
+      <section class="release-section" id="android-auto" aria-labelledby="car-title">
+        <div class="section-heading section-heading-split">
+          <div><h2 id="car-title">Smoother motion on car displays</h2></div>
+          <p>On devices marked as low-RAM or with 4 GB of total system memory or less, Waypoint paces map animation at 30 frames per second. The lower update rate reduces rendering pressure on aftermarket car displays and other constrained hardware.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card feature-card-wide">
+            <div class="feature-copy">
+              <h3>Keep motion moving.</h3>
+              <p>Map frame scheduling adapts to memory-constrained devices, smoothing repeated updates without changing the normal frame rate on other hardware.</p>
+            </div>
+            <div class="bearing-visual" aria-hidden="true">
+              <span class="bearing-ring ring-outer"></span><span class="bearing-ring ring-inner"></span>
+              <span class="bearing-cross cross-h"></span><span class="bearing-cross cross-v"></span>
+              <span class="bearing-arrow"></span><span class="bearing-label">30 FPS · PACED</span>
+            </div>
+          </article>
+        </div>
+        <div class="route-note"><span class="route-note-line" aria-hidden="true"></span><p>The reported 4 GB aftermarket unit ran Waypoint directly. Adaptive pacing now reduces map-rendering work on low-memory devices.</p></div>
+      </section>
+
+      <section class="release-section" id="map-camera" aria-labelledby="camera-title">
+        <div class="section-heading">
+          <h2 id="camera-title">Zoom where you choose.</h2>
+          <p>Manual gestures now take control of the map camera. A GPS update no longer takes that control back when your pinch ends.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <h3>No more snap-back.</h3>
+            <p>Zooming, panning or rotating pauses automatic location-following, so you can inspect another part of the map without it jumping to your current fix.</p>
+          </article>
+          <article class="feature-card feature-card-accent">
+            <h3>Follow returns gently.</h3>
+            <p>During active guidance, automatic camera-follow resumes after an eight-second grace period. While browsing, it waits until you choose to recenter.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="release-section credits-section" id="credits" aria-labelledby="credits-title">
+        <div class="section-heading section-heading-split">
+          <div><h2 id="credits-title">Credits for the fixes.</h2></div>
+          <p>These recordings and details helped reproduce the issues and point the fixes to the right parts of the map.</p>
+        </div>
+        <div class="credits-grid">
+          <div class="credit-group">
+            <h3>Who reported them</h3>
+            <ul class="credit-list">
+              <li><code>@Aleksandyr</code><span>Intermittent stutter on a 4 GB aftermarket car display running Waypoint directly. Addressed by low-memory map frame pacing.</span></li>
+              <li><code>@Jkizzle</code><span>Zoom snapping back to the current location, demonstrated in a video and tracked in <a href="https://github.com/the-geeky-couldron/waypoint/issues/84">GitHub issue #84</a>. Addressed by pausing location-following after manual camera gestures.</span></li>
+            </ul>
+            <p class="private-ticket-note">Discord tickets are private, so these credits use handles without private links.</p>
+          </div>
+          <div class="credit-group">
+            <h3>Where we fixed them</h3>
+            <ul class="credit-list">
+              <li><code>Map motion</code><span>Adaptive frame pacing reduces repeated rendering work on low-memory devices, including car map views.</span></li>
+              <li><code>Camera follow</code><span>The map follow policy now yields to pinch zoom, pan and rotation; navigation resumes after a grace period.</span></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="release-footer-cta" aria-labelledby="download-title">
+        <div><h2 id="download-title">Ready for 2.6.6?</h2><p>More room for the map. More control over where it goes.</p></div>
+        <a class="release-button" href="https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.6.6">Get the APK <span aria-hidden="true">↗</span></a>
+      </section>
+    </main>
+
+    <footer class="release-footer"><a href="../index.html">Waypoint</a><span>Made for the road ahead.</span><a href="https://github.com/the-geeky-couldron/waypoint">Source on GitHub <span aria-hidden="true">↗</span></a></footer>
+    <script src="release-motion.js" defer></script>
+  </body>
+</html>

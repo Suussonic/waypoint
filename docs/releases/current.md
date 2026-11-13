@@ -1,55 +1,30 @@
-# Waypoint 2.6.5
+# Waypoint 2.6.6
 
-This release steadies navigation on the phone and in Android Auto, brings offline place names into downloaded regions, and makes place discovery and map rendering more complete.
+This release reduces map-rendering pressure on lower-memory devices and keeps manual zoom and pan from snapping back to your current location.
 
-## Navigation that holds its line
+## Smoother motion on car displays
 
-- The camera now settles when the vehicle is stationary, filters noisy heading changes, and stops the world from jittering as you move the phone or end guidance.
-- Turn guidance uses a steadier course and road-position estimate so the vehicle marker stays with the selected route through bends and roundabouts.
-- Navigation camera framing is tuned for closer road context, smoother turns and a clearer forward view. The start-navigation action transitions into guidance with less visual interruption.
-- The map scale indicator has moved away from the center of the route.
+- Devices marked as low-RAM or with 4 GB of total system memory or less now pace map animation at 30 frames per second. This reduces rendering work on aftermarket car displays and other memory-constrained devices.
+- Devices outside that low-memory range keep their existing frame rate.
 
-## Places that work offline
+## Zoom where you choose
 
-- Downloaded map regions can include nearby open-place records. Their place names remain available for local search and nearby discovery without a network connection, including when you are elsewhere.
-- Search can offer optional Google Maps web suggestions while you type. Opening a nearby place can load Google business details and photos, with open-data results and Commons imagery available as alternatives.
-- Google web lookups are experimental and off by default. They use undocumented Maps endpoints rather than the supported Places API, have no Places API key or Places API billing, and may change or stop working. Google's published terms restrict automated scraping. Offline place snapshots contain open-data records, not Google suggestions, details or photos.
+- Pinch zoom, pan and rotation now pause automatic location-following when the gesture ends, so a fresh GPS update will not pull the camera back to your current position.
+- During active guidance, camera-follow resumes after an eight-second grace period. While browsing, it remains paused until you recenter manually.
 
-## More readable worlds
+## Community support
 
-- Liberty City regains its landmark blips and place references, with repaired icon assets.
-- Full zoom-out rendering now preserves map content across the worlds instead of leaving large areas incomplete.
-- In Night City, 3D buildings and the highlighted route now use a clearer draw order, so routes remain legible around raised geometry.
-- World styles, map symbols, and day/night artwork receive another consistency pass.
+- A.T.L.A.S. can recover a failed ticket-close action, and its GitHub issue creation avoids duplicate reports.
 
-## Android Auto and the updater
+## Credits for the fixes
 
-- Android Auto now holds a more useful forward camera direction, tilt and zoom while stationary and while moving.
-- The car map adapts its viewport and guidance layout when Android Auto shares screen space with another app.
-- The updater keeps its download progress visible while the release details scroll, and its loading and download states have clearer feedback.
-
-## A longer route through CI
-
-The Android Actions workflow now runs on pull requests and pushes to both `dev` and `main`. Separate gates validate workflow security, dependency changes, the release page, map styles and assets, motion source, debug and release builds, JVM tests, lint and emulator coverage. Main builds sign the APK and attach GitHub build-provenance attestation before the release workflow can publish it.
-
-## Credits for the route
-
-Thank you to the people who reported these issues and helped shape the fixes.
-
-**GitHub**
-
-- **[@TheNoob1703](https://github.com/TheNoob1703)** — map rotation and compass behavior in [#54](https://github.com/the-geeky-couldron/waypoint/issues/54).
-- **[@harrydbarnes](https://github.com/harrydbarnes)** — the updater's download progress in [#63](https://github.com/the-geeky-couldron/waypoint/issues/63).
-- **[@Balzamus](https://github.com/Balzamus)** — the Cyberpunk map's 3D presentation in [#55](https://github.com/the-geeky-couldron/waypoint/issues/55).
-- **[@lakshvin](https://github.com/lakshvin)** — richer Google place discovery in [#21](https://github.com/the-geeky-couldron/waypoint/issues/21).
+Thank you to the people who shared recordings and details that made these issues reproducible.
 
 **Discord**
 
-- **@ForgotMyИame_124** — Liberty City landmarks and blips in ticket-0002.
-- **@Aleksandyr** — compass behavior in ticket-0003.
-- **@shaurya124** — Android Auto split-screen sizing in ticket-0003.
-- **@Nomad** — map rotation through turns and slowdowns in ticket-0004.
+- **@Aleksandyr** — reported intermittent stutter on a 4 GB aftermarket car display running Waypoint directly. The low-memory map frame pacing addresses the reported rendering pressure.
+- **@Jkizzle** — shared the zoom snap-back recording, tracked in public [issue #84](https://github.com/the-geeky-couldron/waypoint/issues/84). Manual camera gestures now pause location-following.
 
-Discord ticket channels are private, so their names are credited here without exposing ticket links.
+Discord ticket channels are private, so reporters are credited by handle without links to private conversations.
 
-Downloaded regions keep their map data and open-place snapshots available offline. Route calculation and live Google suggestions, details and photos still need an internet connection. Compatible updates preserve saved places, quests and settings. Android Auto availability in a real vehicle still depends on Google's trusted installation requirements.
+Compatible updates preserve saved places, quests and settings. Android Auto availability in a real vehicle still depends on Google's trusted installation requirements.

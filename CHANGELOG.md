@@ -2,6 +2,12 @@
 
 For the full notes and community acknowledgements, see the [Waypoint release page](docs/releases/current.html) or [Markdown release notes](docs/releases/current.md). Published releases are available on [GitHub Releases](https://github.com/the-geeky-couldron/waypoint/releases).
 
+## 2.6.6
+
+- Reduced map-animation work on low-memory devices, including car displays, by pacing map updates at 30 fps on devices reported as low-RAM or with 4 GB of system memory or less.
+- Fixed the map snapping back to the current location after a manual zoom, pan or rotation; navigation follow now resumes after an eight-second grace period, while browsing stays paused until recentering.
+- Improved A.T.L.A.S. ticket recovery and duplicate-issue handling in the community support workflow.
+
 ## 2.6.5
 
 - Stabilized navigation camera behavior at a stop and after guidance ends; improved heading filtering, road alignment and route following through turns.
