@@ -39,13 +39,23 @@ class ReroutePolicy {
     fun failed(now: Long) { failures = (failures + 1).coerceAtMost(3); nextAttempt = now + (8000L shl (failures - 1)) }
 }
 
-/** A deliberate pan pauses guidance briefly; a stray gesture cannot disable following forever. */
+/** A manual camera gesture pauses follow; navigation automatically resumes after a grace period. */
 class MapFollowPolicy {
     private var gestureAt: Long? = null
     private var gesturing = false
     fun gestureStarted(now: Long) { gesturing = true; gestureAt = now }
-    fun gestureEnded(now: Long):Boolean { val ended=gesturing;gesturing=false;if(ended)gestureAt=now;return ended }
+    fun gestureEnded(now: Long):Boolean {
+        val ended=gesturing
+        gesturing=false
+        if(ended)gestureAt=now
+        return ended
+    }
     fun resume() { gestureAt = null; gesturing = false }
+    fun shouldFollowHeading(navigating:Boolean,now:Long):Boolean {
+        if(gesturing)return false
+        if(gestureAt!=null && navigating && now-gestureAt!!>=8000)resume()
+        return gestureAt==null
+    }
     fun shouldFollow(navigating: Boolean, hasDestination: Boolean, now: Long): Boolean {
         if(gesturing) return false
         if(gestureAt != null && navigating && now - gestureAt!! >= 8000) resume()

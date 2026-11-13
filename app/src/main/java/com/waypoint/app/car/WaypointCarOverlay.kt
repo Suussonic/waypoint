@@ -25,23 +25,26 @@ internal class WaypointCarOverlay(private val context: Context) {
         val viewport=Rect(visible).apply {
             if(!intersect(0,0,canvas.width,canvas.height) || isEmpty) set(0,0,canvas.width,canvas.height)
         }
-        val scale=min(viewport.width()/800f,viewport.height()/400f).coerceIn(0.9f,2f)
-        if(state.navigating && viewport.width()>=240 && viewport.height()>=240) drawGuidance(canvas,state,viewport,scale)
+        val scale=min(viewport.width()/800f,viewport.height()/400f).coerceIn(0.65f,2f)
+        if(state.navigating && viewport.width()>=180 && viewport.height()>=150) drawGuidance(canvas,state,viewport,scale)
         drawWorldReadout(canvas,state,state.world,viewport,scale)
-        if(showMapCredit) drawMapCredit(canvas,scale)
+        if(showMapCredit) drawMapCredit(canvas,viewport,scale)
     }
 
     private fun drawGuidance(canvas: Canvas,state: NavState,visible: Rect,scale: Float) {
         val palette=hudPalette(state.world,effectiveNightMapTheme(state.world,isNightAtLocalTime()))
         val left=visible.left+12f*scale;val top=visible.top+12f*scale
-        val right=min(left+350f*scale,visible.right-12f*scale);val bottom=top+106f*scale
+        val right=min(left+350f*scale,visible.right-12f*scale)
+        val textWidth=(right-left-80f*scale).toInt().coerceAtLeast(1)
+        val maxLines=if(textWidth<190f*scale)3 else 2
+        val bottom=top+(if(maxLines==3)140f else 106f)*scale
         paint.style=Paint.Style.FILL
         paint.color=palette.panel.toArgb()
         canvas.drawRoundRect(left,top,right,bottom,8f*scale,8f*scale,paint)
         paint.color=palette.accent.toArgb()
         canvas.drawRect(left,top,right,top+4f*scale,paint)
         paint.typeface=face(state.world.readingTypeface().bold)
-        paint.textSize=16f*scale
+        paint.textSize=maxOf(14f,16f*scale)
         canvas.drawText(state.progress?.let { formatDistance(it.toTurn,state.imperial) } ?: "Ahead",
             left+70f*scale,top+30f*scale,paint)
         val maneuver=state.route?.steps?.getOrNull(state.progress?.nextStep ?: 0)
@@ -53,9 +56,9 @@ internal class WaypointCarOverlay(private val context: Context) {
         }
         cuePaint.color=palette.foreground.toArgb()
         cuePaint.typeface=face(state.world.readingTypeface().bold)
-        cuePaint.textSize=21f*scale
-        val layout=StaticLayout.Builder.obtain(cue,0,cue.length,cuePaint,(right-left-80f*scale).toInt().coerceAtLeast(1))
-            .setMaxLines(2).setEllipsize(TextUtils.TruncateAt.END).build()
+        cuePaint.textSize=maxOf(16f,21f*scale)
+        val layout=StaticLayout.Builder.obtain(cue,0,cue.length,cuePaint,textWidth)
+            .setMaxLines(maxLines).setEllipsize(TextUtils.TruncateAt.END).build()
         canvas.save()
         canvas.translate(left+70f*scale,top+43f*scale)
         layout.draw(canvas)
@@ -141,18 +144,20 @@ internal class WaypointCarOverlay(private val context: Context) {
         }
     }
 
-    private fun drawMapCredit(canvas: Canvas,scale: Float) {
+    private fun drawMapCredit(canvas: Canvas,viewport: Rect,scale: Float) {
         val label="Map data: OpenStreetMap"
+        val creditScale=maxOf(scale,.9f)
         paint.style=Paint.Style.FILL
         paint.typeface=Typeface.DEFAULT
-        paint.textSize=11f*scale
+        paint.textSize=11f*creditScale
         val textWidth=paint.measureText(label)
-        val x=10f*scale
-        val top=canvas.height-22f*scale
+        val x=viewport.left+10f*creditScale
+        val bottom=viewport.bottom.toFloat()
+        val top=bottom-22f*creditScale
         paint.color=Color.argb(220,15,18,19)
-        canvas.drawRoundRect(x-5f*scale,top-1f*scale,x+textWidth+5f*scale,canvas.height.toFloat()-2f*scale,3f*scale,3f*scale,paint)
+        canvas.drawRoundRect(x-5f*creditScale,top-1f*creditScale,x+textWidth+5f*creditScale,bottom-2f*creditScale,3f*creditScale,3f*creditScale,paint)
         paint.color=Color.WHITE
-        canvas.drawText(label,x,canvas.height-7f*scale,paint)
+        canvas.drawText(label,x,bottom-7f*creditScale,paint)
     }
 
 }

@@ -1,5 +1,6 @@
 package com.waypoint.app
 
+import com.waypoint.app.places.DOWNLOADED_PLACE_SOURCE_PREFIX
 import kotlinx.coroutines.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -8,12 +9,15 @@ import java.io.IOException
 class PlaceSearchTest {
     private val near=Coordinate(51.50,-.12)
     private val station=Place("station","Riverton","Riverton, Example District",Coordinate(51.501,-.121),"geocoder")
-    @Test fun deletedLocalMatchesDoNotSurviveInTheProviderCache()=runBlocking {
+    @Test fun exactLocalMatchesStayOfflineAndAreNotKeptInTheProviderCache()=runBlocking {
         var calls=0
         val search=PlaceSearch(PlaceSearchProvider { _,_->calls++;emptyList() })
         assertEquals(listOf(station),search.search("Riverton",near,listOf(station)).places)
+        assertEquals(0,calls)
         assertTrue(search.search("Riverton",near).places.isEmpty())
-        assertEquals("Remote cache should still be reused",1,calls)
+        assertEquals("The remote empty result is cached independently of the local match",1,calls)
+        assertTrue(search.search("Riverton",near).places.isEmpty())
+        assertEquals(1,calls)
     }
     @Test fun railwayQueryRanksTheLocalStationOverUnrelatedStations() {
         val unrelated=Place("other","Farvale Railway Station","Farvale, Example Country",Coordinate(51.6,-.2),"station")
@@ -57,6 +61,25 @@ class PlaceSearchTest {
         val exact=Place("junction","Willow More","Riverton",near)
         val unrelated=Place("shop","Wilma Mode","Rotterdam",Coordinate(51.9,4.4),"clothes")
         assertEquals(listOf(exact),PlaceMatcher.ranked("Willow More",near,listOf(unrelated,exact)))
+    }
+    @Test fun selectedGooglePlaceCanBeFoundOfflineWithoutCallingProviders()=runBlocking {
+        var calls=0
+        val selectedGooglePlace=Place("google-place-id","Riverton Museum","Riverton",near,"museum","Google Maps")
+        val search=PlaceSearch(PlaceSearchProvider{_,_->calls++;emptyList()})
+
+        assertEquals(listOf(selectedGooglePlace),search.search("Riverton Museum",near,listOf(selectedGooglePlace)).places)
+        assertEquals("A strong user-saved result is resolved locally without requesting Google or another provider.",0,calls)
+    }
+    @Test fun strongDownloadedMapMatchDoesNotCallTheExpandedNetworkFallback()=runBlocking {
+        var fallbackCalls=0
+        val downloaded=station.copy(source="$DOWNLOADED_PLACE_SOURCE_PREFIX OpenStreetMap")
+        val search=PlaceSearch(
+            PlaceSearchProvider { _, _ -> listOf(downloaded) },
+            PlaceSearchProvider { _, _ -> fallbackCalls++; emptyList() },
+        )
+
+        assertEquals(listOf(downloaded),search.search("Riverton",near,expanded=true).places)
+        assertEquals(0,fallbackCalls)
     }
     @Test fun categoryShortcutsStillReturnNamedBusinesses() {
         val fuel=Place("fuel","Example Petroleum","Main Road",near,"fuel")

@@ -30,6 +30,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.waypoint.app.places.NearbyPlace
+import com.waypoint.app.offline.OfflineMapArea
+import com.waypoint.app.offline.OfflineMapStyleFile
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -42,6 +45,7 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.style.layers.*
 import org.maplibre.android.style.layers.PropertyFactory.*
+import java.util.Locale
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.geojson.*
 import org.maplibre.android.style.expressions.Expression.*
@@ -50,10 +54,32 @@ import org.maplibre.android.style.expressions.Expression.*
 data class MapViewportInsets(val left:Int,val top:Int,val right:Int,val bottom:Int)
 
 @Composable
-fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit, modifier: Modifier=Modifier,active:Boolean=true,routeInsets:MapViewportInsets?=null,onBearing:(Float)->Unit={},cameraZoomOverride:Double?=null,cameraTiltOverride:Double?=null,styleFileOverride:String?=null,cameraCenterOverride:Coordinate?=null,onAwayFromUser:(Boolean)->Unit={},onSelectRoute:(Int)->Unit={},showScaleBar:Boolean=false,scaleBarInsets:MapViewportInsets?=null) {
+internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit, modifier: Modifier=Modifier,active:Boolean=true,routeInsets:MapViewportInsets?=null,onBearing:(Float)->Unit={},cameraZoomOverride:Double?=null,cameraTiltOverride:Double?=null,styleFileOverride:String?=null,cameraCenterOverride:Coordinate?=null,onAwayFromUser:(Boolean)->Unit={},onSelectRoute:(Int)->Unit={},showScaleBar:Boolean=false,scaleBarInsets:MapViewportInsets?=null,nearbyPlaces:List<NearbyPlace> = emptyList(),onVisibleMapArea:(OfflineMapArea?)->Unit={},onBrowseMapCamera:(Coordinate,Double)->Unit={_,_->},onNearbyPlaceClick:(NearbyPlace)->Unit={place->onPin(place.asWaypointPlace())}) {
     val context=LocalContext.current
     val density=LocalDensity.current
+    val motionFrameIntervalMillis=remember(context) { mapMotionFrameIntervalMillis(context) }
+    var map by remember { mutableStateOf<MapLibreMap?>(null) }
+    var styleReady by remember { mutableIntStateOf(0) }
     val landscape=LocalConfiguration.current.orientation==Configuration.ORIENTATION_LANDSCAPE
+    val rawDisplayPosition=if(state.navigating)navigationDisplayPosition(state.fix,state.progress,state.offRoute,state.accuracy) else state.fix
+    val routeBearing=if(state.navigating && !state.offRoute)state.route?.let { route ->
+        state.progress?.takeIf { it.offRoute < 30.0 }?.let { progress -> routeBearingAt(route.points,route.meters,progress.traveled) }
+    } else null
+    val markerDirectionReliable=state.headingReliable || routeBearing!=null
+    val roadSnapBearing=when {
+        state.navigating && routeBearing!=null -> routeBearing
+        state.headingSource==HeadingSource.COURSE && state.headingReliable -> state.bearing
+        else -> null
+    }
+    val stationaryPositionFilter=remember { StationaryPositionFilter() }
+    var filteredDisplayPosition by remember { mutableStateOf(rawDisplayPosition) }
+    LaunchedEffect(map,styleReady,active,rawDisplayPosition,state.navigating,state.mode,state.speed,state.accuracy,roadSnapBearing) {
+        val visibleRoadPosition=if(active && styleReady>0 && rawDisplayPosition!=null)
+            map?.snapToVisibleRoad(rawDisplayPosition,state.mode,roadSnapBearing,state.accuracy) ?: rawDisplayPosition
+        else rawDisplayPosition
+        filteredDisplayPosition=stationaryPositionFilter.update(visibleRoadPosition,state.mode,state.speed,state.accuracy)
+    }
+    val displayPosition=filteredDisplayPosition ?: rawDisplayPosition
     val selectRoute by rememberUpdatedState(onSelectRoute)
     val owner=LocalLifecycleOwner.current
     val lifecycleState by owner.lifecycle.currentStateAsState()
@@ -64,17 +90,22 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
     val currentState by rememberUpdatedState(state)
     val currentActive by rememberUpdatedState(active)
     val currentPin by rememberUpdatedState(onPin)
+    val currentNearbyPlaceClick by rememberUpdatedState(onNearbyPlaceClick)
     val currentError by rememberUpdatedState(onMapError)
     val currentBearing by rememberUpdatedState(onBearing)
-    val mapView=remember { MapLibre.getInstance(context); MapView(context).apply { onCreate(null) } }
-    var map by remember { mutableStateOf<MapLibreMap?>(null) }
-    var styleReady by remember { mutableIntStateOf(0) }
+    val currentVisibleMapArea by rememberUpdatedState(onVisibleMapArea)
+    val currentBrowseMapCamera by rememberUpdatedState(onBrowseMapCamera)
+    val mapView=remember { MapLibre.getInstance(context); MapView(context).apply {
+        onCreate(null)
+        if(motionFrameIntervalMillis>0L)setMaximumFps(30)
+    } }
     var loadedStyleFile by remember { mutableStateOf<String?>(null) }
     val followPolicy=remember{MapFollowPolicy()}
     var followTick by remember { mutableIntStateOf(0) }
     val cameraMemory=remember { MapCameraMemory() }
     val cameraGate=remember{CameraRequestGate()}
     val tiltRequestSeen=remember{intArrayOf(state.cameraRequest)}
+    val orientationRequestSeen=remember{intArrayOf(state.orientationRequest)}
     val reportAway by rememberUpdatedState(onAwayFromUser)
     var mapBoundsOnScreen by remember { mutableStateOf(Rect.Zero) }
     var scaleLineBounds by remember { mutableStateOf(Rect.Zero) }
@@ -101,6 +132,26 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
         val next=maxMeters?.let { chooseMapScale(it,currentScaleImperial) }
         if(next==null || scaleTick?.label!=next.label ||
             kotlin.math.abs((scaleTick?.widthFraction ?: -1f)-next.widthFraction)>.01f)scaleTick=next
+    }
+    fun reportVisibleMapArea(m:MapLibreMap) {
+        val bounds=runCatching { m.projection.visibleRegion.latLngBounds }.getOrNull() ?: return
+        m.cameraPosition.target?.let { target ->
+            currentBrowseMapCamera(Coordinate(target.latitude,target.longitude),m.cameraPosition.zoom)
+        }
+        currentVisibleMapArea(OfflineMapArea(
+            south=bounds.latitudeSouth,
+            west=bounds.longitudeWest,
+            north=bounds.latitudeNorth,
+            east=bounds.longitudeEast,
+            zoom=m.cameraPosition.zoom,
+        ))
+    }
+    fun navigationPose(m:MapLibreMap, nav:NavState, headingOverride:Float?=null):NavigationCameraPose {
+        val topInset=scaleBarInsets?.top?.takeIf { it>0 }?.toDouble()
+            ?: if(landscape)0.0 else m.height*.20
+        val wantedTilt=mapCameraTilt(nav.world,nav.tilted,nav.navigating,cameraTiltOverride)
+        return navigationCameraPose(nav,m.cameraPosition.bearing.toFloat(),m.height.toInt(),
+            density.density.toDouble(),topInset,wantedTilt,headingOverride)
     }
     val motion=remember { MapMotion() }
     val renderedBearing=remember{floatArrayOf(0f)}
@@ -172,17 +223,22 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
                 isCompassEnabled=false; isLogoEnabled=false; isAttributionEnabled=false
                 setAllGesturesEnabled(true)
             }
-            m.cameraPosition=CameraPosition.Builder().target((cameraCenterOverride ?: PreviewCenter).latLng()).zoom(cameraZoomOverride ?: 15.2).tilt(mapCameraTilt(currentState.world,currentState.tilted,currentState.navigating,cameraTiltOverride)).bearing(-22.0).build()
+            val initialZoom=cameraZoomOverride ?: if(currentState.navigating)NAV_ZOOM else 15.2
+            val initialTilt=mapCameraTilt(currentState.world,currentState.tilted,currentState.navigating,cameraTiltOverride)
+            m.cameraPosition=CameraPosition.Builder().target((cameraCenterOverride ?: PreviewCenter).latLng()).zoom(initialZoom).tilt(if(currentState.navigating)navigationTiltAtZoom(initialZoom,initialTilt) else initialTilt).bearing(-22.0).build()
             m.addOnCameraMoveListener { currentBearing(m.cameraPosition.bearing.toFloat());refreshScale(m) }
             m.addOnCameraMoveStartedListener { reason -> if(reason==MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
                 focusCameraHoldUntil[0]=0L;cameraGate.userMovedCamera();followPolicy.gestureStarted(SystemClock.elapsedRealtime());followTick++
             } }
             m.addOnCameraIdleListener {
-                if(followPolicy.gestureEnded(SystemClock.elapsedRealtime()))followTick++
+                val now=SystemClock.elapsedRealtime()
+                if(followPolicy.gestureEnded(now))followTick++
+                cameraMemory.zoom=m.cameraPosition.zoom
                 reportAway(m.awayFromUser(currentState,followPolicy))
                 refreshScale(m,true)
                 // Re-render the model only once a tilt change settles, never during gestures.
                 modelTilt=cursorModelTilt(m.cameraPosition.tilt)
+                reportVisibleMapArea(m)
             }
             m.addOnMapLongClickListener { point ->
                 if(!currentState.navigating) currentPin(Place("pin:${point.latitude},${point.longitude}","Dropped pin","%.5f, %.5f".format(point.latitude,point.longitude),Coordinate(point.latitude,point.longitude)))
@@ -194,6 +250,27 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
                     val alternate=m.queryRenderedFeatures(android.graphics.RectF(at.x-reach,at.y-reach,at.x+reach,at.y+reach),"route-alt-line","route-alt-casing","route-alt-label")
                         .firstNotNullOfOrNull { f -> runCatching { f.getNumberProperty("index").toInt() }.getOrNull() }
                     if(alternate!=null) { selectRoute(alternate);return@addOnMapClickListener true }
+                }
+                val screen = m.projection.toScreenLocation(point)
+                val hitRadius = 26f
+                val nearby = m.queryRenderedFeatures(
+                    android.graphics.RectF(screen.x-hitRadius,screen.y-hitRadius,screen.x+hitRadius,screen.y+hitRadius),
+                    "nearby-place-dot","nearby-place-marker",
+                ).mapNotNull { feature ->
+                    val id = runCatching { feature.getStringProperty("nearby_id") }.getOrNull() ?: return@mapNotNull null
+                    val pointFeature = feature.geometry() as? Point ?: return@mapNotNull null
+                    val markerScreen = m.projection.toScreenLocation(LatLng(pointFeature.latitude(),pointFeature.longitude()))
+                    val dx = (markerScreen.x-screen.x).toFloat()
+                    val dy = (markerScreen.y-screen.y).toFloat()
+                    (dx*dx+dy*dy).takeIf { it <= hitRadius*hitRadius }?.let { it to feature }
+                }.minByOrNull { it.first }?.second
+                if (nearby != null && !currentState.navigating) {
+                    val id = runCatching { nearby.getStringProperty("nearby_id") }.getOrNull()
+                    val selected = nearbyPlaces.firstOrNull { it.id == id }
+                    if (selected != null) {
+                        currentNearbyPlaceClick(selected)
+                        return@addOnMapClickListener true
+                    }
                 }
                 val features=m.queryRenderedFeatures(m.projection.toScreenLocation(point))
                 val named=features.firstOrNull { f -> f.geometry() is Point && safeMapFeatureText(runCatching { f.getStringProperty("name") }.getOrNull()) != null }
@@ -216,8 +293,12 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
         val insets=scaleBarInsets ?: MapViewportInsets(0,0,0,0)
         val leftInset=with(density){insets.left.toDp()}
         val rightInset=with(density){insets.right.toDp()}
+        val topInset=with(density){insets.top.toDp()}
         val bottomInset=with(density){insets.bottom.toDp()}
-        val placement=if(landscape)Modifier.align(Alignment.BottomStart)
+        val placement=if(state.selected!=null && !state.navigating && !landscape)
+            Modifier.align(Alignment.TopStart)
+                .padding(start=leftInset+8.dp,top=topInset+8.dp)
+        else if(landscape)Modifier.align(Alignment.BottomStart)
             .padding(start=leftInset+16.dp,bottom=bottomInset+18.dp)
         else Modifier.align(Alignment.BottomCenter)
             .offset(x=(leftInset-rightInset)/2)
@@ -245,7 +326,7 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
         if(styleReady==0)return@LaunchedEffect
         val style=map?.style ?: return@LaunchedEffect
         if(useModel)style.addImage(CURSOR_MODEL_IMAGE,requireNotNull(modelBitmap))
-        style.getLayerAs<SymbolLayer>("position-arrow")?.showPlayerMarker(state,useModel)
+        style.getLayerAs<SymbolLayer>("position-arrow")?.showPlayerMarker(state,useModel,markerDirectionReliable)
     }
     LaunchedEffect(map,state.world,active,requestedStyleFile,mapNight) {
         val m=map ?: return@LaunchedEffect
@@ -280,11 +361,14 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
             source to prepared
         }
         if(styleEpoch[0]!=requestedEpoch || !active)return@LaunchedEffect
-        m.setStyle(Style.Builder().fromJson(json)) { style ->
+        val styleUri=withContext(Dispatchers.IO) { OfflineMapStyleFile.write(context,json) }
+        m.setStyle(Style.Builder().fromUri(styleUri)) { style ->
             if(currentState.world!=requestedWorld || styleEpoch[0]!=requestedEpoch)return@setStyle
             val world=requestedWorld
             val art=world.mapArt()
             style.addImages(images)
+            style.raiseBuildingExtrusionsAboveRoads()
+            reportVisibleMapArea(m)
             val poiLabel=step(zoom(),literal(""),stop(17.2,coalesce(get("name:en"),get("name_en"),get("name"))))
             val poiCategories=MapPoiCategories.all(context)
             fun matches(category:MapPoiCategory):org.maplibre.android.style.expressions.Expression {
@@ -339,8 +423,8 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
             style.addLayer(poiLayer("waypoint-essential-places",13.2f,
                 all(essentialPoi,lte(poiRank,step(zoom(),literal(2),stop(14.5,literal(12)),stop(16f,literal(36)),stop(17.5,literal(100)),stop(18.6,literal(999))))),readablePoiScale))
             style.addSource(GeoJsonSource("route",FeatureCollection.fromFeatures(emptyArray<Feature>())))
-            style.addLayer(LineLayer("route-casing","route").withProperties(lineColor(currentState.world.routeCasingColor(mapNight)),lineWidth(routeWidthAtZoom(art.routeWidth,4f)),lineDasharray(currentState.world.routeLineDash(currentState.mode,currentState.navigating)),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)))
-            style.addLayer(LineLayer("route-line","route").withProperties(lineColor(currentState.world.routeColor),lineWidth(routeWidthAtZoom(art.routeWidth,0f)),lineDasharray(currentState.world.routeLineDash(currentState.mode,currentState.navigating)),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)))
+            style.addRouteLayerBelowBuildings(LineLayer("route-casing","route").withProperties(lineColor(currentState.world.routeCasingColor(mapNight)),lineWidth(routeWidthAtZoom(art.routeWidth,4f)),lineDasharray(currentState.world.routeLineDash(currentState.mode,currentState.navigating)),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)))
+            style.addRouteLayerBelowBuildings(LineLayer("route-line","route").withProperties(lineColor(currentState.world.routeColor),lineWidth(routeWidthAtZoom(art.routeWidth,0f)),lineDasharray(currentState.world.routeLineDash(currentState.mode,currentState.navigating)),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)))
             // Other ways to the same place: quieter lines under the chosen route, tap one to take it.
             style.addSource(GeoJsonSource("route-alt",FeatureCollection.fromFeatures(emptyArray<Feature>())))
             style.addLayerBelow(LineLayer("route-alt-casing","route-alt").withProperties(lineColor(currentState.world.routeCasingColor(mapNight)),lineWidth(routeWidthAtZoom(art.routeWidth,3f)),lineOpacity(.85f),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)),"route-casing")
@@ -350,10 +434,21 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
                 textColor(if(art.lightLabels)"#EEEEDF" else "#282E26"),textHaloColor(if(art.lightLabels)"#18201C" else "#E3DABF"),textHaloWidth(2f),textAllowOverlap(true),textIgnorePlacement(true)))
             style.addSource(GeoJsonSource("destination",FeatureCollection.fromFeatures(emptyArray<Feature>())))
             style.addLayer(SymbolLayer("destination-dot","destination").withProperties(iconImage("destination-marker"),iconSize(.65f),iconAllowOverlap(true),iconIgnorePlacement(true)))
+            style.addSource(GeoJsonSource("nearby-results",FeatureCollection.fromFeatures(emptyArray<Feature>())))
+            style.addLayer(CircleLayer("nearby-place-dot","nearby-results").withProperties(
+                circleRadius(4.5f),circleColor(currentState.world.routeColor),
+                circleStrokeColor(if(mapNight)"#10151C" else "#F3F0E8"),circleStrokeWidth(1.5f),
+            ))
+            style.addLayer(SymbolLayer("nearby-place-marker","nearby-results").withProperties(
+                iconImage(get("poi_icon")),iconSize(.34f),iconAllowOverlap(false),iconIgnorePlacement(false),
+                textField(get("name")),textFont(arrayOf(world.mapFontName())),textSize(11f),textOptional(true),
+                textOffset(arrayOf(0f,1.15f)),textColor(if(art.lightLabels)"#EEEEDF" else "#282E26"),
+                textHaloColor(if(art.lightLabels)"#18201C" else "#E3DABF"),textHaloWidth(1.5f),
+            ))
             style.addSource(GeoJsonSource("position",FeatureCollection.fromFeatures(emptyArray<Feature>())))
             style.addSource(GeoJsonSource("accuracy",FeatureCollection.fromFeatures(emptyArray<Feature>())))
             style.addLayer(FillLayer("position-accuracy","accuracy").withProperties(fillColor("#9CCBD8"),fillOpacity(.10f),fillOutlineColor("#9CCBD8")))
-            style.addLayer(SymbolLayer("position-arrow","position").withProperties(iconImage("nav-arrow"),iconSize(playerIconSize(0.55f)),iconAllowOverlap(true),iconIgnorePlacement(true),iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),iconRotate(renderedBearing[0])))
+            style.addLayer(SymbolLayer("position-arrow","position").withProperties(iconImage("nav-arrow"),iconSize(playerIconSize(0.55f)),iconAnchor("center"),iconOffset(arrayOf(0f,0f)),iconAllowOverlap(true),iconIgnorePlacement(true),iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),iconRotate(renderedBearing[0])))
             loadedStyleFile=requestedFile;styleReady=requestedEpoch
         }
     }
@@ -399,33 +494,73 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
         style.getSourceAs<GeoJsonSource>("route")?.setFeature(state.route?.let{Feature.fromGeometry(LineString.fromLngLats((if(state.navigating)it.remainingPoints(state.progress).let{ahead->state.progress?.snapped?.let{at->trimAhead(ahead,at)} ?: ahead} else it.points).map{p->Point.fromLngLat(p.lon,p.lat)}))})
         style.getSourceAs<GeoJsonSource>("destination")?.setFeature(state.selected?.let{Feature.fromGeometry(Point.fromLngLat(it.point.lon,it.point.lat))})
     }
-    LaunchedEffect(active,lifecycleState,styleReady,state.fix,state.bearing,state.headingReliable,state.headingSource,state.mode,state.navigating) {
+    LaunchedEffect(active,styleReady,nearbyPlaces,state.navigating) {
+        if (!active || styleReady == 0) return@LaunchedEffect
+        val source = map?.style?.getSourceAs<GeoJsonSource>("nearby-results") ?: return@LaunchedEffect
+        val features = if (state.navigating) emptyList() else nearbyPlaces.take(36).map { place ->
+            Feature.fromGeometry(Point.fromLngLat(place.point.lon, place.point.lat)).also {
+                it.addStringProperty("nearby_id", place.id)
+                it.addStringProperty("name", place.name)
+                it.addStringProperty("kind", place.kind)
+                it.addStringProperty("poi_icon", "poi-${nearbyPoiIcon(place)}")
+            }
+        }
+        source.setGeoJson(FeatureCollection.fromFeatures(features))
+    }
+    LaunchedEffect(active,lifecycleState,styleReady,state.fix,displayPosition,routeBearing,state.bearing,state.headingReliable,state.headingSource,state.mode,state.navigating,state.keepMapNorthUp,state.progress?.offRoute,state.offRoute,state.accuracy) {
         positionFrames[0]?.cancel();positionFrames[0]=null
         if(!active || styleReady==0 || !lifecycleState.isAtLeast(Lifecycle.State.RESUMED))return@LaunchedEffect
         val m=map ?: return@LaunchedEffect
         val style=m.style ?: return@LaunchedEffect
         val layer=style.getLayerAs<SymbolLayer>("position-arrow") ?: return@LaunchedEffect
         val source=style.getSourceAs<GeoJsonSource>("position") ?: return@LaunchedEffect
-        val course=state.navigating && state.headingSource.isTravelDirection
-        val heading=if(state.headingReliable)state.bearing else renderedBearing[0]
-        motion.update(state.fix,heading,SystemClock.elapsedRealtime(),course,ValueAnimator.areAnimatorsEnabled())
-        layer.showPlayerMarker(state,currentUseModel)
+        val gpsCourse=state.navigating && state.headingReliable && state.headingSource==HeadingSource.COURSE
+        val heading=when {
+            gpsCourse -> state.bearing
+            routeBearing!=null -> routeBearing
+            state.headingReliable -> state.bearing
+            else -> renderedBearing[0]
+        }
+        val travelDirection=state.navigating && (gpsCourse || routeBearing!=null)
+        val baseCameraBearing=mapCameraBearing(state,m.cameraPosition.bearing.toFloat())
+        val cameraBearing=if(state.navigating && displayPosition!=null)
+            navigationPose(m,state.copy(fix=displayPosition),baseCameraBearing).bearing.toFloat()
+        else baseCameraBearing
+        motion.update(displayPosition,heading,SystemClock.elapsedRealtime(),travelDirection,ValueAnimator.areAnimatorsEnabled(),
+            cameraBearing=cameraBearing,
+            currentCameraBearing=m.cameraPosition.bearing.toFloat())
+        layer.showPlayerMarker(state,currentUseModel,markerDirectionReliable)
         val epoch=styleEpoch[0]
         // Sensor/accuracy emissions cannot reset the accepted fix's timeline.
         // This bookkeeping is deliberately not Compose state: a GL frame should
         // not recompose the whole map, HUD and its effects.
-        positionFrames[0]=MapMotionFrames { now ->
+        positionFrames[0]=MapMotionFrames(motionFrameIntervalMillis) { now ->
             if(epoch!=styleEpoch[0] || !currentActive || styleReady==0)return@MapMotionFrames false
             val pose=motion.sample(now)
             renderedBearing[0]=pose.bearing
             source.setFeature(pose.point?.let { Feature.fromGeometry(Point.fromLngLat(it.lon,it.lat)) })
             layer.setProperties(iconRotate(pose.bearing))
             val point=pose.point
-            if(point!=null && now>=focusCameraHoldUntil[0] &&
-                followPolicy.shouldFollow(currentState.navigating,currentState.selected!=null,now)) {
-                m.moveCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder(m.cameraPosition)
-                    .padding(drivePadding(m,currentState.navigating)).target(point.latLng()).bearing(if(course)pose.bearing.toDouble() else m.cameraPosition.bearing).build()))
-                cameraMemory.fix=point;cameraMemory.bearing=m.cameraPosition.bearing.toFloat()
+            val followsPosition=followPolicy.shouldFollow(currentState.navigating,currentState.selected!=null,now)
+            val followsHeadingOnly=!currentState.navigating && currentState.selected!=null &&
+                !currentState.keepMapNorthUp && currentState.headingReliable && followPolicy.shouldFollowHeading(false,now)
+            val cameraTarget=when {
+                point==null -> null
+                followsPosition -> point.latLng()
+                followsHeadingOnly -> m.cameraPosition.target
+                else -> null
+            }
+            if(cameraTarget!=null && now>=focusCameraHoldUntil[0]) {
+                val cameraBearing=when {
+                    currentState.navigating && currentState.keepMapNorthUp -> 0.0
+                    currentState.navigating -> pose.cameraBearing.toDouble()
+                    mapCameraBearingIsControlled(currentState) -> pose.cameraBearing.toDouble()
+                    else -> m.cameraPosition.bearing
+                }
+                val camera=CameraPosition.Builder(m.cameraPosition).target(cameraTarget).bearing(cameraBearing)
+                if(followsPosition)camera.padding(drivePadding(m,currentState.navigating))
+                m.moveCamera(CameraUpdateFactory.newCameraPosition(camera.build()))
+                if(followsPosition && point!=null)cameraMemory.fix=point
             }
             motion.remainingMillis(now)>0
         }.also { it.start() }
@@ -443,27 +578,50 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
     LaunchedEffect(active,styleReady,state.navigating) {
         if(!active || styleReady==0)return@LaunchedEffect
         val m=map ?: return@LaunchedEffect
-        m.easeCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder(m.cameraPosition).padding(drivePadding(m,state.navigating)).build()),600)
+        val camera=CameraUpdateFactory.newCameraPosition(CameraPosition.Builder(m.cameraPosition).padding(drivePadding(m,state.navigating)).build())
+        if(state.navigating)m.easeCamera(camera,600) else m.moveCamera(camera)
     }
-    LaunchedEffect(active,styleReady,state.fix,state.bearing,state.headingSource,state.navigating,state.tilted,state.selected,followTick) {
+    LaunchedEffect(active,styleReady,state.fix,displayPosition,routeBearing,state.bearing,state.headingReliable,state.headingSource,state.navigating,state.keepMapNorthUp,state.tilted,state.selected,state.progress,state.route,state.speed,state.routing,state.offRoute,scaleBarInsets,followTick) {
         if(!active || styleReady==0)return@LaunchedEffect
         val m=map ?: return@LaunchedEffect
         val following=followPolicy.shouldFollow(state.navigating,state.selected!=null,SystemClock.elapsedRealtime())
         // A panned-away map offers an explicit way back to the user.
         reportAway(m.awayFromUser(state,followPolicy))
-        val desiredCameraBearing=if(state.navigating && state.headingSource.isTravelDirection)state.bearing else m.cameraPosition.bearing.toFloat()
-        val desiredTilt=mapCameraTilt(state.world,state.tilted,state.navigating,cameraTiltOverride)
-        if(motion.remainingMillis(SystemClock.elapsedRealtime())>0)return@LaunchedEffect
-        if(SystemClock.elapsedRealtime()>=focusCameraHoldUntil[0] && following && state.fix!=null &&
-            (cameraMemory.fix==null || distance(cameraMemory.fix!!,state.fix)>1.5 ||
-            distance(Coordinate(m.cameraPosition.target!!.latitude,m.cameraPosition.target!!.longitude),state.fix)>20 ||
-            kotlin.math.abs(headingDelta(cameraMemory.bearing,desiredCameraBearing))>3f ||
-            kotlin.math.abs(m.cameraPosition.tilt-desiredTilt)>1.0)) {
-            cameraMemory.fix=state.fix;cameraMemory.bearing=desiredCameraBearing
+        val cameraState=if(state.navigating && displayPosition!=null)state.copy(fix=displayPosition) else state
+        val navPose=if(state.navigating)navigationPose(m,cameraState) else null
+        val desiredCameraZoom=navPose?.zoom ?: m.cameraPosition.zoom
+        val desiredTilt=navPose?.tilt ?: mapCameraTilt(state.world,state.tilted,state.navigating,cameraTiltOverride)
+        val motionRemaining=motion.remainingMillis(SystemClock.elapsedRealtime())
+        // The position-frame interpolator normally owns course rotation. If a map gesture or a
+        // camera hold prevented those frames from applying it, recheck once the short interpolation
+        // window has elapsed and let the follow camera correct the bearing without fighting it.
+        if(motionRemaining>0)delay(motionRemaining+48L)
+        val desiredBearing=navPose?.bearing ?: m.cameraPosition.bearing
+        val zoomChanged=state.navigating && (cameraMemory.zoom.isNaN() || kotlin.math.abs(cameraMemory.zoom-desiredCameraZoom)>.2)
+        val bearingChanged=state.navigating && kotlin.math.abs(headingDelta(m.cameraPosition.bearing.toFloat(),desiredBearing.toFloat()))>2f
+        if(SystemClock.elapsedRealtime()>=focusCameraHoldUntil[0] && following && displayPosition!=null &&
+            (cameraMemory.fix==null || distance(cameraMemory.fix!!,displayPosition)>1.5 ||
+            distance(Coordinate(m.cameraPosition.target!!.latitude,m.cameraPosition.target!!.longitude),displayPosition)>20 ||
+            kotlin.math.abs(m.cameraPosition.tilt-desiredTilt)>1.0 || zoomChanged || bearingChanged)) {
+            cameraMemory.fix=displayPosition;cameraMemory.zoom=desiredCameraZoom
             focusCameraHoldUntil[0]=SystemClock.elapsedRealtime()+500L
-            m.easeCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder(m.cameraPosition).padding(drivePadding(m,state.navigating)).target(state.fix.latLng())
-                .zoom(if(state.navigating)NAV_ZOOM else m.cameraPosition.zoom).bearing(desiredCameraBearing.toDouble())
+            m.easeCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder(m.cameraPosition).padding(drivePadding(m,state.navigating)).target(displayPosition.latLng())
+                .zoom(desiredCameraZoom).bearing(if(state.navigating)desiredBearing else m.cameraPosition.bearing)
                 .tilt(desiredTilt).build()),500)
+        }
+    }
+    // A compass tap rotates the view in place; it never recentres or changes zoom.
+    LaunchedEffect(active,styleReady,state.orientationRequest) {
+        val m=map ?: return@LaunchedEffect
+        if(!active || styleReady==0 || orientationRequestSeen[0]==state.orientationRequest)return@LaunchedEffect
+        orientationRequestSeen[0]=state.orientationRequest
+        val following=followPolicy.shouldFollow(state.navigating,state.selected!=null,SystemClock.elapsedRealtime())
+        // Browsing the live position is still a following camera. The compass must rotate it
+        // without changing its centre or zoom; only a moving navigation camera is left to the
+        // position-frame interpolator to avoid two competing camera animations.
+        if(!state.navigating || !following || state.fix==null) {
+            val bearing=mapCameraBearing(state,m.cameraPosition.bearing.toFloat())
+            m.easeCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder(m.cameraPosition).bearing(bearing.toDouble()).build()),350)
         }
     }
     // The 2D/3D control changes pitch alone: same target, zoom and bearing wherever the user is looking.
@@ -473,26 +631,32 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
         val m=map ?: return@LaunchedEffect
         // A new camera request already carries the tilt in its own animation.
         if(!active || styleReady==0 || requestChanged) return@LaunchedEffect
-        val tilt=pitchChange(m.cameraPosition.tilt,mapCameraTilt(state.world,state.tilted,state.navigating,cameraTiltOverride)) ?: return@LaunchedEffect
+        val wantedTilt=mapCameraTilt(state.world,state.tilted,state.navigating,cameraTiltOverride)
+        val targetTilt=if(state.navigating)navigationTiltAtZoom(m.cameraPosition.zoom,wantedTilt) else wantedTilt
+        val tilt=pitchChange(m.cameraPosition.tilt,targetTilt) ?: return@LaunchedEffect
         m.easeCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder(m.cameraPosition).tilt(tilt).build()),400)
     }
-    LaunchedEffect(active,state.cameraRequest,styleReady,routeInsets,cameraZoomOverride,cameraTiltOverride,cameraCenterOverride) {
+    LaunchedEffect(active,state.cameraRequest,styleReady,routeInsets,cameraZoomOverride,cameraTiltOverride,cameraCenterOverride,scaleBarInsets,displayPosition) {
         val m=map ?: return@LaunchedEffect
         if(!active || styleReady==0) return@LaunchedEffect
         // A style reload or new insets replays this effect; only a fresh request may move a map the user has taken over.
         if(!cameraGate.accept(state.cameraRequest,passive=state.cameraRequest==state.passiveCameraRequest))return@LaunchedEffect
-        val focusUser=state.fix!=null && state.cameraRequest==state.focusUserCameraRequest
+        val focusUser=displayPosition!=null && state.cameraRequest==state.focusUserCameraRequest
         focusCameraHoldUntil[0]=SystemClock.elapsedRealtime()+if(focusUser)1100L else 750L
         followPolicy.resume();cameraMemory.fix=null
         // A follow tick would launch a second camera animation at the old zoom.
         if(!focusUser)followTick++
         if(focusUser) {
-            val fix=requireNotNull(state.fix)
-            val zoom=if(state.navigating)NAV_ZOOM else maxOf(LOCATE_ZOOM,state.world.mapArt().zoom)
+            val fix=requireNotNull(displayPosition)
+            val pose=if(state.navigating)navigationPose(m,state) else null
+            val zoom=pose?.zoom ?: maxOf(LOCATE_ZOOM,state.world.mapArt().zoom)
+            val tilt=pose?.tilt ?: mapCameraTilt(state.world,state.tilted,state.navigating,cameraTiltOverride)
+            val bearing=pose?.bearing ?: mapCameraBearing(state,m.cameraPosition.bearing.toFloat()).toDouble()
+            cameraMemory.zoom=zoom
             m.animateCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder()
                 .padding(drivePadding(m,state.navigating)).target(fix.latLng()).zoom(zoom)
-                .bearing(if(state.navigating)state.bearing.toDouble() else 0.0)
-                .tilt(mapCameraTilt(state.world,state.tilted,state.navigating,cameraTiltOverride))
+                .bearing(bearing)
+                .tilt(tilt)
                 .build()),700)
         } else if(state.route!=null && !state.navigating) {
             val insets=routeInsets ?: return@LaunchedEffect
@@ -502,8 +666,16 @@ fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit,
             // produces an invalid fit with the narrow landscape viewport.
             m.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds,0.0,0.0,insets.left,insets.top,insets.right,insets.bottom),700)
         } else {
-            val center=if(state.navigating) state.fix else state.selected?.point ?: state.fix
-            if(center!=null) m.animateCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder().padding(drivePadding(m,state.navigating)).target(center.latLng()).zoom(if(state.navigating)NAV_ZOOM else cameraZoomOverride ?: state.world.mapArt().zoom).bearing(if(state.navigating)state.bearing.toDouble() else 0.0).tilt(mapCameraTilt(state.world,state.tilted,state.navigating,cameraTiltOverride)).build()),700)
+            val center=if(state.navigating) displayPosition else state.selected?.point ?: state.fix
+            if(center!=null) {
+                val pose=if(state.navigating)navigationPose(m,state) else null
+                val zoom=pose?.zoom ?: cameraZoomOverride ?: state.world.mapArt().zoom
+                val bearing=pose?.bearing ?: mapCameraBearing(state,m.cameraPosition.bearing.toFloat()).toDouble()
+                val wantedTilt=mapCameraTilt(state.world,state.tilted,state.navigating,cameraTiltOverride)
+                val tilt=pose?.tilt ?: wantedTilt
+                cameraMemory.zoom=zoom
+                m.animateCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder().padding(drivePadding(m,state.navigating)).target(center.latLng()).zoom(zoom).bearing(bearing).tilt(tilt).build()),700)
+            }
             else m.animateCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder().target((cameraCenterOverride ?: PreviewCenter).latLng()).zoom(cameraZoomOverride ?: state.world.mapArt().zoom).bearing(0.0).tilt(mapCameraTilt(state.world,state.tilted,state.navigating,cameraTiltOverride)).build()))
         }
     }
@@ -519,11 +691,48 @@ internal fun safeMapFeatureText(raw: String?, limit: Int = 120): String? {
     }
     return text.toString().trim().ifEmpty { null }
 }
+
+/** Match Vela archive taxonomy to Waypoint's per-world POI sprites. */
+private fun nearbyPoiIcon(place: NearbyPlace): String {
+    val kind = place.kind.lowercase(Locale.ROOT)
+    return when {
+        listOf("coffee", "cafe", "café", "tea").any(kind::contains) -> "cafe"
+        "bakery" in kind -> "bakery"
+        listOf("fast food", "fast_food", "burger").any(kind::contains) -> "fast_food"
+        listOf("restaurant", "food", "dining").any(kind::contains) -> "restaurant"
+        listOf("hospital", "medical center", "medical centre").any(kind::contains) -> "hospital"
+        listOf("pharmacy", "chemist").any(kind::contains) -> "pharmacy"
+        listOf("clinic", "doctor", "dentist").any(kind::contains) -> "clinic"
+        listOf("fuel", "petrol", "gas station").any(kind::contains) -> "fuel"
+        listOf("charging", "ev station").any(kind::contains) -> "ev_charging"
+        listOf("parking", "car park").any(kind::contains) -> "parking"
+        listOf("hotel", "hostel", "lodging", "guest house").any(kind::contains) -> "lodging"
+        listOf("park", "garden", "playground").any(kind::contains) -> "park"
+        listOf("museum", "gallery").any(kind::contains) -> "museum"
+        listOf("attraction", "monument", "landmark", "castle").any(kind::contains) -> "attraction"
+        listOf("worship", "church", "mosque", "temple", "synagogue").any(kind::contains) -> "place_of_worship"
+        listOf("grocery", "supermarket", "market").any(kind::contains) -> "grocery"
+        listOf("mall", "shopping centre", "shopping center").any(kind::contains) -> "mall"
+        "shop" in kind || place.group == "shop" -> "shop"
+        else -> when (place.group) {
+            "food" -> "restaurant"
+            "park" -> "park"
+            "culture" -> "attraction"
+            "fuel" -> "fuel"
+            "lodging" -> "lodging"
+            "health" -> "pharmacy"
+            "parking" -> "parking"
+            "civic" -> "information"
+            else -> "place"
+        }
+    }
+}
+
 private fun Coordinate.latLng()=LatLng(lat,lon)
 
 /** A model snapshot is pre-rotated for the camera tilt, so it always faces the viewport. */
-private fun SymbolLayer.showPlayerMarker(state: NavState, useModel: Boolean)=setProperties(
-    iconImage(if(useModel)CURSOR_MODEL_IMAGE else playerMarkerImage(state.world,state.mode,state.headingReliable)),
+private fun SymbolLayer.showPlayerMarker(state: NavState, useModel: Boolean, directionReliable: Boolean=state.headingReliable)=setProperties(
+    iconImage(if(useModel)CURSOR_MODEL_IMAGE else playerMarkerImage(state.world,state.mode,directionReliable)),
     iconSize(playerIconSize(if(useModel)1f else .55f)),
     iconPitchAlignment(if(!useModel && state.world!=World.NIGHT_CITY && state.mode==TravelMode.WALK)Property.ICON_PITCH_ALIGNMENT_MAP
         else Property.ICON_PITCH_ALIGNMENT_VIEWPORT))
@@ -543,7 +752,7 @@ private fun MapLibreMap.awayFromUser(state: NavState, follow: MapFollowPolicy): 
 
 private class MapCameraMemory {
     var fix:Coordinate?=null
-    var bearing=0f
+    var zoom=Double.NaN
 }
 
 /** Stop hidden GL rendering without losing the selected camera or native style. */

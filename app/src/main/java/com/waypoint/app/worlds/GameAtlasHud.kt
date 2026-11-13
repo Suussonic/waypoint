@@ -31,7 +31,11 @@ import kotlin.math.roundToInt
 data class AtlasActions(val search:()->Unit,val huds:()->Unit,val saved:()->Unit,val settings:()->Unit,
     val locate:()->Unit,val tilt:()->Unit,val voice:()->Unit,val nearby:(String)->Unit,
     /** The map is panned away from the user, so the recentre control has somewhere to go. */
-    val awayFromUser:Boolean=false)
+    val awayFromUser:Boolean=false,
+    val toggleMapOrientation:()->Unit={})
+
+internal fun mapOrientationState(keepMapNorthUp:Boolean)=if(keepMapNorthUp)"North-up" else "Heading-up"
+internal fun mapOrientationAction(keepMapNorthUp:Boolean)=if(keepMapNorthUp)"Follow heading and travel direction" else "Keep map north-up"
 
 @Composable fun GameAtlasChrome(state:NavState,actions:AtlasActions,modifier:Modifier=Modifier) {
     val heading=if(state.headingReliable)state.bearing else Float.NaN
@@ -116,7 +120,7 @@ internal fun atlasToolCaption(label:String)=when(label) {
     val p=hudPalette(s.world)
     Surface(color=p.panel,modifier=modifier) {AtlasText(s.city,s.world,Modifier.padding(horizontal=12.dp,vertical=7.dp),18,font=if(serif)AtlasFont else hudFont(s.world))}
 }
-@Composable internal fun CompassRose(bearing:Float,world:World,modifier:Modifier=Modifier,ornate:Boolean=false,onRecenter:()->Unit={},hudSize:HudSize=HudSize.STANDARD) {
+@Composable internal fun CompassRose(bearing:Float,world:World,modifier:Modifier=Modifier,ornate:Boolean=false,onRecenter:()->Unit={},hudSize:HudSize=HudSize.STANDARD,northUp:Boolean?=null,onToggleOrientation:(()->Unit)?=null) {
     val p=hudPalette(world);val reliable=bearing.isFinite()
     val diameter=when(hudSize) {
         HudSize.COMPACT -> if(ornate)88.dp else 64.dp
@@ -128,9 +132,19 @@ internal fun atlasToolCaption(label:String)=when(label) {
     var unwrapped by remember { mutableFloatStateOf(target) }
     LaunchedEffect(target) {unwrapped+=headingDelta(unwrapped%360,target)}
     val rotation by androidx.compose.animation.core.animateFloatAsState(unwrapped,androidx.compose.animation.core.tween(120),label="Compass heading")
-    val description=if(reliable)stringResource(R.string.heading_recenter, target.roundToInt()) else stringResource(R.string.heading_unavailable_recenter)
-    Box(modifier.size(diameter).background(p.panel.copy(alpha=.96f),CircleShape)
-        .clickable(role=Role.Button,onClick=onRecenter).semantics(mergeDescendants=true){contentDescription=description},contentAlignment=Alignment.Center) {
+    val orientationMode=northUp ?: false
+    val description=if(onToggleOrientation!=null) {
+        val mode=mapOrientationState(orientationMode)
+        val action=mapOrientationAction(orientationMode)
+        if(reliable)"Heading ${target.roundToInt()} degrees. $mode. Tap to $action." else "$mode map. Heading unavailable. Tap to $action."
+    } else if(reliable)stringResource(R.string.heading_recenter, target.roundToInt()) else stringResource(R.string.heading_unavailable_recenter)
+    Surface(onClick=onToggleOrientation ?: onRecenter,
+        modifier=modifier.size(diameter).semantics(mergeDescendants=true){
+            role=Role.Button
+            contentDescription=description
+            if(onToggleOrientation!=null)stateDescription=mapOrientationState(orientationMode)
+        },color=p.panel.copy(alpha=.96f),contentColor=p.foreground,shape=CircleShape) {
+        Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center) {
         Canvas(Modifier.fillMaxSize().padding(7.dp)) {
             val r=size.minDimension/2
             drawCircle(p.foreground.copy(alpha=.65f),r,style=Stroke(1.dp.toPx()))
@@ -147,6 +161,7 @@ internal fun atlasToolCaption(label:String)=when(label) {
         Column(horizontalAlignment=Alignment.CenterHorizontally) {
             Text(if(reliable)listOf("N","NE","E","SE","S","SW","W","NW")[((target+22.5f)/45).toInt()%8] else "—",fontFamily=hudFont(world),fontSize=if(ornate)20.sp else 15.sp,lineHeight=if(ornate)24.sp else 18.sp,letterSpacing=0.sp,color=p.foreground)
             if(reliable)Text("${target.roundToInt()%360}°",fontFamily=hudFont(world),fontSize=TypeScale.Caption,lineHeight=16.sp,letterSpacing=0.sp,color=p.muted)
+        }
         }
     }
 }
@@ -195,7 +210,7 @@ internal fun atlasToolCaption(label:String)=when(label) {
     AtlasTool(s.world,Icons.Default.Search,"Set a destination",a.search,Modifier.align(Alignment.TopEnd).padding(top=88.dp,end=18.dp),round=true)
     Column(Modifier.align(Alignment.BottomStart).padding(start=18.dp,bottom=18.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
         Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){AtlasTool(s.world,Icons.Default.MyLocation,"Use my location",a.locate,round=true);AtlasTool(s.world,Icons.Default.BookmarkBorder,"Saved",a.saved,round=true);AtlasTool(s.world,Icons.Default.Layers,"Worlds",a.huds,round=true)}
-        Row(verticalAlignment=Alignment.Bottom,horizontalArrangement=Arrangement.spacedBy(12.dp)){CompassRose(b,s.world,ornate=true,onRecenter=a.locate);Column {FixLabel(s);AtlasAction(s.world,"Settings",a.settings)}}
+        Row(verticalAlignment=Alignment.Bottom,horizontalArrangement=Arrangement.spacedBy(12.dp)){CompassRose(b,s.world,ornate=true,onRecenter=a.locate,northUp=s.keepMapNorthUp,onToggleOrientation=a.toggleMapOrientation);Column {FixLabel(s);AtlasAction(s.world,"Settings",a.settings)}}
     }
 }
 @Composable private fun BoxScope.NightCityAtlas(s:NavState,a:AtlasActions) {
@@ -242,13 +257,13 @@ internal fun atlasToolCaption(label:String)=when(label) {
 }
 @Composable private fun BoxScope.SanAndreasAtlas(s:NavState,b:Float,a:AtlasActions) {
     Column(Modifier.align(Alignment.TopStart).padding(18.dp)) {AtlasText("Map",s.world,size=42,color=atlasInkColor(s.world,Color(0xFF1D241C)),font=WesternFont);Row(verticalAlignment=Alignment.CenterVertically) {AtlasAction(s.world,"Worlds",a.huds);AtlasAction(s.world,"Saved",a.saved);AtlasTool(s.world,Icons.Default.Tune,"Settings",a.settings)}}
-    CompassRose(b,s.world,Modifier.align(Alignment.TopEnd).padding(18.dp),onRecenter=a.locate)
+    CompassRose(b,s.world,Modifier.align(Alignment.TopEnd).padding(18.dp),onRecenter=a.locate,northUp=s.keepMapNorthUp,onToggleOrientation=a.toggleMapOrientation)
     Column(Modifier.align(Alignment.BottomCenter).padding(18.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {PlaceLabel(s);Row(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalAlignment=Alignment.CenterVertically){AtlasFind(s.world,a,Modifier.weight(1f));AtlasTool(s.world,Icons.Default.MyLocation,"Use my location",a.locate,round=true)}}
 }
 @Composable private fun BoxScope.ViceAtlas(s:NavState,b:Float,a:AtlasActions) {
     Column(Modifier.align(Alignment.TopStart).padding(18.dp)) {AtlasText("Map",s.world,size=44,color=atlasAccentColor(s.world,Color(0xFF6B184E)),font=ViceFont);PlaceLabel(s)}
     Column(Modifier.align(Alignment.TopEnd).padding(18.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){AtlasTool(s.world,Icons.Default.Layers,"Worlds",a.huds);AtlasTool(s.world,Icons.Default.Tune,"Settings",a.settings)}
-    Row(Modifier.align(Alignment.BottomCenter).padding(18.dp),verticalAlignment=Alignment.Bottom,horizontalArrangement=Arrangement.spacedBy(8.dp)) {CompassRose(b,s.world,onRecenter=a.locate);Column(Modifier.weight(1f)){AtlasFind(s.world,a);Row(verticalAlignment=Alignment.CenterVertically){AtlasAction(s.world,"Saved",a.saved);AtlasAction(s.world,"Locate",a.locate)}}}
+    Row(Modifier.align(Alignment.BottomCenter).padding(18.dp),verticalAlignment=Alignment.Bottom,horizontalArrangement=Arrangement.spacedBy(8.dp)) {CompassRose(b,s.world,onRecenter=a.locate,northUp=s.keepMapNorthUp,onToggleOrientation=a.toggleMapOrientation);Column(Modifier.weight(1f)){AtlasFind(s.world,a);Row(verticalAlignment=Alignment.CenterVertically){AtlasAction(s.world,"Saved",a.saved);AtlasAction(s.world,"Locate",a.locate)}}}
 }
 @Composable private fun BoxScope.LibertyAtlas(s:NavState,a:AtlasActions) {
     Column(Modifier.align(Alignment.TopCenter).padding(16.dp)) {AtlasTabs(s.world,a,activeColor=atlasAccentColor(s.world,Color(0xFFE1E4E2)));AtlasText(s.city,s.world,Modifier.padding(top=8.dp),22)}

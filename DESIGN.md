@@ -547,7 +547,7 @@ The normal preview toolbar retains Back, ROUTE, Worlds and Settings on the theme
 
 ### Compass and position
 
-`CompassRose` now uses the reliable heading selected from phone sensors or GPS course. Its fixed top index represents forward travel; the rose rotates beneath it, and the center shows the cardinal direction and degrees. Unavailable heading shows a dash and does not draw a misleading direction. The whole compass is a recenter button with an accessible heading description. Its standard size is 72dp; the ornate variant is 100dp. Cardinal text uses 15sp/18sp in the standard variant and 20sp/24sp in the ornate variant; degree text uses 11sp/14sp. Both use zero tracking. It is not a map-orientation dial.
+`CompassRose` uses the reliable heading selected from phone sensors or GPS course. Its fixed top index represents forward direction; the rose rotates beneath it, and the center shows the cardinal direction and degrees. Unavailable heading shows a dash without drawing a misleading direction. The compass toggles the camera between heading-up and north-up, exposes its mode and action to accessibility services, and leaves recentering to the separate Locate control. Heading-up is the default: a stationary map follows the phone compass, while movement follows GPS course. Its standard size is 72dp; the ornate variant is 100dp. Cardinal text uses 15sp/18sp in the standard variant and 20sp/24sp in the ornate variant; degree text uses 11sp/14sp. Both use zero tracking.
 
 Car and Motorcycle modes use original, world-specific transport illustrations on phone and car maps. Old West uses a horse; Pixel World uses a minecart for Car and a saddled pig for Motorcycle; Sea Chart uses a ship and rowboat; Highlands uses a carriage and broom. Modern atlases use their own sports cars, classic cars, trucks, rovers, motorcycles and trikes. Fantasy atlases use mounts. These pictures change presentation only: the visible Car, Motorcycle, Bicycle and Walk controls still select the real routing profile.
 
@@ -607,6 +607,7 @@ Map info is a small labelled text-and-icon control with a minimum 48dp touch hei
 - **Do** retain native touch targets, semantic labels, insets and system navigation behavior.
 - **Do** consult the actual map or navigation state in `docs/visual-sourcebook.md` before changing a theme.
 - **Do** show only reliable phone heading or travel course in the compass, with a dash when unavailable.
+- **Do** default to heading-up and let the compass toggle north-up without recentering the map.
 - **Do** keep the catalogue naming hierarchy consistent and visible captions on map icon controls.
 - **Do** reserve fixed task actions outside the scrolling content and allow native text to reflow.
 - **Do** use contrast-paired task colors, explicit completion with Undo, and quiet reward presentation outside navigation.

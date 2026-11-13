@@ -27,6 +27,7 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.maps.renderer.MapRenderer
+import com.waypoint.app.offline.OfflineMapStyleFile
 import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory.*
@@ -42,10 +43,11 @@ import kotlin.math.abs
 /** One GPU-backed MapLibre view owns the car map for the life of the projected Surface. */
 internal class WaypointCarLiveMap(context: Context, private val overlay: WaypointCarOverlay): FrameLayout(context) {
     private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main.immediate)
+    private val motionFrameIntervalMillis=mapMotionFrameIntervalMillis(context)
     private val availableStyles by lazy(LazyThreadSafetyMode.NONE) { mapThemeStyleFiles(getContext()) }
     private val mapView=MapView(context).apply {
         onCreate(null)
-        setMaximumFps(60)
+        setMaximumFps(if(motionFrameIntervalMillis>0L)30 else 60)
         setRenderingRefreshMode(MapRenderer.RenderingRefreshMode.WHEN_DIRTY)
     }
     private val hud=object: View(context) {
@@ -76,11 +78,19 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
     private var cameraStart=0L
     private var cameraDuration=0L
     private var framePosted=false
+    private var lastRenderedFrameNanos=0L
     private val frames=Choreographer.getInstance()
     private val frameCallback=object:Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos:Long) {
             framePosted=false
             if(destroyed || !started || !styleReady)return
+            val minimumFrameIntervalNanos=motionFrameIntervalMillis*1_000_000L
+            if(minimumFrameIntervalNanos>0L && lastRenderedFrameNanos>0L &&
+                frameTimeNanos-lastRenderedFrameNanos<minimumFrameIntervalNanos) {
+                requestFrame()
+                return
+            }
+            lastRenderedFrameNanos=frameTimeNanos
             val now=SystemClock.elapsedRealtime()
             renderMotion(now)
             if(motion.remainingMillis(now)>0 || now<cameraStart+cameraDuration)requestFrame()
@@ -182,21 +192,23 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
                 source to bitmaps
             }
             if(epoch!=styleEpoch)return@launch
-            m.setStyle(Style.Builder().fromJson(json)) { style ->
+            val styleUri=withContext(Dispatchers.IO) { OfflineMapStyleFile.write(context,json) }
+            m.setStyle(Style.Builder().fromUri(styleUri)) { style ->
                 if(epoch!=styleEpoch)return@setStyle
                 style.addImages(images)
+                style.raiseBuildingExtrusionsAboveRoads()
                 val art=world.mapArt()
                 // Other ways to the same place sit quietly under the chosen line, as on the phone.
                 style.addSource(GeoJsonSource("car-route-alt",FeatureCollection.fromFeatures(emptyArray<Feature>())))
-                style.addLayer(LineLayer("car-route-alt-casing","car-route-alt").withProperties(
+                style.addRouteLayerBelowBuildings(LineLayer("car-route-alt-casing","car-route-alt").withProperties(
                     lineColor(world.routeCasingColor(effectiveNight)),lineWidth(art.routeWidth+2f),lineOpacity(.85f),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)))
-                style.addLayer(LineLayer("car-route-alt-line","car-route-alt").withProperties(
+                style.addRouteLayerBelowBuildings(LineLayer("car-route-alt-line","car-route-alt").withProperties(
                     lineColor(if(effectiveNight)"#8A949A" else "#7E8A92"),lineWidth((art.routeWidth-.5f).coerceAtLeast(2f)),lineOpacity(.95f),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)))
                 style.addSource(GeoJsonSource("car-route-alt-labels",FeatureCollection.fromFeatures(emptyArray<Feature>())))
                 style.addSource(GeoJsonSource("car-route",Feature.fromGeometry(LineString.fromLngLats(emptyList()))))
-                style.addLayer(LineLayer("car-route-casing","car-route").withProperties(
+                style.addRouteLayerBelowBuildings(LineLayer("car-route-casing","car-route").withProperties(
                     lineColor("#161716"),lineWidth(art.routeWidth+3f),lineDasharray(world.routeLineDash(state.mode,state.navigating)),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)))
-                style.addLayer(LineLayer("car-route-line","car-route").withProperties(
+                style.addRouteLayerBelowBuildings(LineLayer("car-route-line","car-route").withProperties(
                     lineColor(world.routeColor),lineWidth(art.routeWidth),lineDasharray(world.routeLineDash(state.mode,state.navigating)),lineJoin(Property.LINE_JOIN_ROUND),lineCap(Property.LINE_CAP_ROUND)))
                 style.addLayer(SymbolLayer("car-route-alt-label","car-route-alt-labels").withProperties(
                     textField(get("label")),textFont(arrayOf(world.mapFontName())),textSize(14f),
@@ -207,7 +219,7 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
                     iconImage("destination-marker"),iconSize(.65f),iconAllowOverlap(true),iconIgnorePlacement(true)))
                 style.addSource(GeoJsonSource("car-position",Feature.fromGeometry(Point.fromLngLat(0.0,0.0))))
                 style.addLayer(SymbolLayer("car-position-marker","car-position").withProperties(
-                    iconImage("nav-arrow"),iconSize(.55f),iconAllowOverlap(true),iconIgnorePlacement(true),
+                    iconImage("nav-arrow"),iconSize(.55f),iconAnchor("center"),iconOffset(arrayOf(0f,0f)),iconAllowOverlap(true),iconIgnorePlacement(true),
                     iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
                     iconPitchAlignment(Property.ICON_PITCH_ALIGNMENT_VIEWPORT)))
                 loadedStyleFile=styleFile
@@ -281,7 +293,9 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
             iconSize(if(state.world==World.NIGHT_CITY || state.mode==TravelMode.WALK).55f else .72f))
         val now=SystemClock.elapsedRealtime()
         val bearing=if(state.navigating)carTravelBearing(state).toFloat() else if(state.headingReliable)state.bearing else 0f
-        motion.update(state.fix,bearing,now,state.navigating,ValueAnimator.areAnimatorsEnabled())
+        motion.update(state.fix,bearing,now,state.navigating,ValueAnimator.areAnimatorsEnabled(),
+            cameraBearing=if(state.navigating)camera.bearing.toFloat() else bearing,
+            currentCameraBearing=m.cameraPosition.bearing.toFloat())
         val manualTarget=if(following)null else camera.target
         val key=listOf(state.world,System.identityHashCode(state.route),state.selected?.id,
             state.navigating,following,manualTarget?.latitude,manualTarget?.longitude,
@@ -322,7 +336,7 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
         val paddingFrom=cameraFrom.padding ?: doubleArrayOf(0.0,0.0,0.0,0.0)
         val paddingTo=camera.padding ?: doubleArrayOf(0.0,0.0,0.0,0.0)
         val padding=DoubleArray(4) { paddingFrom[it]+(paddingTo[it]-paddingFrom[it])*eased }
-        val bearing=if(followPosition && state.navigating)pose.bearing.toDouble()
+        val bearing=if(followPosition && state.navigating)pose.cameraBearing.toDouble()
             else cameraFrom.bearing+headingDelta(cameraFrom.bearing.toFloat(),camera.bearing.toFloat())*eased
         m.moveCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder()
             .target(LatLng(start.latitude+(target.latitude-start.latitude)*eased,

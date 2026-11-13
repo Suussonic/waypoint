@@ -33,7 +33,7 @@ hyrule|#4b4932|#4b4932|#424a32|#112a3d|#5f5b3b|#a69c64|#393b2c|#a4dafa|#142330|#
 just_cause|#143748|#1e4653|#235c5d|#0b2539|#305360|#6fa4ad|#183643|#c4edef|#193745|#6fa4ad|Waypoint Technical|coastal-grid|tactical|coastal_drop
 kingdom|#b2a37d|#c4b38a|#76805a|#8caaa5|#a39472|#e7d4aa|#81704e|#3c392b|#d9c9a4|#e7d4aa|Waypoint Atlas|vellum-engraving|engraved|heraldic_seal
 lands_between|#b1a789|#b9ac89|#798568|#798b89|#817963|#e0d1aa|#776e54|#eee2c5|#655b43|#e0d1aa|Waypoint Atlas|antique-contour|fantasy|golden_grace
-liberty|#222527|#2b2e30|#333c36|#121518|#42484b|#92999c|#222426|#dbdfda|#24272a|#92999c|Waypoint Condensed|concrete-blocks|street|metro_roundel
+liberty|#000000|#292929|#222222|#050505|#242424|#e5e5e5|#080808|#eeeeee|#050505|#858585|Waypoint Condensed|concrete-blocks|street|metro_roundel
 los_santos|#202020|#252525|#30362f|#182126|#383838|#898989|#171717|#e1e1da|#262626|#898989|Waypoint Condensed|street-atlas|street|blip_arc
 mafia|#c1c1a4|#d0c9aa|#8ca66b|#83b1b1|#aaa99a|#e8d174|#8e8e74|#3e453c|#dbd5b9|#e8d174|Waypoint Atlas|printed-atlas|engraved|printed_roundel
 nier|#CCC8B0|#D5D1BB|#B9BCA4|#9D9F94|#B1AD99|#EAE5CF|#716F60|#35362E|#E5E1CD|#EAE5CF|Waypoint Classic|machine-paper|machine|machine_bracket

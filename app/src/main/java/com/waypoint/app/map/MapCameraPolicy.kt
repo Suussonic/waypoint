@@ -10,6 +10,17 @@ import kotlin.math.abs
 /** A toggled tilt changes pitch only: no camera request, so no effect re-targets the user or destination. */
 internal fun NavState.withTiltToggled(): NavState = copy(tilted = !tilted)
 
+/** Camera direction: course/phone heading by default, or true north when the compass is toggled. */
+internal fun mapCameraBearing(state: NavState, currentBearing: Float): Float = when {
+    state.keepMapNorthUp -> 0f
+    state.headingReliable -> state.bearing
+    else -> currentBearing
+}
+
+/** A reliable heading may turn the camera; north-up is always a controlled orientation. */
+internal fun mapCameraBearingIsControlled(state: NavState): Boolean =
+    state.keepMapNorthUp || state.headingReliable
+
 /** Smallest pitch change worth animating; below this the camera is already at the requested tilt. */
 private const val TILT_EPSILON = 0.5
 

@@ -102,7 +102,7 @@ fun World.mapArt()=when(this) {
  * over-zoomed past 14, so these levels cost no extra tile data.
  */
 internal const val LOCATE_ZOOM = 18.3
-internal const val NAV_ZOOM = 18.0
+internal const val NAV_ZOOM = 18.5
 
 /**
  * The route is drawn wider as the map zooms in, and always wider than the widest road at that zoom
@@ -150,6 +150,71 @@ private object PoiAtlas {
         return Bitmap.createScaledBitmap(tile,64,64,world!=World.PIXEL && world!=World.SAN_ANDREAS)
     }
 }
+
+/** GTA IV's Liberty City radar marks, reused for the closest live OSM category. */
+private object LibertyBlips {
+    private val filesByCategory = mapOf(
+        "place" to "centre",
+        "restaurant" to "restaurant",
+        "fast_food" to "burgershot",
+        "ice_cream" to "chicken",
+        "cafe" to "bar",
+        "pub" to "darts",
+        "bar" to "club",
+        "lodging" to "safehouse",
+        "fuel" to "car",
+        "ev_charging" to "car",
+        "parking" to "car",
+        "grocery" to "deal",
+        "convenience" to "deal",
+        "bakery" to "chicken",
+        "butcher" to "restaurant",
+        "shop" to "sprayshop",
+        "clothing" to "clothes",
+        "mall" to "clothes",
+        "pharmacy" to "hospital",
+        "hospital" to "hospital",
+        "clinic" to "hospital",
+        "bank" to "deal",
+        "atm" to "deal",
+        "school" to "multiplayer",
+        "university" to "multiplayer",
+        "library" to "lawyer",
+        "museum" to "cup",
+        "attraction" to "helitour",
+        "castle" to "assassin",
+        "monument" to "centre",
+        "cinema" to "comedy",
+        "theatre" to "cabaret",
+        "park" to "girlfriend",
+        "playground" to "8ball",
+        "garden" to "girlfriend",
+        "toilets" to "centre",
+        "drinking_water" to "centre",
+        "information" to "north",
+        "police" to "police",
+        "fire_station" to "fire",
+        "post_office" to "station",
+        "place_of_worship" to "lawyer",
+        "stadium" to "cup",
+        "sports" to "bowling",
+        "train_station" to "station",
+        "bus_stop" to "taxi",
+        "ferry_terminal" to "boattour",
+        "car_repair" to "carwash",
+        "office" to "lawyer",
+    )
+    private val decoded = HashMap<String, Bitmap>()
+
+    @Synchronized fun icon(context: Context, category: String): Bitmap? {
+        val file = filesByCategory[category] ?: return null
+        decoded[file]?.let { return it }
+        return runCatching {
+            context.assets.open("poi/liberty_blips/radar_$file.png").use(BitmapFactory::decodeStream)
+        }.getOrNull()?.also { decoded[file] = it }
+    }
+}
+
 /**
  * Size of the position marker (car, bike, arrow) by zoom. The close-in size is unchanged; zoomed out it shrinks
  * so the marker stays proportionate to the roads instead of covering them.
@@ -198,6 +263,7 @@ internal fun mapPlayer(context:Context,world:World):Bitmap =
     else mapPlayer(world)
 
 internal fun mapPoi(context:Context,kind:String,world:World,night:Boolean=false):Bitmap {
+    if(world==World.LIBERTY) LibertyBlips.icon(context,kind)?.let { return it }
     PoiAtlas.icon(context,kind,world,night)?.let { return it }
     if(world.mapArt().marker==MarkerArt.PIXEL && kind in setOf("food","stay"))
         return BitmapFactory.decodeResource(context.resources,if(kind=="food")R.drawable.pixel_food else R.drawable.pixel_stay)

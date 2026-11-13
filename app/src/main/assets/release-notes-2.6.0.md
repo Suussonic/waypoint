@@ -20,7 +20,7 @@ This update adds a speed-limit warning while you drive, a first version of bus a
 
 ### Join the Waypoint Discord
 
-- Settings now has **Join the Waypoint Discord**, and the What's New window shown after you update has **Join Discord** and **Visit site** buttons beside **Explore map**. The server has a private channel for each of the 38 worlds, plus release notes and bug reports. Open invite: https://discord.gg/3ddSCASNUn
+- Settings now has **Join the Waypoint Discord**, and the What's New window shown after you update has **Join Discord** and **Visit site** buttons beside **Explore map**. The server has a private channel for each of the 38 worlds, plus release notes and bug reports. Open invite: https://discord.gg/TQ9cEx6rsu
 
 ### Website
 

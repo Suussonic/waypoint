@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#101711" />
+    <meta name="description" content="Waypoint 2.6.5 steadies navigation, expands offline place search, restores Liberty City blips and refines Android Auto." />
+    <title>Waypoint 2.6.5 — The map holds steady</title>
+    <link rel="stylesheet" href="../site.css" />
+    <link rel="stylesheet" href="release.css" />
+  </head>
+  <body class="release-page">
+    <a class="skip-link" href="#main-content">Skip to release notes</a>
+    <header class="release-nav">
+      <a class="release-brand" href="../index.html" aria-label="Waypoint home">
+        <img src="../images/waypoint-icon.png" width="38" height="38" alt="" />
+        <span>WAYPOINT</span>
+      </a>
+      <nav aria-label="Release navigation">
+        <a href="#navigation">Navigation</a>
+        <a href="#places">Offline places</a>
+        <a href="#credits">Credits</a>
+        <a class="release-nav-cta" href="https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.6.5">Get 2.6.5 <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+
+    <main id="main-content" class="release-main">
+      <section class="release-hero" aria-labelledby="release-title">
+        <div class="hero-map" aria-hidden="true">
+          <svg viewBox="0 0 1200 620" preserveAspectRatio="xMidYMid slice">
+            <path class="map-road" d="M-80 455 C120 455 105 220 300 220 S460 470 620 390 780 160 965 210 1080 385 1280 320" />
+            <path class="map-road" d="M-40 105 C160 130 215 340 360 350 S560 210 710 245 900 470 1220 500" />
+            <path class="map-road" d="M180 -60 C255 100 390 105 490 220 S620 445 705 700" />
+            <path class="map-road" d="M810 -40 C720 100 820 170 920 300 S1030 460 1120 700" />
+            <path class="map-route-halo" d="M-80 455 C120 455 105 220 300 220 S460 470 620 390 780 160 965 210 1080 385 1280 320" />
+            <path class="map-route" d="M-80 455 C120 455 105 220 300 220 S460 470 620 390 780 160 965 210 1080 385 1280 320" />
+            <circle class="map-node" cx="300" cy="220" r="8" /><circle class="map-node" cx="620" cy="390" r="8" /><circle class="map-node" cx="965" cy="210" r="8" />
+          </svg>
+          <span class="map-label map-label-a">NIGHT CITY · 03</span>
+          <span class="map-label map-label-b">LIBERTY · 04</span>
+          <span class="map-coordinate">37° 46′ N&nbsp; / &nbsp;122° 25′ W</span>
+        </div>
+        <div class="hero-copy">
+          <p class="release-kicker"><span class="release-live-dot"></span> VERSION 2.6.5 <span class="kicker-divider">/</span> RELEASE NOTES</p>
+          <h1 id="release-title">The map holds steady.<br /><span>The world stays open.</span></h1>
+          <p class="release-lede">A calmer camera through every turn. Offline place names when the signal disappears. More room for the road, the route and the worlds around them.</p>
+          <div class="hero-actions">
+            <a class="release-button" href="https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.6.5">Download Waypoint 2.6.5 <span aria-hidden="true">↗</span></a>
+            <a class="release-text-link" href="https://github.com/the-geeky-couldron/waypoint/blob/dev/CHANGELOG.md">Read the changelog <span aria-hidden="true">↗</span></a>
+          </div>
+          <div class="release-stats" aria-label="Release highlights">
+            <div><strong>38</strong><span>authored worlds</span></div>
+            <div><strong>4</strong><span>travel modes</span></div>
+            <div><strong>0</strong><span>place names lost offline</span></div>
+          </div>
+        </div>
+        <div class="hero-stamp" aria-hidden="true"><span>FIELD</span><strong>26.5</strong><span>RELEASE</span></div>
+      </section>
+
+      <section class="release-section navigation-section" id="navigation" aria-labelledby="navigation-title">
+        <div class="section-heading">
+          <p class="section-index">01 / GUIDANCE</p>
+          <h2 id="navigation-title">Navigation that holds its line</h2>
+          <p>Camera motion now follows the journey instead of reacting to every sensor tremor.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card feature-card-wide">
+            <div class="feature-copy">
+              <span class="feature-mark">A / STATIONARY</span>
+              <h3>Still means still.</h3>
+              <p>When you stop, the camera settles. Heading noise is filtered, and ending a route no longer leaves the map jittering as you move the phone.</p>
+            </div>
+            <div class="bearing-visual" aria-hidden="true">
+              <span class="bearing-ring ring-outer"></span><span class="bearing-ring ring-inner"></span>
+              <span class="bearing-cross cross-h"></span><span class="bearing-cross cross-v"></span>
+              <span class="bearing-arrow"></span><span class="bearing-label">HEADING · STABLE</span>
+            </div>
+          </article>
+          <article class="feature-card">
+            <span class="feature-mark">B / ROAD POSITION</span>
+            <h3>Stay on the route.</h3>
+            <p>A steadier position estimate keeps the vehicle marker with the selected road through bends, roundabouts and slower turns.</p>
+          </article>
+          <article class="feature-card feature-card-accent">
+            <span class="feature-mark">C / CAMERA</span>
+            <h3>Look further ahead.</h3>
+            <p>Route framing balances close road context with a forward view. The navigation action moves into guidance with less visual interruption.</p>
+          </article>
+        </div>
+        <div class="route-note"><span class="route-note-line" aria-hidden="true"></span><p>The map scale indicator now sits outside the center of the route, where it belongs.</p></div>
+      </section>
+
+      <section class="release-section places-section" id="places" aria-labelledby="places-title">
+        <div class="section-heading section-heading-split">
+          <div><p class="section-index">02 / EXPLORATION</p><h2 id="places-title">Places that work offline</h2></div>
+          <p>Download a region with its open-place records. Search those names on-device later, even when you are outside the saved area or out of coverage.</p>
+        </div>
+        <div class="places-showcase">
+          <figure class="world-shot liberty-shot">
+            <img src="../assets/landing/previews/liberty.webp" width="720" height="300" loading="lazy" alt="Liberty City map preview with its street grid and restored landmark labels." />
+            <figcaption><span>04 / LIBERTY CITY</span><strong>Landmarks back on the map</strong></figcaption>
+          </figure>
+          <div class="places-detail">
+            <div class="place-data-mark" aria-hidden="true"><span>OPEN DATA</span><b>↓</b><span>LOCAL INDEX</span><b>⌕</b></div>
+            <h3>Save the places with the map.</h3>
+            <p>Nearby discovery and name search can read the open-data snapshot stored with a downloaded area. Removing that area removes its place snapshot too.</p>
+            <ul class="release-list">
+              <li>Local open-place search, even without location access</li>
+              <li>Nearby discovery from saved regional records</li>
+              <li>Clear source and license information retained</li>
+            </ul>
+            <p class="online-note"><strong>Optional online layer:</strong> Google Maps web suggestions, listing details and photos can be enabled separately. These experimental, undocumented endpoints are not part of offline packs and are not the supported Google Places API. They have no Places API key or API SKU billing, may change or stop working, and are subject to Google's terms.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="release-section worlds-section" id="worlds" aria-labelledby="worlds-title">
+        <div class="section-heading">
+          <p class="section-index">03 / CARTOGRAPHY</p>
+          <h2 id="worlds-title">Every world reads more clearly</h2>
+          <p>Map artwork remains its own language. The real roads and the route stay easy to read underneath it.</p>
+        </div>
+        <div class="world-card-grid">
+          <figure class="world-shot night-shot">
+            <img src="../assets/landing/previews/night_city.webp" width="720" height="300" loading="lazy" alt="Night City map preview with red building footprints, teal roads and district labels." />
+            <figcaption><span>03 / NIGHT CITY</span><strong>Buildings sit in their own layer</strong></figcaption>
+          </figure>
+          <div class="world-copy-card">
+            <span class="feature-mark">38 WORLDS · ONE MAP ENGINE</span>
+            <h3>Routes stay visible around the skyline.</h3>
+            <p>3D buildings, roads, route paint and street labels now use a clearer layer order. Zooming out across the map worlds also keeps more of the geography in view.</p>
+            <div class="layer-stack" aria-label="Map drawing order: roads, route, buildings and labels">
+              <span><i>01</i> Roads &amp; streets</span><span><i>02</i> Route paint</span><span><i>03</i> 3D buildings</span><span><i>04</i> Street labels</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="release-section car-section" id="android-auto" aria-labelledby="car-title">
+        <div class="car-panel">
+          <div class="car-heading"><p class="section-index">04 / SHARED DISPLAY</p><h2 id="car-title">Android Auto has room to breathe</h2><p>Direction, tilt and zoom now hold a useful view while stationary and while moving. When another app shares the display, the map and guidance reflow into the space Android Auto gives them.</p><a class="release-text-link" href="https://github.com/the-geeky-couldron/waypoint/blob/dev/docs/guide.md#android-auto">Android Auto setup and limitations <span aria-hidden="true">↗</span></a></div>
+          <div class="dash-visual" aria-hidden="true">
+            <div class="dash-map"><div class="dash-road dash-road-one"></div><div class="dash-road dash-road-two"></div><div class="dash-route"></div><div class="dash-car">▲</div><span class="dash-label dash-label-a">ROUTE / 02</span><span class="dash-label dash-label-b">TURN IN 400 M</span></div>
+            <div class="dash-panel"><span class="dash-panel-notch"></span><strong>VIEW ADAPTED</strong><span>MAP + GUIDANCE</span><span class="dash-progress"><i></i></span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="release-section updater-section" id="updater" aria-labelledby="updater-title">
+        <div class="updater-copy"><p class="section-index">05 / UPDATE EXPERIENCE</p><h2 id="updater-title">Progress stays in view</h2><p>The updater keeps its loading and download bar anchored while the longer release details scroll below. The action remains clear on smaller screens.</p></div>
+        <div class="updater-card" aria-label="Illustration of pinned download progress above scrollable release details">
+          <div class="updater-card-head"><span>WAYPOINT UPDATE</span><span>2.6.5</span></div>
+          <div class="updater-progress"><div><strong>Downloading update</strong><b>68%</b></div><span class="progress-track"><i></i></span></div>
+          <div class="updater-scroll"><span class="fake-line long"></span><span class="fake-line medium"></span><span class="fake-line short"></span><span class="fake-heading"></span><span class="fake-line long"></span><span class="fake-line medium"></span><span class="fake-line short"></span></div>
+          <span class="scroll-label">DETAILS · SCROLL</span>
+        </div>
+      </section>
+
+      <section class="release-section workflow-section" id="workflow" aria-labelledby="workflow-title">
+        <div class="section-heading section-heading-split">
+          <div><p class="section-index">06 / RELEASE ROUTE</p><h2 id="workflow-title">A longer route through CI</h2></div>
+          <p>The Actions graph branches across map, Android and release checks, then rejoins before signing and provenance. Every stop runs a real validator, build or test.</p>
+        </div>
+        <div class="workflow-map" role="img" aria-label="Workflow diagram: repository checks branch into workflow safety, page, map, motion and dependency checks; Android builds, tests, lint and emulator checks rejoin at release preflight; main then signs and attests the APK.">
+          <div class="workflow-column origin-column"><span class="workflow-node node-origin">00 · SOURCE<br /><strong>Repository integrity</strong></span><span class="node-join origin-join"></span></div>
+          <div class="workflow-column branch-column"><span class="workflow-node">01A · SAFETY<br /><strong>actionlint + zizmor</strong></span><span class="workflow-node">01B · DEPENDENCIES<br /><strong>Vulnerability review</strong></span><span class="workflow-node">01C · RELEASE PAGE<br /><strong>HTML + link contract</strong></span><span class="workflow-node">02 · CARTOGRAPHY<br /><strong>Styles · assets · motion</strong></span></div>
+          <div class="workflow-column build-column"><span class="workflow-node">03A · PACKAGE<br /><strong>Debug APK</strong></span><span class="workflow-node">03B · JVM<br /><strong>Regression tests</strong></span><span class="workflow-node">03C · STATIC<br /><strong>Android lint</strong></span></div>
+          <div class="workflow-column join-column"><span class="workflow-node node-join">04A · RELEASE LOOP<br /><strong>Release preflight</strong></span><span class="workflow-node node-join">04B · FIELD STATION<br /><strong>Emulator navigation</strong></span></div>
+          <div class="workflow-column publish-column"><span class="workflow-node node-publish">05A · SIGN<br /><strong>Verified APK</strong></span><span class="workflow-node node-publish">05B · ATTEST<br /><strong>Build provenance</strong></span></div>
+          <svg class="workflow-wires" viewBox="0 0 1000 420" preserveAspectRatio="none" aria-hidden="true"><path d="M130 210H185M185 45V374M185 45H230M185 145H230M185 245H230M185 345H230M430 45H490M430 145H465V275H490M430 245H465V275M430 345H465V95H490M640 95H705M640 275H705M855 95H915M855 275H885V95H915M915 95V275" /></svg>
+          <div class="workflow-legend"><span><i class="legend-dot"></i> Pull request &amp; dev gates</span><span><i class="legend-dot legend-main"></i> Main-only signing and attestation</span></div>
+        </div>
+        <a class="release-text-link workflow-link" href="https://github.com/the-geeky-couldron/waypoint/actions/workflows/android.yml">Open the Android workflow in GitHub <span aria-hidden="true">↗</span></a>
+      </section>
+
+      <section class="release-section credits-section" id="credits" aria-labelledby="credits-title">
+        <div class="section-heading section-heading-split">
+          <div><p class="section-index">07 / COMMUNITY ROUTE REPORTS</p><h2 id="credits-title">Credits for the route</h2></div>
+          <p>These reports helped us find the rough edges that made this release better. Thank you for taking the time to show what needed fixing.</p>
+        </div>
+        <div class="credits-grid">
+          <div class="credit-group"><h3>GitHub issues</h3>
+            <ul class="credit-list">
+              <li><a href="https://github.com/TheNoob1703">@TheNoob1703</a><span>Compass and map rotation · <a href="https://github.com/the-geeky-couldron/waypoint/issues/54">issue #54</a></span></li>
+              <li><a href="https://github.com/harrydbarnes">@harrydbarnes</a><span>Updater progress visibility · <a href="https://github.com/the-geeky-couldron/waypoint/issues/63">issue #63</a></span></li>
+              <li><a href="https://github.com/Balzamus">@Balzamus</a><span>Cyberpunk 3D map presentation · <a href="https://github.com/the-geeky-couldron/waypoint/issues/55">issue #55</a></span></li>
+              <li><a href="https://github.com/lakshvin">@lakshvin</a><span>Google place discovery · <a href="https://github.com/the-geeky-couldron/waypoint/issues/21">issue #21</a></span></li>
+            </ul>
+          </div>
+          <div class="credit-group discord-credits"><h3>Discord tickets</h3>
+            <ul class="credit-list">
+              <li><code>@ForgotMyИame_124</code><span>Liberty City landmarks and blips · ticket-0002</span></li>
+              <li><code>@Aleksandyr</code><span>Compass behavior · ticket-0003</span></li>
+              <li><code>@shaurya124</code><span>Android Auto split-screen sizing · ticket-0003</span></li>
+              <li><code>@Nomad</code><span>Map rotation through turns and slowdowns · ticket-0004</span></li>
+            </ul>
+            <p class="private-ticket-note">Discord ticket channels are private; reporter names are credited without exposing private links.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="release-footer-cta" aria-labelledby="download-title">
+        <div><p class="section-index">THE NEXT ROUTE IS YOURS</p><h2 id="download-title">Ready for 2.6.5?</h2><p>Four travel modes. Thirty-eight worlds. Your places stay yours.</p></div>
+        <a class="release-button" href="https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.6.5">Get the APK <span aria-hidden="true">↗</span></a>
+      </section>
+    </main>
+
+    <footer class="release-footer"><a href="../index.html">Waypoint</a><span>Made for the road ahead.</span><a href="https://github.com/the-geeky-couldron/waypoint">Source on GitHub <span aria-hidden="true">↗</span></a></footer>
+  </body>
+</html>

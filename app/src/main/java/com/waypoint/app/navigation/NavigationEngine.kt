@@ -47,12 +47,26 @@ data class RouteProgress(val traveled: Double, val remaining: Double, val second
     val segmentIndex: Int = 0, val projectedAlong: Double = traveled,
     val remainingShape: List<Coordinate>? = null, val guidanceText: String? = null)
 
+/** Keep the displayed vehicle on a confident route match while retaining the raw fix off route. */
+internal fun navigationDisplayPosition(
+    fix: Coordinate?, progress: RouteProgress?, offRoute: Boolean, accuracyMeters: Float,
+): Coordinate? {
+    if (fix == null || progress == null || !progress.snapped.isValid() ||
+        !progress.offRoute.isFinite() || progress.offRoute < 0.0) return fix
+    val accuracy = accuracyMeters.takeIf { it.isFinite() && it > 0f }?.toDouble() ?: 0.0
+    val tolerance = maxOf(20.0, accuracy * 1.5).coerceAtMost(45.0)
+    // During rerouting, only keep the old route match when it is within lane-scale noise of the fix.
+    val snapLimit = if (offRoute) maxOf(4.0, (accuracy * .7).coerceAtMost(8.0)) else tolerance
+    val fixToMatch = distance(fix, progress.snapped)
+    return if (fixToMatch.isFinite() && fixToMatch <= snapLimit && progress.offRoute <= snapLimit) progress.snapped else fix
+}
+
 /**
- * Direction of the road under the vehicle: bearing from the point `traveled` metres along the route to the
- * point a short distance further on. Uses distance travelled, so it can never point backwards the way the
- * start of a "remaining shape" sometimes does.
+ * Direction of the road under the vehicle: bearing from the point `traveled` metres along the route to a
+ * nearby point further on. The short lookahead keeps the marker on the incoming road until it reaches a turn.
+ * Uses distance travelled, so it can never point backwards the way the start of a "remaining shape" sometimes does.
  */
-fun routeBearingAt(points: List<Coordinate>, routeMeters: Double, traveled: Double, lookAhead: Double = 15.0): Float? {
+fun routeBearingAt(points: List<Coordinate>, routeMeters: Double, traveled: Double, lookAhead: Double = 5.0): Float? {
     if (points.size < 2 || routeMeters <= 0.0) return null
     val cumulative = DoubleArray(points.size)
     for (i in 1 until points.size) cumulative[i] = cumulative[i - 1] + distance(points[i - 1], points[i])

@@ -13,7 +13,7 @@
   <p><a href="https://github.com/the-geeky-couldron/waypoint/releases/latest"><img src="docs/images/promo/download.jpg" width="340" alt="Download Waypoint for Android from GitHub Releases" /></a></p>
   <p><strong>Android 8.0+</strong> · No ads or paywall · No Waypoint account<br />Every world included · Made in India, open to the world</p>
   <p><a href="https://upstar.dev/r/the-geeky-couldron/waypoint"><picture><source media="(prefers-color-scheme: dark)" srcset="https://upstar.dev/badge/the-geeky-couldron/waypoint/award/kotlin-dark.svg"><img alt="Upstar: #10 Riser Of The Week in Kotlin, November 2026" src="https://upstar.dev/badge/the-geeky-couldron/waypoint/award/kotlin.svg" width="250" height="55"></picture></a></p>
-  <p><a href="https://discord.gg/3ddSCASNUn"><strong>Join the Waypoint Discord</strong></a> · a channel for each of the 38 worlds</p>
+  <p><a href="https://discord.gg/TQ9cEx6rsu"><strong>Join the Waypoint Discord</strong></a> · a channel for each of the 38 worlds</p>
   <p><a href="https://repolode.com/en/repo/the-geeky-couldron/waypoint"><img src="https://repolode.com/badge/the-geeky-couldron/waypoint" alt="Featured on Repolode" height="30" /></a></p>
 </div>
 
@@ -28,14 +28,13 @@
 
 ---
 
-## What's new in 2.6.0
+## What's new in 2.6.6
 
-- **Speed limit warning:** the posted limit appears beside your speed while you drive, turns your speed red when you pass it and speaks one gentle alert. Switch it off in Settings.
-- **Bus & transit:** pick a destination and see which bus, tram, metro or train to take, where to board and when it leaves, where open timetable data exists.
-- **Join the Discord:** a channel for each world, release notes and bug reports, linked from Settings and What's New.
-- **A website that shows the light:** the day and night section compares real maps of the same place.
+- **Smoother map motion on low-memory devices:** map animation is paced at 30 fps on devices flagged as low-RAM or with 4 GB of system memory or less, reducing rendering pressure on car displays and other constrained hardware.
+- **Zoom without the snap-back:** pinch zoom, pan and rotation pause location-following. During active guidance, follow resumes after eight seconds; while browsing, the map stays put until you recenter.
+- **More reliable community support:** A.T.L.A.S. ticket closing can recover from errors, and issue creation avoids duplicates.
 
-[Full release notes →](docs/releases/current.md)
+[Full release notes →](docs/releases/current.html)
 
 ## Your tasks, with rewards
 
@@ -147,7 +146,7 @@ Android Auto keeps Google Maps available in the launcher. Open Waypoint there to
 - **Pick up where you left off.** Save places, revisit recent destinations and switch worlds during a trip. Shared `geo:` and `google.navigation:` links ask for confirmation before Waypoint looks up or previews the imported destination.
 - **Stay under the limit.** While you drive, the phone HUD shows the posted speed limit beside your speed, turns your speed red when you pass it and speaks one gentle alert. Limits come from OpenStreetMap `maxspeed` tags, so they appear only where mappers have recorded one. Switch it off in Settings.
 - **See which bus to take.** Choose a destination, then **Bus & transit** to list the next buses, trams, metro and trains with the line, direction, boarding stop and live times where operators share them. Coverage depends on open timetable data and this first version is a trip list, not stop-by-stop guidance.
-- **Join the community.** The [Waypoint Discord](https://discord.gg/3ddSCASNUn) has a private channel for each of the 38 worlds, release notes and bug reports; Settings and What's New link to it.
+- **Join the community.** The [Waypoint Discord](https://discord.gg/TQ9cEx6rsu) has a private channel for each of the 38 worlds, release notes and bug reports; Settings and What's New link to it.
 - **Send feedback in context.** Settings opens a draft GitHub issue with the current world and app version. You review it in your browser before submitting; a GitHub account is needed to post the issue.
 
 <img src="docs/images/promo/identity.jpg" width="100%" alt="Waypoint's launcher emblem and compact navigation identity." />
@@ -165,7 +164,7 @@ Android Auto keeps Google Maps available in the launcher. Open Waypoint there to
 
 Installed versions check for a newer stable GitHub release on foreground entry, at most once every 30 minutes; you can check manually in Settings at any time. If an update is available, an in-app prompt appears when the idle map is visible. Review the release notes, choose **Download update**, and confirm installation in Android.
 
-The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.6.0**; see the [release notes](docs/releases/current.md) and [changelog](CHANGELOG.md).
+The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.6.6**; see the [release notes](docs/releases/current.html) and [changelog](CHANGELOG.md).
 
 ## Build from source
 
@@ -224,7 +223,7 @@ GPS and place coverage vary by device and location; real-road and long-duration 
 | [Development layout](docs/development/architecture.md) | Source structure, assets and checks |
 | [Security review](docs/security.md) | Reviewed boundaries, source fixes and remaining validation |
 | [Contributing](CONTRIBUTING.md) | Tests, public examples and repository hygiene |
-| [Discord](https://discord.gg/3ddSCASNUn) | Community channels for each world, release notes and bug reports |
+| [Discord](https://discord.gg/TQ9cEx6rsu) | Community channels for each world, release notes and bug reports |
 
 ### License and attribution
 

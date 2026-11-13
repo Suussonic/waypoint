@@ -4,6 +4,13 @@ on:
   push:
     branches: [main]
     tags: ['v*']
+    # Bot-only main pushes must not publish a new Android release. GitHub does
+    # not evaluate path filters for tag pushes, so explicit v* tags still work.
+    paths-ignore:
+      - 'tools/waypoint-discord-bot/**'
+      - '.github/workflows/discord-ticket-issue.yml'
+      - '.github/workflows/android.yml'
+      - '.github/workflows/release.yml'
 
 permissions:
   contents: read
@@ -136,6 +143,7 @@ jobs:
     permissions:
       actions: read
       contents: write
+      attestations: read
     steps:
       - name: Check out the verified release source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -151,6 +159,10 @@ jobs:
           path: release
       - name: Verify downloaded release artifact
         run: (cd release && sha256sum --check --strict SHA256SUMS)
+      - name: Verify signed APK build provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh attestation verify release/Waypoint.apk --repo "$GITHUB_REPOSITORY"
       - name: Create an annotated version tag if needed
         env:
           GH_TOKEN: ${{ github.token }}
@@ -179,6 +191,7 @@ jobs:
           gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
             -f ref="refs/tags/${RELEASE_TAG}" -f sha="$tag_object" >/dev/null
       - name: Publish the verified GitHub release
+        id: publish_release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
@@ -187,8 +200,25 @@ jobs:
           set -euo pipefail
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             echo "Release $RELEASE_TAG was published while this job waited for approval."
+            echo "created=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           gh release create "$RELEASE_TAG" release/Waypoint.apk release/SHA256SUMS \
             --verify-tag --title "Waypoint $RELEASE_TAG" \
             --notes-file docs/releases/current.md --latest
+          echo "created=true" >> "$GITHUB_OUTPUT"
+          delimiter="RELEASE_NOTES_$(openssl rand -hex 16)"
+          {
+            echo "release_notes<<$delimiter"
+            cat docs/releases/current.md
+            echo
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
+      - name: Announce the newly published release in Discord
+        if: steps.publish_release.outputs.created == 'true'
+        env:
+          DISCORD_ANNOUNCEMENTS_WEBHOOK_URL: ${{ secrets.DISCORD_ANNOUNCEMENTS_WEBHOOK_URL }}
+          WAYPOINT_RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          WAYPOINT_RELEASE_URL: https://github.com/${{ github.repository }}/releases/tag/${{ needs.prepare.outputs.tag }}
+          WAYPOINT_RELEASE_NOTES: ${{ steps.publish_release.outputs.release_notes }}
+        run: python3 .github/scripts/announce_discord_release.py

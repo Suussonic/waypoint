@@ -24,6 +24,25 @@ class MapCameraPolicyTest {
         assertEquals(45.0, pitchChange(0.0, 45.0)!!, 0.0)
     }
 
+    @Test fun mapFollowsHeadingByDefaultAndCanLockNorthWithoutChangingItsCenter() {
+        val headingUp = NavState(headingReliable = true, bearing = 73f)
+        assertEquals(73f, mapCameraBearing(headingUp, -22f), 0f)
+        assertTrue(mapCameraBearingIsControlled(headingUp))
+
+        val northUp = headingUp.copy(keepMapNorthUp = true)
+        assertEquals(0f, mapCameraBearing(northUp, 73f), 0f)
+        assertTrue(mapCameraBearingIsControlled(northUp))
+        assertEquals(22f, mapCameraBearing(NavState(), 22f), 0f)
+    }
+
+    @Test fun stoppedRoutePreviewKeepsFollowingThePhoneHeadingUnlessNorthIsLocked() {
+        val route=RoadRoute(listOf(fix,Coordinate(51.51,-.1281)),emptyList(),220.0,60.0)
+        val preview=NavState(route=route,selected=Place("p","Somewhere","",route.points.last()),headingReliable=true,bearing=124f)
+        assertEquals(124f,mapCameraBearing(preview,0f),0f)
+        assertTrue(mapCameraBearingIsControlled(preview))
+        assertEquals(0f,mapCameraBearing(preview.copy(keepMapNorthUp=true),124f),0f)
+    }
+
     @Test fun browsingAwayShowsRecentreAndBeingCentredHidesIt() {
         assertTrue(cameraAwayFromUser(false, false, 4_000_000.0, 0.3))
         assertFalse(cameraAwayFromUser(false, false, 3.0, 0.3))
