@@ -1,8 +1,8 @@
 import {
-  ActionRowBuilder, Events, MessageFlags, ModalBuilder,
+  ActionRowBuilder, EmbedBuilder, Events, MessageFlags, ModalBuilder,
   SlashCommandBuilder, TextInputBuilder, TextInputStyle,
 } from 'discord.js';
-import { GUILD_ID } from './config.js';
+import { GUILD_ID, STAFF_ROLE } from './config.js';
 import { leaderboard, rankFor, setXpByOwner, welcomePayload } from './leveling.js';
 import { applyRoleSelection, roleMenuRows } from './selfRoles.js';
 import { adoptLegacyTicket, closeTicket, openTicket, syncTicketIssue } from './tickets.js';
@@ -27,6 +27,7 @@ const commands = [
         { name: 'Feature', value: 'feature' },
         { name: 'General help', value: 'general' },
       )),
+  new SlashCommandBuilder().setName('announcements').setDescription('Share a milestone announcement in this channel'),
   new SlashCommandBuilder().setName('close').setDescription('Close this A.T.L.A.S. support ticket'),
   new SlashCommandBuilder().setName('adopt-ticket').setDescription('Owner only: let A.T.L.A.S. manage an open Ticket Tool channel')
     .addUserOption((option) => option.setName('member').setDescription('Original ticket requester').setRequired(true)),
@@ -61,6 +62,33 @@ function ticketModal(type) {
   return modal;
 }
 
+function announcementModal() {
+  const modal = new ModalBuilder()
+    .setCustomId('atlas:announcements')
+    .setTitle('Share a milestone');
+  const inputs = [
+    new TextInputBuilder().setCustomId('title').setLabel('Milestone headline')
+      .setStyle(TextInputStyle.Short).setPlaceholder('e.g. Our 1,000th community quest completed')
+      .setMinLength(3).setMaxLength(100).setRequired(true),
+    new TextInputBuilder().setCustomId('description').setLabel('What did the community achieve?')
+      .setStyle(TextInputStyle.Paragraph).setPlaceholder('Share what happened. Use **bold** for key figures or *italics* for context.')
+      .setMinLength(10).setMaxLength(1800).setRequired(true),
+    new TextInputBuilder().setCustomId('impact').setLabel('Why it matters or what is next (optional)')
+      .setStyle(TextInputStyle.Paragraph).setPlaceholder('What does this unlock, or what comes next?')
+      .setMaxLength(1000).setRequired(false),
+    new TextInputBuilder().setCustomId('link').setLabel('Related page URL (optional)')
+      .setStyle(TextInputStyle.Short).setPlaceholder('https://…').setMaxLength(300).setRequired(false),
+  ];
+  modal.addComponents(inputs.map((input) => new ActionRowBuilder().addComponents(input)));
+  return modal;
+}
+
+async function canAnnounce(interaction) {
+  if (interaction.user.id === interaction.guild.ownerId) return true;
+  const member = await interaction.guild.members.fetch(interaction.user.id);
+  return member.roles.cache.some((role) => role.name === STAFF_ROLE);
+}
+
 async function rankText(userId) {
   const rank = await rankFor(userId);
   return `<@${userId}> is level **${rank.level}** with **${rank.xp} total quest points** and **${rank.today} today**. Next level: **${rank.next} points**. Discord community points are separate from the app's on-device quest XP.`;
@@ -68,6 +96,44 @@ async function rankText(userId) {
 
 async function handle(interaction) {
   if (!interaction.inGuild() || interaction.guildId !== GUILD_ID) return;
+  if (interaction.isModalSubmit() && interaction.customId === 'atlas:announcements') {
+    if (!await canAnnounce(interaction)) {
+      await interaction.reply(privateReply('Only the server owner or Mod Squad can post milestone announcements.'));
+      return;
+    }
+    if (!interaction.channel?.isTextBased() || typeof interaction.channel.send !== 'function') {
+      await interaction.reply(privateReply('Run /announcements in a text channel where A.T.L.A.S. can post.'));
+      return;
+    }
+    const title = interaction.fields.getTextInputValue('title').trim();
+    const description = interaction.fields.getTextInputValue('description').trim();
+    const impact = interaction.fields.getTextInputValue('impact').trim();
+    const link = interaction.fields.getTextInputValue('link').trim();
+    let linkUrl = '';
+    if (link) {
+      try {
+        const parsedUrl = new URL(link);
+        if (!['http:', 'https:'].includes(parsedUrl.protocol)) throw new Error('Unsupported URL protocol.');
+        linkUrl = parsedUrl.href;
+      } catch {
+        await interaction.reply(privateReply('Add a valid http or https URL for the related page, or leave the field blank.'));
+        return;
+      }
+    }
+    const displayName = interaction.member?.displayName ?? interaction.user.username;
+    const embed = new EmbedBuilder()
+      .setColor(0xd5f16c)
+      .setTitle(title)
+      .setDescription(description)
+      .setFooter({ text: `Shared by ${displayName} · Waypoint Community` })
+      .setTimestamp();
+    if (impact) embed.addFields({ name: '✨ Why it matters / what’s next', value: impact });
+    if (linkUrl) embed.addFields({ name: '🔗 Read the related update', value: `[Open milestone details](<${linkUrl}>)` });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    await interaction.channel.send({ embeds: [embed], allowedMentions: { parse: [] } });
+    await interaction.editReply('Milestone announcement posted in this channel.');
+    return;
+  }
   if (interaction.isModalSubmit() && interaction.customId.startsWith('atlas:ticket:')) {
     const type = interaction.customId.split(':')[2];
     const fields = {
@@ -133,6 +199,13 @@ async function handle(interaction) {
       await interaction.showModal(ticketModal(type));
       break;
     }
+    case 'announcements':
+      if (!await canAnnounce(interaction)) {
+        await interaction.reply(privateReply('Only the server owner or Mod Squad can post milestone announcements.'));
+        break;
+      }
+      await interaction.showModal(announcementModal());
+      break;
     case 'close':
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
       await closeTicket(interaction.channel, interaction.user);
