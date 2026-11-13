@@ -60,7 +60,7 @@ export async function createIssueOnce(ticketId, type, fields) {
   state.ticketIssues ??= {};
   if (state.ticketIssues[ticketId]) return state.ticketIssues[ticketId];
   const marker = `atlas-ticket:${ticketId}`;
-  const search = new URLSearchParams({ q: `repo:${repository} "${marker}" in:body`, per_page: '10' });
+  const search = new URLSearchParams({ q: `repo:${repository} is:issue "${marker}" in:body`, per_page: '10' });
   const found = await github(`/search/issues?${search}`);
   const existing = found.items?.find((item) => item.body?.includes(`<!-- ${marker} -->`));
   if (existing) {
