@@ -43,10 +43,11 @@ import kotlin.math.abs
 /** One GPU-backed MapLibre view owns the car map for the life of the projected Surface. */
 internal class WaypointCarLiveMap(context: Context, private val overlay: WaypointCarOverlay): FrameLayout(context) {
     private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main.immediate)
+    private val motionFrameIntervalMillis=mapMotionFrameIntervalMillis(context)
     private val availableStyles by lazy(LazyThreadSafetyMode.NONE) { mapThemeStyleFiles(getContext()) }
     private val mapView=MapView(context).apply {
         onCreate(null)
-        setMaximumFps(60)
+        setMaximumFps(if(motionFrameIntervalMillis>0L)30 else 60)
         setRenderingRefreshMode(MapRenderer.RenderingRefreshMode.WHEN_DIRTY)
     }
     private val hud=object: View(context) {
@@ -77,11 +78,19 @@ internal class WaypointCarLiveMap(context: Context, private val overlay: Waypoin
     private var cameraStart=0L
     private var cameraDuration=0L
     private var framePosted=false
+    private var lastRenderedFrameNanos=0L
     private val frames=Choreographer.getInstance()
     private val frameCallback=object:Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos:Long) {
             framePosted=false
             if(destroyed || !started || !styleReady)return
+            val minimumFrameIntervalNanos=motionFrameIntervalMillis*1_000_000L
+            if(minimumFrameIntervalNanos>0L && lastRenderedFrameNanos>0L &&
+                frameTimeNanos-lastRenderedFrameNanos<minimumFrameIntervalNanos) {
+                requestFrame()
+                return
+            }
+            lastRenderedFrameNanos=frameTimeNanos
             val now=SystemClock.elapsedRealtime()
             renderMotion(now)
             if(motion.remainingMillis(now)>0 || now<cameraStart+cameraDuration)requestFrame()

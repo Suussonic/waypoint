@@ -55,6 +55,7 @@ data class MapViewportInsets(val left:Int,val top:Int,val right:Int,val bottom:I
 internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String?)->Unit, modifier: Modifier=Modifier,active:Boolean=true,routeInsets:MapViewportInsets?=null,onBearing:(Float)->Unit={},cameraZoomOverride:Double?=null,cameraTiltOverride:Double?=null,styleFileOverride:String?=null,cameraCenterOverride:Coordinate?=null,onAwayFromUser:(Boolean)->Unit={},onSelectRoute:(Int)->Unit={},showScaleBar:Boolean=false,scaleBarInsets:MapViewportInsets?=null,nearbyPlaces:List<NearbyPlace> = emptyList(),onVisibleMapArea:(OfflineMapArea?)->Unit={},onBrowseMapCamera:(Coordinate,Double)->Unit={_,_->},onNearbyPlaceClick:(NearbyPlace)->Unit={place->onPin(place.asWaypointPlace())}) {
     val context=LocalContext.current
     val density=LocalDensity.current
+    val motionFrameIntervalMillis=remember(context) { mapMotionFrameIntervalMillis(context) }
     var map by remember { mutableStateOf<MapLibreMap?>(null) }
     var styleReady by remember { mutableIntStateOf(0) }
     val landscape=LocalConfiguration.current.orientation==Configuration.ORIENTATION_LANDSCAPE
@@ -92,7 +93,10 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
     val currentBearing by rememberUpdatedState(onBearing)
     val currentVisibleMapArea by rememberUpdatedState(onVisibleMapArea)
     val currentBrowseMapCamera by rememberUpdatedState(onBrowseMapCamera)
-    val mapView=remember { MapLibre.getInstance(context); MapView(context).apply { onCreate(null) } }
+    val mapView=remember { MapLibre.getInstance(context); MapView(context).apply {
+        onCreate(null)
+        if(motionFrameIntervalMillis>0L)setMaximumFps(30)
+    } }
     var loadedStyleFile by remember { mutableStateOf<String?>(null) }
     val followPolicy=remember{MapFollowPolicy()}
     var followTick by remember { mutableIntStateOf(0) }
@@ -510,7 +514,7 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
         // Sensor/accuracy emissions cannot reset the accepted fix's timeline.
         // This bookkeeping is deliberately not Compose state: a GL frame should
         // not recompose the whole map, HUD and its effects.
-        positionFrames[0]=MapMotionFrames { now ->
+        positionFrames[0]=MapMotionFrames(motionFrameIntervalMillis) { now ->
             if(epoch!=styleEpoch[0] || !currentActive || styleReady==0)return@MapMotionFrames false
             val pose=motion.sample(now)
             renderedBearing[0]=pose.bearing
