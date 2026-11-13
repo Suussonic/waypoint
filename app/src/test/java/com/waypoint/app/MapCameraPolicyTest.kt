@@ -43,12 +43,6 @@ class MapCameraPolicyTest {
         assertEquals(0f,mapCameraBearing(preview.copy(keepMapNorthUp=true),124f),0f)
     }
 
-    @Test fun aCenteredPinchKeepsFollowingButAnUnrelatedPanDoesNot() {
-        assertTrue(zoomGestureKeepsFollowing(15.0,14.6,24.0,3.0))
-        assertFalse(zoomGestureKeepsFollowing(15.0,14.6,240.0,3.0))
-        assertFalse(zoomGestureKeepsFollowing(15.0,15.0,24.0,3.0))
-    }
-
     @Test fun browsingAwayShowsRecentreAndBeingCentredHidesIt() {
         assertTrue(cameraAwayFromUser(false, false, 4_000_000.0, 0.3))
         assertFalse(cameraAwayFromUser(false, false, 3.0, 0.3))

@@ -1,6 +1,6 @@
 # A.T.L.A.S. for Waypoint
 
-A.T.L.A.S. is Waypoint's single Discord community bot. It handles welcomes, a base member role, 38 self-serve world roles, lane roles, activity-based quest points, level roles, a daily leaderboard, private support tickets, GitHub issues for bug and feature tickets, and owner-only role request decisions.
+A.T.L.A.S. is Waypoint's single Discord community bot. It handles welcomes, a base member role, 38 self-serve world roles, lane roles, activity-based quest points, level roles, a daily leaderboard, milestone announcements, private support tickets, GitHub issues for bug and feature tickets, and owner-only role request decisions.
 
 The existing Moderator request was already granted to its author and tagged Approved. For each new pending request, A.T.L.A.S. posts an approval card naming the exact role and applicant. On startup, it checks owner reactions on those cards so decisions made while it was offline are not lost.
 
@@ -16,6 +16,7 @@ The Discord application is private: **Public Bot** is off, its install link is *
 | `/rank [member]` | Show total points, today's points, level, and next threshold |
 | `/leaderboard [period]` | Daily IST board by default, or all-time board |
 | `/ticket type` | Structured ticket form; bug and feature forms create public GitHub issues |
+| `/announcements` | Owner or Mod Squad opens a milestone form and posts a formatted announcement in the current channel |
 | `/close` | Requester or staff closes an A.T.L.A.S. ticket |
 | `/adopt-ticket member` | Owner moves an existing Ticket Tool channel under A.T.L.A.S. without publishing its history |
 | `/sync-issue` | Staff retries GitHub issue creation if it failed |

@@ -1,14 +1,39 @@
 package com.waypoint.app
 
+import android.app.ActivityManager
+import android.content.Context
 import android.os.SystemClock
 import android.view.Choreographer
 
+private const val LOW_MEMORY_MAP_FRAME_INTERVAL_MILLIS=33L
+private const val LOW_MEMORY_DEVICE_RAM_BYTES=4L*1024L*1024L*1024L
+
+internal fun mapMotionFrameIntervalMillis(context:Context):Long {
+    val activityManager=context.getSystemService(ActivityManager::class.java)
+    val memoryInfo=ActivityManager.MemoryInfo()
+    activityManager?.getMemoryInfo(memoryInfo)
+    val constrained=activityManager?.isLowRamDevice==true ||
+        memoryInfo.totalMem in 1L..LOW_MEMORY_DEVICE_RAM_BYTES
+    return if(constrained)LOW_MEMORY_MAP_FRAME_INTERVAL_MILLIS else 0L
+}
+
 /** Requests frames only while there is movement; cancellation releases captured native sources. */
-internal class MapMotionFrames(private val render:(Long)->Boolean):Choreographer.FrameCallback {
+internal class MapMotionFrames(
+    private val minimumFrameIntervalMillis:Long=0L,
+    private val render:(Long)->Boolean,
+):Choreographer.FrameCallback {
     private val frames=Choreographer.getInstance()
     private var cancelled=false
+    private var lastRenderedFrameNanos=0L
     override fun doFrame(frameTimeNanos:Long) {
-        if(!cancelled && render(SystemClock.elapsedRealtime()))frames.postFrameCallback(this)
+        if(cancelled)return
+        val minimumFrameIntervalNanos=minimumFrameIntervalMillis.coerceAtLeast(0L)*1_000_000L
+        if(minimumFrameIntervalNanos==0L || lastRenderedFrameNanos==0L ||
+            frameTimeNanos-lastRenderedFrameNanos>=minimumFrameIntervalNanos) {
+            lastRenderedFrameNanos=frameTimeNanos
+            if(!render(SystemClock.elapsedRealtime()))return
+        }
+        if(!cancelled)frames.postFrameCallback(this)
     }
     fun start() { frames.postFrameCallback(this) }
     fun cancel() { cancelled=true;frames.removeFrameCallback(this) }

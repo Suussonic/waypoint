@@ -104,7 +104,7 @@ def validate_release_site(docs_root: Path, version: str | None = None) -> list[s
         errors.extend(validate_document(page, docs_root))
     if versioned.is_file():
         source = versioned.read_text(encoding="utf-8")
-        for required in ("Navigation that holds its line", "Places that work offline", "Credits for the route"):
+        for required in ("Smoother motion on car displays", "Zoom where you choose", "Credits for the fixes"):
             if required not in source:
                 errors.append(f"{versioned.name} is missing the '{required}' release section")
     if current.is_file():

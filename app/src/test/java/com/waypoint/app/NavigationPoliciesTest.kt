@@ -79,11 +79,12 @@ class NavigationPoliciesTest {
         p.gestureEnded(15000)
         assertFalse(p.shouldFollow(true,true,22999));assertTrue(p.shouldFollow(true,true,23000))
     }
-    @Test fun pinchZoomKeepsLocationFollowActiveAfterTheGesture() {
+    @Test fun pinchZoomPausesLocationFollowSoTheUserCanInspectTheMap() {
         val p=MapFollowPolicy();p.gestureStarted(0)
         assertFalse(p.shouldFollow(true,true,100))
-        assertTrue(p.gestureEnded(100,keepFollowing=true))
-        assertTrue(p.shouldFollow(true,true,101))
+        assertTrue(p.gestureEnded(100))
+        assertFalse(p.shouldFollow(true,true,101))
+        assertTrue(p.shouldFollow(true,true,8100))
     }
     @Test fun stoppedRoutePreviewCanFollowHeadingButAUserPanPausesIt() {
         val p=MapFollowPolicy()
