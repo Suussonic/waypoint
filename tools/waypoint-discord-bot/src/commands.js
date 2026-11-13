@@ -130,11 +130,7 @@ async function handle(interaction) {
     if (impact) embed.addFields({ name: '✨ Why it matters / what’s next', value: impact });
     if (linkUrl) embed.addFields({ name: '🔗 Read the related update', value: `[Open milestone details](<${linkUrl}>)` });
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-    await interaction.channel.send({
-      content: '@everyone',
-      embeds: [embed],
-      allowedMentions: { parse: ['everyone'] },
-    });
+    await interaction.channel.send({ embeds: [embed], allowedMentions: { parse: [] } });
     await interaction.editReply('Milestone announcement posted in this channel.');
     return;
   }

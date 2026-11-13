@@ -16,7 +16,7 @@ The Discord application is private: **Public Bot** is off, its install link is *
 | `/rank [member]` | Show total points, today's points, level, and next threshold |
 | `/leaderboard [period]` | Daily IST board by default, or all-time board |
 | `/ticket type` | Structured ticket form; bug and feature forms create public GitHub issues |
-| `/announcements` | Owner or Mod Squad opens a milestone form and posts a formatted `@everyone` announcement in the current channel |
+| `/announcements` | Owner or Mod Squad opens a milestone form and posts a formatted announcement in the current channel |
 | `/close` | Requester or staff closes an A.T.L.A.S. ticket |
 | `/adopt-ticket member` | Owner moves an existing Ticket Tool channel under A.T.L.A.S. without publishing its history |
 | `/sync-issue` | Staff retries GitHub issue creation if it failed |
