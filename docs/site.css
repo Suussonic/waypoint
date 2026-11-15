@@ -365,6 +365,7 @@ details[open] .world-entry{animation:rise .8s var(--ease) both;animation-delay:c
 @media (prefers-reduced-motion:reduce){.cd-chip,.cd-wire{transition:background-color .15s ease,color .15s ease,border-color .15s ease}.cd-row:has([aria-pressed="true"]) .cd-ch{animation:cd-fade .25s ease backwards}@keyframes cd-fade{from{opacity:.4}to{opacity:1}}.cd-wire{transform:none;opacity:0}.cd-row:has([aria-pressed="true"]) .cd-wire{opacity:1;transform:none}}
 .community-copy>p{max-width:34rem;color:var(--muted)}
 .community-actions{margin-top:1.6rem}.community-actions p{margin:.8rem 0 0;color:var(--quiet);font-size:var(--meta)}
+.community-actions .kofi-brand-button{display:inline-flex;max-width:100%;align-items:center;line-height:0}.community-actions .kofi-brand-button img{display:block;width:15.3125rem;max-width:100%;height:auto;border-radius:999px}
 .community-list{display:grid;margin:0;padding:0;list-style:none;border-top:1px solid var(--line-strong);counter-reset:join-step}
 .community-list li{padding:1.3rem 0;border-bottom:1px solid var(--line-strong);counter-increment:join-step}
 .community-list h3{margin:0 0 .4rem;font-size:1.5rem}.community-list h3::before{display:inline-block;min-width:2.2rem;margin-right:.4rem;color:var(--lime);content:"0" counter(join-step);font-variant-numeric:tabular-nums}.community-list p{margin:0;max-width:34rem;color:var(--muted)}
