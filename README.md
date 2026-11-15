@@ -14,7 +14,7 @@
   <p><strong>Android 8.0+</strong> · No ads or paywall · No Waypoint account<br />Every world included · Made in India, open to the world</p>
   <p><a href="https://upstar.dev/r/the-geeky-couldron/waypoint"><picture><source media="(prefers-color-scheme: dark)" srcset="https://upstar.dev/badge/the-geeky-couldron/waypoint/award/kotlin-dark.svg"><img alt="Upstar: #10 Riser Of The Week in Kotlin, November 2026" src="https://upstar.dev/badge/the-geeky-couldron/waypoint/award/kotlin.svg" width="250" height="55"></picture></a></p>
   <p><a href="https://discord.gg/TQ9cEx6rsu"><strong>Join the Waypoint Discord</strong></a> · a channel for each of the 38 worlds</p>
-  <p><a href="https://ko-fi.com/thegeekycouldron"><strong>Support Waypoint on Ko-fi</strong></a> · optional tips, handled by Ko-fi</p>
+  <p><a href="https://ko-fi.com/thegeekycouldron"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/kofi/support_me_on_kofi_dark.png" /><img src="docs/images/kofi/support_me_on_kofi_blue.png" width="245" height="50" alt="Support Waypoint on Ko-fi" /></picture></a> · optional tips, handled by Ko-fi</p>
   <p><a href="https://repolode.com/en/repo/the-geeky-couldron/waypoint"><img src="https://repolode.com/badge/the-geeky-couldron/waypoint" alt="Featured on Repolode" height="30" /></a></p>
 </div>
 

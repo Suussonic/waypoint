@@ -1,5 +1,6 @@
 package com.waypoint.app
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
@@ -62,7 +63,11 @@ internal fun KoFiSettingsRow() {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Default.FavoriteBorder, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
+        Image(
+            painter = painterResource(R.drawable.kofi_symbol),
+            contentDescription = null,
+            modifier = Modifier.size(width = 30.dp, height = 24.dp),
+        )
         Column(Modifier.weight(1f)) {
             Text("Support Waypoint on Ko-fi", style = MaterialTheme.typography.titleMedium)
             Text("Optional tip · opens Ko-fi in your browser", style = MaterialTheme.typography.bodySmall, color = Muted)
