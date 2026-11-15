@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#101711" />
+    <meta name="description" content="Waypoint 2.7.0 makes map symbols easier to read, keeps navigation pitch steady, restores the landscape speed HUD and adds optional Ko-fi support." />
+    <title>Waypoint 2.7.0 — Readable maps, steady navigation</title>
+    <link rel="stylesheet" href="../site.css?v=20261115-r1" />
+    <link rel="stylesheet" href="release.css?v=20261115-r1" />
+  </head>
+  <body class="release-page release-v270">
+    <a class="skip-link" href="#main-content">Skip to release notes</a>
+    <header class="release-nav">
+      <a class="release-brand" href="../index.html" aria-label="Waypoint home">
+        <img src="../images/waypoint-icon.png" width="38" height="38" alt="" />
+        <span>WAYPOINT</span>
+      </a>
+      <nav aria-label="Release navigation">
+        <a href="#map-icons">Map icons</a>
+        <a href="#camera">Navigation</a>
+        <a href="#landscape">Landscape</a>
+        <a href="#credits">Credits</a>
+        <a class="release-nav-cta" href="https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.7.0">Get 2.7.0 <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+
+    <main id="main-content" class="release-main">
+      <section class="release-hero" aria-labelledby="release-title">
+        <div class="hero-map" aria-hidden="true">
+          <svg viewBox="0 0 1200 620" preserveAspectRatio="xMidYMid slice">
+            <path class="map-road" d="M-50 500 C180 500 160 350 310 350 S500 455 620 335 760 110 930 145 1070 390 1270 310" />
+            <path class="map-road" d="M-80 140 C160 160 175 300 360 300 S610 115 760 210 900 460 1080 440 1210 280 1300 250" />
+            <path class="map-road" d="M130 -80 C250 80 235 190 350 350 S460 500 570 690" />
+            <path class="map-route-halo" d="M-50 500 C180 500 160 350 310 350 S500 455 620 335 760 110 930 145 1070 390 1270 310" />
+            <path class="map-route" pathLength="1" d="M-50 500 C180 500 160 350 310 350 S500 455 620 335 760 110 930 145 1070 390 1270 310" />
+            <circle class="map-node" cx="310" cy="350" r="8" /><circle class="map-node" cx="620" cy="335" r="8" /><circle class="map-node" cx="930" cy="145" r="8" />
+          </svg>
+        </div>
+        <div class="hero-copy">
+          <p class="release-kicker">Waypoint · Release 2.7.0</p>
+          <h1 id="release-title">Clearer symbols.<br /><span>Steadier roads.</span></h1>
+          <p class="release-lede">Bigger map icons across every world, a navigation camera that holds its chosen pitch, and the speed HUD back in landscape.</p>
+          <div class="hero-actions">
+            <a class="release-button" href="https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.7.0">Download Waypoint 2.7.0 <span aria-hidden="true">↗</span></a>
+            <a class="release-text-link" href="../milestones.html">Follow the release journey <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+        <div class="hero-stamp" aria-hidden="true"><span>FIELD</span><strong>27.0</strong><span>RELEASE</span></div>
+      </section>
+
+      <section class="release-section" id="map-icons" aria-labelledby="icons-title">
+        <div class="section-heading section-heading-split">
+          <div><h2 id="icons-title">Recognize a place at a glance.</h2></div>
+          <p>Phone captures showed that map symbols were too small to make out at everyday zoom. Their rendered size is now lifted across all 38 worlds while each world keeps its own artwork.</p>
+        </div>
+        <div class="feature-grid feature-grid-wide">
+          <article class="feature-card feature-card-wide">
+            <div class="feature-copy">
+              <h3>More room for the mark.</h3>
+              <p>Landmark symbols are about 20% larger. Nearby search results scale with zoom so their artwork stays easy to recognize beside themed places. Original day and night artwork stays unchanged.</p>
+            </div>
+            <div class="icon-samples" aria-label="Place icon artwork from Old West, Night City and Sheikah Slate">
+              <img src="../assets/landing/poi-preview/old_west.webp" width="96" height="48" alt="Old West place icon artwork" />
+              <img src="../assets/landing/poi-preview/night_city.webp" width="96" height="48" alt="Night City place icon artwork" />
+              <img src="../assets/landing/poi-preview/hyrule.webp" width="96" height="48" alt="Sheikah Slate place icon artwork" />
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="release-section" id="camera" aria-labelledby="camera-title">
+        <div class="section-heading">
+          <h2 id="camera-title">Zoom where you choose.</h2>
+          <p>Speed can change how far the navigation camera looks ahead. Its chosen 2D or 3D pitch stays steady, so the map no longer tilts by itself as speed changes.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card feature-card-accent">
+            <h3>Smoother motion on car displays.</h3>
+            <p>The camera now holds its requested tilt while zoom changes with speed or a turn. The map stops pitching up and down on its own as pace changes.</p>
+          </article>
+          <article class="feature-card">
+            <h3>One camera policy across worlds.</h3>
+            <p>All map themes use the same stable pitch behavior. Switch between 2D and 3D whenever you want to change the view.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="release-section" id="landscape" aria-labelledby="landscape-title">
+        <div class="section-heading section-heading-split">
+          <div><h2 id="landscape-title">Speed belongs on the wide screen too.</h2></div>
+          <p>In landscape navigation, the current speed and posted limit now sit below the compact turn instruction, where they remain visible while guidance continues.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card feature-card-wide">
+            <div class="feature-copy">
+              <h3>Stopped still has a speed.</h3>
+              <p>With a ready GPS fix, the readout shows 0 mph or 0 km/h at a standstill. A missing fix stays a dash, and the limit sign appears when a posted limit is available.</p>
+            </div>
+            <div class="landscape-readout" aria-label="Example landscape speed readout showing zero miles per hour and a 30 mile per hour limit">
+              <div><strong>0</strong><span>mph</span></div>
+              <span class="limit-sign"><span>30</span></span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="release-section support-section" id="support" aria-labelledby="support-title">
+        <div class="section-heading section-heading-split">
+          <div><h2 id="support-title">A small way to keep it moving.</h2></div>
+          <p>Waypoint remains free to use, with every world included. If it has helped you, there is now an optional way to support ongoing work.</p>
+        </div>
+        <div class="support-strip">
+          <span class="support-heart" aria-hidden="true">♡</span>
+          <div><h3>Support Waypoint on Ko-fi.</h3><p>The direct link opens Ko-fi in your browser. Payment details stay with Ko-fi.</p></div>
+          <a class="release-button" href="https://ko-fi.com/thegeekycouldron" rel="noopener">Visit Ko-fi <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="journey-link"><p>See how each release changed the project and how the public APK download count has grown.</p><a class="release-text-link" href="../milestones.html">Open the release journey <span aria-hidden="true">↗</span></a></div>
+      </section>
+
+      <section class="release-section credits-section" id="credits" aria-labelledby="credits-title">
+        <div class="section-heading section-heading-split">
+          <div><h2 id="credits-title">Credits for the fixes.</h2></div>
+          <p>Video and notes from the Waypoint community helped make both the camera behavior and the landscape HUD issue reproducible.</p>
+        </div>
+        <div class="credits-grid">
+          <div class="credit-group">
+            <h3>Who reported them</h3>
+            <ul class="credit-list">
+              <li><code>Venus Starlight</code><span>Reported that the map pitched automatically as speed changed, and that the speed and speed limit disappeared in landscape, including at zero speed. The navigation camera and compact landscape HUD now address those reports.</span></li>
+            </ul>
+            <p class="private-ticket-note">The Discord ticket is private, so this credit does not link to the conversation.</p>
+          </div>
+          <div class="credit-group">
+            <h3>What changed</h3>
+            <ul class="credit-list">
+              <li><code>Map symbols</code><span>Rendered POI icons grew across all 38 worlds without replacing or altering the original icon atlases.</span></li>
+              <li><code>Navigation HUD</code><span>Navigation pitch remains steady as zoom changes, and phone landscape guidance shows speed and the posted limit.</span></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="release-footer-cta" aria-labelledby="download-title">
+        <div><h2 id="download-title">Ready to take the next route?</h2><p>All 38 worlds are included, with no ads or subscriptions.</p></div>
+        <a class="release-button" href="https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.7.0">Get the APK <span aria-hidden="true">↗</span></a>
+      </section>
+    </main>
+
+    <footer class="release-footer"><a href="../index.html">Waypoint</a><span>Made for the road ahead.</span><a href="https://github.com/the-geeky-couldron/waypoint">Source on GitHub <span aria-hidden="true">↗</span></a></footer>
+    <script src="release-motion.js" defer></script>
+  </body>
+</html>

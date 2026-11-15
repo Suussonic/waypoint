@@ -164,6 +164,8 @@ Transitous combines open timetable feeds, so coverage differs by city and some a
 
 Settings has **Join the Waypoint Discord**, and the What's New window after an update has **Join Discord** and **Visit site** buttons. The invite is https://discord.gg/TQ9cEx6rsu: each of the 38 worlds has a private channel that opens when you pick the world, alongside release notes and bug reports. Nothing is sent from the phone; the link opens in your browser or the Discord app.
 
+Settings also has an optional **Support Waypoint on Ko-fi** link. It opens https://ko-fi.com/thegeekycouldron in your browser; Waypoint does not process or store payment details.
+
 ## Search matching
 
 Search accepts typos, accent differences and joined place names, and ranks matches from saved/recent places alongside provider results. Press **Search places** or the keyboard Search key for a broader device-geocoder lookup. Search results retain the returned name, full address and actual provider coordinates. Optional confirmed spelling aliases are read from private device preferences; no user-specific place aliases are bundled in the public app. Android sometimes returns an address code instead of a landmark label; these results explicitly say **Address result for …** and retain the complete provider address. Confirm the address before starting.

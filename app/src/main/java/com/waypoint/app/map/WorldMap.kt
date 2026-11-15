@@ -211,7 +211,7 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
             }
             val initialZoom=cameraZoomOverride ?: if(currentState.navigating)NAV_ZOOM else 15.2
             val initialTilt=mapCameraTilt(currentState.world,currentState.tilted,currentState.navigating,cameraTiltOverride)
-            m.cameraPosition=CameraPosition.Builder().target((cameraCenterOverride ?: PreviewCenter).latLng()).zoom(initialZoom).tilt(if(currentState.navigating)navigationTiltAtZoom(initialZoom,initialTilt) else initialTilt).bearing(-22.0).build()
+            m.cameraPosition=CameraPosition.Builder().target((cameraCenterOverride ?: PreviewCenter).latLng()).zoom(initialZoom).tilt(initialTilt).bearing(-22.0).build()
             m.addOnCameraMoveListener { currentBearing(m.cameraPosition.bearing.toFloat());refreshScale(m) }
             m.addOnCameraMoveStartedListener { reason -> if(reason==MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
                 focusCameraHoldUntil[0]=0L;cameraGate.userMovedCamera();followPolicy.gestureStarted(SystemClock.elapsedRealtime());followTick++
@@ -236,10 +236,10 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
                     if(alternate!=null) { selectRoute(alternate);return@addOnMapClickListener true }
                 }
                 val screen = m.projection.toScreenLocation(point)
-                val hitRadius = 26f
+                val hitRadius = 44f
                 val nearby = m.queryRenderedFeatures(
                     android.graphics.RectF(screen.x-hitRadius,screen.y-hitRadius,screen.x+hitRadius,screen.y+hitRadius),
-                    "nearby-place-dot","nearby-place-marker",
+                    "nearby-place-marker",
                 ).mapNotNull { feature ->
                     val id = runCatching { feature.getStringProperty("nearby_id") }.getOrNull() ?: return@mapNotNull null
                     val pointFeature = feature.geometry() as? Point ?: return@mapNotNull null
@@ -364,11 +364,18 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
             val supportPoi=groupPoi("support")
             val otherPoi=not(any(essentialPoi,utilityPoi,discoveryPoi,communityPoi,supportPoi,socialPoi))
             val poiRank=coalesce(get("rank"),literal(0))
-            val readablePoiScale=art.poiScale.coerceAtLeast(1.1f)
-            // Markers grow with the zoom so they stay readable close in and still visible when zoomed out.
+            // Keep static map POIs readable without letting landmark artwork dominate nearby shops.
+            // Nearby results use a separate layer, so its scale curve below matches these symbols.
+            val readablePoiScale=art.poiScale.coerceAtLeast(1.1f)*1.2f
             fun poiIconSize(scale:Float)=interpolate(linear(),zoom(),
                 stop(12f,1.15f*scale),stop(14f,1.15f*scale),stop(16f,1.3f*scale),stop(18f,1.6f*scale),stop(20f,1.95f*scale),stop(22f,2.2f*scale))
             fun poiTextSize()=interpolate(linear(),zoom(),stop(12f,11f),stop(16f,12f),stop(18f,14f),stop(20f,16f))
+            // Nearby-result sprites used to be less than half the size of the static POI blips.
+            // Keep their artwork and labels in the same visual range as the player zooms in.
+            fun nearbyIconSize()=interpolate(linear(),zoom(),
+                stop(13f,1.32f),stop(15f,1.5f),stop(17f,1.78f),stop(19f,2.14f),stop(21f,2.45f))
+            fun nearbyTextSize()=interpolate(linear(),zoom(),
+                stop(13f,11f),stop(15f,12f),stop(17f,13f),stop(19f,14f),stop(21f,15f))
             fun poiLayer(id:String, minZoom:Float, filter:org.maplibre.android.style.expressions.Expression, scale:Float)=
                 SymbolLayer(id,"openmaptiles").withSourceLayer("poi").apply{this.minZoom=minZoom}.withFilter(filter).withProperties(
                     iconImage(poiIcon),iconSize(poiIconSize(scale)),iconAllowOverlap(false),iconPadding(5f),
@@ -403,13 +410,9 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
             style.addSource(GeoJsonSource("destination",FeatureCollection.fromFeatures(emptyArray<Feature>())))
             style.addLayer(SymbolLayer("destination-dot","destination").withProperties(iconImage("destination-marker"),iconSize(.65f),iconAllowOverlap(true),iconIgnorePlacement(true)))
             style.addSource(GeoJsonSource("nearby-results",FeatureCollection.fromFeatures(emptyArray<Feature>())))
-            style.addLayer(CircleLayer("nearby-place-dot","nearby-results").withProperties(
-                circleRadius(4.5f),circleColor(currentState.world.routeColor),
-                circleStrokeColor(if(mapNight)"#10151C" else "#F3F0E8"),circleStrokeWidth(1.5f),
-            ))
             style.addLayer(SymbolLayer("nearby-place-marker","nearby-results").withProperties(
-                iconImage(get("poi_icon")),iconSize(.34f),iconAllowOverlap(false),iconIgnorePlacement(false),
-                textField(get("name")),textFont(arrayOf(world.mapFontName())),textSize(11f),textOptional(true),
+                iconImage(get("poi_icon")),iconSize(nearbyIconSize()),iconAllowOverlap(false),iconIgnorePlacement(false),
+                textField(get("name")),textFont(arrayOf(world.mapFontName())),textSize(nearbyTextSize()),textOptional(true),
                 textOffset(arrayOf(0f,1.15f)),textColor(if(art.lightLabels)"#EEEEDF" else "#282E26"),
                 textHaloColor(if(art.lightLabels)"#18201C" else "#E3DABF"),textHaloWidth(1.5f),
             ))
@@ -603,7 +606,7 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
         // A new camera request already carries the tilt in its own animation.
         if(!active || styleReady==0 || requestChanged) return@LaunchedEffect
         val wantedTilt=mapCameraTilt(state.world,state.tilted,state.navigating,cameraTiltOverride)
-        val targetTilt=if(state.navigating)navigationTiltAtZoom(m.cameraPosition.zoom,wantedTilt) else wantedTilt
+        val targetTilt=wantedTilt
         val tilt=pitchChange(m.cameraPosition.tilt,targetTilt) ?: return@LaunchedEffect
         m.easeCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.Builder(m.cameraPosition).tilt(tilt).build()),400)
     }

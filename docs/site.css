@@ -57,6 +57,7 @@ h3{font-size:clamp(1.9rem,3vw,2.9rem)}
 .button:hover{transform:translateY(-3px);box-shadow:0 .9rem 1.8rem rgba(0,0,0,.3)}
 .button svg{width:1.2rem;height:1.2rem;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .35s var(--ease)}.button:hover svg{transform:translateX(.25rem)}
 .button-primary{color:var(--lime-ink);background:var(--lime)}.button-primary:hover{color:var(--lime-ink);background:#e9ffa6}
+.button-secondary{color:var(--paper);border-color:var(--line-strong);background:transparent}.button-secondary:hover{color:var(--lime);border-color:var(--lime);background:var(--surface)}
 .text-link{display:inline-flex;align-items:baseline;gap:.5rem;color:var(--lime);font-weight:800;text-decoration:none;transition:color .2s ease,gap .3s var(--ease)}.text-link:hover{color:#ebffb0;gap:.8rem}
 
 /* ───────── Hero ───────── */

@@ -16,8 +16,6 @@ private const val NAV_FAST_ZOOM = 16.2
 private const val NAV_SPEED_LIMIT_MPS = 30.0
 private const val NAV_TURN_ZOOM_FLOOR = 14.5
 private const val NAV_TURN_MARGIN_DP = 72.0
-private const val NAV_TILT_FULL_ZOOM = 15.0
-private const val NAV_TILT_FLAT_ZOOM = 12.5
 private const val NAV_TURN_YAW_CAP_DEGREES = 90.0
 private const val NAV_TURN_YAW_BLEND_LEVELS = 1.0
 private const val NAV_WORLD_PIXELS_AT_ZOOM_ZERO = 512.0
@@ -32,13 +30,9 @@ internal fun navigationSpeedZoom(speedMetersPerSecond: Double): Double {
     return NAV_ZOOM + (NAV_FAST_ZOOM - NAV_ZOOM) * fraction
 }
 
-/** A wide camera naturally flattens so the horizon and excess distant tiles do not dominate. */
-internal fun navigationTiltAtZoom(zoom: Double, wantedTilt: Double = DRIVE_TILT): Double {
-    if (!zoom.isFinite() || !wantedTilt.isFinite()) return 0.0
-    val fraction = ((zoom - NAV_TILT_FLAT_ZOOM) /
-        (NAV_TILT_FULL_ZOOM - NAV_TILT_FLAT_ZOOM)).coerceIn(0.0, 1.0)
-    return wantedTilt.coerceIn(0.0, DRIVE_TILT) * fraction
-}
+/** Navigation zoom can change with speed and turns; keep the requested pitch steady between fixes. */
+internal fun navigationTilt(wantedTilt: Double = DRIVE_TILT): Double =
+    if (!wantedTilt.isFinite()) 0.0 else wantedTilt.coerceIn(0.0, DRIVE_TILT)
 
 /**
  * Zoom level that brings a maneuver to just below the turn card. Distances are projected through
@@ -56,36 +50,21 @@ internal fun navigationTurnZoom(
 ): Double {
     if (!groundMeters.isFinite() || groundMeters <= 0.0 || !latitude.isFinite() ||
         mapHeightPx <= 0 || !density.isFinite() || density <= 0.0 ||
-        !chromeBottomPx.isFinite() || !topPaddingFraction.isFinite()) return Double.NaN
+        !chromeBottomPx.isFinite() || !topPaddingFraction.isFinite() || !wantedTilt.isFinite()) return Double.NaN
 
     val heightDp = mapHeightPx / density
     val arrowY = mapHeightPx * (1.0 + topPaddingFraction) / 2.0
     val upDp = (arrowY - chromeBottomPx) / density - NAV_TURN_MARGIN_DP
     if (heightDp <= 0.0 || upDp <= 0.0) return Double.NaN
 
-    fun zoomAtTilt(tiltDegrees: Double): Double {
-        val tilt = Math.toRadians(tiltDegrees)
-        val cameraDistanceDp = 0.5 * heightDp / tan(NAV_CAMERA_FOV_RADIANS / 2.0)
-        val angle = tilt + atan(upDp / cameraDistanceDp)
-        if (angle >= PI / 2.0 - 1e-6) return Double.NaN
-        val groundAheadDp = cameraDistanceDp * cos(tilt) * tan(angle) - cameraDistanceDp * kotlin.math.sin(tilt)
-        if (!groundAheadDp.isFinite() || groundAheadDp <= 0.0) return Double.NaN
-        val scale = NAV_EARTH_CIRCUMFERENCE_METERS * cos(Math.toRadians(latitude.coerceIn(-85.0, 85.0)))
-        return log2(scale * groundAheadDp / (NAV_WORLD_PIXELS_AT_ZOOM_ZERO * groundMeters))
-    }
-
-    val atWantedTilt = zoomAtTilt(wantedTilt.coerceIn(0.0, DRIVE_TILT))
-    if (atWantedTilt.isNaN() || navigationTiltAtZoom(atWantedTilt, wantedTilt) >= wantedTilt - 1e-6)
-        return atWantedTilt
-
-    var low = zoomAtTilt(0.0)
-    var high = atWantedTilt
-    if (!low.isFinite() || !high.isFinite() || low > high) return atWantedTilt
-    repeat(12) {
-        val middle = (low + high) / 2.0
-        if (zoomAtTilt(navigationTiltAtZoom(middle, wantedTilt)) > middle) low = middle else high = middle
-    }
-    return (low + high) / 2.0
+    val tilt = Math.toRadians(navigationTilt(wantedTilt))
+    val cameraDistanceDp = 0.5 * heightDp / tan(NAV_CAMERA_FOV_RADIANS / 2.0)
+    val angle = tilt + atan(upDp / cameraDistanceDp)
+    if (angle >= PI / 2.0 - 1e-6) return Double.NaN
+    val groundAheadDp = cameraDistanceDp * cos(tilt) * tan(angle) - cameraDistanceDp * kotlin.math.sin(tilt)
+    if (!groundAheadDp.isFinite() || groundAheadDp <= 0.0) return Double.NaN
+    val scale = NAV_EARTH_CIRCUMFERENCE_METERS * cos(Math.toRadians(latitude.coerceIn(-85.0, 85.0)))
+    return log2(scale * groundAheadDp / (NAV_WORLD_PIXELS_AT_ZOOM_ZERO * groundMeters))
 }
 
 /** Apply a floor and let the speed zoom win again close to the maneuver. */
@@ -123,7 +102,7 @@ internal fun navigationCameraPose(
     }
     if (state.mode != TravelMode.CAR) {
         val zoom = NAV_ZOOM
-        return NavigationCameraPose(zoom, navigationTiltAtZoom(zoom, wantedTilt), baseBearing)
+        return NavigationCameraPose(zoom, navigationTilt(wantedTilt), baseBearing)
     }
 
     val speedZoom = navigationSpeedZoom(state.speed.toDouble())
@@ -144,7 +123,7 @@ internal fun navigationCameraPose(
             baseBearing, bearingBetween(origin, turn.point).toDouble(), speedZoom, rawTurnZoom,
         )
     } else baseBearing
-    return NavigationCameraPose(zoom, navigationTiltAtZoom(zoom, wantedTilt), bearing)
+    return NavigationCameraPose(zoom, navigationTilt(wantedTilt), bearing)
 }
 
 private fun nextCameraManeuver(route: RoadRoute?, index: Int): Maneuver? {
