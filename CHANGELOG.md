@@ -2,6 +2,14 @@
 
 For the full notes and community acknowledgements, see the [Waypoint release page](docs/releases/current.html) or [Markdown release notes](docs/releases/current.md). Published releases are available on [GitHub Releases](https://github.com/the-geeky-couldron/waypoint/releases).
 
+## 2.7.0
+
+- Increased map place icon size across all worlds so symbols are easier to recognize on a phone.
+- Kept navigation pitch steady as speed and turn framing change the map zoom; added speed and posted-limit readouts to phone landscape guidance, including a clear zero-speed reading.
+- Added optional Ko-fi support links in the app, website and README. The links open Ko-fi directly; no third-party widget code runs in Waypoint.
+- Added a separate animated release journey page, with first-release and cumulative APK download totals and a dated history of published versions.
+- Thanked Venus Starlight for reporting the automatic-tilt and landscape HUD behavior in the Waypoint Discord.
+
 ## 2.6.6
 
 - Reduced map-animation work on low-memory devices, including car displays, by pacing map updates at 30 fps on devices reported as low-RAM or with 4 GB of system memory or less.

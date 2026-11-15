@@ -1,5 +1,5 @@
 (() => {
-  const page = document.querySelector(".release-v266");
+  const page = document.querySelector(".release-v266, .release-v270");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   if (!page || reduceMotion.matches || !("IntersectionObserver" in window) || !Element.prototype.animate) return;
 

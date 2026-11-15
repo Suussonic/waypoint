@@ -36,3 +36,25 @@
 }
 @keyframes waypoint-release-route{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
 @media(prefers-reduced-motion:reduce){.release-v266 .map-route{animation:none;stroke-dashoffset:0}}
+
+/* Waypoint 2.7.0: keep the map glyphs and landscape HUD examples clear at every width. */
+.release-v270 .release-nav nav a{display:inline-flex;min-height:2.75rem;align-items:center}
+.release-v270 .release-footer a{display:inline-flex;min-height:2.75rem;align-items:center}
+.release-v270 p{text-wrap:pretty}
+.release-v270 .icon-samples{display:flex;flex:none;align-items:center;gap:clamp(.4rem,1.6vw,1.2rem);padding:1.1rem;border:1px solid rgba(213,241,108,.2);background:rgba(10,15,11,.5)}
+.release-v270 .icon-samples img{width:clamp(3.7rem,7vw,6.2rem);height:auto;image-rendering:auto;filter:drop-shadow(0 .5rem .9rem rgba(0,0,0,.3))}
+.release-v270 .landscape-readout{display:flex;flex:none;align-items:center;gap:.8rem;padding:1rem 1.2rem;border:1px solid rgba(213,241,108,.24);background:#111811;color:#f1f3e8}
+.release-v270 .landscape-readout>div{display:flex;align-items:baseline;gap:.35rem}
+.release-v270 .landscape-readout strong{font-family:var(--display);font-size:4rem;font-variant-numeric:tabular-nums;line-height:.85}
+.release-v270 .landscape-readout>div span{color:#bfcbba;font-size:.72rem;font-weight:700}
+.release-v270 .limit-sign{display:grid;width:3.2rem;height:3.2rem;place-items:center;border:3px solid #f3f0e8;border-radius:50%;color:#f3f0e8;font-size:.83rem;font-weight:800;box-shadow:inset 0 0 0 2px #111811}
+.release-v270 .support-strip{display:grid;grid-template-columns:4rem minmax(0,1fr) auto;align-items:center;gap:1rem;padding:clamp(1.2rem,3vw,2rem);border:1px solid rgba(213,241,108,.24);background:linear-gradient(115deg,rgba(213,241,108,.1),transparent 65%),var(--panel)}
+.release-v270 .support-heart{display:grid;width:3.4rem;height:3.4rem;place-items:center;border:1px solid rgba(213,241,108,.35);border-radius:50%;color:var(--route);font-size:2.4rem;line-height:1}
+.release-v270 .support-strip h3{margin:0 0 .35rem;font-size:clamp(1.7rem,3vw,2.4rem)}
+.release-v270 .support-strip p{margin:0;color:var(--muted);font-size:.85rem;line-height:1.6}
+.release-v270 .journey-link{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.5rem 1.4rem;margin-top:1.2rem;padding-top:1.1rem;border-top:1px solid var(--border)}
+.release-v270 .journey-link p{margin:0;color:var(--muted);font-size:.84rem}
+.release-v270 .icon-samples img:nth-child(2){scale:1.12}
+@media(max-width:42rem){.release-v270 .feature-card-wide{align-items:flex-start;flex-direction:column}.release-v270 .icon-samples{width:100%;justify-content:space-around}.release-v270 .support-strip{grid-template-columns:3rem minmax(0,1fr)}.release-v270 .support-heart{width:2.7rem;height:2.7rem;font-size:2rem}.release-v270 .support-strip .release-button{grid-column:1/-1;width:100%}.release-v270 .journey-link{align-items:flex-start;flex-direction:column}}
+@media(prefers-reduced-motion:no-preference){.release-v270 .map-route{animation:waypoint-release-route 1.1s cubic-bezier(.16,1,.3,1) 120ms both}}
+@media(prefers-reduced-motion:reduce){.release-v270 .map-route{animation:none;stroke-dashoffset:0}}
