@@ -25,7 +25,7 @@
   <a href="#build-from-source">Build</a> ·
   <a href="#privacy-and-services">Privacy</a> ·
   <a href="#open-project">Guides</a> ·
-  <a href="docs/milestones.html">Release journey</a>
+  <a href="#waypoints-release-journey">Release journey</a>
 </p>
 
 ---
@@ -38,6 +38,19 @@
 - **Release journey:** [follow Waypoint from its first public release to the latest](docs/milestones.html), with the first APK download count and the current cumulative APK total. Counts represent download events, not unique users.
 
 [Full release notes →](docs/releases/current.html)
+
+## Waypoint’s release journey
+
+Waypoint began with 27 game-inspired map worlds and has grown to 38, alongside navigation, quests and community-requested improvements.
+
+| Release | Milestone |
+| --- | --- |
+| [0.2.1](https://github.com/the-geeky-couldron/waypoint/releases/tag/v0.2.1) | First public Android build with 27 worlds |
+| [1.0.0](https://github.com/the-geeky-couldron/waypoint/releases/tag/v1.0.0) | First stable release with search and spoken routes |
+| [2.0.0](https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.0.0) | 38 worlds, personal quests and bicycle routes |
+| [2.7.0](https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.7.0) | Readable map symbols, steady camera pitch and an improved landscape HUD |
+
+**[Follow every release and see APK download growth →](docs/milestones.html)** Counts on the journey page are GitHub download events, not unique people or active installs.
 
 ## Your tasks, with rewards
 
