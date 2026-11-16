@@ -2,6 +2,10 @@
 
 For the full notes and community acknowledgements, see the [Waypoint release page](docs/releases/current.html) or [Markdown release notes](docs/releases/current.md). Published releases are available on [GitHub Releases](https://github.com/the-geeky-couldron/waypoint/releases).
 
+## Unreleased
+
+- Added an optional 3D position cursor to the phone map, including a bundled Waypoint model. Thanks to **Suussonic** for contributing the feature in [PR #65](https://github.com/the-geeky-couldron/waypoint/pull/65).
+
 ## 2.7.0
 
 - Increased map place icon size across all worlds so symbols are easier to recognize on a phone.
