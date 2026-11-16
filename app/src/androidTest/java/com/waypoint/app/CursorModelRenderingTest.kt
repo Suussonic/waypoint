@@ -35,16 +35,17 @@ class CursorModelRenderingTest {
 
     @Test fun bundledSelectionSurvivesRestartWithoutExposingImports() {
         val inst=InstrumentationRegistry.getInstrumentation()
-        val app=TestApplication(inst.targetContext,inst.context.assets)
+        val productionAssets=inst.targetContext.assets
+        val app=TestApplication(inst.targetContext,productionAssets)
         val prefs=app.getSharedPreferences("cursor-test",0)
         prefs.edit().clear().commit()
         try {
             val controller=NavigationController(app,preferencesName="cursor-test")
-            assertEquals(listOf("Test.glb"),controller.cursorModels)
+            assertEquals(listOf("Waypoint.glb"),controller.cursorModels)
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
                 scenario.onActivity { activity ->
                     val context=object: ContextWrapper(activity) {
-                        override fun getAssets()=inst.context.assets
+                        override fun getAssets()=productionAssets
                     }
                     activity.setContent {
                         val state=controller.state.collectAsState().value
@@ -54,8 +55,8 @@ class CursorModelRenderingTest {
                     }
                 }
                 val device=UiDevice.getInstance(inst)
-                assertTrue(device.wait(Until.hasObject(By.text("Test")),5000))
-                assertFalse(device.hasObject(By.text("Test.glb")))
+                assertTrue(device.wait(Until.hasObject(By.text("Waypoint")),5000))
+                assertFalse(device.hasObject(By.text("Waypoint.glb")))
                 val use=device.wait(Until.findObject(By.text("Use this model").enabled(true)),20000)
                 assertNotNull("Bundled preview finishes loading",use)
                 use!!.click()
@@ -63,7 +64,7 @@ class CursorModelRenderingTest {
                 assertFalse(device.hasObject(By.text("Choose GLB file")))
             }
             val restored=NavigationController(app,preferencesName="cursor-test")
-            assertEquals("Test.glb",restored.state.value.cursorModel)
+            assertEquals("Waypoint.glb",restored.state.value.cursorModel)
             assertTrue(restored.state.value.cursorModelEnabled)
             inst.runOnMainSync { restored.toggleCursorModel() }
             assertFalse(prefs.getBoolean("cursorModelEnabled",true))
@@ -83,11 +84,11 @@ class CursorModelRenderingTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 val context=object: ContextWrapper(activity) {
-                    override fun getAssets()=inst.context.assets
+                    override fun getAssets()=inst.targetContext.assets
                 }
                 activity.setContent {
                     CompositionLocalProvider(LocalContext provides context) {
-                        CursorModelView("Test.glb",Modifier.size(128.dp).graphicsLayer { alpha=0f },
+                        CursorModelView("Waypoint.glb",Modifier.size(128.dp).graphicsLayer { alpha=0f },
                             onSnapshot={image=it;ready.countDown()},onError={error=it;ready.countDown()})
                     }
                 }
@@ -114,6 +115,42 @@ class CursorModelRenderingTest {
                     assertNotSame("Reattach must create a new renderer surface",surface,findTexture(host))
                 }
             }
+        }
+    }
+
+    @Test fun topDownSnapshotKeepsTheArrowFaceVisible() {
+        val inst=InstrumentationRegistry.getInstrumentation()
+        val ready=CountDownLatch(1)
+        var image: Bitmap?=null
+        var error: String?=null
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val context=object: ContextWrapper(activity) {
+                    override fun getAssets()=inst.targetContext.assets
+                }
+                activity.setContent {
+                    CompositionLocalProvider(LocalContext provides context) {
+                        CursorModelView("Waypoint.glb",Modifier.size(128.dp).graphicsLayer { alpha=0f },
+                            tilt=0f,onSnapshot={image=it;ready.countDown()},onError={error=it;ready.countDown()})
+                    }
+                }
+            }
+            assertTrue("Top-down snapshot completes",ready.await(20,TimeUnit.SECONDS))
+            assertNull(error)
+            val bitmap=requireNotNull(image)
+            var minX=bitmap.width;var maxX=-1;var minY=bitmap.height;var maxY=-1
+            val row=IntArray(bitmap.width)
+            for(y in 0 until bitmap.height) {
+                bitmap.getPixels(row,0,bitmap.width,0,y,bitmap.width,1)
+                row.forEachIndexed { x,pixel -> if((pixel ushr 24)>128) {
+                    minX=minOf(minX,x);maxX=maxOf(maxX,x);minY=minOf(minY,y);maxY=maxOf(maxY,y)
+                } }
+            }
+            val visibleWidth=maxX-minX+1
+            val visibleHeight=maxY-minY+1
+            assertTrue("Top-down arrow face stays taller than it is wide ($visibleWidth x $visibleHeight)",
+                visibleHeight>visibleWidth)
+            bitmap.recycle()
         }
     }
 

@@ -249,7 +249,7 @@ internal fun CursorModelView(model: String, modifier: Modifier, autoRotate: Bool
                     }
                     Matrix.setIdentityM(pose,0)
                     Matrix.translateM(pose,0,0f,0f,-4f)
-                    Matrix.rotateM(pose,0,if(autoRotate)20f else 90f-currentTilt,1f,0f,0f)
+                    Matrix.rotateM(pose,0,if(autoRotate)20f else currentTilt,1f,0f,0f)
                     if(autoRotate)Matrix.rotateM(pose,0,((time-firstFrame)/1e9*30.0%360.0).toFloat(),0f,1f,0f)
                     Matrix.multiplyMM(result,0,pose,0,normalized,0)
                     val tm=renderer.engine.transformManager
