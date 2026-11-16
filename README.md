@@ -41,14 +41,14 @@
 
 ## Choose your 3D cursor
 
-Choose a bundled **Car**, **Motorcycle** or **Bicycle** for the phone map. The model follows your travel direction while map tilt stays a separate control. Android Auto keeps its standard marker.
+Choose a bundled **Car**, **Motorcycle** or **Bicycle** for the phone map. The model follows your travel direction while map tilt stays a separate control. Settings previews show each vehicle upright from a three-quarter front angle. Android Auto keeps its standard marker.
 
 <table>
   <thead><tr><th>Car</th><th>Motorcycle</th><th>Bicycle</th></tr></thead>
   <tbody><tr>
-    <td><img src="docs/images/promo/cursor-car.png" width="180" alt="Waypoint's blue 3D car cursor shown in the Settings preview." /></td>
-    <td><img src="docs/images/promo/cursor-motorcycle.png" width="180" alt="Waypoint's blue 3D motorcycle cursor shown in the Settings preview." /></td>
-    <td><img src="docs/images/promo/cursor-bicycle.png" width="180" alt="Waypoint's blue and gold 3D bicycle cursor shown in the Settings preview." /></td>
+    <td><img src="docs/images/promo/cursor-car.png" width="180" alt="Blue car shown upright from a three-quarter front angle, with its roof, front and side visible." /></td>
+    <td><img src="docs/images/promo/cursor-motorcycle.png" width="180" alt="Blue motorcycle shown upright from a three-quarter front angle, with its front wheel and side visible." /></td>
+    <td><img src="docs/images/promo/cursor-bicycle.png" width="180" alt="Blue and gold bicycle shown upright from a three-quarter front angle, with both wheels and its frame visible." /></td>
   </tr></tbody>
 </table>
 
