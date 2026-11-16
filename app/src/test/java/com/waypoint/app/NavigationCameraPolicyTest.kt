@@ -22,11 +22,14 @@ class NavigationCameraPolicyTest {
         assertEquals(14.5, navigationZoomForTurn(NAV_ZOOM, 10.0), 0.001)
     }
 
-    @Test fun pitchMatchesNavigationPerspectiveAndFlattensAtWideZoom() {
-        assertEquals(55.0, navigationTiltAtZoom(18.0), 0.001)
-        assertEquals(0.0, navigationTiltAtZoom(12.5), 0.001)
-        assertEquals(27.5, navigationTiltAtZoom(13.75), 0.001)
-        assertEquals(0.0, navigationTiltAtZoom(18.0, wantedTilt = 0.0), 0.001)
+    @Test fun navigationPitchStaysSteadyWhenSpeedChangesTheZoom() {
+        val stopped = navigationCameraPose(NavState(navigating = true, speed = 0f), 0f, 2400, 3.0, 450.0, 55.0)
+        val moving = navigationCameraPose(NavState(navigating = true, speed = 25f), 0f, 2400, 3.0, 450.0, 55.0)
+        assertTrue("speed still pulls the camera back", moving.zoom < stopped.zoom)
+        assertEquals(55.0, stopped.tilt, 0.001)
+        assertEquals(55.0, moving.tilt, 0.001)
+        assertEquals(0.0, navigationTilt(0.0), 0.001)
+        assertEquals(0.0, navigationTilt(Double.NaN), 0.001)
     }
 
     @Test fun cameraTurnsTowardFarManeuverAndFadesYawNearIt() {

@@ -81,8 +81,7 @@
     const svg = run.querySelector('.run-line');
     const guide = svg.querySelector('.run-guide'), trace = svg.querySelector('.run-trace');
     const car = svg.querySelector('.run-car');
-    const stops = $$('[data-stop]', run);
-    const dots = stops.map((s) => s.querySelector('.dot'));
+    let stops = [], dots = [];
     let ys = [], len = [], total = 0, ready = false;
     const showAll = () => {
       stops.forEach((s) => s.classList.add('on'));
@@ -90,6 +89,8 @@
       trace.style.strokeDashoffset = '0';
     };
     const build = () => {
+      stops = $$('[data-stop]', run);
+      dots = stops.map((s) => s.querySelector('.dot'));
       const rb = run.getBoundingClientRect();
       const pts = dots.map((dot) => {
         const b = dot.getBoundingClientRect();

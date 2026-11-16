@@ -22,6 +22,7 @@ blocked_suffixes = {".apk", ".aab", ".log", ".pyc", ".mov", ".webm", ".avi", ".p
 blocked_suffixes |= {".keystore", ".jks", ".p12", ".pem"}
 readme_media = {
     "docs/images/waypoint-icon.png",
+    "docs/images/kofi/support_me_on_kofi_blue.png",
     "docs/images/promo/download.jpg",
     "docs/images/promo/hero.jpg",
     "docs/images/promo/hero-mobile.jpg",

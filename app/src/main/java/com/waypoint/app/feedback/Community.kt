@@ -1,5 +1,6 @@
 package com.waypoint.app
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
@@ -26,6 +28,9 @@ const val DISCORD_INVITE_URL = "https://discord.gg/TQ9cEx6rsu"
 
 /** The public Waypoint website. */
 const val WAYPOINT_SITE_URL = "https://the-geeky-couldron.github.io/waypoint/"
+
+/** Opens Waypoint's public Ko-fi page in the user's browser. */
+const val WAYPOINT_KOFI_URL = "https://ko-fi.com/thegeekycouldron"
 
 /** Settings entry that hands the invite to the browser or the Discord app. Nothing is sent from the phone. */
 @Composable
@@ -42,6 +47,30 @@ internal fun CommunitySettingsRow() {
         Column(Modifier.weight(1f)) {
             Text("Join the Waypoint Discord", style = MaterialTheme.typography.titleMedium)
             Text("A channel for each world, release notes and bug reports", style = MaterialTheme.typography.bodySmall, color = Muted)
+        }
+        Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(20.dp), tint = Muted)
+    }
+}
+
+/** Optional support link; payment details stay on Ko-fi and no third-party widget runs in the app. */
+@Composable
+internal fun KoFiSettingsRow() {
+    val uri = LocalUriHandler.current
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 56.dp)
+            .clickable(role = Role.Button) { runCatching { uri.openUri(WAYPOINT_KOFI_URL) } }
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(
+            painter = painterResource(R.drawable.kofi_symbol),
+            contentDescription = null,
+            modifier = Modifier.size(width = 30.dp, height = 24.dp),
+        )
+        Column(Modifier.weight(1f)) {
+            Text("Support Waypoint on Ko-fi", style = MaterialTheme.typography.titleMedium)
+            Text("Optional tip · opens Ko-fi in your browser", style = MaterialTheme.typography.bodySmall, color = Muted)
         }
         Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(20.dp), tint = Muted)
     }

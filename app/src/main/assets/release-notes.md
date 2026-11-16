@@ -1,30 +1,35 @@
-# Waypoint 2.6.6
+# Waypoint 2.7.0
 
-This release reduces map-rendering pressure on lower-memory devices and keeps manual zoom and pan from snapping back to your current location.
+This release makes place symbols easier to read, steadies the navigation view, restores the speed readout in landscape, and adds optional ways to support Waypoint.
 
-## Smoother motion on car displays
+## Map icons that read at a glance
 
-- Devices marked as low-RAM or with 4 GB of total system memory or less now pace map animation at 30 frames per second. This reduces rendering work on aftermarket car displays and other memory-constrained devices.
-- Devices outside that low-memory range keep their existing frame rate.
+- Increased landmark symbol size by about 20% across all 38 worlds. Each world keeps its own original artwork; the source atlases are unchanged.
+- Nearby search-result markers now scale with zoom, keeping their symbols easy to distinguish beside themed places.
 
-## Zoom where you choose
+## A steady navigation view
 
-- Pinch zoom, pan and rotation now pause automatic location-following when the gesture ends, so a fresh GPS update will not pull the camera back to your current position.
-- During active guidance, camera-follow resumes after an eight-second grace period. While browsing, it remains paused until you recenter manually.
+- Navigation now keeps the selected 2D or 3D pitch while speed and turn framing change map zoom. Speed-based zoom no longer makes the map tilt on its own.
 
-## Community support
+## Landscape guidance at a glance
 
-- A.T.L.A.S. can recover a failed ticket-close action, and its GitHub issue creation avoids duplicate reports.
+- Phone landscape guidance shows current speed, units and the posted speed limit when one is available.
+- When GPS is ready, a stopped vehicle shows zero speed. When GPS is unavailable, the readout shows a dash instead of a misleading zero.
 
-## Credits for the fixes
+## Support Waypoint if you choose
 
-Thank you to the people who shared recordings and details that made these issues reproducible.
+- Settings and the project pages now link directly to Waypoint on Ko-fi for optional tips.
+- The link opens Ko-fi in the browser. Payment details stay with Ko-fi; Waypoint does not embed a third-party payment widget or handle payment information.
 
-**Discord**
+## The release journey
 
-- **@Aleksandyr** — reported intermittent stutter on a 4 GB aftermarket car display running Waypoint directly. The low-memory map frame pacing addresses the reported rendering pressure.
-- **@Jkizzle** — shared the zoom snap-back recording, tracked in public [issue #84](https://github.com/the-geeky-couldron/waypoint/issues/84). Manual camera gestures now pause location-following.
+- The website now has a separate, animated page for Waypoint's public release history, with a live GitHub snapshot of the first public APK and the cumulative APK download total.
+- GitHub counts download events, including updates and repeat downloads. They do not represent unique people or active installs.
 
-Discord ticket channels are private, so reporters are credited by handle without links to private conversations.
+## Credits for the reports
+
+Thank you to **Venus Starlight** for sharing the navigation video and landscape HUD report in the Waypoint Discord. The report helped reproduce the changing map pitch at lower speeds and the missing speed and speed-limit readout in landscape. The camera and HUD fixes are included here.
+
+Discord tickets are private, so this acknowledgement does not link to the ticket.
 
 Compatible updates preserve saved places, quests and settings. Android Auto availability in a real vehicle still depends on Google's trusted installation requirements.

@@ -301,6 +301,42 @@ private fun compactGuidanceInstruction(guidance: RouteGuidance): String {
     }
 }
 
+/** Speed and the posted limit stay visible beside the guidance card in phone landscape. */
+@Composable
+internal fun CompactLandscapeSpeedReadout(state: NavState, modifier: Modifier = Modifier) {
+    val world = state.world
+    val p = hudPalette(world)
+    val over = state.overSpeedLimit && state.speedWarning
+    val speed = if (state.gpsReady)
+        (state.speed * if (state.imperial) 2.23694 else 3.6).roundToInt().toString()
+    else "—"
+    val units = if (state.imperial) "mph" else "km/h"
+    Row(modifier, verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Surface(
+            color = p.panel,
+            contentColor = if (over) Color(0xFFFF5A4D) else p.foreground,
+            shape = hudShape(world),
+            border = if (over) androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFFF5A4D)) else hudBorder(world),
+            modifier = Modifier.heightIn(min = 52.dp).semantics {
+                contentDescription = "Speed $speed $units"
+            },
+        ) {
+            Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(speed, fontFamily = hudFont(world), fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp, lineHeight = 24.sp)
+                Text(units, fontFamily = hudFont(world), fontSize = TypeScale.Caption,
+                    lineHeight = 16.sp, color = if (over) Color(0xFFFF5A4D) else p.muted)
+            }
+        }
+        val limit = state.speedLimitKmh
+        if (state.speedWarning && limit != null && state.navigating)
+            SpeedLimitSign(speedLimitForDisplay(limit, state.imperial), over)
+    }
+}
+
 /** Trip status and every guidance action in one low landscape strip. */
 @Composable
 internal fun CompactLandscapeNavFooter(

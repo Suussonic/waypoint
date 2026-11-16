@@ -14,6 +14,7 @@
   <p><strong>Android 8.0+</strong> · No ads or paywall · No Waypoint account<br />Every world included · Made in India, open to the world</p>
   <p><a href="https://upstar.dev/r/the-geeky-couldron/waypoint"><picture><source media="(prefers-color-scheme: dark)" srcset="https://upstar.dev/badge/the-geeky-couldron/waypoint/award/kotlin-dark.svg"><img alt="Upstar: #10 Riser Of The Week in Kotlin, November 2026" src="https://upstar.dev/badge/the-geeky-couldron/waypoint/award/kotlin.svg" width="250" height="55"></picture></a></p>
   <p><a href="https://discord.gg/TQ9cEx6rsu"><strong>Join the Waypoint Discord</strong></a> · a channel for each of the 38 worlds</p>
+  <p><a href="https://ko-fi.com/thegeekycouldron"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/kofi/support_me_on_kofi_dark.png" /><img src="docs/images/kofi/support_me_on_kofi_blue.png" width="245" height="50" alt="Support Waypoint on Ko-fi" /></picture></a> · optional tips, handled by Ko-fi</p>
   <p><a href="https://repolode.com/en/repo/the-geeky-couldron/waypoint"><img src="https://repolode.com/badge/the-geeky-couldron/waypoint" alt="Featured on Repolode" height="30" /></a></p>
 </div>
 
@@ -23,18 +24,33 @@
   <a href="#get-waypoint">Install</a> ·
   <a href="#build-from-source">Build</a> ·
   <a href="#privacy-and-services">Privacy</a> ·
-  <a href="#open-project">Guides</a>
+  <a href="#open-project">Guides</a> ·
+  <a href="#waypoints-release-journey">Release journey</a>
 </p>
 
 ---
 
-## What's new in 2.6.6
+## What's new in 2.7.0
 
-- **Smoother map motion on low-memory devices:** map animation is paced at 30 fps on devices flagged as low-RAM or with 4 GB of system memory or less, reducing rendering pressure on car displays and other constrained hardware.
-- **Zoom without the snap-back:** pinch zoom, pan and rotation pause location-following. During active guidance, follow resumes after eight seconds; while browsing, the map stays put until you recenter.
-- **More reliable community support:** A.T.L.A.S. ticket closing can recover from errors, and issue creation avoids duplicates.
+- **Map symbols are easier to read:** increased place icon size consistently across all 38 worlds.
+- **Navigation pitch stays put:** speed-based zoom no longer changes the selected 2D/3D camera pitch. Landscape guidance keeps speed and the posted speed limit visible, including when the vehicle is stopped.
+- **Optional support:** find a direct Ko-fi link in Settings and on the project pages. Payment details stay with Ko-fi.
+- **Release journey:** [follow Waypoint from its first public release to the latest](docs/milestones.html), with the first APK download count and the current cumulative APK total. Counts represent download events, not unique users.
 
 [Full release notes →](docs/releases/current.html)
+
+## Waypoint’s release journey
+
+Waypoint began with 27 game-inspired map worlds and has grown to 38, alongside navigation, quests and community-requested improvements.
+
+| Release | Milestone |
+| --- | --- |
+| [0.2.1](https://github.com/the-geeky-couldron/waypoint/releases/tag/v0.2.1) | First public Android build with 27 worlds |
+| [1.0.0](https://github.com/the-geeky-couldron/waypoint/releases/tag/v1.0.0) | First stable release with search and spoken routes |
+| [2.0.0](https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.0.0) | 38 worlds, personal quests and bicycle routes |
+| [2.7.0](https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.7.0) | Readable map symbols, steady camera pitch and an improved landscape HUD |
+
+**[Follow every release and see APK download growth →](docs/milestones.html)** Counts on the journey page are GitHub download events, not unique people or active installs.
 
 ## Your tasks, with rewards
 
@@ -141,12 +157,13 @@ Android Auto keeps Google Maps available in the launcher. Open Waypoint there to
 
 - **Drive, cycle, ride or walk.** Choose a car, motorcycle, bicycle or walking route, then follow spoken turns, remaining distance and ETA.
 - **Take the route into the car.** Android Auto shows Waypoint's selected world, moving map, route and next turn. Search, saved destinations, route choices and map controls stay within the car's template UI.
-- **Keep your bearings.** Locate recentres on your actual position; the map follows movement and can recalculate after a confirmed wrong turn. A 2D/3D control changes the camera tilt.
+- **Keep your bearings.** Locate recentres on your actual position; the map follows movement and can recalculate after a confirmed wrong turn. A 2D/3D control changes camera tilt without speed-based zoom shifting the chosen pitch.
 - **Find useful places.** Search destinations, drop a pin, and see world-specific blips for food, pubs, shops, schools, hospitals and other mapped places. Icons appear progressively as you zoom so dense streets stay legible.
 - **Pick up where you left off.** Save places, revisit recent destinations and switch worlds during a trip. Shared `geo:` and `google.navigation:` links ask for confirmation before Waypoint looks up or previews the imported destination.
 - **Stay under the limit.** While you drive, the phone HUD shows the posted speed limit beside your speed, turns your speed red when you pass it and speaks one gentle alert. Limits come from OpenStreetMap `maxspeed` tags, so they appear only where mappers have recorded one. Switch it off in Settings.
 - **See which bus to take.** Choose a destination, then **Bus & transit** to list the next buses, trams, metro and trains with the line, direction, boarding stop and live times where operators share them. Coverage depends on open timetable data and this first version is a trip list, not stop-by-stop guidance.
 - **Join the community.** The [Waypoint Discord](https://discord.gg/TQ9cEx6rsu) has a private channel for each of the 38 worlds, release notes and bug reports; Settings and What's New link to it.
+- **Support the project if you choose.** The [Waypoint Ko-fi page](https://ko-fi.com/thegeekycouldron) accepts optional tips. Payments are handled by Ko-fi, not the app.
 - **Send feedback in context.** Settings opens a draft GitHub issue with the current world and app version. You review it in your browser before submitting; a GitHub account is needed to post the issue.
 
 <img src="docs/images/promo/identity.jpg" width="100%" alt="Waypoint's launcher emblem and compact navigation identity." />
@@ -164,7 +181,7 @@ Android Auto keeps Google Maps available in the launcher. Open Waypoint there to
 
 Installed versions check for a newer stable GitHub release on foreground entry, at most once every 30 minutes; you can check manually in Settings at any time. If an update is available, an in-app prompt appears when the idle map is visible. Review the release notes, choose **Download update**, and confirm installation in Android.
 
-The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.6.6**; see the [release notes](docs/releases/current.html) and [changelog](CHANGELOG.md).
+The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.7.0**; see the [release notes](docs/releases/current.html) and [changelog](CHANGELOG.md).
 
 ## Build from source
 
@@ -186,6 +203,8 @@ For maintainers, the [development layout](docs/development/architecture.md) expl
 ## Privacy and services
 
 Waypoint has no app-owned account, analytics backend or recorded route history. Saved places, quests, pictures and personal progress stay on your device. Location and destinations are sent to providers when a map, search or route needs them. No live-traffic provider is configured, so Waypoint does not send location updates to a traffic service. The app’s update check contacts GitHub without location data.
+
+The optional Ko-fi link opens Ko-fi in your browser. Waypoint does not process or store payment details; Ko-fi handles any payment you choose to make.
 
 | Feature | Service |
 | --- | --- |
@@ -219,6 +238,7 @@ GPS and place coverage vary by device and location; real-road and long-duration 
 | [Map typography](docs/map-fonts.md) | Fonts and map glyphs |
 | [Visual sourcebook](docs/visual-sourcebook.md) | Cartography decisions and references |
 | [Design system](DESIGN.md) | Colors, type, map treatments and interface rules |
+| [Release journey](docs/milestones.html) | Published releases and aggregate APK download growth |
 | [Product notes](PRODUCT.md) | Scope and product behavior |
 | [Development layout](docs/development/architecture.md) | Source structure, assets and checks |
 | [Security review](docs/security.md) | Reviewed boundaries, source fixes and remaining validation |

@@ -262,7 +262,6 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
     }
     var mapBrowsePlaces by remember { mutableStateOf<List<NearbyPlace>>(emptyList()) }
     var lastMapPlacesCenter by remember { mutableStateOf<Coordinate?>(null) }
-    var lastMapPlacesZoom by remember { mutableDoubleStateOf(Double.NaN) }
     val mapPreferences = remember(context) { context.getSharedPreferences("waypoint-map", android.content.Context.MODE_PRIVATE) }
     var mapPlacePinsEnabled by remember(mapPreferences) {
         mutableStateOf(mapPreferences.getBoolean("open-place-pins", true))
@@ -284,7 +283,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
         state.navigating, state.routing, state.selected, tab, search, settings, steps, welcomeVisible, state.carConnected,
     ) {
         val camera = browseMapCamera
-        if (!mapPlacePinsEnabled || state.navigating || state.routing || state.selected != null ||
+        if (!mapPlacePinsEnabled || state.navigating || state.routing ||
             tab != 0 || search || settings || steps || welcomeVisible || state.carConnected || camera == null) {
             mapBrowsePlaces = emptyList()
             return@LaunchedEffect
@@ -292,13 +291,9 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
         // Let the Nearby sheet own the map symbols while it is open.
         if (nearbyOpen) return@LaunchedEffect
         val (center, zoom) = camera
-        if (zoom < 13.6) {
-            mapBrowsePlaces = emptyList()
-            return@LaunchedEffect
-        }
+        if (zoom < 13.6) return@LaunchedEffect
         val previous = lastMapPlacesCenter
-        if (previous != null && mapBrowsePlaces.isNotEmpty() &&
-            distance(previous, center) < 1_600.0 && kotlin.math.abs(lastMapPlacesZoom - zoom) < .8) {
+        if (previous != null && mapBrowsePlaces.isNotEmpty() && distance(previous, center) < 1_600.0) {
             return@LaunchedEffect
         }
         delay(380)
@@ -307,12 +302,9 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
             currentCoroutineContext().ensureActive()
             mapBrowsePlaces = places
             lastMapPlacesCenter = center
-            lastMapPlacesZoom = zoom
         } catch (error: CancellationException) {
             throw error
-        } catch (_: Exception) {
-            mapBrowsePlaces = emptyList()
-        }
+        } catch (_: Exception) { /* Keep the last successful place results while offline. */ }
     }
     var mapError by remember { mutableStateOf<String?>(null) }
     var mapBounds by remember { mutableStateOf(Rect.Zero) }
@@ -459,7 +451,16 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                             active=tab==0 && !search && !settings && !steps,routeInsets=routeInsets,onAwayFromUser={awayFromUser=it},
                             onSelectRoute={ index -> if(state.navigating)controller.switchToAlternate(index) else controller.selectRouteOption(index) },
                             showScaleBar=scaleVisible,scaleBarInsets=scaleInsets,
-                            nearbyPlaces=if(nearbyOpen)nearbyResults else mapBrowsePlaces,
+                            nearbyPlaces=if(nearbyOpen) nearbyResults else mapBrowsePlaces.take(
+                                when {
+                                    (browseMapCamera?.second ?: 15.2) < 13.6 -> 0
+                                    (browseMapCamera?.second ?: 15.2) < 14.5 -> 4
+                                    (browseMapCamera?.second ?: 15.2) < 15.5 -> 8
+                                    (browseMapCamera?.second ?: 15.2) < 16.5 -> 14
+                                    (browseMapCamera?.second ?: 15.2) < 18.0 -> 24
+                                    else -> 36
+                                }
+                            ),
                             onVisibleMapArea={ visibleMapArea=it },
                             onBrowseMapCamera={ center, zoom -> browseMapCamera=center to zoom },
                             onNearbyPlaceClick={ place ->
@@ -523,6 +524,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                                         .verticalScroll(rememberScrollState()),
                                         verticalArrangement=Arrangement.spacedBy(8.dp)) {
                                         CompactLandscapeNavBanner(state,{steps=true},{selectTab(1)})
+                                        CompactLandscapeSpeedReadout(state)
                                         when {
                                             mapError!=null -> Notice(mapError!!,Icons.Default.CloudOff)
                                             !state.gpsReady -> Notice(state.gpsStatus,Icons.Default.GpsOff)
@@ -717,6 +719,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 FeedbackSettingsRow(onClick={feedbackOpen=true})
                 CommunitySettingsRow()
+                KoFiSettingsRow()
                 Text("WAYPOINT",style=MaterialTheme.typography.headlineMedium,color=WaypointColors.accent)
                 Text("Made in India · Open to the world",style=MaterialTheme.typography.bodySmall,color=Muted)
                 Text("Open source. Every world included. No ads or subscriptions.",style=MaterialTheme.typography.bodyMedium)
