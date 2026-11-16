@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -50,8 +51,8 @@ fun UpdatePromptDialog(
         title = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text("Waypoint update", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text("Version ${release.version}", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.update_dialog_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.update_version, release.version), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                 }
                 // AlertDialog keeps its title outside the scrolling message area, so download
                 // progress remains visible while release notes and details are being read.
@@ -62,7 +63,7 @@ fun UpdatePromptDialog(
                     ) {
                         UpdateDownloadProgress(
                             current.percent,
-                            if (current.percent >= 100) "Verifying the update" else "Downloading version ${release.version}",
+                            if (current.percent >= 100) stringResource(R.string.update_verifying) else stringResource(R.string.update_downloading, release.version),
                             modifier = Modifier.fillMaxWidth().padding(12.dp),
                         )
                     }
@@ -71,7 +72,7 @@ fun UpdatePromptDialog(
                         shape = RoundedCornerShape(12.dp),
                     ) {
                         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Checking for a stable release", style = MaterialTheme.typography.labelLarge)
+                            Text(stringResource(R.string.update_checking), style = MaterialTheme.typography.labelLarge)
                             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                         }
                     }
@@ -92,21 +93,21 @@ fun UpdatePromptDialog(
                                 tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(9.dp))
                         }
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text("Stable release", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                            Text("$size MB · Verified before install", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.update_stable), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.update_size_verified, size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
-                Text("Review what's new, then download when you're ready. Android will ask you to confirm installation.",
+                Text(stringResource(R.string.update_review),
                     style = MaterialTheme.typography.bodyMedium)
                 when (val current = status) {
                     is UpdateStatus.Downloading, UpdateStatus.Checking -> Unit
-                    is UpdateStatus.Ready -> UpdateInfoMessage("Verified and ready. Android will show its installation confirmation.")
+                    is UpdateStatus.Ready -> UpdateInfoMessage(stringResource(R.string.update_ready))
                     is UpdateStatus.Failed -> UpdateErrorMessage(current.message)
                     else -> Unit
                 }
                 if (release.notes.isNotBlank()) {
-                    Text("What's new", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.update_whats_new), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                     ReleaseNotesContent(release.notes)
                 }
                 installMessage?.let { UpdateInfoMessage(it) }
@@ -120,33 +121,33 @@ fun UpdatePromptDialog(
                     modifier = Modifier.heightIn(min = 48.dp),
                 ) {
                     androidx.compose.material3.Icon(Icons.Default.SystemUpdate, null)
-                    Text("Install")
+                    Text(stringResource(R.string.update_install_short))
                 }
                 is UpdateStatus.Downloading -> TextButton(
                     onClick = updater::cancel,
                     modifier = Modifier.heightIn(min = 48.dp),
-                ) { Text("Cancel download") }
+                ) { Text(stringResource(R.string.update_cancel)) }
                 is UpdateStatus.Failed -> Button(
                     onClick = { updater.download(release) },
                     modifier = Modifier.heightIn(min = 48.dp),
                 ) {
                     androidx.compose.material3.Icon(Icons.Default.Download, null)
-                    Text("Retry download")
+                    Text(stringResource(R.string.update_retry))
                 }
                 UpdateStatus.Checking -> TextButton(onClick = {}, enabled = false, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text("Checking…")
+                    Text(stringResource(R.string.update_checking_short))
                 }
                 else -> Button(
                     onClick = { updater.download(release) },
                     modifier = Modifier.heightIn(min = 48.dp),
                 ) {
                     androidx.compose.material3.Icon(Icons.Default.Download, null)
-                    Text("Download update")
+                    Text(stringResource(R.string.update_download))
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = onLater, modifier = Modifier.heightIn(min = 48.dp)) { Text("Later") }
+            TextButton(onClick = onLater, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.update_later)) }
         },
     )
 }

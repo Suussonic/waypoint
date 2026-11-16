@@ -1,0 +1,31 @@
+<resources>
+    <string name="journey_title">Your journey</string>
+    <string name="journey_heading">A little progress, every day</string>
+    <string name="journey_intro">Your tasks and rewards stay on this phone. Every world and navigation feature is available from the start.</string>
+    <string name="journey_show_progress">Show levels and rewards</string>
+    <string name="journey_sounds">In-app completion sounds</string>
+    <string name="journey_level_xp">Level %1$d · %2$d XP</string>
+    <string name="journey_badges">Your badges</string>
+    <string name="journey_first_badge">Complete your first quest to earn First step.</string>
+    <string name="journey_frame">Avatar frame</string>
+    <string name="journey_frame_unlocks">New frames at Levels 2, 5 and 10.</string>
+    <string name="journey_story">Your story</string>
+    <string name="journey_chapter_locked">Opens after %1$d completed quests. %2$d completed so far.</string>
+    <string name="journey_rewards_help">Each quest earns 20 XP. Finishing its focus timer of at least 10 minutes adds 10 XP once. No streaks to maintain, and no points to lose for taking your time.</string>
+    <string name="journey_local_title">On this phone</string>
+    <string name="journey_local_help">App updates preserve your quests. Uninstalling Waypoint removes them. There is no account or cloud backup.</string>
+    <string name="journey_badge_first">First step</string>
+    <string name="journey_badge_rhythm">Finding your rhythm</string>
+    <string name="journey_badge_adventurer">Seasoned adventurer</string>
+    <string name="journey_badge_focus">Time well spent</string>
+    <string name="journey_frame_simple">Simple</string>
+    <string name="journey_frame_scout">Scout</string>
+    <string name="journey_frame_explorer">Explorer</string>
+    <string name="journey_frame_wayfinder">Wayfinder</string>
+    <string name="journey_chapter_begin_title">A place to begin</string>
+    <string name="journey_chapter_begin_text">Five small promises, kept. The map has not changed, but your place in it has. Every journey begins with something ordinary that you decide to do.</string>
+    <string name="journey_chapter_way_title">Making your own way</string>
+    <string name="journey_chapter_way_text">The familiar paths now carry a different story: the things you finished, the time you made, the people and places you chose. You are drawing a route of your own.</string>
+    <string name="journey_chapter_road_title">The road ahead</string>
+    <string name="journey_chapter_road_text">Fifty quests behind you, and no final destination to chase. Take a moment to look back. The next chapter can be as small as a quiet afternoon or as wide as a new horizon.</string>
+</resources>

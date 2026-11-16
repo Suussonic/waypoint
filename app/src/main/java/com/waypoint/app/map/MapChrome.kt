@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -79,7 +80,7 @@ internal fun MapChrome(state: NavState, heading: Float, actions: AtlasActions, m
             // Recenter remains separate from the compass orientation toggle.
             AtlasTool(world, Icons.Default.MyLocation, "Use my location", actions.locate,
                 highlighted = !actions.awayFromUser && state.gpsReady,
-                stateText = if (actions.awayFromUser) "Map is away from you" else if (state.gpsReady) "Centred on you" else null,
+                stateText = if (actions.awayFromUser) stringResource(R.string.nav_map_away) else if (state.gpsReady) stringResource(R.string.nav_map_centered) else null,
                 hudSize = size)
         }
         if (landscape) Row(toolPlacement, horizontalArrangement = Arrangement.spacedBy(gap)) {

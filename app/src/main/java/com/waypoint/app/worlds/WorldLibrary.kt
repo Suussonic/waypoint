@@ -26,6 +26,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.Role
@@ -52,10 +53,10 @@ import androidx.compose.ui.unit.dp
     if (preview != null) {
         BackHandler { previewName = null }
         QuestTheme(preview, adaptSystemBars = true) {
-            Scaffold(topBar = { TopAppBar(title = { Text("World preview") }, navigationIcon = { IconButton(onClick = { previewName = null }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to worlds") } },
+            Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.world_preview_title)) }, navigationIcon = { IconButton(onClick = { previewName = null }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.world_back)) } },
                 actions = { FavoriteWorldButton(preview, preview.name in favorites) { favorite(preview) } }) },
                 bottomBar = { Surface { Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                    Button(onClick = { previewName = null; onSelect(preview) }, modifier = Modifier.widthIn(max = 680.dp).fillMaxWidth().heightIn(min = 52.dp), shape = hudShape(preview)) { Text("Use this world") }
+                    Button(onClick = { previewName = null; onSelect(preview) }, modifier = Modifier.widthIn(max = 680.dp).fillMaxWidth().heightIn(min = 52.dp), shape = hudShape(preview)) { Text(stringResource(R.string.world_use)) }
                 } } }) { padding ->
                 Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
                     Column(Modifier.widthIn(max = 760.dp).fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(20.dp)) {
@@ -64,9 +65,9 @@ import androidx.compose.ui.unit.dp
                             Text(preview.title, style = MaterialTheme.typography.headlineMedium)
                             Text(preview.inspiration(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                             Text(stringResource(preview.descriptionRes), style = MaterialTheme.typography.bodyLarge)
-                            Text("Preview: ${preview.previewPlace().label}", style = MaterialTheme.typography.bodySmall)
+                            Text(stringResource(R.string.world_preview_place, preview.previewPlace().label), style = MaterialTheme.typography.bodySmall)
                             HorizontalDivider()
-                            Text("Your places, quests and progress stay with you.", style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.world_keep_progress), style = MaterialTheme.typography.bodyMedium)
                             Text("Maps © OpenFreeMap · OpenMapTiles · OpenStreetMap contributors", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Spacer(Modifier.height(24.dp))
                         }
@@ -82,34 +83,35 @@ import androidx.compose.ui.unit.dp
         else -> true
     } }
     Scaffold( containerColor = Ink, topBar = {
-        TopAppBar(title = { Text("Worlds") }, navigationIcon = { IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Return to map") } })
+        TopAppBar(title = { Text(stringResource(R.string.nav_worlds)) }, navigationIcon = { IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.quest_return_map)) } })
     }) { padding ->
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
             LazyColumn(Modifier.widthIn(max = 760.dp).fillMaxSize(), state=listState, contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("Find your next world", style = MaterialTheme.typography.headlineMedium)
-                        Text("${World.entries.size} worlds. Every one included. Preview a world, then make it yours.", color = Muted)
-                        OutlinedTextField(query, onValueChange = { query = it.take(100) }, label = { Text("Find a world or game") }, leadingIcon = { Icon(Icons.Default.Search, null) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                        Text(stringResource(R.string.world_find_title), style = MaterialTheme.typography.headlineMedium)
+                        Text(pluralStringResource(R.plurals.world_count_description, World.entries.size, World.entries.size), color = Muted)
+                        OutlinedTextField(query, onValueChange = { query = it.take(100) }, label = { Text(stringResource(R.string.world_find_hint)) }, leadingIcon = { Icon(Icons.Default.Search, null) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            listOf("All", "Favourites", "New").forEach { name -> FilterChip(selected = filter == name, onClick = { filter = name }, label = { Text(name) }) }
+                            listOf("All" to R.string.world_filter_all, "Favourites" to R.string.world_filter_favourites, "New" to R.string.world_filter_new).forEach { (name, label) -> FilterChip(selected = filter == name, onClick = { filter = name }, label = { Text(stringResource(label)) }) }
                         }
                     }
                 }
                 if (worlds.isEmpty()) item {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(if (filter == "Favourites" && query.isBlank()) "Keep your favourites close" else "No worlds found", style = MaterialTheme.typography.titleLarge)
-                        Text(if (filter == "Favourites" && query.isBlank()) "Tap a heart on any world to find it here." else "Try a different name or browse all worlds.", color = Muted)
-                        TextButton(onClick = { filter = "All"; query = "" }) { Text("Browse all worlds") }
+                        Text(stringResource(if (filter == "Favourites" && query.isBlank()) R.string.world_favourites_empty_title else R.string.world_empty_title), style = MaterialTheme.typography.titleLarge)
+                        Text(stringResource(if (filter == "Favourites" && query.isBlank()) R.string.world_favourites_empty else R.string.world_empty), color = Muted)
+                        TextButton(onClick = { filter = "All"; query = "" }) { Text(stringResource(R.string.world_browse_all)) }
                     }
                 }
                 items(worlds, key = { it.name }) { world ->
+                    val previewDescription = stringResource(R.string.world_preview_accessibility, world.title)
                     Surface(color = Panel, shape = RoundedCornerShape(12.dp), border = if (selected == world) BorderStroke(2.dp, WaypointColors.accent) else null) {
                         Column {
                             Column(
                                 Modifier.fillMaxWidth()
                                     .clickable(role = Role.Button, onClick = { previewName = world.name })
-                                    .semantics { contentDescription = "Preview ${world.title} theme" },
+                                    .semantics { contentDescription = previewDescription },
                             ) {
                                 Box {
                                     WorldPreviewArtwork(world, Modifier.fillMaxWidth().height(180.dp))
@@ -117,7 +119,7 @@ import androidx.compose.ui.unit.dp
                                         FavoriteWorldButton(world, world.name in favorites) { favorite(world) }
                                     }
                                     if (selected == world || world in newWorlds) Surface(color = Ink, shape = RoundedCornerShape(4.dp), modifier = Modifier.align(Alignment.BottomStart).padding(12.dp)) {
-                                        Text(if (selected == world) "Current world" else "New", color = Cream, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp))
+                                        Text(stringResource(if (selected == world) R.string.world_current else R.string.world_filter_new), color = Cream, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp))
                                     }
                                 }
                                 Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -128,13 +130,13 @@ import androidx.compose.ui.unit.dp
                                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                                         Text(world.title, fontFamily = worldFont(world), style = MaterialTheme.typography.titleLarge, color = Cream)
                                         Text(world.inspiration(), style = MaterialTheme.typography.bodySmall, color = Muted)
-                                        Text("Preview world", style = MaterialTheme.typography.labelLarge, color = WaypointColors.accent, fontWeight = FontWeight.SemiBold)
+                                        Text(stringResource(R.string.world_preview_action), style = MaterialTheme.typography.labelLarge, color = WaypointColors.accent, fontWeight = FontWeight.SemiBold)
                                     }
                                     Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = Cream)
                                 }
                             }
                             Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.End) {
-                                Button(onClick = { onSelect(world) }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Use this world") }
+                                Button(onClick = { onSelect(world) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.world_use)) }
                             }
                         }
                     }
@@ -148,7 +150,7 @@ import androidx.compose.ui.unit.dp
 @Composable private fun FavoriteWorldButton(world: World, favorite: Boolean, onClick: () -> Unit) {
     IconToggleButton(checked = favorite, onCheckedChange = { onClick() }) {
         Icon(if (favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-            if (favorite) "Remove ${world.title} from favourites" else "Add ${world.title} to favourites")
+            stringResource(if (favorite) R.string.world_remove_favourite else R.string.world_add_favourite, world.title))
     }
 }
 

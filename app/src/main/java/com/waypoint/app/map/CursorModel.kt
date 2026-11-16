@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -91,16 +92,17 @@ internal fun CursorModelSettings(state: NavState, controller: NavigationControll
     var preview by remember { mutableStateOf(state.cursorModel ?: models.firstOrNull()) }
     var ready by remember(preview) { mutableStateOf(false) }
     var error by remember(preview) { mutableStateOf<String?>(null) }
+    val replaceLabel=stringResource(R.string.cursor_replace)
     Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
-        Text("3D position cursor",style=MaterialTheme.typography.titleMedium)
-        Text("Choose a model included with Waypoint. Phone map only; Android Auto keeps its standard marker.",
+        Text(stringResource(R.string.cursor_title),style=MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.cursor_summary),
             style=MaterialTheme.typography.bodySmall)
         Row(verticalAlignment=Alignment.CenterVertically) {
-            Text("Replace the position cursor",Modifier.weight(1f))
+            Text(replaceLabel,Modifier.weight(1f))
             Switch(state.cursorModelEnabled,{controller.toggleCursorModel()},enabled=state.cursorModel!=null,
-                modifier=Modifier.semantics { contentDescription="Replace the position cursor" })
+                modifier=Modifier.semantics { contentDescription=replaceLabel })
         }
-        if(models.isEmpty())Text("No 3D models are included in this version.")
+        if(models.isEmpty())Text(stringResource(R.string.cursor_none))
         Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 models.forEach { model ->
@@ -113,9 +115,10 @@ internal fun CursorModelSettings(state: NavState, controller: NavigationControll
             }
             preview?.let { model ->
                 key(model) {
+                    val previewDescription=stringResource(R.string.cursor_preview,cursorModelDisplayName(model))
                     CursorModelView(model,Modifier.size(144.dp).clip(RoundedCornerShape(16.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .semantics { contentDescription = "${cursorModelDisplayName(model)} 3D preview" },
+                        .semantics { contentDescription = previewDescription },
                         tilt=0f,azimuth=0f,onReady={ready=true},onError={error=it;ready=false})
                 }
             }
@@ -123,7 +126,7 @@ internal fun CursorModelSettings(state: NavState, controller: NavigationControll
         preview?.let { model ->
             if(!ready && error==null)LinearProgressIndicator(Modifier.fillMaxWidth())
             Button(onClick={controller.setCursorModel(model)},enabled=ready) {
-                Text(if(state.cursorModel==model && state.cursorModelEnabled)"Selected" else "Use this model")
+                Text(stringResource(if(state.cursorModel==model && state.cursorModelEnabled)R.string.cursor_selected else R.string.cursor_use))
             }
         }
         error?.let { Text(it,color=MaterialTheme.colorScheme.error) }

@@ -212,6 +212,8 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 The Android build uses Kotlin, Jetpack Compose and MapLibre Native. The checked-in app does not need a map API key or the optional artwork-generation tools.
 
+The Language control in Settings selects English or French using Android's per-app language support. The choice is retained across restarts and in-place app updates (same package and signing identity); uninstalling or clearing app data resets it. Android stores the choice on Android 13 and later, while AndroidX persists it on older versions. Translation is in progress: the world catalogue, saved places, quest editor, details and journey (including badges, frames and story chapters), key settings and portions of search and updates have French translations. Other screens, notifications and service-provided content can still appear in English.
+
 Local release builds stay unsigned unless you supply distribution signing credentials; see the [release guide](docs/releasing.md).
 
 For maintainers, the [development layout](docs/development/architecture.md) explains the source folders, asset generators and validation commands. The finished images in this README are kept in the repository; their working captures stay outside Git.

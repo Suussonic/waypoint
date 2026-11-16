@@ -1,0 +1,40 @@
+<resources>
+    <string name="world_preview_title">World preview</string>
+    <string name="world_back">Back to worlds</string>
+    <string name="world_use">Use this world</string>
+    <string name="world_preview_place">Preview: %1$s</string>
+    <string name="world_keep_progress">Your places, quests and progress stay with you.</string>
+    <string name="world_find_title">Find your next world</string>
+    <plurals name="world_count_description">
+        <item quantity="one">%1$d world. Included for everyone. Preview it, then make it yours.</item>
+        <item quantity="other">%1$d worlds. Every one included. Preview a world, then make it yours.</item>
+    </plurals>
+    <string name="world_find_hint">Find a world or game</string>
+    <string name="world_filter_all">All</string>
+    <string name="world_filter_favourites">Favourites</string>
+    <string name="world_filter_new">New</string>
+    <string name="world_favourites_empty_title">Keep your favourites close</string>
+    <string name="world_empty_title">No worlds found</string>
+    <string name="world_favourites_empty">Tap a heart on any world to find it here.</string>
+    <string name="world_empty">Try a different name or browse all worlds.</string>
+    <string name="world_browse_all">Browse all worlds</string>
+    <string name="world_preview_accessibility">Preview %1$s theme</string>
+    <string name="world_current">Current world</string>
+    <string name="world_preview_action">Preview world</string>
+    <string name="world_remove_favourite">Remove %1$s from favourites</string>
+    <string name="world_add_favourite">Add %1$s to favourites</string>
+    <string name="saved_intro">Your favourite destinations, with names you choose.</string>
+    <string name="saved_empty_title">No saved places yet</string>
+    <string name="saved_empty">Search for a destination and tap the bookmark to keep it here.</string>
+    <string name="saved_find">Find a place</string>
+    <string name="saved_options">Options for %1$s</string>
+    <string name="saved_rename">Rename</string>
+    <string name="saved_remove">Remove from saved</string>
+    <string name="saved_name_title">Name this place</string>
+    <string name="saved_name">Place name</string>
+    <string name="saved_name_example">For example, Work</string>
+    <string name="saved_name_error">Enter a name for this place.</string>
+    <string name="saved_name_help">Only the name changes. The location stays the same.</string>
+    <string name="saved_save_name">Save name</string>
+    <string name="action_cancel">Cancel</string>
+</resources>

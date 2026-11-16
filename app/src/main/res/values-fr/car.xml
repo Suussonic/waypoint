@@ -1,0 +1,42 @@
+<resources>
+    <string name="car_location_explanation">À l’arrêt, autorisez la localisation précise sur votre téléphone pour voir votre position et naviguer. Si vous l’avez refusée, ouvrez les paramètres de Waypoint → Autorisations → Localisation, puis vérifiez à nouveau.</string>
+    <string name="car_allow_location">Autoriser la localisation</string>
+    <string name="car_check_permission">Vérifier à nouveau</string>
+    <string name="car_destinations">Destinations</string>
+    <string name="car_destination">Destination</string>
+    <string name="car_saved">Lieux enregistrés</string>
+    <string name="car_recent">Destinations récentes</string>
+    <string name="car_search">Rechercher un lieu</string>
+    <string name="car_no_destinations">Recherchez une destination ici ou enregistrez un lieu sur votre téléphone. Vos lieux restent synchronisés.</string>
+    <string name="car_places_removed">Ces lieux ne sont plus enregistrés. Revenez en arrière pour choisir une autre destination.</string>
+    <string name="car_through_place">Via %1$s</string>
+    <plurals name="car_places"><item quantity="one">%d lieu</item><item quantity="other">%d lieux</item></plurals>
+    <string name="car_search_empty">Rechercher un lieu ou une adresse</string>
+    <string name="car_search_no_results">Aucun lieu trouvé. Essayez une ville proche ou une adresse plus complète.</string>
+    <string name="car_search_error">Recherche indisponible. Vérifiez votre connexion et réessayez.</string>
+    <string name="car_imperial">Miles et pieds</string>
+    <string name="car_map_world">Monde de la carte</string>
+    <string name="car_current_world">Monde actuel · partagé avec votre téléphone</string>
+    <string name="car_world_cities">Rues urbaines</string>
+    <string name="car_world_roads">Routes ouvertes</string>
+    <string name="car_world_fantasy">Mondes fantastiques</string>
+    <string name="car_world_future">Mondes futuristes</string>
+    <string name="car_world_tactical">Cartes tactiques</string>
+    <string name="car_world_classic">Classique et ludique</string>
+    <string name="car_settings_title">Android Auto</string>
+    <string name="car_connected">Connecté à votre voiture</string>
+    <string name="car_ready_to_connect">Ouvrez Waypoint dans votre voiture</string>
+    <string name="car_sync_explanation">Votre monde, vos lieux enregistrés, les unités de distance et le guidage restent synchronisés avec votre téléphone.</string>
+    <string name="car_connect_explanation">Connectez votre téléphone, puis choisissez Waypoint dans le lanceur Android Auto.</string>
+    <string name="car_location_ready">Localisation précise autorisée</string>
+    <string name="car_location_ready_detail">Waypoint peut utiliser votre position pour la carte et les instructions de navigation.</string>
+    <string name="car_location_needed">Localisation précise nécessaire</string>
+    <string name="car_location_needed_detail">Autorisez la localisation à l’arrêt avant de démarrer la navigation.</string>
+    <string name="car_distribution_explanation">L’application manque dans le lanceur ? Les essais en voiture nécessitent une installation reconnue, comme un canal de test Google Play. Le mode développeur et les sources inconnues ne suffisent pas à activer Waypoint.</string>
+    <string name="car_open_settings">Paramètres Android Auto</string>
+    <string name="car_location_settings">Gérer l’autorisation de localisation</string>
+    <string name="car_settings_unavailable">Les paramètres Android Auto sont indisponibles. Vérifiez qu’Android Auto est installé et activé sur ce téléphone.</string>
+    <string name="car_group_current">Actuel : %1$s</string>
+    <string name="car_group_examples">%1$s, %2$s et plus</string>
+    <plurals name="car_world_count"><item quantity="one">%d monde</item><item quantity="other">%d mondes</item></plurals>
+</resources>

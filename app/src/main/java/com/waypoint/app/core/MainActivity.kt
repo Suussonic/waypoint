@@ -19,7 +19,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -128,7 +128,7 @@ private val AppTypography=Typography(
     titleLarge=Typography().titleLarge.copy(fontWeight=FontWeight.SemiBold)
 )
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     companion object {
         private var foregroundEntryCounter=0
         private var configurationRestartPending=false
@@ -434,7 +434,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
             Row(Modifier.fillMaxSize()) {
                 if(wide && !state.navigating && !welcomeVisible) NavigationRail(containerColor=Ink,modifier=Modifier.statusBarsPadding()) {
                     if(!compactHeight) { Spacer(Modifier.height(16.dp));Icon(Icons.Default.Navigation,"Waypoint",tint=WaypointColors.accent);Spacer(Modifier.height(32.dp)) }
-                    listOf("Map" to Icons.Default.Map,"Worlds" to Icons.Default.Layers,"Saved" to Icons.Default.BookmarkBorder,"Quests" to Icons.Default.Assignment).forEachIndexed { i,(name,icon)->
+                    listOf(stringResource(R.string.nav_map) to Icons.Default.Map,stringResource(R.string.nav_worlds) to Icons.Default.Layers,stringResource(R.string.nav_saved) to Icons.Default.BookmarkBorder,stringResource(R.string.nav_quests) to Icons.Default.Assignment).forEachIndexed { i,(name,icon)->
                         val artworkIcon=when(i) { 1 -> R.drawable.waypoint_worlds; 2 -> R.drawable.waypoint_bookmark; else -> null }
                         NavigationRailItem(selected=tab==i,onClick={selectTab(i)},icon={
                             if(artworkIcon!=null) Icon(painterResource(artworkIcon),name) else Icon(icon,name)
@@ -660,42 +660,43 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 )
             } else {
             Column(Modifier.padding(horizontal=24.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(16.dp)) {
-                Text("Make it your own",style=MaterialTheme.typography.headlineLarge)
+                Text(stringResource(R.string.settings_title),style=MaterialTheme.typography.headlineLarge)
+                LanguageSettings()
                 UpdatePanel((context.applicationContext as WaypointApplication).updater, state.navigating)
                 ListItem(
-                    headlineContent={Text("Offline maps")},
-                    supportingContent={Text("Save map areas on this device · ${offlineMapState.regions.size} saved")},
-                    leadingContent={Icon(Icons.Default.Download,"Offline maps",tint=WaypointColors.accent)},
+                    headlineContent={Text(stringResource(R.string.settings_offline_maps))},
+                    supportingContent={Text(stringResource(R.string.settings_offline_maps_summary,offlineMapState.regions.size))},
+                    leadingContent={Icon(Icons.Default.Download,null,tint=WaypointColors.accent)},
                     trailingContent={Icon(Icons.AutoMirrored.Filled.ArrowForward,null,tint=Muted)},
                     modifier=Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable { offlineMapsPage=true },
                     colors=ListItemDefaults.colors(containerColor=Panel,headlineColor=Cream,supportingColor=Muted),
                 )
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
-                SettingRow("Voice guidance","Spoken turn instructions",state.voice,controller::toggleVoice)
-                SettingRow("World voice style","Give each world its own spoken wording and delivery on your device's speech voice. Turn it off for standard instructions.",state.gameVoice,controller::toggleGameVoice)
-                SettingRow("Miles & feet","Use imperial distances",state.imperial,controller::toggleUnits)
-                SettingRow("Speed limit warning","Show the posted limit and warn when you go over it while driving. Looks up the limit on OpenStreetMap through Overpass, sending your position only while guiding by car.",state.speedWarning,controller::toggleSpeedWarning)
-                SettingRow("Google search suggestions, details and photos","Optional keyless Google web lookups. Google receives partial search text and a location bias while you type, then the selected place name and coordinates when you open its details. These undocumented endpoints can change and are subject to Google’s terms; no Places API key or Places API billing is used.",googleWebLookupsEnabled,{setGoogleWebLookupsEnabled(!googleWebLookupsEnabled)})
-                SettingRow("Open place pins","Show Vela open-data pins while browsing. Vela matches archive names on-device; GitHub gets nearby tile ranges, not search text. With Google off, searches start after 700 ms; on a saved-snapshot miss, Photon gets text and location bias, and Android Geocoder may be used for weak matches. Google gets partial text and location bias only when suggestions are on. This switch hides pins only.",mapPlacePinsEnabled,{setMapPlacePinsEnabled(!mapPlacePinsEnabled)})
-                SettingRow("3D perspective","Tilt the map in every world",state.tilted,controller::toggleTilt)
+                SettingRow(stringResource(R.string.settings_voice),stringResource(R.string.settings_voice_summary),state.voice,controller::toggleVoice)
+                SettingRow(stringResource(R.string.settings_world_voice),stringResource(R.string.settings_world_voice_summary),state.gameVoice,controller::toggleGameVoice)
+                SettingRow(stringResource(R.string.settings_imperial),stringResource(R.string.settings_imperial_summary),state.imperial,controller::toggleUnits)
+                SettingRow(stringResource(R.string.settings_speed_warning),stringResource(R.string.settings_speed_warning_summary),state.speedWarning,controller::toggleSpeedWarning)
+                SettingRow(stringResource(R.string.settings_google),stringResource(R.string.settings_google_summary),googleWebLookupsEnabled,{setGoogleWebLookupsEnabled(!googleWebLookupsEnabled)})
+                SettingRow(stringResource(R.string.settings_place_pins),stringResource(R.string.settings_place_pins_summary),mapPlacePinsEnabled,{setMapPlacePinsEnabled(!mapPlacePinsEnabled)})
+                SettingRow(stringResource(R.string.settings_perspective),stringResource(R.string.settings_perspective_summary),state.tilted,controller::toggleTilt)
                 CursorModelSettings(state,controller)
-                SettingRow("North-up map","When off, follow your phone heading while still and travel direction while moving.",state.keepMapNorthUp,controller::toggleMapOrientation)
+                SettingRow(stringResource(R.string.settings_north_up),stringResource(R.string.settings_north_up_summary),state.keepMapNorthUp,controller::toggleMapOrientation)
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
-                Text("Map controls", style=MaterialTheme.typography.titleMedium)
-                Text("These presets affect controls floating over the phone map.",
+                Text(stringResource(R.string.settings_map_controls), style=MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.settings_map_controls_summary),
                     style=MaterialTheme.typography.bodySmall, color=Muted)
-                Text("Size", style=MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.settings_size), style=MaterialTheme.typography.titleSmall)
                 FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),
                     verticalArrangement=Arrangement.spacedBy(4.dp)) {
                     HudSize.entries.forEach { size ->
                         FilterChip(selected=state.hudSize==size,onClick={controller.setHudSize(size)},
-                            label={Text(size.label)},modifier=Modifier.heightIn(min=48.dp))
+                            label={Text(stringResource(when(size) { HudSize.COMPACT->R.string.settings_size_compact; HudSize.STANDARD->R.string.settings_size_standard; HudSize.LARGE->R.string.settings_size_large }))},modifier=Modifier.heightIn(min=48.dp))
                     }
                 }
-                Text("Side", style=MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.settings_side), style=MaterialTheme.typography.titleSmall)
                 FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),
                     verticalArrangement=Arrangement.spacedBy(4.dp)) {
-                    listOf<Pair<HudSide?,String>>(null to "Original", HudSide.LEFT to "Left", HudSide.RIGHT to "Right")
+                    listOf<Pair<HudSide?,String>>(null to stringResource(R.string.settings_side_original), HudSide.LEFT to stringResource(R.string.settings_side_left), HudSide.RIGHT to stringResource(R.string.settings_side_right))
                         .forEach { (side,label) ->
                             FilterChip(selected=state.hudSide==side,onClick={controller.setHudSide(side)},
                                 label={Text(label)},modifier=Modifier.heightIn(min=48.dp))
@@ -706,16 +707,16 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                     onLocation={context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))},
                     onUnavailable={navigationScope.launch { snackbar.showSnackbar(carSettingsUnavailable) }})
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
-                Text("Location & sensors",style=MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.settings_location_sensors),style=MaterialTheme.typography.titleMedium)
                 Text(state.locationProvider,style=MaterialTheme.typography.bodyMedium)
                 Text(state.sensorDescription,style=MaterialTheme.typography.bodySmall,color=Muted)
                 Text(state.headingStatus,style=MaterialTheme.typography.bodySmall,color=if(state.headingReliable)WaypointColors.accent else Color(0xFFFFCF89))
-                if(state.fix!=null)Text("Position accuracy: ±${state.accuracy.roundToInt()} m",style=MaterialTheme.typography.bodySmall,color=Muted)
-                state.satellitesVisible?.let{Text("Satellites: ${state.satellitesUsed ?: 0} used / $it visible",style=MaterialTheme.typography.bodySmall,color=Muted)}
+                if(state.fix!=null)Text(stringResource(R.string.settings_accuracy,state.accuracy.roundToInt()),style=MaterialTheme.typography.bodySmall,color=Muted)
+                state.satellitesVisible?.let{Text(stringResource(R.string.settings_satellites,state.satellitesUsed ?: 0,it),style=MaterialTheme.typography.bodySmall,color=Muted)}
                 Text(state.gpsStatus,style=MaterialTheme.typography.bodyMedium,color=Muted)
-                TextButton(onClick={context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))}) { Text("Open device location settings") }
-                TextButton(onClick={context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))}) { Text("Manage location permissions") }
-                TextButton(onClick={clearConfirm=true}) { Text("Clear saved places and history",color=MaterialTheme.colorScheme.error) }
+                TextButton(onClick={context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))}) { Text(stringResource(R.string.settings_open_location)) }
+                TextButton(onClick={context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))}) { Text(stringResource(R.string.settings_location_permissions)) }
+                TextButton(onClick={clearConfirm=true}) { Text(stringResource(R.string.settings_clear_history),color=MaterialTheme.colorScheme.error) }
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 FeedbackSettingsRow(onClick={feedbackOpen=true})
                 CommunitySettingsRow()
@@ -1048,50 +1049,50 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
     }
     Surface(color=palette.panel,contentColor=palette.foreground,modifier=Modifier.fillMaxSize()) { Column(Modifier.fillMaxSize().statusBarsPadding().imePadding()) {
         Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically) {
-            IconButton(onClick=onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Back to map")}
-            OutlinedTextField(value=state.query,onValueChange={onQuery(it.take(NavigationSharing.MAX_INPUT))},label={Text("Place or address")},singleLine=true,keyboardOptions=KeyboardOptions(imeAction=ImeAction.Search),keyboardActions=KeyboardActions(onSearch={submit()}),modifier=Modifier.weight(1f),shape=hudShape(state.world),trailingIcon={if(state.query.isNotEmpty())IconButton(onClick={onQuery("")}){Icon(Icons.Default.Close,"Clear search")}},colors=OutlinedTextFieldDefaults.colors(focusedTextColor=palette.foreground,unfocusedTextColor=palette.foreground,cursorColor=palette.accent,focusedBorderColor=palette.accent,unfocusedBorderColor=palette.muted,focusedLabelColor=palette.accent,unfocusedLabelColor=palette.muted,focusedLeadingIconColor=palette.foreground,focusedTrailingIconColor=palette.foreground,unfocusedTrailingIconColor=palette.foreground))
+            IconButton(onClick=onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,stringResource(R.string.search_back))}
+            OutlinedTextField(value=state.query,onValueChange={onQuery(it.take(NavigationSharing.MAX_INPUT))},label={Text(stringResource(R.string.search_place_address))},singleLine=true,keyboardOptions=KeyboardOptions(imeAction=ImeAction.Search),keyboardActions=KeyboardActions(onSearch={submit()}),modifier=Modifier.weight(1f),shape=hudShape(state.world),trailingIcon={if(state.query.isNotEmpty())IconButton(onClick={onQuery("")}){Icon(Icons.Default.Close,stringResource(R.string.search_clear))}},colors=OutlinedTextFieldDefaults.colors(focusedTextColor=palette.foreground,unfocusedTextColor=palette.foreground,cursorColor=palette.accent,focusedBorderColor=palette.accent,unfocusedBorderColor=palette.muted,focusedLabelColor=palette.accent,unfocusedLabelColor=palette.muted,focusedLeadingIconColor=palette.foreground,focusedTrailingIconColor=palette.foreground,unfocusedTrailingIconColor=palette.foreground))
         }
         Button(onClick={submit()},enabled=state.query.trim().length>=2,shape=hudShape(state.world),modifier=Modifier.fillMaxWidth().padding(horizontal=24.dp)) {
-            Icon(painterResource(R.drawable.waypoint_search),null,Modifier.size(20.dp));Spacer(Modifier.width(8.dp));Text("Search places")
+            Icon(painterResource(R.drawable.waypoint_search),null,Modifier.size(20.dp));Spacer(Modifier.width(8.dp));Text(stringResource(R.string.search_places))
         }
         ModeSegments(state.mode,onMode,state.world,Modifier.padding(horizontal=24.dp).fillMaxWidth())
-        Text(if(state.fix==null)"Downloaded-map names and saved places search offline; live Google suggestions need a connection" else "Downloaded-map names and saved places search offline first; live Google suggestions need a connection",style=MaterialTheme.typography.bodySmall,color=palette.muted,modifier=Modifier.padding(horizontal=24.dp,vertical=12.dp))
+        Text(stringResource(if(state.fix==null)R.string.search_offline_no_fix else R.string.search_offline),style=MaterialTheme.typography.bodySmall,color=palette.muted,modifier=Modifier.padding(horizontal=24.dp,vertical=12.dp))
         if(state.searchNote!=null)Text(state.searchNote,style=MaterialTheme.typography.bodySmall,color=palette.muted,modifier=Modifier.padding(horizontal=24.dp,vertical=8.dp))
         if(state.searching) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal=24.dp))
-        if(state.searchError!=null) { Notice(state.searchError,Icons.Default.CloudOff);TextButton(onClick={submit()}){Text("Retry search")} }
+        if(state.searchError!=null) { Notice(state.searchError,Icons.Default.CloudOff);TextButton(onClick={submit()}){Text(stringResource(R.string.search_retry))} }
         LazyColumn {
             if(state.query.length<2) {
-                item { Text(if(state.recent.isEmpty())"Your next destination starts here." else "Recent destinations",style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(24.dp)) }
+                item { Text(stringResource(if(state.recent.isEmpty())R.string.search_start else R.string.search_recent),style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(24.dp)) }
                 items(state.recent,key={it.id}){PlaceRow(it,state,onSelect)}
-                if(state.recent.isEmpty()) item { Text("Find an address, a landmark, or your next coffee stop. You can also press and hold the map to drop a pin.",color=palette.muted,style=MaterialTheme.typography.bodyMedium,modifier=Modifier.padding(horizontal=24.dp)) }
+                if(state.recent.isEmpty()) item { Text(stringResource(R.string.search_hint),color=palette.muted,style=MaterialTheme.typography.bodyMedium,modifier=Modifier.padding(horizontal=24.dp)) }
             } else {
                 val hasGoogleSuggestions=googleSuggestionsEnabled && (placeSuggestions.isNotEmpty() || liveSuggestions.queries.isNotEmpty())
                 if(googleSuggestionsEnabled) item {
-                    Text("Google Maps suggestions · search text and location bias are sent while you type",style=MaterialTheme.typography.labelSmall,
+                    Text(stringResource(R.string.search_google_privacy),style=MaterialTheme.typography.labelSmall,
                         color=palette.muted,modifier=Modifier.fillMaxWidth().padding(horizontal=24.dp,vertical=8.dp))
                 }
                 if(liveSuggestionsLoading && liveSuggestions.places.isEmpty() && liveSuggestions.queries.isEmpty()) item {
-                    Text("Finding nearby names…",style=MaterialTheme.typography.bodySmall,color=palette.muted,modifier=Modifier.padding(horizontal=24.dp,vertical=8.dp))
+                    Text(stringResource(R.string.search_finding),style=MaterialTheme.typography.bodySmall,color=palette.muted,modifier=Modifier.padding(horizontal=24.dp,vertical=8.dp))
                 }
                 if(offlineSuggestions.isNotEmpty()) {
-                    item { Text("Downloaded map places",style=MaterialTheme.typography.titleSmall,color=palette.accent,modifier=Modifier.padding(start=24.dp,top=8.dp,bottom=4.dp)) }
+                    item { Text(stringResource(R.string.search_downloaded),style=MaterialTheme.typography.titleSmall,color=palette.accent,modifier=Modifier.padding(start=24.dp,top=8.dp,bottom=4.dp)) }
                     items(offlineSuggestions.take(6),key={"offline:${it.id}"}) { PlaceRow(it,state,onSelect) }
                 }
                 if(personalSuggestions.isNotEmpty()) {
-                    item { Text("Your places",style=MaterialTheme.typography.titleSmall,color=palette.accent,modifier=Modifier.padding(start=24.dp,top=8.dp,bottom=4.dp)) }
+                    item { Text(stringResource(R.string.search_your_places),style=MaterialTheme.typography.titleSmall,color=palette.accent,modifier=Modifier.padding(start=24.dp,top=8.dp,bottom=4.dp)) }
                     items(personalSuggestions,key={"local:${it.id}"}) { PlaceRow(it,state,onSelect) }
                 }
                 if(hasGoogleSuggestions) {
-                    item { Text("Suggestions",style=MaterialTheme.typography.titleSmall,color=palette.accent,modifier=Modifier.padding(start=24.dp,top=8.dp,bottom=4.dp)) }
+                    item { Text(stringResource(R.string.search_suggestions),style=MaterialTheme.typography.titleSmall,color=palette.accent,modifier=Modifier.padding(start=24.dp,top=8.dp,bottom=4.dp)) }
                     items(placeSuggestions,key={"google:${it.id}"}) { place ->
                         GoogleSuggestionRow(place,state,onSelect,{ onQuery(place.name) })
                     }
                     items(liveSuggestions.queries,key={"query:$it"}) { suggestion ->
                         ListItem(
                             headlineContent={Text(suggestion,maxLines=1,overflow=TextOverflow.Ellipsis)},
-                            supportingContent={Text("Search for this phrase",style=MaterialTheme.typography.bodySmall)},
+                            supportingContent={Text(stringResource(R.string.search_phrase),style=MaterialTheme.typography.bodySmall)},
                             leadingContent={Icon(Icons.Default.Search,null,tint=palette.accent)},
-                            trailingContent={Icon(Icons.AutoMirrored.Filled.ArrowForward,"Search $suggestion",tint=palette.muted)},
+                            trailingContent={Icon(Icons.AutoMirrored.Filled.ArrowForward,stringResource(R.string.search_for,suggestion),tint=palette.muted)},
                             modifier=Modifier.clickable { onQuery(suggestion);submit() },
                             colors=hudPalette(state.world).let { ListItemDefaults.colors(containerColor=Color.Transparent,headlineColor=it.foreground,supportingColor=it.muted,trailingIconColor=it.muted) },
                         )
@@ -1102,11 +1103,11 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
                         hasGoogleSuggestions && placeSuggestions.any { it.id==fallback.id || it.name.equals(fallback.name,true) && distance(it.point,fallback.point)<120.0 }
                 }
                 if(fallbackResults.isNotEmpty() && hasGoogleSuggestions) item {
-                    Text("More matches",style=MaterialTheme.typography.titleSmall,color=palette.muted,modifier=Modifier.padding(start=24.dp,top=10.dp,bottom=4.dp))
+                    Text(stringResource(R.string.search_more),style=MaterialTheme.typography.titleSmall,color=palette.muted,modifier=Modifier.padding(start=24.dp,top=10.dp,bottom=4.dp))
                 }
                 items(fallbackResults,key={"fallback:${it.id}"}){PlaceRow(it,state,onSelect)}
                 if(!liveSuggestionsLoading && !state.searching && localSuggestions.isEmpty() && placeSuggestions.isEmpty() && liveSuggestions.queries.isEmpty() && state.searchResults.isEmpty() && state.searchError==null && state.searchNote==null)
-                    item{Text("No places found. Try a street, city, or fuller address.",modifier=Modifier.padding(24.dp),color=palette.muted)}
+                    item{Text(stringResource(R.string.search_empty),modifier=Modifier.padding(24.dp),color=palette.muted)}
             }
         }
     } }

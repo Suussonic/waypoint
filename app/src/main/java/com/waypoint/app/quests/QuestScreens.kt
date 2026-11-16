@@ -42,6 +42,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.core.view.WindowCompat
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -108,6 +109,10 @@ fun QuestsScreen(world: World, controller: QuestController, navigation: Navigati
     var template by rememberSaveable { mutableStateOf("Everyday task") }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val questCompletedMessage = stringResource(R.string.quest_completed_message)
+    val undoLabel = stringResource(R.string.quest_undo)
+    val rewardsDescription = stringResource(R.string.quest_rewards_settings)
+    val addQuestLabel = stringResource(R.string.quest_add)
     var seedName by rememberSaveable { mutableStateOf<String?>(null) }
     var seedAddress by rememberSaveable { mutableStateOf("") }
     var seedLatitude by rememberSaveable { mutableStateOf<Double?>(null) }
@@ -124,7 +129,7 @@ fun QuestsScreen(world: World, controller: QuestController, navigation: Navigati
     fun endEdit() { creating = false; editing = null; seedName = null; seedLatitude = null; seedLongitude = null }
     fun finish(id: String) { controller.complete(id) {
         detail = null
-        if (!snapshot.profile.showProgress) scope.launch { if (snackbar.showSnackbar("Quest completed", "Undo", duration = SnackbarDuration.Long) == SnackbarResult.ActionPerformed) controller.reopen(id) }
+        if (!snapshot.profile.showProgress) scope.launch { if (snackbar.showSnackbar(questCompletedMessage, undoLabel, duration = SnackbarDuration.Long) == SnackbarResult.ActionPerformed) controller.reopen(id) }
     } }
     QuestTheme(world, adaptSystemBars = true) {
         BackHandler(detail != null || profile) { detail = null; profile = false }
@@ -140,26 +145,26 @@ fun QuestsScreen(world: World, controller: QuestController, navigation: Navigati
                 else if (!snapshot.loading) LaunchedEffect(detail) { detail = null }
             }
             else -> Scaffold(containerColor = MaterialTheme.colorScheme.background, snackbarHost = { SnackbarHost(snackbar) },
-                topBar = { TopAppBar(title = { Text("Quests", style = MaterialTheme.typography.headlineMedium) },
-                    navigationIcon = { IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Return to map") } },
-                    actions = { IconButton(onClick = { profile = true }, modifier = Modifier.semantics { contentDescription = "Your rewards and quest settings" }) {
+                topBar = { TopAppBar(title = { Text(stringResource(R.string.nav_quests), style = MaterialTheme.typography.headlineMedium) },
+                    navigationIcon = { IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.quest_return_map)) } },
+                    actions = { IconButton(onClick = { profile = true }, modifier = Modifier.semantics { contentDescription = rewardsDescription }) {
                         QuestPortrait(QuestRecord(title = "Your profile"), Modifier.size(32.dp), snapshot.profile.frame.takeIf { it in snapshot.progress.frames } ?: "Simple")
                     } }) },
                 bottomBar = { Surface {
                     Box(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), contentAlignment = Alignment.Center) {
                         Button(onClick = { template = "Everyday task"; creating = true }, shape = hudShape(world),
-                            modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth().heightIn(min = 52.dp).semantics { contentDescription = "Add a quest" }) {
-                            Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Add a quest")
+                            modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth().heightIn(min = 52.dp).semantics { contentDescription = addQuestLabel }) {
+                            Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text(addQuestLabel)
                         }
                     }
                 } }) { padding ->
                 Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
                     LazyColumn(Modifier.widthIn(max = 760.dp).fillMaxSize(), contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        if (!compactHeight) item { Text("Your tasks, with rewards", style = MaterialTheme.typography.titleLarge) }
+                        if (!compactHeight) item { Text(stringResource(R.string.quest_subtitle), style = MaterialTheme.typography.titleLarge) }
                         if (!compactHeight && snapshot.profile.showProgress && snapshot.progress.completed > 0) item {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Level ${snapshot.progress.level}", fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.quest_level, snapshot.progress.level), fontWeight = FontWeight.Bold)
                                     Text("${snapshot.progress.xp} XP", color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 LinearProgressIndicator(progress = { snapshot.progress.levelProgress }, modifier = Modifier.fillMaxWidth())
@@ -168,8 +173,8 @@ fun QuestsScreen(world: World, controller: QuestController, navigation: Navigati
                         }
                         item {
                             ScrollableTabRow(selectedTabIndex = if (completed) 1 else 0, edgePadding = 0.dp) {
-                                Tab(selected = !completed, onClick = { completed = false }, text = { Text("Active", maxLines = 1) })
-                                Tab(selected = completed, onClick = { completed = true }, text = { Text("Completed", maxLines = 1) })
+                                Tab(selected = !completed, onClick = { completed = false }, text = { Text(stringResource(R.string.quest_active), maxLines = 1) })
+                                Tab(selected = completed, onClick = { completed = true }, text = { Text(stringResource(R.string.quest_completed_tab), maxLines = 1) })
                             }
                         }
                         if (snapshot.loading) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
@@ -177,11 +182,15 @@ fun QuestsScreen(world: World, controller: QuestController, navigation: Navigati
                         if (!snapshot.loading && quests.isEmpty()) item {
                             Column(Modifier.fillMaxWidth().padding(vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                 Icon(if (completed) Icons.Default.TaskAlt else Icons.Default.Assignment, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
-                                Text(if (completed) "Small wins belong here" else "Start with something simple", style = MaterialTheme.typography.headlineSmall)
-                                Text(if (completed) "Complete a quest and it will appear here. There is no deadline to get started." else "Turn everyday tasks into quests. Complete them to earn rewards. A title is all you need.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(if (completed) R.string.quest_empty_completed_title else R.string.quest_empty_title), style = MaterialTheme.typography.headlineSmall)
+                                Text(stringResource(if (completed) R.string.quest_empty_completed else R.string.quest_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 if (!completed) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     listOf("Everyday task", "Visit a place", "Focus session").forEach { name ->
-                                        OutlinedButton(onClick = { template = name; creating = true }) { Text(name) }
+                                        OutlinedButton(onClick = { template = name; creating = true }) { Text(stringResource(when(name) {
+                                            "Everyday task" -> R.string.quest_template_task
+                                            "Visit a place" -> R.string.quest_template_place
+                                            else -> R.string.quest_template_focus
+                                        })) }
                                     }
                                 }
                             }
@@ -191,7 +200,7 @@ fun QuestsScreen(world: World, controller: QuestController, navigation: Navigati
                             ListItem(headlineContent = { Text(quest.title, maxLines = 2, overflow = TextOverflow.Ellipsis) },
                                 supportingContent = { Text(questSummary(quest), maxLines = 2, overflow = TextOverflow.Ellipsis) },
                                 leadingContent = { QuestPortrait(quest, Modifier.size(48.dp)) },
-                                trailingContent = { Icon(Icons.AutoMirrored.Filled.ArrowForward, "View quest") },
+                                trailingContent = { Icon(Icons.AutoMirrored.Filled.ArrowForward, stringResource(R.string.quest_view)) },
                                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                                 modifier = Modifier.fillMaxWidth().clickable { detail = quest.id })
                             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = .3f))
@@ -202,21 +211,26 @@ fun QuestsScreen(world: World, controller: QuestController, navigation: Navigati
             }
         }
         snapshot.error?.let { message -> AlertDialog(onDismissRequest = controller::dismissError,
-            title = { Text("Please try again") }, text = { Text(message) }, confirmButton = { TextButton(onClick = controller::dismissError) { Text("OK") } }) }
+            title = { Text(stringResource(R.string.quest_try_again)) }, text = { Text(message) }, confirmButton = { TextButton(onClick = controller::dismissError) { Text("OK") } }) }
     }
 }
 
-private fun nextLevelText(progress: QuestProgress): String = "Complete ${progress.nextLevelTasks} more ${if (progress.nextLevelTasks == 1) "quest" else "quests"} to reach Level ${progress.level + 1}."
-private fun questSummary(quest: QuestRecord): String = when {
-    quest.completedAt != null -> "Completed · ${DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(quest.completedAt))}"
-    quest.reminderAt != null -> "${if (quest.reminderAt < System.currentTimeMillis()) "Ready when you are" else "Reminder"} · ${questDate(quest.reminderAt)}"
-    quest.placeName != null -> quest.placeName
-    quest.hasFocus -> "${quest.focusMinutes}-minute focus session"
-    quest.notes.isNotBlank() -> quest.notes
-    else -> "Ready when you are"
+@Composable private fun nextLevelText(progress: QuestProgress): String {
+    val resources = LocalContext.current.resources
+    return resources.getQuantityString(R.plurals.quest_next_level, progress.nextLevelTasks, progress.nextLevelTasks, progress.level + 1)
 }
-private fun questDate(value: Long) = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(value))
-
+@Composable private fun questSummary(quest: QuestRecord): String {
+    val locale = LocalConfiguration.current.locales[0]
+    return when {
+        quest.completedAt != null -> stringResource(R.string.quest_completed_date, DateFormat.getDateInstance(DateFormat.MEDIUM, locale).format(Date(quest.completedAt)))
+        quest.reminderAt != null -> stringResource(if (quest.reminderAt < System.currentTimeMillis()) R.string.quest_ready_date else R.string.quest_reminder_date,
+            DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, locale).format(Date(quest.reminderAt)))
+        quest.placeName != null -> quest.placeName
+        quest.hasFocus -> stringResource(R.string.quest_focus_minutes, quest.focusMinutes)
+        quest.notes.isNotBlank() -> quest.notes
+        else -> stringResource(R.string.quest_ready)
+    }
+}
 @Composable
 internal fun QuestPortrait(quest: QuestRecord, modifier: Modifier = Modifier, frame: String = "Simple") {
     val context = LocalContext.current
@@ -239,35 +253,37 @@ private fun QuestDetailScreen(world: World, quest: QuestRecord, focus: FocusReco
                               onNavigate: (Place) -> Unit, onEdit: () -> Unit, onComplete: () -> Unit, onBack: () -> Unit) {
     var confirmDelete by remember { mutableStateOf(false) }
     val busy by controller.busy.collectAsStateWithLifecycle()
-    Scaffold(topBar = { TopAppBar(title = { Text("Your quest") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to quests") } },
-        actions = { TextButton(onClick = onEdit, enabled = !busy) { Text("Edit") } }) }) { padding ->
+    val locale = LocalConfiguration.current.locales[0]
+    fun formattedDate(value: Long) = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, locale).format(Date(value))
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.quest_your_quest)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.quest_back)) } },
+        actions = { TextButton(onClick = onEdit, enabled = !busy) { Text(stringResource(R.string.quest_edit_action)) } }) }) { padding ->
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
             Column(Modifier.widthIn(max = 720.dp).fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 QuestPortrait(quest, Modifier.size(72.dp))
-                if (quest.characterName.isNotBlank()) Text("From ${quest.characterName}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (quest.characterName.isNotBlank()) Text(stringResource(R.string.quest_from, quest.characterName), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(quest.title, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.semantics { heading() })
                 if (quest.notes.isNotBlank()) Text(quest.notes, style = MaterialTheme.typography.bodyLarge)
                 quest.place()?.let { place ->
                     ListItem(headlineContent = { Text(place.name) }, supportingContent = { Text(place.address) }, leadingContent = { Icon(Icons.Default.Place, null) }, colors = ListItemDefaults.colors(containerColor = Color.Transparent))
-                    OutlinedButton(onClick = { onNavigate(place) }) { Icon(Icons.Default.Navigation, null); Spacer(Modifier.width(8.dp)); Text("Navigate") }
+                    OutlinedButton(onClick = { onNavigate(place) }) { Icon(Icons.Default.Navigation, null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.quest_navigate)) }
                 }
-                if (quest.reminderAt != null) Text("Reminder · ${questDate(quest.reminderAt)}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (quest.reminderAt != null) Text(stringResource(R.string.quest_reminder_date, formattedDate(quest.reminderAt)), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (quest.hasFocus && quest.completedAt == null) FocusPanel(quest, focus?.takeIf { it.questId == quest.id }, controller)
                 if (quest.completedAt == null) Button(onClick = onComplete, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = hudShape(world)) {
-                    Icon(Icons.Default.Check, null); Spacer(Modifier.width(8.dp)); Text("Complete quest")
+                    Icon(Icons.Default.Check, null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.quest_complete))
                 } else {
-                    Text("Completed · ${questDate(quest.completedAt)}", color = MaterialTheme.colorScheme.primary)
-                    OutlinedButton(onClick = { controller.reopen(quest.id) }, enabled = !busy) { Text("Reopen quest") }
-                    Text("Reopening removes this quest’s XP and achievement credit until you complete it again.", style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.quest_completed_date, formattedDate(quest.completedAt)), color = MaterialTheme.colorScheme.primary)
+                    OutlinedButton(onClick = { controller.reopen(quest.id) }, enabled = !busy) { Text(stringResource(R.string.quest_reopen)) }
+                    Text(stringResource(R.string.quest_reopen_help), style = MaterialTheme.typography.bodySmall)
                 }
-                TextButton(onClick = { confirmDelete = true }, enabled = !busy) { Text("Delete quest") }
+                TextButton(onClick = { confirmDelete = true }, enabled = !busy) { Text(stringResource(R.string.quest_delete)) }
             }
         }
     }
-    if (confirmDelete) AlertDialog(onDismissRequest = { confirmDelete = false }, title = { Text("Delete this quest?") },
-        text = { Text("Its notes and picture will be removed from this phone. Any progress already earned will stay.") },
-        confirmButton = { TextButton(onClick = { confirmDelete = false; controller.delete(quest.id, onBack) }) { Text("Delete quest") } },
-        dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Keep quest") } })
+    if (confirmDelete) AlertDialog(onDismissRequest = { confirmDelete = false }, title = { Text(stringResource(R.string.quest_delete_title)) },
+        text = { Text(stringResource(R.string.quest_delete_help)) },
+        confirmButton = { TextButton(onClick = { confirmDelete = false; controller.delete(quest.id, onBack) }) { Text(stringResource(R.string.quest_delete)) } },
+        dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.quest_keep)) } })
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -277,6 +293,7 @@ private fun FocusPanel(quest: QuestRecord, focus: FocusRecord?, controller: Ques
     var now by remember { mutableStateOf(AndroidQuestTime(context).now()) }
     var alerts by rememberSaveable { mutableStateOf(false) }
     val busy by controller.busy.collectAsStateWithLifecycle()
+    val alertLabel = stringResource(R.string.quest_focus_alert)
     LaunchedEffect(focus?.id, focus?.status) {
         while (focus?.status == "RUNNING") {
             now = AndroidQuestTime(context).now()
@@ -288,23 +305,23 @@ private fun FocusPanel(quest: QuestRecord, focus: FocusRecord?, controller: Ques
     val seconds = (remaining + 999) / 1000
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HorizontalDivider()
-        Text("Focus time", style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.quest_focus_time), style = MaterialTheme.typography.titleLarge)
         if (focus?.status == "NEEDS_CONFIRMATION") {
-            Text("Did you finish your focus time?", style = MaterialTheme.typography.headlineSmall)
-            Text("Your timer ended while the phone was restarting. Confirm the session to count its focus reward.")
-            OutlinedButton(onClick = { controller.focusAction(focus.id, "confirm") }, enabled = !busy) { Text("Yes, I finished") }
+            Text(stringResource(R.string.quest_focus_confirmation), style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.quest_focus_reboot))
+            OutlinedButton(onClick = { controller.focusAction(focus.id, "confirm") }, enabled = !busy) { Text(stringResource(R.string.quest_focus_confirm)) }
         } else if (focus?.status == "FINISHED") {
-            Text("Time well spent", style = MaterialTheme.typography.headlineSmall)
-            Text("Your timer is finished. Complete the quest when you’re ready.")
+            Text(stringResource(R.string.quest_focus_finished), style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.quest_focus_finished_help))
         } else {
             Text(String.format(Locale.ROOT, "%02d:%02d", seconds / 60, seconds % 60), style = MaterialTheme.typography.displayMedium.copy(fontFamily = TerminalFont))
             if (focus?.status !in listOf("RUNNING", "PAUSED")) {
-                Row(verticalAlignment = Alignment.CenterVertically) { Text("Alert me when time is up", Modifier.weight(1f)); Switch(checked = alerts, onCheckedChange = { alerts = it }, modifier = Modifier.semantics { contentDescription = "Alert me when time is up" }) }
+                Row(verticalAlignment = Alignment.CenterVertically) { Text(alertLabel, Modifier.weight(1f)); Switch(checked = alerts, onCheckedChange = { alerts = it }, modifier = Modifier.semantics { contentDescription = alertLabel }) }
                 if (alerts) QuestAlertAccess(controller)
-                Button(onClick = { controller.startFocus(quest.id, alerts) }, enabled = !busy) { Icon(Icons.Default.PlayArrow, null); Text("Start focus") }
+                Button(onClick = { controller.startFocus(quest.id, alerts) }, enabled = !busy) { Icon(Icons.Default.PlayArrow, null); Text(stringResource(R.string.quest_focus_start)) }
             } else FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { controller.focusAction(focus!!.id, if (focus.status == "RUNNING") "pause" else "resume") }, enabled = !busy) { Text(if (focus?.status == "RUNNING") "Pause" else "Resume") }
-                OutlinedButton(onClick = { controller.focusAction(focus!!.id, "cancel") }, enabled = !busy) { Text("Finish early") }
+                Button(onClick = { controller.focusAction(focus!!.id, if (focus.status == "RUNNING") "pause" else "resume") }, enabled = !busy) { Text(stringResource(if (focus?.status == "RUNNING") R.string.quest_focus_pause else R.string.quest_focus_resume)) }
+                OutlinedButton(onClick = { controller.focusAction(focus!!.id, "cancel") }, enabled = !busy) { Text(stringResource(R.string.quest_focus_early)) }
             }
         }
     }
@@ -319,48 +336,77 @@ internal fun QuestAlertAccess(controller: QuestController) {
     val notifications = remember(revision) { controller.reminders.canNotify() }
     val exact = remember(revision) { controller.reminders.canAlertOnTime() }
     if (!notifications) {
-        Text("Allow notifications to receive your reminders. Your quests work without them.", style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.quest_alert_notification_help), style = MaterialTheme.typography.bodySmall)
         TextButton(onClick = {
             if (Build.VERSION.SDK_INT >= 33) notificationRequest.launch(Manifest.permission.POST_NOTIFICATIONS)
             else alarmRequest.launch(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName))
-        }) { Text("Allow notifications") }
-        TextButton(onClick = { alarmRequest.launch(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }) { Text("Open notification settings") }
+        }) { Text(stringResource(R.string.update_allow_notifications)) }
+        TextButton(onClick = { alarmRequest.launch(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }) { Text(stringResource(R.string.quest_alert_notification_settings)) }
     } else if (!exact) {
-        Text("Alerts may arrive late while your phone sleeps. Allow on-time alerts to hear when your timer finishes.", style = MaterialTheme.typography.bodySmall)
-        TextButton(onClick = { if (Build.VERSION.SDK_INT >= 31) alarmRequest.launch(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}"))) }) { Text("Enable on-time alerts") }
-    } else Text("Alerts are ready. Your phone’s sound and Do Not Disturb settings still apply.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.quest_alert_exact_help), style = MaterialTheme.typography.bodySmall)
+        TextButton(onClick = { if (Build.VERSION.SDK_INT >= 31) alarmRequest.launch(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}"))) }) { Text(stringResource(R.string.quest_alert_exact)) }
+    } else Text(stringResource(R.string.quest_alert_ready), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-private fun QuestProfileScreen(world: World, snapshot: QuestSnapshot, controller: QuestController, onBack: () -> Unit) {
+internal fun QuestProfileScreen(world: World, snapshot: QuestSnapshot, controller: QuestController, onBack: () -> Unit) {
     val progress = snapshot.progress
-    Scaffold(topBar = { TopAppBar(title = { Text("Your journey") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to quests") } }) }) { padding ->
+    val progressLabel = stringResource(R.string.journey_show_progress)
+    val soundLabel = stringResource(R.string.journey_sounds)
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.journey_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.quest_back)) } }) }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            item { Text("A little progress, every day", style = MaterialTheme.typography.headlineMedium) }
-            item { Text("Your tasks and rewards stay on this phone. Every world and navigation feature is available from the start.") }
-            item { Row(verticalAlignment = Alignment.CenterVertically) { Text("Show levels and rewards", Modifier.weight(1f)); Switch(snapshot.profile.showProgress, onCheckedChange = controller::showProgress, modifier = Modifier.semantics { contentDescription = "Show levels and rewards" }) } }
-            item { Row(verticalAlignment = Alignment.CenterVertically) { Text("In-app completion sounds", Modifier.weight(1f)); Switch(snapshot.profile.sound, onCheckedChange = controller::sound, modifier = Modifier.semantics { contentDescription = "In-app completion sounds" }) } }
+            item { Text(stringResource(R.string.journey_heading), style = MaterialTheme.typography.headlineMedium) }
+            item { Text(stringResource(R.string.journey_intro)) }
+            item { Row(verticalAlignment = Alignment.CenterVertically) { Text(progressLabel, Modifier.weight(1f)); Switch(snapshot.profile.showProgress, onCheckedChange = controller::showProgress, modifier = Modifier.semantics { contentDescription = progressLabel }) } }
+            item { Row(verticalAlignment = Alignment.CenterVertically) { Text(soundLabel, Modifier.weight(1f)); Switch(snapshot.profile.sound, onCheckedChange = controller::sound, modifier = Modifier.semantics { contentDescription = soundLabel }) } }
             if (snapshot.profile.showProgress) {
-                item { Text("Level ${progress.level} · ${progress.xp} XP", style = MaterialTheme.typography.titleLarge); Text(nextLevelText(progress)) }
-                item { QuestSectionTitle("Your badges") }
-                item { Text(if (progress.badges.isEmpty()) "Complete your first quest to earn First step." else progress.badges.joinToString("\n"), style = MaterialTheme.typography.bodyLarge) }
+                item { Text(stringResource(R.string.journey_level_xp, progress.level, progress.xp), style = MaterialTheme.typography.titleLarge); Text(nextLevelText(progress)) }
+                item { QuestSectionTitle(stringResource(R.string.journey_badges)) }
                 item {
-                    QuestSectionTitle("Avatar frame")
-                    QuestPortrait(QuestRecord(title = "Your profile"), Modifier.padding(vertical = 12.dp).size(72.dp), snapshot.profile.frame.takeIf { it in progress.frames } ?: "Simple")
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { progress.frames.forEach { frame -> FilterChip(selected = snapshot.profile.frame == frame, onClick = { controller.frame(frame) }, label = { Text(frame) }) } }
-                    Text("New frames at Levels 2, 5 and 10.", style = MaterialTheme.typography.bodySmall)
+                    val badges = progress.badges.map { badge ->
+                        stringResource(when (badge) {
+                            "First step" -> R.string.journey_badge_first
+                            "Finding your rhythm" -> R.string.journey_badge_rhythm
+                            "Seasoned adventurer" -> R.string.journey_badge_adventurer
+                            "Time well spent" -> R.string.journey_badge_focus
+                            else -> error("Unknown quest badge: $badge")
+                        })
+                    }
+                    Text(if (badges.isEmpty()) stringResource(R.string.journey_first_badge) else badges.joinToString("\n"), style = MaterialTheme.typography.bodyLarge)
                 }
-                item { QuestSectionTitle("Your story") }
+                item {
+                    QuestSectionTitle(stringResource(R.string.journey_frame))
+                    QuestPortrait(QuestRecord(title = "Your profile"), Modifier.padding(vertical = 12.dp).size(72.dp), snapshot.profile.frame.takeIf { it in progress.frames } ?: "Simple")
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { progress.frames.forEach { frame ->
+                        FilterChip(selected = snapshot.profile.frame == frame, onClick = { controller.frame(frame) }, label = {
+                            Text(stringResource(when (frame) {
+                                "Simple" -> R.string.journey_frame_simple
+                                "Scout" -> R.string.journey_frame_scout
+                                "Explorer" -> R.string.journey_frame_explorer
+                                "Wayfinder" -> R.string.journey_frame_wayfinder
+                                else -> error("Unknown quest frame: $frame")
+                            }))
+                        })
+                    } }
+                    Text(stringResource(R.string.journey_frame_unlocks), style = MaterialTheme.typography.bodySmall)
+                }
+                item { QuestSectionTitle(stringResource(R.string.journey_story)) }
                 items(journeyChapters) { chapter ->
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(chapter.title, style = MaterialTheme.typography.titleLarge)
-                        Text(if (progress.completed >= chapter.quests) chapter.text else "Opens after ${chapter.quests} completed quests. ${progress.completed} completed so far.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        val (titleRes, textRes) = when (chapter.quests) {
+                            5 -> R.string.journey_chapter_begin_title to R.string.journey_chapter_begin_text
+                            20 -> R.string.journey_chapter_way_title to R.string.journey_chapter_way_text
+                            50 -> R.string.journey_chapter_road_title to R.string.journey_chapter_road_text
+                            else -> error("Unknown journey chapter: ${chapter.quests}")
+                        }
+                        Text(stringResource(titleRes), style = MaterialTheme.typography.titleLarge)
+                        Text(if (progress.completed >= chapter.quests) stringResource(textRes) else stringResource(R.string.journey_chapter_locked, chapter.quests, progress.completed), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                item { Text("Each quest earns 20 XP. Finishing its focus timer of at least 10 minutes adds 10 XP once. No streaks to maintain, and no points to lose for taking your time.", style = MaterialTheme.typography.bodySmall) }
+                item { Text(stringResource(R.string.journey_rewards_help), style = MaterialTheme.typography.bodySmall) }
             }
-            item { HorizontalDivider(); Text("On this phone", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 20.dp)); Text("App updates preserve your quests. Uninstalling Waypoint removes them. There is no account or cloud backup.") }
+            item { HorizontalDivider(); Text(stringResource(R.string.journey_local_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 20.dp)); Text(stringResource(R.string.journey_local_help)) }
         }
     }
 }
