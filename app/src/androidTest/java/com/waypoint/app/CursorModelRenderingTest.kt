@@ -171,6 +171,63 @@ class CursorModelRenderingTest {
         }
     }
 
+    @Test fun settingsPreviewsRenderAllModelsFromTheUprightCamera() {
+        val inst=InstrumentationRegistry.getInstrumentation()
+        for(model in listOf("Waypoint.glb","Motorcycle.glb","Bicycle.glb")) {
+            val ready=CountDownLatch(1)
+            var image: Bitmap?=null
+            var error: String?=null
+            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                scenario.onActivity { activity ->
+                    val context=object: ContextWrapper(activity) {
+                        override fun getAssets()=inst.targetContext.assets
+                    }
+                    activity.setContent {
+                        CompositionLocalProvider(LocalContext provides context) {
+                            CursorModelView(model,Modifier.size(144.dp),tilt=0f,azimuth=0f,
+                                onReady={ready.countDown()},onError={error=it;ready.countDown()})
+                        }
+                    }
+                }
+                assertTrue("$model settings preview completes",ready.await(20,TimeUnit.SECONDS))
+                assertNull("$model settings preview renders without error",error)
+                val deadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(10)
+                while(image==null && System.nanoTime()<deadline) {
+                    scenario.onActivity { activity ->
+                        val rendered=findTexture(activity.window.decorView)?.bitmap
+                        if(rendered!=null) {
+                            if(rendered.hasVisiblePixels()) {
+                                image=Bitmap.createScaledBitmap(rendered,405,405,true).also {
+                                    if(it!==rendered)rendered.recycle()
+                                }
+                            } else rendered.recycle()
+                        }
+                    }
+                    if(image==null)Thread.sleep(100)
+                }
+                val bitmap=requireNotNull(image) { "$model settings preview has no visible frame" }
+                val pixels=IntArray(bitmap.width*bitmap.height)
+                bitmap.getPixels(pixels,0,bitmap.width,0,0,bitmap.width,bitmap.height)
+                assertTrue("$model shows a visible vehicle",pixels.count { (it ushr 24)>128 }>100)
+                val frontLightRows=mutableListOf<Int>()
+                val rearLightRows=mutableListOf<Int>()
+                pixels.forEachIndexed { index,pixel -> if((pixel ushr 24)>128) {
+                    val red=(pixel shr 16) and 0xff
+                    val green=(pixel shr 8) and 0xff
+                    val blue=pixel and 0xff
+                    val row=index/bitmap.width
+                    if(red>150 && green>150 && blue>125)frontLightRows+=row
+                    if(red>80 && red>green*1.8 && red>blue*1.8)rearLightRows+=row
+                } }
+                assertTrue("$model front light is rendered",frontLightRows.isNotEmpty())
+                assertTrue("$model rear light is rendered",rearLightRows.isNotEmpty())
+                assertTrue("$model front points toward the preview camera",
+                    frontLightRows.average()>rearLightRows.average())
+                bitmap.recycle()
+            }
+        }
+    }
+
     @Test fun topDownSnapshotShowsTheVehicleBody() {
         val inst=InstrumentationRegistry.getInstrumentation()
         val ready=CountDownLatch(1)
@@ -213,5 +270,14 @@ class CursorModelRenderingTest {
             findTexture(view.getChildAt(index))?.let { return it }
         }
         return null
+    }
+
+    private fun Bitmap.hasVisiblePixels(): Boolean {
+        val row=IntArray(width)
+        for(y in 0 until height) {
+            getPixels(row,0,width,0,y,width,1)
+            if(row.any { (it ushr 24)>128 })return true
+        }
+        return false
     }
 }

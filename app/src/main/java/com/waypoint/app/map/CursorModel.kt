@@ -25,12 +25,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
 import com.google.android.filament.Camera
+import com.google.android.filament.Engine
 import com.google.android.filament.IndirectLight
 import com.google.android.filament.Renderer
 import com.google.android.filament.View.BlendMode
 import com.google.android.filament.android.UiHelper
 import com.google.android.filament.gltfio.Gltfio
 import com.google.android.filament.utils.Float3
+import com.google.android.filament.utils.Manipulator
 import com.google.android.filament.utils.ModelViewer
 import com.google.android.filament.utils.Utils
 import kotlinx.coroutines.Dispatchers
@@ -114,7 +116,7 @@ internal fun CursorModelSettings(state: NavState, controller: NavigationControll
                     CursorModelView(model,Modifier.size(144.dp).clip(RoundedCornerShape(16.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                         .semantics { contentDescription = "${cursorModelDisplayName(model)} 3D preview" },
-                        tilt=42f,azimuth=25f,onReady={ready=true},onError={error=it;ready=false})
+                        tilt=0f,azimuth=0f,onReady={ready=true},onError={error=it;ready=false})
                 }
             }
         }
@@ -189,7 +191,20 @@ internal fun CursorModelView(model: String, modifier: Modifier, autoRotate: Bool
                         }
                     })
                     val helper=UiHelper(UiHelper.ContextErrorPolicy.DONT_CHECK).apply { isOpaque=false }
-                    val renderer=ModelViewer(this,uiHelper=helper)
+                    val previewCamera=if(onSnapshot==null) {
+                        val (cameraX,cameraY,cameraZ)=when(model) {
+                            "Bicycle.glb" -> Triple(-3.0f,2.4f,1.6f)
+                            "Motorcycle.glb" -> Triple(3.0f,2.4f,1.8f)
+                            else -> Triple(2.2f,3.2f,2.4f)
+                        }
+                        Manipulator.Builder()
+                            .viewport(1,1)
+                            .targetPosition(0f,0f,0f)
+                            .upVector(0f,0f,1f)
+                            .orbitHomePosition(cameraX,cameraY,cameraZ)
+                            .build(Manipulator.Mode.ORBIT)
+                    } else null
+                    val renderer=ModelViewer(this,Engine.create(),helper,previewCamera)
                     val ambient=IndirectLight.Builder().irradiance(3,FloatArray(27).apply {
                         this[0]=1f;this[1]=1f;this[2]=1f
                     }).intensity(30_000f).build(renderer.engine)
@@ -256,9 +271,16 @@ internal fun CursorModelView(model: String, modifier: Modifier, autoRotate: Bool
                         }
                     }
                     Matrix.setIdentityM(pose,0)
-                    Matrix.translateM(pose,0,0f,0f,-4f)
-                    Matrix.rotateM(pose,0,if(autoRotate)20f else currentTilt,1f,0f,0f)
-                    Matrix.rotateM(pose,0,if(autoRotate)((time-firstFrame)/1e9*30.0%360.0).toFloat() else azimuth,0f,0f,1f)
+                    if(snapshot!=null) {
+                        // Map snapshots use the default front-facing camera and pose
+                        // the model to match the map's pitch and heading.
+                        Matrix.translateM(pose,0,0f,0f,-4f)
+                        Matrix.rotateM(pose,0,currentTilt,1f,0f,0f)
+                        Matrix.rotateM(pose,0,azimuth,0f,0f,1f)
+                    } else if(autoRotate) {
+                        Matrix.rotateM(pose,0,20f,1f,0f,0f)
+                        Matrix.rotateM(pose,0,((time-firstFrame)/1e9*30.0%360.0).toFloat(),0f,0f,1f)
+                    }
                     Matrix.multiplyMM(result,0,pose,0,normalized,0)
                     val tm=renderer.engine.transformManager
                     tm.setTransform(tm.getInstance(asset.root),result)
