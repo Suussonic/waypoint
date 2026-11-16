@@ -80,6 +80,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
     // The default 13.x artifact uses Vulkan; OpenGL ES keeps older devices supported.
     implementation("org.maplibre.gl:android-sdk-opengl:13.7.1")
+    implementation("com.google.android.filament:filament-android:1.56.0")
+    implementation("com.google.android.filament:gltfio-android:1.56.0")
+    implementation("com.google.android.filament:filament-utils-android:1.56.0")
     implementation("com.stadiamaps.ferrostar:core:0.59.0")
     implementation("com.squareup.okhttp3:okhttp:5.5.1")
     implementation("com.google.android.gms:play-services-location:21.4.0")

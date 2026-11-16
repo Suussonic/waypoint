@@ -97,6 +97,8 @@ data class NavState(
     /** Posted limit for the road the car is on, in km/h; null when unknown or not guiding by car. */
     val speedLimitKmh: Int? = null,
     val overSpeedLimit: Boolean = false,
+    val cursorModel: String? = null,
+    val cursorModelEnabled: Boolean = false,
 )
 
 class WaypointApplication : Application() {
@@ -141,6 +143,8 @@ class NavigationController(private val app: Application, private val repository:
     }.getOrDefault(emptyMap())
     private val scope = CoroutineScope(SupervisorJob()+Dispatchers.Main.immediate)
     private val initialWorld=World.entries.find{it.name==prefs.getString("world",null)} ?: World.LOS_SANTOS
+    val cursorModels = bundledCursorModels(app.assets)
+    private val initialCursorModel=prefs.getString("cursorModel",null)?.takeIf { it in cursorModels }
     private val _state = MutableStateFlow(NavState(
         world = initialWorld,
         mode = TravelMode.entries.find{it.name==prefs.getString("mode",null)} ?: TravelMode.CAR,
@@ -150,9 +154,21 @@ class NavigationController(private val app: Application, private val repository:
         saved = readPlaces("saved"), recent = readPlaces("recent"),
         tilted = prefs.getBoolean("tilted",initialWorld.mapArt().tilt>0.0),
         keepMapNorthUp = prefs.getBoolean("keepMapNorthUp",false),
-        speedWarning = prefs.getBoolean("speedWarning",true)
+        speedWarning = prefs.getBoolean("speedWarning",true),
+        cursorModel = initialCursorModel,
+        cursorModelEnabled = initialCursorModel!=null && prefs.getBoolean("cursorModelEnabled",false)
     ))
     val state = _state.asStateFlow()
+    fun setCursorModel(model: String) {
+        require(model in cursorModels) { "Choose a bundled cursor model." }
+        prefs.edit().putString("cursorModel",model).putBoolean("cursorModelEnabled",true).apply()
+        _state.update { it.copy(cursorModel=model,cursorModelEnabled=true) }
+    }
+    fun toggleCursorModel() {
+        val enabled=_state.value.cursorModel!=null && !_state.value.cursorModelEnabled
+        prefs.edit().putBoolean("cursorModelEnabled",enabled).apply()
+        _state.update { it.copy(cursorModelEnabled=enabled) }
+    }
     private val manager = app.getSystemService(LocationManager::class.java)
     private var visible = false
     private var carVisible = false
