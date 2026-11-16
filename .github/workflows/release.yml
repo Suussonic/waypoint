@@ -12,6 +12,8 @@ on:
       - '.github/workflows/android.yml'
       - '.github/workflows/release.yml'
       - 'docs/milestones.html'
+      - 'docs/index.html'
+      - 'docs/site.css'
 
 permissions:
   contents: read
