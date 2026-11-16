@@ -39,6 +39,21 @@
 
 [Full release notes →](docs/releases/current.html)
 
+## A 3D cursor is coming to the phone map
+
+An upcoming update adds three bundled position cursors: **Car**, **Motorcycle** and **Bicycle**. The model follows your travel direction while map tilt stays a separate control. Android Auto keeps its standard marker.
+
+<table>
+  <thead><tr><th>Car</th><th>Motorcycle</th><th>Bicycle</th></tr></thead>
+  <tbody><tr>
+    <td><img src="docs/images/promo/cursor-car.png" width="180" alt="Waypoint's blue 3D car cursor shown in the Settings preview." /></td>
+    <td><img src="docs/images/promo/cursor-motorcycle.png" width="180" alt="Waypoint's blue 3D motorcycle cursor shown in the Settings preview." /></td>
+    <td><img src="docs/images/promo/cursor-bicycle.png" width="180" alt="Waypoint's blue and gold 3D bicycle cursor shown in the Settings preview." /></td>
+  </tr></tbody>
+</table>
+
+<p><sub>These are live previews from the app. The feature is being prepared in <a href="https://github.com/the-geeky-couldron/waypoint/pull/65">PR #65</a>; it is not part of the current 2.7.0 APK.</sub></p>
+
 ## Waypoint’s release journey
 
 Waypoint began with 27 game-inspired map worlds and has grown to 38, alongside navigation, quests and community-requested improvements.

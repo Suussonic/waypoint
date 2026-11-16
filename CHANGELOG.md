@@ -4,7 +4,7 @@ For the full notes and community acknowledgements, see the [Waypoint release pag
 
 ## Unreleased
 
-- Added an optional 3D position cursor to the phone map, including a bundled Waypoint model. Thanks to **Suussonic** for contributing the feature in [PR #65](https://github.com/the-geeky-couldron/waypoint/pull/65).
+- Added an optional 3D position cursor to the phone map with original low-poly car, motorcycle, and bicycle models. The cursor follows travel direction independently of map tilt; Android Auto keeps its standard marker. Thanks to **Suussonic** for contributing the feature in [PR #65](https://github.com/the-geeky-couldron/waypoint/pull/65).
 
 ## 2.7.0
 

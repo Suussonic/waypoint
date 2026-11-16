@@ -37,7 +37,7 @@ internal fun MapLegendControl(state: NavState, modifier: Modifier = Modifier) {
     val palette = hudPalette(world)
     val keyOnRight = state.hudSide != HudSide.LEFT
     val targetSize = hudToolTargetSize(state.hudSize)
-    val visualSize = hudToolVisualSize(state.hudSize)
+    val toolFootprint = hudToolColumnWidth(state.hudSize) + 8.dp
     val profile = remember(world) { WorldLegendProfiles.forWorld(world) }
     var expanded by remember(world) { mutableStateOf(false) }
     val keyLabel = if (expanded) "Close ${world.title} map key" else "Open ${world.title} map key"
@@ -82,6 +82,8 @@ internal fun MapLegendControl(state: NavState, modifier: Modifier = Modifier) {
         val compactHeight = maxHeight < 420.dp
         val compactTopKey = compactHeight && maxWidth >= 600.dp
         val mediumHeight = maxHeight < 560.dp
+        val gutter = when (state.hudSize) { HudSize.COMPACT -> 12.dp; HudSize.STANDARD -> 16.dp; HudSize.LARGE -> 20.dp }
+        val gap = if (state.hudSize == HudSize.COMPACT) 8.dp else 12.dp
         val panelOnRight = compactHeight || keyOnRight
         val keyAlignment = when {
             compactHeight -> Alignment.TopEnd
@@ -94,20 +96,12 @@ internal fun MapLegendControl(state: NavState, modifier: Modifier = Modifier) {
             mediumHeight -> 128.dp
             else -> 0.dp
         }
-        val keyEndInset = when {
-            compactTopKey -> {
-                val gutter = when (state.hudSize) { HudSize.COMPACT -> 12.dp; HudSize.STANDARD -> 16.dp; HudSize.LARGE -> 20.dp }
-                val gap = if (state.hudSize == HudSize.COMPACT) 8.dp else 12.dp
-                gutter + targetSize * 2 + gap * 2
-            }
-            compactHeight || keyOnRight -> 16.dp
-            else -> 0.dp
-        }
+        val keyEndInset = if (compactHeight || keyOnRight) 16.dp else 0.dp
         if (expanded && icons != null) {
             Surface(
                 modifier = Modifier.align(if (panelOnRight) Alignment.CenterEnd else Alignment.CenterStart)
-                    .padding(end = if (panelOnRight) targetSize + 24.dp else 0.dp,
-                        start = if (panelOnRight) 0.dp else targetSize + 24.dp)
+                    .padding(end = if (panelOnRight) toolFootprint + 24.dp else 0.dp,
+                        start = if (panelOnRight) 0.dp else toolFootprint + 24.dp)
                     .fillMaxWidth(.84f).widthIn(max = 280.dp),
                 color = palette.panel,
                 contentColor = palette.foreground,
@@ -168,23 +162,21 @@ internal fun MapLegendControl(state: NavState, modifier: Modifier = Modifier) {
             }
         }
         key(keyLabel) {
-            IconButton(onClick = { expanded = !expanded },
-                modifier = Modifier.align(keyAlignment)
-                    .padding(top = keyTopInset,
-                        end = keyEndInset,
-                        start = if (compactHeight || keyOnRight) 0.dp else 16.dp)
-                    .size(targetSize)) {
-                Surface(color = palette.panel, contentColor = palette.foreground,
-                    shape = hudShape(world), border = hudBorder(world),
-                    modifier = Modifier.size(visualSize)) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.Info, contentDescription = keyLabel, tint = palette.accent,
-                            modifier = Modifier.size(when (state.hudSize) {
-                                HudSize.COMPACT -> 19.dp; HudSize.STANDARD -> 24.dp; HudSize.LARGE -> 26.dp
-                            }))
-                    }
-                }
+            val toolStackHeight = targetSize + 30.dp + gap
+            val keyModifier = when {
+                compactTopKey -> Modifier.align(Alignment.BottomEnd)
+                    .padding(end = gutter + toolFootprint * 2 + gap, bottom = gutter)
+                compactHeight -> Modifier.align(keyAlignment)
+                    .padding(top = keyTopInset, end = keyEndInset,
+                        start = if (keyOnRight) 0.dp else 16.dp)
+                else -> Modifier.align(if (keyOnRight) Alignment.BottomEnd else Alignment.BottomStart)
+                    .padding(start = if (keyOnRight) 0.dp else gutter,
+                        end = if (keyOnRight) gutter else 0.dp,
+                        bottom = gutter + toolStackHeight * 2)
             }
+            AtlasTool(world, Icons.Default.Info, keyLabel, { expanded = !expanded },
+                modifier = keyModifier,
+                hudSize = state.hudSize, caption = "Map info")
         }
     }
 }

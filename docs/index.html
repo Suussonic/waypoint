@@ -9,7 +9,7 @@
     <link rel="icon" href="images/waypoint-icon.png" type="image/png" />
     <link rel="preload" href="fonts/barlow_condensed_bold_site.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="images/landing/old-west-heath-screen.jpg" as="image" fetchpriority="high" />
-    <link rel="stylesheet" href="site.css?v=20261115-r1" />
+    <link rel="stylesheet" href="site.css?v=20261116-r1" />
     <script>document.documentElement.className+=' js';setTimeout(function(){window.__wp||(document.documentElement.className=document.documentElement.className.replace(' js',''))},3000)</script>
     <script src="site.js?v=20261109-r1" defer></script>
     <script src="github-metrics.js?v=20261107-r1" defer></script>
@@ -25,6 +25,7 @@
         <nav aria-label="Main navigation">
           <a href="#world-room">Worlds</a>
           <a href="#day-night">Day &amp; night</a>
+          <a href="#cursor-models">3D cursor</a>
           <a href="#voice">Voice</a>
           <a href="#car-screen">Android Auto</a>
           <a href="#milestones">Release journey</a>
@@ -359,6 +360,29 @@
               <a class="text-link rv" style="--d:300ms" href="https://github.com/the-geeky-couldron/waypoint/blob/dev/docs/game-catalogue.md">See all map themes <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="cursor-section section-wrap" id="cursor-models" aria-labelledby="cursor-title">
+        <div class="cursor-copy">
+          <p class="cursor-kicker">Upcoming · phone map</p>
+          <h2 id="cursor-title" data-split>Put your vehicle on the map.</h2>
+          <p class="rv">Choose an included Car, Motorcycle or Bicycle as your 3D position cursor. It follows your travel direction while the map’s 2D or 3D tilt stays in your control. Android Auto keeps its standard marker.</p>
+          <a class="text-link rv" style="--d:180ms" href="https://github.com/the-geeky-couldron/waypoint/pull/65">Follow the cursor update on GitHub <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7"/></svg></a>
+        </div>
+        <div class="cursor-models" role="group" aria-label="3D position cursor previews">
+          <figure class="cursor-model-card rv">
+            <img src="images/promo/cursor-car.png" width="270" height="270" alt="Blue 3D car cursor, shown at an angle in Waypoint’s model picker." loading="lazy" decoding="async" />
+            <figcaption>Car</figcaption>
+          </figure>
+          <figure class="cursor-model-card rv" style="--d:100ms">
+            <img src="images/promo/cursor-motorcycle.png" width="270" height="270" alt="Blue 3D motorcycle cursor, shown at an angle in Waypoint’s model picker." loading="lazy" decoding="async" />
+            <figcaption>Motorcycle</figcaption>
+          </figure>
+          <figure class="cursor-model-card rv" style="--d:200ms">
+            <img src="images/promo/cursor-bicycle.png" width="270" height="270" alt="Blue and gold 3D bicycle cursor, shown at an angle in Waypoint’s model picker." loading="lazy" decoding="async" />
+            <figcaption>Bicycle</figcaption>
+          </figure>
         </div>
       </section>
 
