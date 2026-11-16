@@ -147,6 +147,22 @@ class CursorModelRenderingTest {
                     bitmap.getPixels(pixels,0,bitmap.width,0,0,bitmap.width,bitmap.height)
                     assertTrue("$model at $tilt° visible mesh",pixels.count { (it ushr 24)>128 }>100)
                     assertTrue("$model at $tilt° transparent background",pixels.count { (it ushr 24)==0 }>100)
+                    val frontLightRows=mutableListOf<Int>()
+                    val rearLightRows=mutableListOf<Int>()
+                    pixels.forEachIndexed { index,pixel ->
+                        if((pixel ushr 24)>128) {
+                            val red=(pixel shr 16) and 0xff
+                            val green=(pixel shr 8) and 0xff
+                            val blue=pixel and 0xff
+                            val row=index/bitmap.width
+                            if(red>150 && green>150 && blue>125)frontLightRows+=row
+                            if(red>80 && red>green*1.8 && red>blue*1.8)rearLightRows+=row
+                        }
+                    }
+                    assertTrue("$model at $tilt° front light is rendered",frontLightRows.isNotEmpty())
+                    assertTrue("$model at $tilt° rear light is rendered",rearLightRows.isNotEmpty())
+                    assertTrue("$model at $tilt° nose (+Y) stays above its tail (-Y)",
+                        frontLightRows.average()<rearLightRows.average())
                     if(tilt==0f)flatPixels=pixels
                     else assertFalse("$model tilt changes its rendered image",requireNotNull(flatPixels).contentEquals(pixels))
                     bitmap.recycle()

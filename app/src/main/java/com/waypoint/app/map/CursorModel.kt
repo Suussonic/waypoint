@@ -221,10 +221,14 @@ internal fun CursorModelView(model: String, modifier: Modifier, autoRotate: Bool
         if(extent.any { !it.isFinite() } || extent.maxOrNull()!!<=0f || asset.boundingBox.center.any { !it.isFinite() }) {
             renderer.destroyModel();error("The model has invalid dimensions.");return@LaunchedEffect
         }
+        val maxExtent=extent.maxOrNull()!!
         renderer.transformToUnitCube(Float3(0f,0f,0f))
         val tm=renderer.engine.transformManager
         normalization[0]=tm.getTransform(tm.getInstance(asset.root),FloatArray(16)).apply {
-            if(onSnapshot!=null)this[13]+=extent[1]/extent.maxOrNull()!!
+            // Bundled cursors use +Z for height and +Y for the nose. The unit-cube
+            // transform centers them, so raise the road plane along Z to put the
+            // wheels back on it; translating Y moves the whole vehicle nose-first.
+            if(onSnapshot!=null)this[14]+=extent[2]/maxExtent
         }
     }
     DisposableEffect(viewer,lifecycle,if(onSnapshot!=null)tilt else null) {
