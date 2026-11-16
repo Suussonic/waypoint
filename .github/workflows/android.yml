@@ -335,8 +335,8 @@ jobs:
         with:
           api-level: 35
           arch: x86_64
-          # Mesa avoids the legacy SwiftShader GLES compiler's Filament shader failures.
-          emulator-options: -no-window -gpu host -no-snapshot -noaudio -no-boot-anim -camera-back none
+          # Mesa's lavapipe software renderer avoids SwiftShader GLES failures without a host GPU.
+          emulator-options: -no-window -gpu lavapipe -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: >-
             ./gradlew --no-daemon :app:connectedDebugAndroidTest
             -Pandroid.testInstrumentationRunnerArguments.class=com.waypoint.app.SecurityConfigurationTest,com.waypoint.app.QuestRepositoryTest,com.waypoint.app.CarSessionTest,com.waypoint.app.CursorModelRenderingTest,com.waypoint.app.MapOrientationTest,com.waypoint.app.places.OfflinePlacesStoreTest,com.waypoint.app.SearchAliasStorageTest
