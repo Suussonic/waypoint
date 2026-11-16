@@ -280,6 +280,17 @@ details[open] .world-entry{animation:rise .8s var(--ease) both;animation-delay:c
 .dn-world{margin:0 0 .9rem;color:var(--quiet);font-size:var(--meta)}
 .dn-copy h3{max-width:14ch;line-height:1.02}.dn-copy p{max-width:36rem;color:var(--muted)}
 
+/* ───────── 3D position cursor ───────── */
+.cursor-section{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);align-items:center;gap:clamp(2rem,6vw,6rem)}
+.cursor-copy{padding-left:1.4rem;border-left:1px solid var(--lime)}
+.cursor-kicker{margin:0 0 .9rem;color:var(--lime);font-family:var(--display);font-size:1rem;letter-spacing:.1em;text-transform:uppercase}
+.cursor-copy h2{max-width:10ch}
+.cursor-copy>p:not(.cursor-kicker){max-width:36rem;margin-bottom:1.5rem;color:var(--muted)}
+.cursor-models{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(.5rem,1.8vw,1.25rem)}
+.cursor-model-card{min-width:0;margin:0;padding:.65rem;border:1px solid var(--line-strong);background:var(--surface);box-shadow:0 1.4rem 2.5rem rgba(0,0,0,.2)}
+.cursor-model-card img{width:100%;aspect-ratio:1;object-fit:cover;border:1px solid var(--line);background:var(--surface-2)}
+.cursor-model-card figcaption{padding:.65rem .15rem .1rem;color:var(--paper);font-family:var(--display);font-size:clamp(1rem,1.8vw,1.35rem);letter-spacing:.04em;text-align:center;text-transform:uppercase}
+
 /* ───────── Voice ───────── */
 .voice-section{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);align-items:center;gap:clamp(2rem,6vw,6rem)}
 .voice-copy{padding-left:1.4rem;border-left:1px solid var(--lime)}.voice-copy h2{max-width:11ch}.voice-copy>p{max-width:36rem;margin-bottom:1.5rem;color:var(--muted)}
@@ -530,6 +541,7 @@ html:not(.js) .dn-hint,html:not(.js) .dn-worlds{display:none}
 .dl-pin-c{left:0;bottom:34%;animation-delay:-2s}
 .dl-pin-d{right:0;bottom:30%;animation-delay:-4.5s}
 @media(max-width:55rem){
+  .cursor-section{grid-template-columns:minmax(0,1fr);gap:2rem}
   .download-inner{grid-template-columns:1fr;min-height:0;gap:0}
   .download-inner>div:first-child{padding-bottom:2.5rem}
   .download-inner h2{max-width:none;font-size:clamp(3.6rem,13vw,5.6rem)}
@@ -537,6 +549,9 @@ html:not(.js) .dn-hint,html:not(.js) .dn-worlds{display:none}
   .dl-phone-a,.dl-phone-b{display:none}
 }
 @media(max-width:39rem){
+  .cursor-models{gap:.4rem}
+  .cursor-model-card{padding:.35rem}
+  .cursor-model-card figcaption{font-size:.95rem;letter-spacing:0}
   .dl-phones{height:19rem;--dw:9.4rem}
   .dl-phone{width:var(--dw)}
   .dl-phone-l,.dl-phone-r{width:calc(var(--dw)*.84)}

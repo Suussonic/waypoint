@@ -41,7 +41,7 @@ class CursorModelRenderingTest {
         prefs.edit().clear().commit()
         try {
             val controller=NavigationController(app,preferencesName="cursor-test")
-            assertEquals(listOf("Waypoint.glb"),controller.cursorModels)
+            assertEquals(listOf("Bicycle.glb","Motorcycle.glb","Waypoint.glb"),controller.cursorModels)
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
                 scenario.onActivity { activity ->
                     val context=object: ContextWrapper(activity) {
@@ -55,8 +55,9 @@ class CursorModelRenderingTest {
                     }
                 }
                 val device=UiDevice.getInstance(inst)
-                assertTrue(device.wait(Until.hasObject(By.text("Waypoint")),5000))
+                assertTrue(device.wait(Until.hasObject(By.text("Car")),5000))
                 assertFalse(device.hasObject(By.text("Waypoint.glb")))
+                device.findObject(By.desc("Car")).click()
                 val use=device.wait(Until.findObject(By.text("Use this model").enabled(true)),20000)
                 assertNotNull("Bundled preview finishes loading",use)
                 use!!.click()
@@ -118,7 +119,59 @@ class CursorModelRenderingTest {
         }
     }
 
-    @Test fun topDownSnapshotKeepsTheArrowFaceVisible() {
+    @Test fun bundledModelsRemainVisibleAtFlatAndTiltedMapAngles() {
+        val inst=InstrumentationRegistry.getInstrumentation()
+        for(model in listOf("Waypoint.glb","Bicycle.glb","Motorcycle.glb")) {
+            var flatPixels: IntArray?=null
+            for(tilt in listOf(0f,DRIVE_TILT.toFloat())) {
+                val ready=CountDownLatch(1)
+                var image: Bitmap?=null
+                var error: String?=null
+                ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                    scenario.onActivity { activity ->
+                        val context=object: ContextWrapper(activity) {
+                            override fun getAssets()=inst.targetContext.assets
+                        }
+                        activity.setContent {
+                            CompositionLocalProvider(LocalContext provides context) {
+                                CursorModelView(model,Modifier.size(128.dp).graphicsLayer { alpha=0f },tilt=tilt,
+                                    onSnapshot={image=it;ready.countDown()},
+                                    onError={error=it;ready.countDown()})
+                            }
+                        }
+                    }
+                    assertTrue("$model at $tilt° snapshot completes",ready.await(20,TimeUnit.SECONDS))
+                    assertNull("$model at $tilt° render error",error)
+                    val bitmap=requireNotNull(image)
+                    val pixels=IntArray(bitmap.width*bitmap.height)
+                    bitmap.getPixels(pixels,0,bitmap.width,0,0,bitmap.width,bitmap.height)
+                    assertTrue("$model at $tilt° visible mesh",pixels.count { (it ushr 24)>128 }>100)
+                    assertTrue("$model at $tilt° transparent background",pixels.count { (it ushr 24)==0 }>100)
+                    val frontLightRows=mutableListOf<Int>()
+                    val rearLightRows=mutableListOf<Int>()
+                    pixels.forEachIndexed { index,pixel ->
+                        if((pixel ushr 24)>128) {
+                            val red=(pixel shr 16) and 0xff
+                            val green=(pixel shr 8) and 0xff
+                            val blue=pixel and 0xff
+                            val row=index/bitmap.width
+                            if(red>150 && green>150 && blue>125)frontLightRows+=row
+                            if(red>80 && red>green*1.8 && red>blue*1.8)rearLightRows+=row
+                        }
+                    }
+                    assertTrue("$model at $tilt° front light is rendered",frontLightRows.isNotEmpty())
+                    assertTrue("$model at $tilt° rear light is rendered",rearLightRows.isNotEmpty())
+                    assertTrue("$model at $tilt° nose (+Y) stays above its tail (-Y)",
+                        frontLightRows.average()<rearLightRows.average())
+                    if(tilt==0f)flatPixels=pixels
+                    else assertFalse("$model tilt changes its rendered image",requireNotNull(flatPixels).contentEquals(pixels))
+                    bitmap.recycle()
+                }
+            }
+        }
+    }
+
+    @Test fun topDownSnapshotShowsTheVehicleBody() {
         val inst=InstrumentationRegistry.getInstrumentation()
         val ready=CountDownLatch(1)
         var image: Bitmap?=null
@@ -148,8 +201,8 @@ class CursorModelRenderingTest {
             }
             val visibleWidth=maxX-minX+1
             val visibleHeight=maxY-minY+1
-            assertTrue("Top-down arrow face stays taller than it is wide ($visibleWidth x $visibleHeight)",
-                visibleHeight>visibleWidth)
+            assertTrue("Top-down vehicle silhouette stays longer than it is wide ($visibleWidth x $visibleHeight)",
+                visibleHeight>visibleWidth*1.35f)
             bitmap.recycle()
         }
     }

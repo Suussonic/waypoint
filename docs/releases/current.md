@@ -1,35 +1,23 @@
-# Waypoint 2.7.0
+# Waypoint 2.7.5
 
-This release makes place symbols easier to read, steadies the navigation view, restores the speed readout in landscape, and adds optional ways to support Waypoint.
+This release brings a selectable 3D vehicle cursor to the phone map, with three bundled models and clearer controls for the map view.
 
-## Map icons that read at a glance
+## Three vehicle models for the phone map
 
-- Increased landmark symbol size by about 20% across all 38 worlds. Each world keeps its own original artwork; the source atlases are unchanged.
-- Nearby search-result markers now scale with zoom, keeping their symbols easy to distinguish beside themed places.
+- Choose the Car, Motorcycle or Bicycle model in Settings. Each model is bundled with Waypoint and remains selected after the app restarts.
+- The larger Settings preview shows each model from an angled view so its shape and orientation are easier to see.
 
-## A steady navigation view
+## Keep 2D or 3D tilt in your control
 
-- Navigation now keeps the selected 2D or 3D pitch while speed and turn framing change map zoom. Speed-based zoom no longer makes the map tilt on its own.
+- The position cursor follows travel direction independently of map tilt, and stays visible in both the flat and tilted map views.
+- Search, Nearby, Map info, Map tilt, Locate and Settings have clearer labels and compact spacing on the phone map.
 
-## Landscape guidance at a glance
+## Android Auto keeps its standard marker
 
-- Phone landscape guidance shows current speed, units and the posted speed limit when one is available.
-- When GPS is ready, a stopped vehicle shows zero speed. When GPS is unavailable, the readout shows a dash instead of a misleading zero.
+The selectable 3D cursor is for the phone map. Android Auto continues to use its standard marker.
 
-## Support Waypoint if you choose
+## Credits for the feature
 
-- Settings and the project pages now link directly to Waypoint on Ko-fi for optional tips.
-- The link opens Ko-fi in the browser. Payment details stay with Ko-fi; Waypoint does not embed a third-party payment widget or handle payment information.
+Thank you to **Suussonic**, who opened [PR #65](https://github.com/the-geeky-couldron/waypoint/pull/65) and contributed the 3D cursor feature.
 
-## The release journey
-
-- The website now has a separate, animated page for Waypoint's public release history, with a live GitHub snapshot of the first public APK and the cumulative APK download total.
-- GitHub counts download events, including updates and repeat downloads. They do not represent unique people or active installs.
-
-## Credits for the reports
-
-Thank you to **Venus Starlight** for sharing the navigation video and landscape HUD report in the Waypoint Discord. The report helped reproduce the changing map pitch at lower speeds and the missing speed and speed-limit readout in landscape. The camera and HUD fixes are included here.
-
-Discord tickets are private, so this acknowledgement does not link to the ticket.
-
-Compatible updates preserve saved places, quests and settings. Android Auto availability in a real vehicle still depends on Google's trusted installation requirements.
+Compatible updates preserve saved places, quests and settings.

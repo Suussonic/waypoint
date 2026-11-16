@@ -50,6 +50,8 @@ internal fun mapOrientationAction(keepMapNorthUp:Boolean)=if(keepMapNorthUp)"Fol
 }
 internal fun atlasToolCaption(label:String)=when(label) {
     "Set a destination"->"Search"
+    "Explore nearby places"->"Nearby"
+    "Open map key"->"Map info"
     "Use my location"->"Locate"
     "Toggle 2D and 3D"->"Map tilt"
     "Find fuel"->"Fuel"
@@ -65,7 +67,7 @@ internal fun atlasToolCaption(label:String)=when(label) {
     if(LocalNightMapTheme.current)hudPalette(world).foreground else dayColor
 @Suppress("UNUSED_PARAMETER")
 @Composable internal fun atlasAccentColor(world:World,dayColor:Color):Color = hudPalette(world).accent
-@Composable internal fun AtlasTool(world:World,icon:ImageVector,label:String,action:()->Unit,modifier:Modifier=Modifier,light:Boolean=false,round:Boolean=false,hudSize:HudSize=HudSize.STANDARD) {
+@Composable internal fun AtlasTool(world:World,icon:ImageVector,label:String,action:()->Unit,modifier:Modifier=Modifier,light:Boolean=false,round:Boolean=false,hudSize:HudSize=HudSize.STANDARD,caption:String=atlasToolCaption(label),stateText:String?=null,highlighted:Boolean=false) {
     val p=hudPalette(world)
     val background=if(light)p.foreground else p.panel
     val foreground=if(light)p.panel else p.foreground
@@ -73,15 +75,15 @@ internal fun atlasToolCaption(label:String)=when(label) {
     val shape=if(round)CircleShape else hudShape(world)
     val targetSize=hudToolTargetSize(hudSize)
     val visualSize=hudToolVisualSize(hudSize)
-    val toolWidth=if(hudSize==HudSize.COMPACT)56.dp else 64.dp
-    Column(modifier.padding(4.dp).width(toolWidth).heightIn(min=targetSize+22.dp).clickable(role=Role.Button,onClick=action).semantics(mergeDescendants=true){contentDescription=label},horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(3.dp)) {
+    val toolWidth=hudToolColumnWidth(hudSize)
+    Column(modifier.padding(4.dp).width(toolWidth).heightIn(min=targetSize+22.dp).clickable(role=Role.Button,onClick=action).semantics(mergeDescendants=true){contentDescription=label;stateText?.let{stateDescription=it}},horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(3.dp)) {
         Surface(color=background,contentColor=foreground,shape=shape,modifier=Modifier.size(visualSize),border=if(round)BorderStroke(1.dp,foreground) else hudBorder(world)) {
             Box(contentAlignment=Alignment.Center){
-                if (artworkIcon != null) Icon(painterResource(artworkIcon),null,Modifier.size(if(hudSize==HudSize.LARGE)26.dp else 23.dp),tint=foreground)
-                else Icon(icon,null,Modifier.size(when(hudSize){HudSize.COMPACT->19.dp;HudSize.STANDARD->21.dp;HudSize.LARGE->25.dp}))
+                if (artworkIcon != null) Icon(painterResource(artworkIcon),null,Modifier.size(if(hudSize==HudSize.LARGE)26.dp else 23.dp),tint=if(highlighted)p.accent else foreground)
+                else Icon(icon,null,Modifier.size(when(hudSize){HudSize.COMPACT->19.dp;HudSize.STANDARD->21.dp;HudSize.LARGE->25.dp}),tint=if(highlighted)p.accent else foreground)
             }
         }
-        Text(atlasToolCaption(label),fontFamily=if(world==World.NIER)hudFont(world) else PipBoyFont,fontSize=if(hudSize==HudSize.LARGE)13.sp else 12.sp,lineHeight=16.sp,letterSpacing=0.sp,color=p.foreground,maxLines=1,softWrap=false,overflow=TextOverflow.Ellipsis,textAlign=androidx.compose.ui.text.style.TextAlign.Center,
+        Text(caption,fontFamily=if(world==World.NIER)hudFont(world) else PipBoyFont,fontSize=if(hudSize==HudSize.LARGE)13.sp else 12.sp,lineHeight=16.sp,letterSpacing=0.sp,color=p.foreground,maxLines=1,softWrap=false,overflow=TextOverflow.Ellipsis,textAlign=androidx.compose.ui.text.style.TextAlign.Center,
             modifier=Modifier.fillMaxWidth().background(p.panel,hudShape(world)).padding(horizontal=2.dp,vertical=2.dp))
     }
 }

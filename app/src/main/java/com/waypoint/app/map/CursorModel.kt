@@ -56,7 +56,10 @@ internal fun cursorModelFileNames(files: List<String>): List<String> =
 internal fun bundledCursorModels(assets: AssetManager): List<String> =
     cursorModelFileNames(assets.list(CURSOR_MODEL_ASSET_DIRECTORY).orEmpty().toList())
 
-internal fun cursorModelDisplayName(model: String): String = model.substringBeforeLast('.')
+internal fun cursorModelDisplayName(model: String): String = when (model) {
+    "Waypoint.glb" -> "Car"
+    else -> model.substringBeforeLast('.')
+}
 
 internal fun validateCursorGlb(bytes: ByteArray) {
     require(bytes.size in 20..MAX_CURSOR_MODEL_BYTES) { "The bundled GLB model must be at most 10 MB." }
@@ -108,9 +111,10 @@ internal fun CursorModelSettings(state: NavState, controller: NavigationControll
             }
             preview?.let { model ->
                 key(model) {
-                    CursorModelView(model,Modifier.size(128.dp).clip(RoundedCornerShape(16.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                        autoRotate=true,onReady={ready=true},onError={error=it;ready=false})
+                    CursorModelView(model,Modifier.size(144.dp).clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .semantics { contentDescription = "${cursorModelDisplayName(model)} 3D preview" },
+                        tilt=42f,azimuth=25f,onReady={ready=true},onError={error=it;ready=false})
                 }
             }
         }
@@ -127,7 +131,7 @@ internal fun CursorModelSettings(state: NavState, controller: NavigationControll
 /** Preview is live 3D; map snapshots are rendered once and placed by MapLibre itself. */
 @Composable
 internal fun CursorModelView(model: String, modifier: Modifier, autoRotate: Boolean=false,
-    tilt: Float=45f, onSnapshot: ((Bitmap)->Unit)?=null,
+    tilt: Float=45f, azimuth: Float=0f, onSnapshot: ((Bitmap)->Unit)?=null,
     onReady: ()->Unit={}, onError: (String)->Unit={}) {
     val assets=LocalContext.current.assets
     val owner=LocalLifecycleOwner.current
@@ -217,10 +221,14 @@ internal fun CursorModelView(model: String, modifier: Modifier, autoRotate: Bool
         if(extent.any { !it.isFinite() } || extent.maxOrNull()!!<=0f || asset.boundingBox.center.any { !it.isFinite() }) {
             renderer.destroyModel();error("The model has invalid dimensions.");return@LaunchedEffect
         }
+        val maxExtent=extent.maxOrNull()!!
         renderer.transformToUnitCube(Float3(0f,0f,0f))
         val tm=renderer.engine.transformManager
         normalization[0]=tm.getTransform(tm.getInstance(asset.root),FloatArray(16)).apply {
-            if(onSnapshot!=null)this[13]+=extent[1]/extent.maxOrNull()!!
+            // Bundled cursors use +Z for height and +Y for the nose. The unit-cube
+            // transform centers them, so raise the road plane along Z to put the
+            // wheels back on it; translating Y moves the whole vehicle nose-first.
+            if(onSnapshot!=null)this[14]+=extent[2]/maxExtent
         }
     }
     DisposableEffect(viewer,lifecycle,if(onSnapshot!=null)tilt else null) {
@@ -250,7 +258,7 @@ internal fun CursorModelView(model: String, modifier: Modifier, autoRotate: Bool
                     Matrix.setIdentityM(pose,0)
                     Matrix.translateM(pose,0,0f,0f,-4f)
                     Matrix.rotateM(pose,0,if(autoRotate)20f else currentTilt,1f,0f,0f)
-                    if(autoRotate)Matrix.rotateM(pose,0,((time-firstFrame)/1e9*30.0%360.0).toFloat(),0f,1f,0f)
+                    Matrix.rotateM(pose,0,if(autoRotate)((time-firstFrame)/1e9*30.0%360.0).toFloat() else azimuth,0f,0f,1f)
                     Matrix.multiplyMM(result,0,pose,0,normalized,0)
                     val tm=renderer.engine.transformManager
                     tm.setTransform(tm.getInstance(asset.root),result)
