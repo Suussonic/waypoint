@@ -21,6 +21,7 @@ Waypoint is one Android application module. Kotlin source files are grouped by f
 
 - `app/src/main/assets/styles/` contains Waypoint-authored MapLibre style JSON: day and night for every world, plus the Dark Zone holographic variants. MapLibre renders them; no sample style or preset is bundled.
 - `app/src/main/assets/poi/`, `map-markers/`, `map-materials/` and `map-textures/` contain the runtime place symbols, destination markers and map materials.
+- `app/src/main/assets/cursor-models/` contains the bundled car, motorcycle and bicycle GLB files for the optional phone-map position cursor. `scripts/generate_cursor_models.py` rebuilds the original motorcycle and bicycle assets.
 - `app/src/main/res/drawable-nodpi/` contains Android image resources, including descriptively named `waypoint_*` control and world-card images. Android requires drawable resources directly in a qualified resource directory, so the filename prefix keeps these groups identifiable.
 - `app/src/main/res/raw/` holds only videos referenced by the app. Optional Remotion source lives in `tools/waypoint-motion/`.
 - `docs/images/promo/` holds finished README compositions. Raw device captures and temporary image work stay outside the tracked tree.

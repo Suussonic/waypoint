@@ -20,7 +20,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.size
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
@@ -158,6 +160,18 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
     val focusCameraHoldUntil=remember{longArrayOf(0L)}
     val styleEpoch=remember{intArrayOf(0)}
     val renderLifecycle=remember(mapView){MapRenderLifecycle(mapView)}
+    var modelBitmap by remember(state.cursorModel) { mutableStateOf<Bitmap?>(null) }
+    var modelFailed by remember(state.cursorModel) { mutableStateOf(false) }
+    var modelTilt by remember { mutableFloatStateOf(45f) }
+    var modelSnapshotTilt by remember(state.cursorModel) { mutableStateOf<Float?>(null) }
+    val showModel=active && cameraZoomOverride==null && state.cursorModelEnabled &&
+        state.cursorModel!=null && state.fix!=null && state.headingReliable && !modelFailed
+    val useModel=showModel && modelBitmap!=null
+    val currentUseModel by rememberUpdatedState(useModel)
+    DisposableEffect(modelBitmap) {
+        val bitmap=modelBitmap
+        onDispose { bitmap?.recycle() }
+    }
     DisposableEffect(mapView,owner) {
         val observer=LifecycleEventObserver { _,_ -> renderLifecycle.update(owner.lifecycle.currentState,currentActive) }
         owner.lifecycle.addObserver(observer)
@@ -222,6 +236,8 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
                 cameraMemory.zoom=m.cameraPosition.zoom
                 reportAway(m.awayFromUser(currentState,followPolicy))
                 refreshScale(m,true)
+                // Re-render the model only once a tilt change settles, never during gestures.
+                modelTilt=cursorModelTilt(m.cameraPosition.tilt)
                 reportVisibleMapArea(m)
             }
             m.addOnMapLongClickListener { point ->
@@ -290,11 +306,27 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
         MapScaleBar(state.world,scaleTick,landscape,placement,
             onLineBounds={scaleLineBounds=it})
     }
+    // The offscreen renderer only lives until the snapshot for the current tilt exists.
+    if(showModel && modelSnapshotTilt!=modelTilt)key(state.cursorModel) {
+        val tilt=modelTilt
+        // MapLibre owns the visible cursor so it cannot drift from the streets during gestures.
+        CursorModelView(requireNotNull(state.cursorModel),Modifier.size(128.dp).graphicsLayer { alpha=0f },
+            tilt=tilt,onSnapshot={bitmap ->
+                bitmap.density=context.resources.displayMetrics.densityDpi
+                modelBitmap=bitmap;modelSnapshotTilt=tilt
+            },onError={message -> modelFailed=true;currentError(message)})
+    }
     }
     LaunchedEffect(map,styleReady,active,showScaleBar,state.imperial,mapBoundsOnScreen,scaleLineBounds) {
         val m=map
         if(m==null || !active || !showScaleBar || styleReady==0)scaleTick=null
         else refreshScale(m,true)
+    }
+    LaunchedEffect(map,styleReady,useModel,modelBitmap,state.world,state.mode,state.headingReliable) {
+        if(styleReady==0)return@LaunchedEffect
+        val style=map?.style ?: return@LaunchedEffect
+        if(useModel)style.addImage(CURSOR_MODEL_IMAGE,requireNotNull(modelBitmap))
+        style.getLayerAs<SymbolLayer>("position-arrow")?.showPlayerMarker(state,useModel,markerDirectionReliable)
     }
     LaunchedEffect(map,state.world,active,requestedStyleFile,mapNight) {
         val m=map ?: return@LaunchedEffect
@@ -500,10 +532,7 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
         motion.update(displayPosition,heading,SystemClock.elapsedRealtime(),travelDirection,ValueAnimator.areAnimatorsEnabled(),
             cameraBearing=cameraBearing,
             currentCameraBearing=m.cameraPosition.bearing.toFloat())
-        layer.setProperties(iconImage(playerMarkerImage(state.world,state.mode,markerDirectionReliable)),
-            iconPitchAlignment(if(state.world==World.NIGHT_CITY)Property.ICON_PITCH_ALIGNMENT_VIEWPORT
-                else if(state.mode==TravelMode.WALK)Property.ICON_PITCH_ALIGNMENT_MAP
-                else Property.ICON_PITCH_ALIGNMENT_VIEWPORT))
+        layer.showPlayerMarker(state,currentUseModel,markerDirectionReliable)
         val epoch=styleEpoch[0]
         // Sensor/accuracy emissions cannot reset the accepted fix's timeline.
         // This bookkeeping is deliberately not Compose state: a GL frame should
@@ -703,6 +732,13 @@ private fun nearbyPoiIcon(place: NearbyPlace): String {
 }
 
 private fun Coordinate.latLng()=LatLng(lat,lon)
+
+/** A model snapshot is pre-rotated for the camera tilt, so it always faces the viewport. */
+private fun SymbolLayer.showPlayerMarker(state: NavState, useModel: Boolean, directionReliable: Boolean=state.headingReliable)=setProperties(
+    iconImage(if(useModel)CURSOR_MODEL_IMAGE else playerMarkerImage(state.world,state.mode,directionReliable)),
+    iconSize(playerIconSize(if(useModel)1f else .55f)),
+    iconPitchAlignment(if(!useModel && state.world!=World.NIGHT_CITY && state.mode==TravelMode.WALK)Property.ICON_PITCH_ALIGNMENT_MAP
+        else Property.ICON_PITCH_ALIGNMENT_VIEWPORT))
 // Native MapLibre cannot accept a Feature whose geometry is null.
 private fun GeoJsonSource.setFeature(feature: Feature?) {
     if(feature==null) setGeoJson(FeatureCollection.fromFeatures(emptyArray<Feature>())) else setGeoJson(feature)

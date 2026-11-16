@@ -678,6 +678,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 SettingRow("Google search suggestions, details and photos","Optional keyless Google web lookups. Google receives partial search text and a location bias while you type, then the selected place name and coordinates when you open its details. These undocumented endpoints can change and are subject to Google’s terms; no Places API key or Places API billing is used.",googleWebLookupsEnabled,{setGoogleWebLookupsEnabled(!googleWebLookupsEnabled)})
                 SettingRow("Open place pins","Show Vela open-data pins while browsing. Vela matches archive names on-device; GitHub gets nearby tile ranges, not search text. With Google off, searches start after 700 ms; on a saved-snapshot miss, Photon gets text and location bias, and Android Geocoder may be used for weak matches. Google gets partial text and location bias only when suggestions are on. This switch hides pins only.",mapPlacePinsEnabled,{setMapPlacePinsEnabled(!mapPlacePinsEnabled)})
                 SettingRow("3D perspective","Tilt the map in every world",state.tilted,controller::toggleTilt)
+                CursorModelSettings(state,controller)
                 SettingRow("North-up map","When off, follow your phone heading while still and travel direction while moving.",state.keepMapNorthUp,controller::toggleMapOrientation)
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 Text("Map controls", style=MaterialTheme.typography.titleMedium)

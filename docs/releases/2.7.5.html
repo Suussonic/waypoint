@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#101711" />
+    <meta name="description" content="Waypoint 2.7.5 adds three 3D vehicle cursors for the phone map, with travel direction kept separate from map tilt." />
+    <link rel="icon" href="../images/waypoint-icon.png" type="image/png" />
+    <title>Waypoint 2.7.5 — Three vehicle cursors</title>
+    <link rel="stylesheet" href="../site.css?v=20261116-r2" />
+    <link rel="stylesheet" href="release.css?v=20261116-r2" />
+  </head>
+  <body class="release-page release-v275">
+    <a class="skip-link" href="#main-content">Skip to release notes</a>
+    <header class="release-nav">
+      <a class="release-brand" href="../index.html" aria-label="Waypoint home">
+        <img src="../images/waypoint-icon.png" width="38" height="38" alt="" />
+        <span>WAYPOINT</span>
+      </a>
+      <nav aria-label="Release navigation">
+        <a href="#models">Cursor models</a>
+        <a href="#map-view">Map view</a>
+        <a href="#android-auto">Android Auto</a>
+        <a href="#credits">Credits</a>
+        <a class="release-nav-cta" href="https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.7.5">Get 2.7.5 <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+
+    <main id="main-content" class="release-main">
+      <section class="release-hero" aria-labelledby="release-title">
+        <div class="hero-map" aria-hidden="true">
+          <svg viewBox="0 0 1200 620" preserveAspectRatio="xMidYMid slice">
+            <path class="map-road" d="M-50 500 C180 500 160 350 310 350 S500 455 620 335 760 110 930 145 1070 390 1270 310" />
+            <path class="map-road" d="M-80 140 C160 160 175 300 360 300 S610 115 760 210 900 460 1080 440 1210 280 1300 250" />
+            <path class="map-road" d="M130 -80 C250 80 235 190 350 350 S460 500 570 690" />
+            <path class="map-route-halo" d="M-50 500 C180 500 160 350 310 350 S500 455 620 335 760 110 930 145 1070 390 1270 310" />
+            <path class="map-route" pathLength="1" d="M-50 500 C180 500 160 350 310 350 S500 455 620 335 760 110 930 145 1070 390 1270 310" />
+            <circle class="map-node" cx="310" cy="350" r="8" /><circle class="map-node" cx="620" cy="335" r="8" /><circle class="map-node" cx="930" cy="145" r="8" />
+          </svg>
+        </div>
+        <div class="hero-copy">
+          <p class="release-kicker">Waypoint · Release 2.7.5</p>
+          <h1 id="release-title">Your vehicle.<br /><span>Your map.</span></h1>
+          <p class="release-lede">Choose a Car, Motorcycle or Bicycle for the phone-map position cursor. It follows your travel direction while you stay in control of the map’s 2D or 3D tilt.</p>
+          <div class="hero-actions">
+            <a class="release-button" href="https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.7.5">Download Waypoint 2.7.5 <span aria-hidden="true">↗</span></a>
+            <a class="release-text-link" href="../index.html#cursor-models">See the cursor previews <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+        <div class="hero-stamp" aria-hidden="true"><span>FIELD</span><strong>27.5</strong><span>RELEASE</span></div>
+      </section>
+
+      <section class="release-section" id="models" aria-labelledby="models-title">
+        <div class="section-heading section-heading-split">
+          <div>
+            <p class="section-index">01 / POSITION</p>
+            <h2 id="models-title">Three vehicle models for the phone map.</h2>
+          </div>
+          <p>Pick the model that suits your route in Settings. All three are included with Waypoint, and the larger angled previews make each model easier to inspect before you select it.</p>
+        </div>
+        <div class="cursor-release-gallery" role="group" aria-label="The three bundled 3D position cursor models">
+          <figure class="cursor-release-model">
+            <img src="../images/promo/cursor-car.png" width="405" height="405" alt="Blue low-poly car model shown from an angled view in Waypoint Settings." loading="lazy" decoding="async" />
+            <figcaption><strong>Car</strong><span>A compact road-ready cursor.</span></figcaption>
+          </figure>
+          <figure class="cursor-release-model">
+            <img src="../images/promo/cursor-motorcycle.png" width="405" height="405" alt="Blue low-poly motorcycle model shown from an angled view in Waypoint Settings." loading="lazy" decoding="async" />
+            <figcaption><strong>Motorcycle</strong><span>A slim two-wheel profile.</span></figcaption>
+          </figure>
+          <figure class="cursor-release-model">
+            <img src="../images/promo/cursor-bicycle.png" width="405" height="405" alt="Blue and gold low-poly bicycle model shown from an angled view in Waypoint Settings." loading="lazy" decoding="async" />
+            <figcaption><strong>Bicycle</strong><span>A familiar shape for the cycle route.</span></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="release-section" id="map-view" aria-labelledby="map-view-title">
+        <div class="section-heading">
+          <p class="section-index">02 / CAMERA</p>
+          <h2 id="map-view-title">Keep 2D or 3D tilt in your control.</h2>
+          <p>The cursor turns with the direction you travel. Its orientation is independent of the map camera, so it remains visible whether you prefer a flat map or a tilted view.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <p class="feature-mark">POSITION · DIRECTION</p>
+            <h3>Follow the road ahead.</h3>
+            <p>The selected vehicle stays aligned with your travel direction as the route moves through the map.</p>
+          </article>
+          <article class="feature-card feature-card-accent">
+            <p class="feature-mark">MAP · YOUR VIEW</p>
+            <h3>Choose the angle.</h3>
+            <p>Flat and tilted map views keep the same cursor model in clear view. The cursor does not decide the camera tilt.</p>
+          </article>
+        </div>
+        <div class="route-note"><span class="route-note-line" aria-hidden="true"></span><p>Search, Nearby, Map info, Map tilt, Locate and Settings have clearer labels and spacing on compact screens.</p></div>
+      </section>
+
+      <section class="release-section" id="android-auto" aria-labelledby="android-auto-title">
+        <div class="section-heading section-heading-split">
+          <div>
+            <p class="section-index">03 / COMPATIBILITY</p>
+            <h2 id="android-auto-title">Android Auto keeps its standard marker.</h2>
+          </div>
+          <p>The selectable 3D vehicle models apply to the phone map. Android Auto continues to use its standard marker, with navigation and route guidance unchanged.</p>
+        </div>
+      </section>
+
+      <section class="release-section credits-section" id="credits" aria-labelledby="credits-title">
+        <div class="section-heading section-heading-split">
+          <div>
+            <p class="section-index">04 / COMMUNITY</p>
+            <h2 id="credits-title">Credits for the feature.</h2>
+          </div>
+          <p>Community contributions help Waypoint grow in useful directions.</p>
+        </div>
+        <div class="credits-grid">
+          <div class="credit-group">
+            <h3>Who opened the PR</h3>
+            <ul class="credit-list">
+              <li><code>Suussonic</code><span>Opened <a href="https://github.com/the-geeky-couldron/waypoint/pull/65">PR #65</a> and contributed the 3D cursor feature.</span></li>
+            </ul>
+          </div>
+          <div class="credit-group">
+            <h3>What arrived</h3>
+            <ul class="credit-list">
+              <li><code>Three models</code><span>Bundled Car, Motorcycle and Bicycle cursors for the phone map, with map tilt kept independent from travel direction.</span></li>
+              <li><code>Clearer controls</code><span>Compact map actions identify their purpose with visible labels.</span></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="release-footer-cta" aria-labelledby="download-title">
+        <div>
+          <p class="section-index">WAYPOINT 2.7.5</p>
+          <h2 id="download-title">Pick your vehicle. Take your route.</h2>
+          <p>All 38 map worlds stay included, with no ads or subscriptions.</p>
+        </div>
+        <a class="release-button" href="https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.7.5">Get the APK <span aria-hidden="true">↗</span></a>
+      </section>
+    </main>
+
+    <footer class="release-footer"><a href="../index.html">Waypoint</a><span>Made for the road ahead.</span><a href="https://github.com/the-geeky-couldron/waypoint">Source on GitHub <span aria-hidden="true">↗</span></a></footer>
+    <script src="release-motion.js" defer></script>
+  </body>
+</html>

@@ -58,27 +58,26 @@ internal fun MapChrome(state: NavState, heading: Float, actions: AtlasActions, m
     val scaleClearance = if (landscape) 64.dp else 0.dp
     val gutter = when (size) { HudSize.COMPACT -> 12.dp; HudSize.STANDARD -> 16.dp; HudSize.LARGE -> 20.dp }
     val gap = if (size == HudSize.COMPACT) 8.dp else 12.dp
-    val buttonSize = hudToolTargetSize(size)
     BoxWithConstraints(modifier.fillMaxSize()) {
-        val compactTopKey = maxHeight < 420.dp && maxWidth >= 600.dp
-        val keySpace = if (compactTopKey) buttonSize + gap else 0.dp
-        val pillMax = (maxWidth - gutter * 2 - buttonSize * 3 - gap * 2 - keySpace - 12.dp).coerceAtLeast(120.dp)
+        val toolbarSize = if (maxWidth < 360.dp) HudSize.COMPACT else size
+        val toolbarGutter = if (toolbarSize == HudSize.COMPACT) 12.dp else gutter
+        val toolFootprint = hudToolColumnWidth(toolbarSize) + 8.dp
+        val pillMax = (maxWidth - toolbarGutter * 2 - toolFootprint * 3).coerceAtLeast(96.dp)
         WorldPill(state, actions.huds,
-            Modifier.align(Alignment.TopStart).padding(start = gutter, top = 12.dp).widthIn(max = pillMax))
-        Row(Modifier.align(Alignment.TopEnd).padding(end = gutter, top = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(gap)) {
-            ChromeButton(world, Icons.Default.Search, "Set a destination", actions.search, hudSize = size)
-            ChromeButton(world, Icons.Default.Explore, "Explore nearby places", { actions.nearby("") }, hudSize = size)
-            ChromeButton(world, Icons.Default.Tune, "Settings", actions.settings, hudSize = size)
+            Modifier.align(Alignment.TopStart).padding(start = toolbarGutter, top = 8.dp).widthIn(max = pillMax))
+        Row(Modifier.align(Alignment.TopEnd).padding(end = toolbarGutter, top = 4.dp)) {
+            AtlasTool(world, Icons.Default.Search, "Set a destination", actions.search, hudSize = toolbarSize)
+            AtlasTool(world, Icons.Default.Explore, "Explore nearby places", { actions.nearby("") }, hudSize = toolbarSize)
+            AtlasTool(world, Icons.Default.Tune, "Settings", actions.settings, hudSize = toolbarSize)
         }
         val toolPlacement = Modifier.align(if (toolsOnRight) Alignment.BottomEnd else Alignment.BottomStart)
             .padding(start = if (toolsOnRight) 0.dp else gutter,
                 end = if (toolsOnRight) gutter else 0.dp,
                 bottom = gutter + if (toolsOnRight) 0.dp else scaleClearance)
         val mapTools: @Composable () -> Unit = {
-            ChromeButton(world, Icons.Default.ViewInAr, "Toggle 2D and 3D", actions.tilt, hudSize = size)
+            AtlasTool(world, Icons.Default.ViewInAr, "Toggle 2D and 3D", actions.tilt, hudSize = size)
             // Recenter remains separate from the compass orientation toggle.
-            ChromeButton(world, Icons.Default.MyLocation, "Use my location", actions.locate,
+            AtlasTool(world, Icons.Default.MyLocation, "Use my location", actions.locate,
                 highlighted = !actions.awayFromUser && state.gpsReady,
                 stateText = if (actions.awayFromUser) "Map is away from you" else if (state.gpsReady) "Centred on you" else null,
                 hudSize = size)
@@ -103,6 +102,7 @@ internal fun MapChrome(state: NavState, heading: Float, actions: AtlasActions, m
 
 internal fun hudToolTargetSize(size: HudSize): Dp = if (size == HudSize.LARGE) 56.dp else 48.dp
 internal fun hudToolVisualSize(size: HudSize): Dp = if (size == HudSize.COMPACT) 40.dp else hudToolTargetSize(size)
+internal fun hudToolColumnWidth(size: HudSize): Dp = if (size == HudSize.COMPACT) 56.dp else 64.dp
 
 /** Icon-only 48 dp control. The accessible label is the content description. */
 @Composable

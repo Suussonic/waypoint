@@ -2,6 +2,14 @@
 
 For the full notes and community acknowledgements, see the [Waypoint release page](docs/releases/current.html) or [Markdown release notes](docs/releases/current.md). Published releases are available on [GitHub Releases](https://github.com/the-geeky-couldron/waypoint/releases).
 
+## Unreleased
+
+## 2.7.5
+
+- Added an optional phone-map 3D position cursor with bundled Car, Motorcycle and Bicycle models. The cursor follows travel direction independently of map tilt; Android Auto keeps its standard marker.
+- Improved the cursor preview angle and size, and clarified map control labels and spacing on compact screens.
+- Credited **Suussonic**, who opened [PR #65](https://github.com/the-geeky-couldron/waypoint/pull/65) and contributed the cursor feature.
+
 ## 2.7.0
 
 - Increased map place icon size across all worlds so symbols are easier to recognize on a phone.
