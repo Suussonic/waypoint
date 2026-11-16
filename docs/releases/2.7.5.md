@@ -5,7 +5,7 @@ This release brings a selectable 3D vehicle cursor to the phone map, with three 
 ## Three vehicle models for the phone map
 
 - Choose the Car, Motorcycle or Bicycle model in Settings. Each model is bundled with Waypoint and remains selected after the app restarts.
-- The larger Settings preview shows each model from an angled view so its shape and orientation are easier to see.
+- The Settings previews show each model upright from a three-quarter front angle, making the front and side easier to inspect.
 
 ## Keep 2D or 3D tilt in your control
 
