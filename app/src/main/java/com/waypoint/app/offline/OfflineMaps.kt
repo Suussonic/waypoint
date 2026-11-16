@@ -53,6 +53,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -63,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import com.waypoint.app.Ink
 import com.waypoint.app.Muted
 import com.waypoint.app.Panel
+import com.waypoint.app.R
 import com.waypoint.app.WaypointColors
 import com.waypoint.app.places.OfflinePlacesStore
 import com.waypoint.app.places.VelaNearbyPlacesRepository
@@ -523,23 +526,23 @@ fun OfflineMapsPanel(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             IconButton(onClick = onBack, modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to settings")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.feedback_back))
             }
             Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(14.dp)) {
                 Icon(Icons.Default.CloudDownload, null, tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.padding(10.dp).size(24.dp))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("Offline maps", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("${state.regions.size} saved areas · ${formatMapBytes(totalBytes)}", style = MaterialTheme.typography.bodySmall, color = Muted)
+                Text(stringResource(R.string.offline_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.offline_saved_summary, state.regions.size, formatMapBytes(totalBytes)), style = MaterialTheme.typography.bodySmall, color = Muted)
             }
         }
 
         Surface(color = Panel, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Take the map with you", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                    Text("Save map streets and open place names for areas you choose.", style = MaterialTheme.typography.bodySmall, color = Muted)
+                    Text(stringResource(R.string.offline_heading), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.offline_intro), style = MaterialTheme.typography.bodySmall, color = Muted)
                 }
                 FilledTonalButton(
                     onClick = onChooseArea,
@@ -549,12 +552,12 @@ fun OfflineMapsPanel(
                 ) {
                     Icon(Icons.Default.Download, null, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.size(9.dp))
-                    Text("Choose an area", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.offline_choose), style = MaterialTheme.typography.labelLarge)
                 }
             }
         }
 
-        Text("Your saved areas", style = MaterialTheme.typography.titleMedium, color = WaypointColors.accent)
+        Text(stringResource(R.string.offline_saved_areas), style = MaterialTheme.typography.titleMedium, color = WaypointColors.accent)
         AnimatedVisibility(
             visible = state.preparingName != null,
             enter = fadeIn(tween(180, easing = FastOutSlowInEasing)) + expandVertically(tween(180, easing = FastOutSlowInEasing)),
@@ -562,8 +565,8 @@ fun OfflineMapsPanel(
         ) {
             Surface(color = Panel, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Preparing ${state.preparingName.orEmpty()}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                    Text("Setting up the map download…", style = MaterialTheme.typography.bodySmall, color = Muted)
+                    Text(stringResource(R.string.offline_preparing, state.preparingName.orEmpty()), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.offline_setting_up), style = MaterialTheme.typography.bodySmall, color = Muted)
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
             }
@@ -581,8 +584,8 @@ fun OfflineMapsPanel(
         if (state.regions.isEmpty() && state.preparingName == null) {
             Surface(color = Panel.copy(alpha = .72f), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Nothing saved yet", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                    Text("Choose an area to keep its map streets and open place names on this device.", style = MaterialTheme.typography.bodyMedium, color = Muted)
+                    Text(stringResource(R.string.offline_empty_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.offline_empty), style = MaterialTheme.typography.bodyMedium, color = Muted)
                 }
             }
         }
@@ -593,7 +596,7 @@ fun OfflineMapsPanel(
         if (state.regions.isNotEmpty()) {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Text(
-                "Map downloads are limited to 3,000 tiles or 50 MB per area. Place snapshots use up to 10 MB per area and 250 MB total. Routes, photos and live business details still need internet.",
+                stringResource(R.string.offline_limits),
                 style = MaterialTheme.typography.bodySmall,
                 color = Muted,
             )
@@ -603,14 +606,14 @@ fun OfflineMapsPanel(
     deleteRegion?.let { region ->
         AlertDialog(
             onDismissRequest = { deleteRegion = null },
-            title = { Text("Remove ${region.name}?") },
-            text = { Text("Its saved map tiles and open place names will be removed from this device.") },
+            title = { Text(stringResource(R.string.offline_remove_title, region.name)) },
+            text = { Text(stringResource(R.string.offline_remove_description)) },
             confirmButton = {
                 TextButton(onClick = { onDelete(region.id); deleteRegion = null }, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
-                    Text("Remove")
+                    Text(stringResource(R.string.offline_remove))
                 }
             },
-            dismissButton = { TextButton(onClick = { deleteRegion = null }) { Text("Keep area") } },
+            dismissButton = { TextButton(onClick = { deleteRegion = null }) { Text(stringResource(R.string.offline_keep)) } },
         )
     }
 }
@@ -625,13 +628,13 @@ private fun OfflineRegionCard(
     val isWorking = region.active || region.placesActive
     val hasMoreToSave = !region.complete || region.placesIncluded && !region.placesComplete
     val ready = region.complete && (!region.placesIncluded || region.placesComplete)
-    val status = when {
-        region.error != null || region.placesError != null -> "Needs attention"
-        ready -> "Ready offline"
-        region.complete -> "Map ready"
-        isWorking -> "Downloading"
-        else -> "Paused"
-    }
+    val status = stringResource(when {
+        region.error != null || region.placesError != null -> R.string.offline_attention
+        ready -> R.string.offline_ready
+        region.complete -> R.string.offline_map_ready
+        isWorking -> R.string.offline_downloading
+        else -> R.string.offline_paused
+    })
     val statusContainer = when {
         region.error != null || region.placesError != null -> MaterialTheme.colorScheme.errorContainer
         ready -> MaterialTheme.colorScheme.secondaryContainer
@@ -657,29 +660,29 @@ private fun OfflineRegionCard(
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), maxLines = 1)
                 }
                 IconButton(onClick = onDelete, modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)) {
-                    Icon(Icons.Default.DeleteOutline, "Remove ${region.name}", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(Icons.Default.DeleteOutline, stringResource(R.string.offline_remove_accessibility, region.name), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             if (!region.complete) {
                 RegionProgressLine(
-                    label = "Map data", progress = region.progress,
-                    progressLabel = "${region.name} map download progress",
-                    detail = "${region.completedTiles} tiles saved · ${formatMapBytes(region.completedBytes)}",
+                    label = stringResource(R.string.offline_map_data), progress = region.progress,
+                    progressLabel = stringResource(R.string.offline_map_progress, region.name),
+                    detail = stringResource(R.string.offline_tiles_saved, region.completedTiles, formatMapBytes(region.completedBytes)),
                 )
             }
             if (region.placesIncluded) {
                 when {
                     region.placesActive -> RegionProgressLine(
-                        label = "Open place names", progress = region.placesProgress,
-                        progressLabel = "${region.name} open place download progress",
-                        detail = "Saving place names for offline search",
+                        label = stringResource(R.string.offline_place_names), progress = region.placesProgress,
+                        progressLabel = stringResource(R.string.offline_places_progress, region.name),
+                        detail = stringResource(R.string.offline_saving_places),
                     )
                     region.placesComplete -> Text(
-                        "Open place names are ready for offline search · ${formatMapBytes(region.placesBytes)}",
+                        stringResource(R.string.offline_places_ready, formatMapBytes(region.placesBytes)),
                         style = MaterialTheme.typography.bodySmall, color = Muted,
                     )
                     region.placesError != null -> OfflineInlineError(region.placesError)
-                    else -> Text("Open place names will download with the map.", style = MaterialTheme.typography.bodySmall, color = Muted)
+                    else -> Text(stringResource(R.string.offline_places_pending), style = MaterialTheme.typography.bodySmall, color = Muted)
                 }
             }
             region.error?.let { OfflineInlineError(it) }
@@ -691,12 +694,12 @@ private fun OfflineRegionCard(
                 ) {
                     Icon(if (isWorking) Icons.Default.Pause else Icons.Default.PlayArrow, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.size(8.dp))
-                    Text(when {
-                        isWorking -> "Pause download"
-                        region.placesError != null && region.complete -> "Retry place names"
-                        region.error != null -> "Retry map download"
-                        else -> "Resume download"
-                    })
+                    Text(stringResource(when {
+                        isWorking -> R.string.offline_pause
+                        region.placesError != null && region.complete -> R.string.offline_retry_places
+                        region.error != null -> R.string.offline_retry_map
+                        else -> R.string.offline_resume
+                    }))
                 }
             }
         }
@@ -754,15 +757,15 @@ fun OfflineMapAreaPicker(
             Surface(color = Ink.copy(alpha = 0.96f), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
                 Row(Modifier.padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = onBack, modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to offline maps")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.offline_back))
                     }
                     Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(12.dp)) {
                         Icon(Icons.Default.CloudDownload, null, tint = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.padding(9.dp).size(22.dp))
                     }
                     Column(Modifier.weight(1f).padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("Save an offline area", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Text("Frame the map, then choose what to keep", style = MaterialTheme.typography.bodySmall, color = Muted)
+                        Text(stringResource(R.string.offline_save_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.offline_frame), style = MaterialTheme.typography.bodySmall, color = Muted)
                     }
                 }
             }
@@ -776,7 +779,7 @@ fun OfflineMapAreaPicker(
                     Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 18.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                Text("Area details", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.offline_area_details), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .55f),
                     shape = RoundedCornerShape(14.dp),
@@ -785,10 +788,10 @@ fun OfflineMapAreaPicker(
                     Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
                             when {
-                                tooLarge -> "Zoom in to save this area"
-                                area == null -> "Choose an area on the map"
-                                !area.valid -> "Adjust the map bounds"
-                                else -> "$tileCount map tiles estimated"
+                                tooLarge -> stringResource(R.string.offline_zoom_in)
+                                area == null -> stringResource(R.string.offline_choose_on_map)
+                                !area.valid -> stringResource(R.string.offline_adjust_bounds)
+                                else -> stringResource(R.string.offline_estimate, tileCount)
                             },
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold,
@@ -796,10 +799,10 @@ fun OfflineMapAreaPicker(
                         )
                         Text(
                             when {
-                                tooLarge -> "Keep the selection under 3,000 tiles."
-                                area == null -> "Pan or zoom until the map shows the streets you need."
-                                !area.valid -> "Move the selection away from the date line and try again."
-                                else -> "${area.centerLabel} · OpenFreeMap streets and labels"
+                                tooLarge -> stringResource(R.string.offline_under_limit)
+                                area == null -> stringResource(R.string.offline_pan_hint)
+                                !area.valid -> stringResource(R.string.offline_date_line)
+                                else -> stringResource(R.string.offline_streets, area.centerLabel)
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = Muted,
@@ -809,7 +812,7 @@ fun OfflineMapAreaPicker(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { onNameChange(it.take(48)) },
-                    label = { Text("Area name") },
+                    label = { Text(stringResource(R.string.offline_area_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -821,8 +824,8 @@ fun OfflineMapAreaPicker(
                 ) {
                     Checkbox(checked = includePlaces, onCheckedChange = null)
                     Column(Modifier.padding(start = 8.dp)) {
-                        Text("Include open place names", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                        Text("Search these names offline across saved regions. Live Google suggestions need a connection and are not included in map downloads.",
+                        Text(stringResource(R.string.offline_include_places), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.offline_include_help),
                             style = MaterialTheme.typography.bodySmall, color = Muted)
                     }
                 }
@@ -837,12 +840,12 @@ fun OfflineMapAreaPicker(
                     }
                 }
                 Text(
-                    "Map limit: 3,000 tiles or 50 MB per area. Open place data saves up to 10 MB; live suggestions, photos and routes need internet.",
+                    stringResource(R.string.offline_picker_limits),
                     style = MaterialTheme.typography.bodySmall,
                     color = Muted,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp)) { Text("Cancel") }
+                    TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.action_cancel)) }
                     FilledTonalButton(
                         onClick = onSave,
                         enabled = valid && name.isNotBlank(),
@@ -851,7 +854,7 @@ fun OfflineMapAreaPicker(
                     ) {
                         Icon(Icons.Default.Download, null, modifier = Modifier.size(20.dp))
                         Spacer(Modifier.size(9.dp))
-                        Text(if (valid) "Download area" else "Choose an area")
+                        Text(stringResource(if (valid) R.string.offline_download else R.string.offline_choose))
                     }
                 }
             }
@@ -860,8 +863,12 @@ fun OfflineMapAreaPicker(
 }
 }
 
-private fun formatMapBytes(bytes: Long): String = when {
-    bytes >= 1024L * 1024L -> String.format(Locale.getDefault(), "%.1f MB", bytes / (1024.0 * 1024.0))
-    bytes >= 1024L -> String.format(Locale.getDefault(), "%.0f KB", bytes / 1024.0)
-    else -> "$bytes B"
+@Composable
+private fun formatMapBytes(bytes: Long): String {
+    val locale = LocalConfiguration.current.locales[0]
+    return when {
+        bytes >= 1024L * 1024L -> stringResource(R.string.offline_mb, String.format(locale, "%.1f", bytes / (1024.0 * 1024.0)))
+        bytes >= 1024L -> stringResource(R.string.offline_kb, String.format(locale, "%.0f", bytes / 1024.0))
+        else -> stringResource(R.string.offline_bytes, bytes)
+    }
 }

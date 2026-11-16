@@ -1,0 +1,55 @@
+<resources>
+    <string name="about_made_in">Made in India · Open to the world</string>
+    <string name="about_open_source">Open source. Every world included. No ads or subscriptions.</string>
+    <string name="about_services">OpenStreetMap with OSRM routes cars; Valhalla routes motorcycles, bicycles and walks. Ferrostar provides navigation guidance, rerouting and remaining ETA. Nearby discovery streams Vela’s Overture, AllThePlaces and OpenStreetMap place archive. Optional Wikimedia Commons photos are off until enabled and shown with source and license credits. Optional Google suggestions, place details and photos use undocumented keyless web endpoints when enabled; Google receives search text and a location bias while you type, then the selected place name and coordinates when you open its details. No Places API key or Places API billing is used. Saved places stay on this phone.</string>
+    <string name="about_satellite">Satellite imagery in the Elden Ring, Zelda and Hogwarts maps: Esri, Maxar, Earthstar Geographics, and the GIS User Community. Those maps ask Esri for imagery of the area on screen.</string>
+    <string name="map_data_credits">Map data and credits</string>
+    <string name="map_close">Close</string>
+    <string name="map_osm">© OpenStreetMap contributors</string>
+    <string name="map_tiles">Map tiles · OpenFreeMap</string>
+    <string name="map_terrain">Terrain · Mapzen and data providers</string>
+    <string name="about_unaffiliated">Original map styles inspired by games. Not affiliated with their publishers.</string>
+    <string name="map_information">Map information</string>
+    <string name="map_info">Map info</string>
+    <string name="map_information_world">Map information · %1$s</string>
+    <string name="map_key">Map key</string>
+    <string name="place_food">Food</string>
+    <string name="place_cafe">Café</string>
+    <string name="place_drinks">Drinks &amp; pubs</string>
+    <string name="place_stay">Stay</string>
+    <string name="place_fuel">Fuel</string>
+    <string name="place_parking">Parking</string>
+    <string name="place_shop">Shop</string>
+    <string name="place_explore">Explore</string>
+    <string name="place_health">Health</string>
+    <string name="place_park">Park</string>
+    <string name="place_atm">ATM</string>
+    <string name="place_generic">Place</string>
+    <string name="place_selected_map">%1$s · Selected on map</string>
+    <string name="search_google_suggestion">Google Maps place suggestion</string>
+    <string name="search_fill_place">Put %1$s in the search field</string>
+    <string name="search_use_place">Use %1$s as search text</string>
+    <string name="map_north_up">North-up</string>
+    <string name="map_heading_up">Heading-up</string>
+    <string name="map_follow_heading">Follow heading and travel direction</string>
+    <string name="map_keep_north">Keep map north-up</string>
+    <string name="map_heading_description">Heading %1$d degrees. %2$s. Tap to %3$s.</string>
+    <string name="map_heading_unavailable">%1$s map. Heading unavailable. Tap to %2$s.</string>
+    <string name="map_change_world">Change world, %1$s</string>
+    <string name="map_close_preview">Close route preview</string>
+    <string name="map_compass_calibrating">Compass calibrating</string>
+    <string name="map_find_fuel">Find fuel</string>
+    <string name="map_find_food">Find food</string>
+    <string name="map_back">Back</string>
+    <string name="map_mute">Mute</string>
+    <string name="map_sound_on">Sound on</string>
+    <string name="map_mode_car">Car</string>
+    <string name="map_mode_motorcycle">Motorcycle</string>
+    <string name="map_mode_bicycle">Bicycle</string>
+    <string name="map_mode_walk">Walk</string>
+    <string name="map_fix_mode">GPS ±%1$d m · %2$s</string>
+    <string-array name="map_compass_points">
+        <item>N</item><item>NE</item><item>E</item><item>SE</item>
+        <item>S</item><item>SW</item><item>W</item><item>NW</item>
+    </string-array>
+</resources>

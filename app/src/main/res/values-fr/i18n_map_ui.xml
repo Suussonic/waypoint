@@ -1,0 +1,55 @@
+<resources>
+    <string name="about_made_in">Créé en Inde · Ouvert au monde</string>
+    <string name="about_open_source">Open source. Tous les mondes inclus. Sans publicité ni abonnement.</string>
+    <string name="about_services">OpenStreetMap et OSRM calculent les itinéraires en voiture ; Valhalla ceux à moto, à vélo et à pied. Ferrostar fournit le guidage, le recalcul d’itinéraire et l’heure d’arrivée estimée. La découverte des environs utilise les données Overture, AllThePlaces et OpenStreetMap de Vela. Les photos facultatives de Wikimedia Commons restent désactivées tant que vous ne les activez pas et sont accompagnées des crédits et licences. Les suggestions, détails et photos Google facultatifs utilisent des points d’accès web non documentés, sans clé ; Google reçoit votre recherche et votre position approximative pendant la saisie, puis le nom et les coordonnées du lieu à l’ouverture de sa fiche. Aucune clé ni facturation Places API n’est utilisée. Les lieux enregistrés restent sur ce téléphone.</string>
+    <string name="about_satellite">Imagerie satellite des cartes Elden Ring, Zelda et Hogwarts : Esri, Maxar, Earthstar Geographics et la communauté SIG. Ces cartes demandent à Esri l’imagerie de la zone affichée.</string>
+    <string name="map_data_credits">Données cartographiques et crédits</string>
+    <string name="map_close">Fermer</string>
+    <string name="map_osm">© Contributeurs OpenStreetMap</string>
+    <string name="map_tiles">Tuiles cartographiques · OpenFreeMap</string>
+    <string name="map_terrain">Relief · Mapzen et fournisseurs de données</string>
+    <string name="about_unaffiliated">Styles cartographiques originaux inspirés de jeux. Sans affiliation avec leurs éditeurs.</string>
+    <string name="map_information">Informations sur la carte</string>
+    <string name="map_info">Infos carte</string>
+    <string name="map_information_world">Informations sur la carte · %1$s</string>
+    <string name="map_key">Légende</string>
+    <string name="place_food">Restauration</string>
+    <string name="place_cafe">Café</string>
+    <string name="place_drinks">Bars et pubs</string>
+    <string name="place_stay">Hébergement</string>
+    <string name="place_fuel">Carburant</string>
+    <string name="place_parking">Stationnement</string>
+    <string name="place_shop">Commerce</string>
+    <string name="place_explore">Découverte</string>
+    <string name="place_health">Santé</string>
+    <string name="place_park">Parc</string>
+    <string name="place_atm">Distributeur</string>
+    <string name="place_generic">Lieu</string>
+    <string name="place_selected_map">%1$s · Sélectionné sur la carte</string>
+    <string name="search_google_suggestion">Suggestion de lieu Google Maps</string>
+    <string name="search_fill_place">Placer %1$s dans le champ de recherche</string>
+    <string name="search_use_place">Utiliser %1$s comme recherche</string>
+    <string name="map_north_up">Nord en haut</string>
+    <string name="map_heading_up">Cap en haut</string>
+    <string name="map_follow_heading">Suivre le cap et le sens du déplacement</string>
+    <string name="map_keep_north">Garder le nord en haut</string>
+    <string name="map_heading_description">Cap à %1$d degrés. %2$s. Appuyez pour %3$s.</string>
+    <string name="map_heading_unavailable">Carte avec %1$s. Cap indisponible. Appuyez pour %2$s.</string>
+    <string name="map_change_world">Changer de monde, %1$s</string>
+    <string name="map_close_preview">Fermer l’aperçu de l’itinéraire</string>
+    <string name="map_compass_calibrating">Étalonnage de la boussole</string>
+    <string name="map_find_fuel">Trouver du carburant</string>
+    <string name="map_find_food">Trouver où manger</string>
+    <string name="map_back">Retour</string>
+    <string name="map_mute">Couper le son</string>
+    <string name="map_sound_on">Activer le son</string>
+    <string name="map_mode_car">Voiture</string>
+    <string name="map_mode_motorcycle">Moto</string>
+    <string name="map_mode_bicycle">Vélo</string>
+    <string name="map_mode_walk">Marche</string>
+    <string name="map_fix_mode">GPS ±%1$d m · %2$s</string>
+    <string-array name="map_compass_points">
+        <item>N</item><item>NE</item><item>E</item><item>SE</item>
+        <item>S</item><item>SO</item><item>O</item><item>NO</item>
+    </string-array>
+</resources>

@@ -1,0 +1,31 @@
+<resources>
+    <string name="transit_title">Bus et transports</string>
+    <string name="transit_to">Vers %1$s</string>
+    <string name="transit_waiting">En attente de votre position. Activez le GPS pour prévoir un trajet en bus ou en train.</string>
+    <string name="transit_unavailable">Les transports en commun sont indisponibles pour le moment. Réessayez.</string>
+    <string name="transit_loading">Recherche des prochains bus, trams et trains…</string>
+    <string name="transit_retry">Réessayer</string>
+    <string name="transit_empty">Aucun transport en commun trouvé pour ce trajet. Les horaires proviennent de données ouvertes dont la couverture varie selon les villes. Certaines zones ne sont pas encore couvertes.</string>
+    <string name="transit_walk_only">Cette destination est assez proche pour y aller à pied. Comptez environ %1$d min de marche.</string>
+    <string name="transit_attribution">Horaires : Transitous, à partir de données de transport ouvertes. Les horaires en temps réel sont affichés lorsqu’ils sont fournis par l’opérateur. La recherche d’un trajet envoie votre position et cette destination à api.transitous.org.</string>
+    <string name="transit_trip_description">Départ à %1$s, arrivée à %2$s, %3$d minutes</string>
+    <string name="transit_minutes">%1$d min</string>
+    <string name="transit_walk_to">Marchez %1$d min jusqu’à %2$s</string>
+    <string name="transit_walk_distance">Marchez %1$d min (%2$d m) jusqu’à %3$s</string>
+    <string name="transit_take">Prenez %1$s</string>
+    <string name="transit_take_toward">Prenez %1$s en direction de %2$s</string>
+    <string name="transit_from">Depuis %1$s à %2$s</string>
+    <string name="transit_from_live">Depuis %1$s à %2$s (temps réel)</string>
+    <string name="transit_get_off">Descendez à %1$s à %2$s</string>
+    <plurals name="transit_stops">
+        <item quantity="one">%1$d arrêt</item>
+        <item quantity="other">%1$d arrêts</item>
+    </plurals>
+    <string name="transit_bus">Bus</string>
+    <string name="transit_tram">Tram</string>
+    <string name="transit_metro">Métro</string>
+    <string name="transit_train">Train</string>
+    <string name="transit_ferry">Ferry</string>
+    <string name="transit_flight">Avion</string>
+    <string name="transit_other">Transport</string>
+</resources>

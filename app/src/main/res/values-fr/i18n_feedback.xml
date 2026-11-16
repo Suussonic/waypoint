@@ -1,0 +1,20 @@
+<resources>
+    <string name="community_discord">Rejoindre le Discord de Waypoint</string>
+    <string name="community_discord_summary">Un salon pour chaque monde, les nouveautés et les signalements de bugs</string>
+    <string name="community_support">Soutenir Waypoint sur Ko-fi</string>
+    <string name="community_support_summary">Don facultatif · ouvre Ko-fi dans votre navigateur</string>
+    <string name="feedback_title">Envoyer un avis</string>
+    <string name="feedback_summary">Créer un ticket GitHub avec vos propres mots</string>
+    <string name="feedback_back">Retour aux réglages</string>
+    <string name="feedback_intro">Décrivez ce qui s’est passé ou ce que vous aimeriez voir. Votre ticket s’ouvre sur GitHub pour que vous puissiez le vérifier et l’envoyer.</string>
+    <string name="feedback_bug">Signaler un bug</string>
+    <string name="feedback_feature">Proposer une fonctionnalité</string>
+    <string name="feedback_other">Autre</string>
+    <string name="feedback_issue_title">Titre du ticket</string>
+    <string name="feedback_details">Votre expérience ou votre idée</string>
+    <string name="feedback_privacy">Seuls votre texte, le monde sélectionné et la version de l’application sont ajoutés. Votre position et vos itinéraires ne sont pas joints.</string>
+    <string name="feedback_too_long">Ce ticket est trop long pour un lien GitHub. Raccourcissez-le, puis réessayez.</string>
+    <string name="feedback_browser_error">Aucune application ne peut ouvrir GitHub. Installez un navigateur et réessayez.</string>
+    <string name="feedback_review">Vérifier le ticket sur GitHub</string>
+    <string name="feedback_browse">Consulter les tickets existants</string>
+</resources>

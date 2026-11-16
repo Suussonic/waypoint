@@ -15,6 +15,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
 private fun plainNote(line: String): String = line
@@ -57,7 +58,7 @@ fun WhatsNewDialog(notes: String, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Panel,
-        title = { Text("What’s new in Waypoint") },
+        title = { Text(stringResource(R.string.update_whats_new_waypoint)) },
         text = {
             ReleaseNotesContent(
                 notes,
@@ -69,9 +70,9 @@ fun WhatsNewDialog(notes: String, onDismiss: () -> Unit) {
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp, androidx.compose.ui.Alignment.End),
             ) {
-                TextButton(onClick = { open(DISCORD_INVITE_URL) }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Join Discord") }
-                TextButton(onClick = { open(WAYPOINT_SITE_URL) }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Visit site") }
-                TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) { Text("Explore map") }
+                TextButton(onClick = { open(DISCORD_INVITE_URL) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.update_join_discord)) }
+                TextButton(onClick = { open(WAYPOINT_SITE_URL) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.update_visit_site)) }
+                TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.update_explore_map)) }
             }
         },
     )

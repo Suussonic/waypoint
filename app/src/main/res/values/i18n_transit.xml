@@ -1,0 +1,31 @@
+<resources>
+    <string name="transit_title">Bus &amp; transit</string>
+    <string name="transit_to">To %1$s</string>
+    <string name="transit_waiting">Waiting for your location. Turn on GPS to plan a bus or train trip.</string>
+    <string name="transit_unavailable">Public transport is unavailable right now. Try again.</string>
+    <string name="transit_loading">Finding the next buses, trams and trains…</string>
+    <string name="transit_retry">Try again</string>
+    <string name="transit_empty">No public transport found for this trip. Timetables come from open data and coverage differs by city, so some areas have none yet.</string>
+    <string name="transit_walk_only">This is close enough to walk. About %1$d min on foot.</string>
+    <string name="transit_attribution">Timetables: Transitous, built on open transit data. Live times show where the operator supplies them. Planning a trip sends your position and this destination to api.transitous.org.</string>
+    <string name="transit_trip_description">Leave %1$s, arrive %2$s, %3$d minutes</string>
+    <string name="transit_minutes">%1$d min</string>
+    <string name="transit_walk_to">Walk %1$d min to %2$s</string>
+    <string name="transit_walk_distance">Walk %1$d min (%2$d m) to %3$s</string>
+    <string name="transit_take">Take %1$s</string>
+    <string name="transit_take_toward">Take %1$s toward %2$s</string>
+    <string name="transit_from">From %1$s at %2$s</string>
+    <string name="transit_from_live">From %1$s at %2$s (live)</string>
+    <string name="transit_get_off">Get off at %1$s at %2$s</string>
+    <plurals name="transit_stops">
+        <item quantity="one">%1$d stop</item>
+        <item quantity="other">%1$d stops</item>
+    </plurals>
+    <string name="transit_bus">Bus</string>
+    <string name="transit_tram">Tram</string>
+    <string name="transit_metro">Metro</string>
+    <string name="transit_train">Train</string>
+    <string name="transit_ferry">Ferry</string>
+    <string name="transit_flight">Flight</string>
+    <string name="transit_other">Transit</string>
+</resources>

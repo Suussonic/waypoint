@@ -15,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -63,15 +65,15 @@ import kotlinx.coroutines.delay
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     QuestPortrait(quest ?: QuestRecord(title = "Your journey"), Modifier.size(44.dp), snapshot.profile.frame.takeIf { it in snapshot.progress.frames } ?: "Simple")
                     Column(Modifier.weight(1f)) {
-                        Text(if (rewards.size == 1) "Quest complete" else "${rewards.size} quests completed", style = MaterialTheme.typography.titleLarge)
-                        Text("+${rewards.sumOf { it.xp }} XP · Level ${snapshot.progress.level}", color = MaterialTheme.colorScheme.primary)
+                        Text(pluralStringResource(R.plurals.quest_celebration_count, rewards.size, rewards.size), style = MaterialTheme.typography.titleLarge)
+                        Text(stringResource(R.string.quest_celebration_xp, rewards.sumOf { it.xp }, snapshot.progress.level), color = MaterialTheme.colorScheme.primary)
                     }
-                    IconButton(onClick = ::dismiss) { Icon(Icons.Default.Close, "Dismiss reward") }
+                    IconButton(onClick = ::dismiss) { Icon(Icons.Default.Close, stringResource(R.string.quest_celebration_dismiss)) }
                 }
-                Text(quest?.title ?: "Your rewards are ready. Take a moment to enjoy your progress.", maxLines = 2)
+                Text(quest?.title ?: stringResource(R.string.quest_celebration_ready), maxLines = 2)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (rewards.size == 1 && quest != null) TextButton(onClick = { controller.reopen(quest.id); dismiss() }) { Text("Undo") }
-                    TextButton(onClick = { dismiss(); onOpen() }) { Text("View quests") }
+                    if (rewards.size == 1 && quest != null) TextButton(onClick = { controller.reopen(quest.id); dismiss() }) { Text(stringResource(R.string.quest_undo)) }
+                    TextButton(onClick = { dismiss(); onOpen() }) { Text(stringResource(R.string.quest_celebration_view)) }
                 }
             }
         }

@@ -212,7 +212,11 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 The Android build uses Kotlin, Jetpack Compose and MapLibre Native. The checked-in app does not need a map API key or the optional artwork-generation tools.
 
-The Language control in Settings selects English or French using Android's per-app language support. The choice is retained across restarts and in-place app updates (same package and signing identity); uninstalling or clearing app data resets it. Android stores the choice on Android 13 and later, while AndroidX persists it on older versions. Translation is in progress: the world catalogue, saved places, quest editor, details and journey (including badges, frames and story chapters), key settings and portions of search and updates have French translations. Other screens, notifications and service-provided content can still appear in English.
+The Language control in Settings selects English or French using Android's per-app language support. The choice is retained across restarts and in-place app updates (same package and signing identity); uninstalling or clearing app data resets it. Android stores the choice on Android 13 and later, while AndroidX persists it on older versions.
+
+Interface translations use Android XML resources in `app/src/main/res/values` and `values-fr`, including formatted strings, plurals and compass directions. Matching `values-en-rGB` resources keep British English coverage consistent. Compose resolves resources using the activity's current locale; no translation service or runtime text replacement is used. Keep persisted identifiers, artwork lookup keys, user-entered text, place names and provider data separate from translated display labels.
+
+French coverage includes the world catalogue, saved places, quest editor, details, journey and completion rewards, key settings, onboarding, feedback/community links, offline-map management, nearby discovery and privacy controls, transit planning, route previews, map controls, navigation status and update dialogs. Coverage is not yet exhaustive: some sensor/download/error messages, themed map legends, notifications, release-note content and provider-supplied navigation instructions can still appear in English. Provider names, hours, addresses and user-entered text are displayed as received rather than automatically translated.
 
 Local release builds stay unsigned unless you supply distribution signing credentials; see the [release guide](docs/releasing.md).
 

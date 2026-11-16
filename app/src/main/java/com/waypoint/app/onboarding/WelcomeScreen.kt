@@ -1,5 +1,7 @@
 package com.waypoint.app
 
+import androidx.compose.ui.res.pluralStringResource
+
 import androidx.compose.ui.res.stringResource
 
 import android.animation.ValueAnimator
@@ -143,7 +145,7 @@ fun WelcomeScreen(
             TextButton(
                 onClick = { complete() },
                 modifier = Modifier.heightIn(min = 48.dp),
-            ) { Text("Skip setup", color = Muted) }
+            ) { Text(stringResource(R.string.onboarding_skip), color = Muted) }
         }
         LinearProgressIndicator(
             progress = { (step + 1) / 6f },
@@ -195,12 +197,12 @@ fun WelcomeScreen(
 @Composable
 private fun StoryStep(step: Int, world: World, onNext: () -> Unit, onBack: () -> Unit) {
     val story = when (step) {
-        0 -> "The worlds you love,\nright on the road." to
+        0 -> stringResource(R.string.onboarding_worlds_story) to
             stringResource(R.string.welcome_worlds_description)
-        1 -> "Find the style\nthat feels like yours." to
-            "Every world brings its own cartography, typography and navigation display."
-        else -> "Go your own way." to
-            "Choose a car, motorcycle or walking route, then follow spoken turn-by-turn guidance."
+        1 -> stringResource(R.string.onboarding_style_story) to
+            stringResource(R.string.onboarding_style_help)
+        else -> stringResource(R.string.onboarding_route_story) to
+            stringResource(R.string.onboarding_route_help)
     }
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Box(
@@ -225,7 +227,7 @@ private fun StoryStep(step: Int, world: World, onNext: () -> Unit, onBack: () ->
         ) {
             if (step > 0) {
                 TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 52.dp)) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, null, Modifier.size(18.dp)); Spacer(Modifier.width(5.dp)); Text("Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, null, Modifier.size(18.dp)); Spacer(Modifier.width(5.dp)); Text(stringResource(R.string.onboarding_back))
                 }
             }
             Button(
@@ -235,7 +237,7 @@ private fun StoryStep(step: Int, world: World, onNext: () -> Unit, onBack: () ->
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 10.dp, pressedElevation = 3.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = WaypointColors.accent, contentColor = Color(0xFF182317)),
             ) {
-                Text(if (step == 2) "Choose your worlds" else "Continue", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(if (step == 2) R.string.onboarding_choose_worlds else R.string.onboarding_continue), fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.width(8.dp)); Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(19.dp))
             }
         }
@@ -246,9 +248,9 @@ private fun StoryStep(step: Int, world: World, onNext: () -> Unit, onBack: () ->
 private fun TravelModePreview(world: World) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(
-            "Car" to Icons.Default.DirectionsCar,
-            "Motorcycle" to Icons.Default.TwoWheeler,
-            "Walk" to Icons.AutoMirrored.Filled.DirectionsWalk,
+            stringResource(R.string.onboarding_car) to Icons.Default.DirectionsCar,
+            stringResource(R.string.onboarding_motorcycle) to Icons.Default.TwoWheeler,
+            stringResource(R.string.onboarding_walk) to Icons.AutoMirrored.Filled.DirectionsWalk,
         ).forEach { (label, icon) ->
             Surface(
                 color = Panel,
@@ -269,9 +271,9 @@ private fun TravelModePreview(world: World) {
 @Composable
 private fun FavoriteWorldPicker(selectedNames: Set<String>, onToggle: (World) -> Unit, onContinue: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Which worlds are yours?", fontFamily = DisplayFont, fontSize = 34.sp, lineHeight = 37.sp, color = Cream)
+        Text(stringResource(R.string.onboarding_which_worlds), fontFamily = DisplayFont, fontSize = 34.sp, lineHeight = 37.sp, color = Cream)
         Text(stringResource(R.string.favorites_hint), color = Muted, fontSize = 14.sp, lineHeight = 20.sp)
-        Text("${selectedNames.size} selected", color = Cream, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+        Text(pluralStringResource(R.plurals.games_selected, selectedNames.size, selectedNames.size), color = Cream, fontSize = 13.sp, fontWeight = FontWeight.Medium)
         LazyVerticalGrid(
             columns = GridCells.Adaptive(150.dp),
             modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -290,7 +292,7 @@ private fun FavoriteWorldPicker(selectedNames: Set<String>, onToggle: (World) ->
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 10.dp, pressedElevation = 3.dp),
             colors = ButtonDefaults.buttonColors(containerColor = WaypointColors.accent, contentColor = Color(0xFF182317)),
         ) {
-            Text("Choose a map", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.onboarding_choose_map), fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.width(8.dp)); Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(19.dp))
         }
     }
@@ -299,16 +301,17 @@ private fun FavoriteWorldPicker(selectedNames: Set<String>, onToggle: (World) ->
 @Composable
 private fun FavoriteWorldTile(world: World, selected: Boolean, onClick: () -> Unit) {
     val accent = world.accent
+    val selectionDescription = "${world.title}, ${stringResource(if (selected) R.string.game_selected else R.string.game_not_selected)}"
     Box(
         Modifier.fillMaxWidth().height(154.dp).clip(RoundedCornerShape(17.dp))
-            .semantics(mergeDescendants = true) { contentDescription = "${world.title}, ${if (selected) "selected" else "not selected"}" }
+            .semantics(mergeDescendants = true) { contentDescription = selectionDescription }
             .clickable(role = Role.Checkbox, onClick = onClick),
     ) {
         Image(painterResource(artworkFor(world)), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.05f), 0.38f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.86f))))
         if (selected) {
             Box(Modifier.align(Alignment.TopEnd).padding(10.dp).size(28.dp).clip(CircleShape).background(accent), contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.Check, "Selected", Modifier.size(17.dp), tint = Ink)
+                Icon(Icons.Default.Check, stringResource(R.string.game_selected), Modifier.size(17.dp), tint = Ink)
             }
         }
         Column(Modifier.align(Alignment.BottomStart).padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -334,16 +337,18 @@ private fun WorldCarouselStep(
     onUseWorld: () -> Unit,
 ) {
     var mapError by remember { mutableStateOf<String?>(null) }
+    val previewDescription = stringResource(R.string.onboarding_preview_description, world.title)
+    val positionDescription = stringResource(R.string.onboarding_world_position, index + 1, worlds.size)
     Column(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Select map to", fontFamily = DisplayFont, fontSize = 27.sp, lineHeight = 30.sp, color = Cream,
+            Text(stringResource(R.string.onboarding_select_map), fontFamily = DisplayFont, fontSize = 27.sp, lineHeight = 30.sp, color = Cream,
                 modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-            Text("start", fontFamily = DisplayFont, fontSize = 40.sp, lineHeight = 43.sp, color = Cream,
+            Text(stringResource(R.string.onboarding_start), fontFamily = DisplayFont, fontSize = 40.sp, lineHeight = 43.sp, color = Cream,
                 modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }
         Box(
             Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(16.dp))
-                .semantics { contentDescription = "${world.title} themed map preview" }
+                .semantics { contentDescription = previewDescription }
                 .pointerInput(world, worlds.size) {
                     var drag = 0f
                     detectHorizontalDragGestures(
@@ -368,13 +373,13 @@ private fun WorldCarouselStep(
                     Icon(Icons.Default.LocationOn, null, Modifier.size(19.dp), tint = world.accent)
                     Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                         Text("KOLKATA", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Cream, letterSpacing = 1.sp)
-                        Text("${world.title} · map preview", fontSize = 10.sp, color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(stringResource(R.string.onboarding_preview_label, world.title), fontSize = 10.sp, color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
             if (mapError != null) {
                 Surface(color = Color(0xE5101518), shape = RoundedCornerShape(10.dp), modifier = Modifier.align(Alignment.Center).padding(18.dp)) {
-                    Text("Map preview needs an internet connection", Modifier.padding(14.dp), color = Cream, fontSize = 13.sp)
+                    Text(stringResource(R.string.onboarding_preview_connection), Modifier.padding(14.dp), color = Cream, fontSize = 13.sp)
                 }
             }
             Row(
@@ -383,14 +388,14 @@ private fun WorldCarouselStep(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 IconButton(onClick = { onMove(-1) }, modifier = Modifier.size(48.dp).background(Color(0xCC111923), CircleShape)) {
-                    Icon(Icons.Default.ChevronLeft, "Previous world", tint = Cream)
+                    Icon(Icons.Default.ChevronLeft, stringResource(R.string.onboarding_previous), tint = Cream)
                 }
                 Column(Modifier.weight(1f).padding(horizontal = 10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(world.title, fontFamily = worldFont(world), fontSize = 24.sp, lineHeight = 28.sp, color = Cream, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(world.inspiration(), color = world.accent, fontSize = 11.sp, lineHeight = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 IconButton(onClick = { onMove(1) }, modifier = Modifier.size(48.dp).background(Color(0xCC111923), CircleShape)) {
-                    Icon(Icons.Default.ChevronRight, "Next world", tint = Cream)
+                    Icon(Icons.Default.ChevronRight, stringResource(R.string.onboarding_next), tint = Cream)
                 }
             }
         }
@@ -400,7 +405,7 @@ private fun WorldCarouselStep(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
-                Modifier.semantics { contentDescription = "World ${index + 1} of ${worlds.size}" },
+                Modifier.semantics { contentDescription = positionDescription },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 worlds.forEachIndexed { dotIndex, _ ->
@@ -419,7 +424,7 @@ private fun WorldCarouselStep(
             shape = CircleShape,
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 10.dp, pressedElevation = 3.dp),
             colors = ButtonDefaults.buttonColors(containerColor = WaypointColors.accent, contentColor = Color(0xFF182317)),
-        ) { Text("Continue", fontWeight = FontWeight.SemiBold); Spacer(Modifier.width(8.dp)); Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(19.dp)) }
+        ) { Text(stringResource(R.string.onboarding_continue), fontWeight = FontWeight.SemiBold); Spacer(Modifier.width(8.dp)); Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(19.dp)) }
     }
 }
 
@@ -440,24 +445,24 @@ private fun LocationStep(
             Icon(Icons.Default.LocationOn, null, Modifier.align(Alignment.Center).size(72.dp), tint = world.accent)
         }
         Column(Modifier.padding(horizontal = 4.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-            Text("Your location, when you need it.", fontFamily = DisplayFont, fontSize = 34.sp, lineHeight = 37.sp, color = Cream)
-            Text("Location shows where you are and lets Waypoint build a route from your current position. You can still explore the maps without it.", color = Muted, fontSize = 14.sp, lineHeight = 20.sp)
+            Text(stringResource(R.string.onboarding_location_title), fontFamily = DisplayFont, fontSize = 34.sp, lineHeight = 37.sp, color = Cream)
+            Text(stringResource(R.string.onboarding_location_help), color = Muted, fontSize = 14.sp, lineHeight = 20.sp)
             if (permissionDenied && !hasPermission) {
-                Text("Location is still off. You can enable it in Android settings, or continue without it.", color = world.accent, fontSize = 13.sp, lineHeight = 18.sp)
+                Text(stringResource(R.string.onboarding_location_off), color = world.accent, fontSize = 13.sp, lineHeight = 18.sp)
             }
         }
         if (hasPermission) {
             Button(onClick = onContinue, modifier = Modifier.fillMaxWidth().heightIn(min = 58.dp), shape = CircleShape, elevation = ButtonDefaults.buttonElevation(defaultElevation = 10.dp, pressedElevation = 3.dp), colors = ButtonDefaults.buttonColors(containerColor = WaypointColors.accent, contentColor = Color(0xFF182317))) {
-                Text("Open your map", fontWeight = FontWeight.SemiBold); Spacer(Modifier.width(8.dp)); Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(19.dp))
+                Text(stringResource(R.string.onboarding_open_map), fontWeight = FontWeight.SemiBold); Spacer(Modifier.width(8.dp)); Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(19.dp))
             }
         } else {
             Button(onClick = onAllow, modifier = Modifier.fillMaxWidth().heightIn(min = 58.dp), shape = CircleShape, elevation = ButtonDefaults.buttonElevation(defaultElevation = 10.dp, pressedElevation = 3.dp), colors = ButtonDefaults.buttonColors(containerColor = WaypointColors.accent, contentColor = Color(0xFF182317))) {
-                Text("Allow location", fontWeight = FontWeight.SemiBold); Spacer(Modifier.width(8.dp)); Icon(Icons.Default.LocationOn, null, Modifier.size(19.dp))
+                Text(stringResource(R.string.onboarding_allow_location), fontWeight = FontWeight.SemiBold); Spacer(Modifier.width(8.dp)); Icon(Icons.Default.LocationOn, null, Modifier.size(19.dp))
             }
             if (permissionDenied) {
-                TextButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Open Android settings", color = Cream) }
+                TextButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(stringResource(R.string.onboarding_android_settings), color = Cream) }
             }
-            TextButton(onClick = onContinue, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Continue without location", color = Muted) }
+            TextButton(onClick = onContinue, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(stringResource(R.string.onboarding_without_location), color = Muted) }
         }
         Spacer(Modifier.height(2.dp))
     }

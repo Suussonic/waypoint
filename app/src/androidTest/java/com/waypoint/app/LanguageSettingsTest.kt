@@ -2,8 +2,12 @@ package com.waypoint.app
 
 import android.content.Intent
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import com.waypoint.app.offline.OfflineMapsPanel
+import com.waypoint.app.offline.OfflineMapsState
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -17,6 +21,78 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class LanguageSettingsTest {
+    @Test fun remainingScreensFollowTheAppLanguageWithoutTranslatingPlaceNames() {
+        val inst = InstrumentationRegistry.getInstrumentation()
+        val context = inst.targetContext
+        val device = UiDevice.getInstance(inst)
+        val place = Place("locale-fixture", "Central station", "", Coordinate(48.85, 2.35))
+        val planner = object : TransitPlanner {
+            override suspend fun plan(from: Coordinate, to: Coordinate): List<TransitItinerary> = emptyList()
+        }
+        ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)).use { scenario ->
+            var previous = LocaleListCompat.getEmptyLocaleList()
+            scenario.onActivity { previous = AppCompatDelegate.getApplicationLocales() }
+            var screen = 0
+            fun show(content: @Composable () -> Unit) {
+                val id = screen++
+                scenario.onActivity { activity ->
+                    activity.setContent {
+                        key(id) { QuestTheme(World.NIGHT_CITY) { content() } }
+                    }
+                }
+                inst.waitForIdleSync()
+            }
+            fun visible(text: String) {
+                assertTrue("Missing localized screen text: $text", device.wait(Until.hasObject(By.text(text)), 10000))
+            }
+            try {
+                for (language in listOf("fr", "en")) {
+                    inst.runOnMainSync { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language)) }
+                    inst.waitForIdleSync()
+                    val french = language == "fr"
+                    show { FeedbackSheet(World.NIGHT_CITY, {}, {}) }
+                    visible(if (french) "Envoyer un avis" else "Send feedback")
+                    visible(if (french) "Signaler un bug" else "Bug report")
+                    visible(if (french) "Proposer une fonctionnalité" else "Feature request")
+                    show { OfflineMapsPanel(OfflineMapsState(), false, {}, {}, {}, {}, {}) }
+                    visible(if (french) "Cartes hors ligne" else "Offline maps")
+                    visible(if (french) "Aucune zone enregistrée" else "Nothing saved yet")
+                    show {
+                        NearbyPlacesSheet(
+                            state = NavState(world = World.NIGHT_CITY), center = null,
+                            googleEnabled = false, savedIds = emptySet(), onGoogleEnabledChange = {},
+                            commonsPhotosEnabled = false, onCommonsPhotosEnabledChange = {},
+                            onPlacesChanged = {}, onLocate = {}, onSelect = {}, onSave = {}, onClose = {},
+                        )
+                    }
+                    visible(if (french) "Explorer les environs" else "Explore nearby")
+                    assertTrue(device.wait(Until.hasObject(By.desc(if (french) "Fermer les lieux à proximité" else "Close nearby places")), 10000))
+                    show { TransitSheet(place, null, World.NIGHT_CITY, planner) {} }
+                    visible(if (french) "Bus et transports" else "Bus & transit")
+                    visible(if (french) "Vers Central station" else "To Central station")
+                    visible(if (french) "En attente de votre position. Activez le GPS pour prévoir un trajet en bus ou en train."
+                        else "Waiting for your location. Turn on GPS to plan a bus or train trip.")
+                    show {
+                        DestinationCard(
+                            NavState(world = World.NIGHT_CITY, selected = place, mode = TravelMode.MOTORCYCLE, routing = true),
+                            {}, {}, {}, {}, {}, {}, {},
+                        )
+                    }
+                    visible("Central station")
+                    visible(if (french) "Recherche d’un itinéraire à moto…" else "Finding a motorcycle route…")
+                    if (french) scenario.onActivity {
+                        assertEquals("0 avis", it.resources.getQuantityString(R.plurals.nearby_reviews, 0, 0))
+                        assertEquals("1 avis", it.resources.getQuantityString(R.plurals.nearby_reviews, 1, 1))
+                        assertEquals("2 avis", it.resources.getQuantityString(R.plurals.nearby_reviews, 2, 2))
+                        assertEquals("0 quête terminée", it.resources.getQuantityString(R.plurals.quest_celebration_count, 0, 0))
+                    }
+                }
+            } finally {
+                inst.runOnMainSync { AppCompatDelegate.setApplicationLocales(previous) }
+            }
+        }
+    }
+
     @Test fun journeyPageDisplaysFrenchIncludingUnlockedRewards() {
         val inst = InstrumentationRegistry.getInstrumentation()
         val context = inst.targetContext

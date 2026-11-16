@@ -44,7 +44,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -72,6 +75,19 @@ import okhttp3.Request
 import java.util.concurrent.TimeUnit
 import java.net.URI
 import java.util.Locale
+
+@Composable
+private fun nearbyCategoryTitle(category: NearbyCategory): String = stringResource(when (category) {
+    NearbyCategory.ALL -> R.string.nearby_category_all
+    NearbyCategory.FOOD -> R.string.nearby_category_food
+    NearbyCategory.COFFEE -> R.string.nearby_category_coffee
+    NearbyCategory.PARKS -> R.string.nearby_category_parks
+    NearbyCategory.CULTURE -> R.string.nearby_category_culture
+    NearbyCategory.SHOPPING -> R.string.nearby_category_shopping
+    NearbyCategory.FUEL -> R.string.nearby_category_fuel
+    NearbyCategory.STAYS -> R.string.nearby_category_stays
+    NearbyCategory.ESSENTIALS -> R.string.nearby_category_essentials
+})
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,6 +128,9 @@ internal fun NearbyPlacesSheet(
     var gallery by remember { mutableStateOf<List<String>>(emptyList()) }
     var galleryLoading by remember { mutableStateOf(false) }
     val uriHandler = LocalUriHandler.current
+    val nearbyError by rememberUpdatedState(stringResource(R.string.nearby_load_error))
+    val googleNoMatch by rememberUpdatedState(stringResource(R.string.nearby_google_no_match))
+    val googleFailure by rememberUpdatedState(stringResource(R.string.nearby_google_error))
 
     LaunchedEffect(initialSelection?.id) {
         selected = initialSelection
@@ -130,12 +149,12 @@ internal fun NearbyPlacesSheet(
                 val found = placesRepository.nearby(center, category)
                 results = found
                 onPlacesChanged(found)
-                if (found.isEmpty()) error = "No ${category.title.lowercase()} found within 6 km. Try another category."
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 results = emptyList()
                 onPlacesChanged(emptyList())
-                error = e.message?.take(160) ?: "Nearby places could not be loaded. Check your connection and try again."
+                android.util.Log.w("NearbyPlaces", "Nearby lookup failed: ${e.javaClass.simpleName}")
+                error = nearbyError
             } finally {
                 loading = false
             }
@@ -155,10 +174,11 @@ internal fun NearbyPlacesSheet(
         googleLoading = true
         try {
             googleDetails = googleLookup.details(place)
-            if (googleDetails == null) googleError = "Google did not return a confidently matching listing. OpenStreetMap place data is still available."
+            if (googleDetails == null) googleError = googleNoMatch
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
-            googleError = e.message?.take(160) ?: "Google details could not be loaded. Try again later."
+            android.util.Log.w("NearbyPlaces", "Google lookup failed: ${e.javaClass.simpleName}")
+            googleError = googleFailure
         } finally {
             googleLoading = false
         }
@@ -201,7 +221,7 @@ internal fun NearbyPlacesSheet(
                         FilterChip(
                             selected = category == option,
                             onClick = { category = option },
-                            label = { Text(option.title, fontFamily = hudFont(world), maxLines = 1) },
+                            label = { Text(nearbyCategoryTitle(option), fontFamily = hudFont(world), maxLines = 1) },
                             modifier = Modifier.heightIn(min = 48.dp),
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = palette.accent,
@@ -222,7 +242,7 @@ internal fun NearbyPlacesSheet(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Icon(Icons.Default.Info, null, Modifier.size(16.dp), tint = palette.accent)
                         Text(
-                            "Suggestions run in Search while you type. Here, Google loads details and photos only when you open a place, and receives that place’s name and coordinates.",
+                            stringResource(R.string.nearby_google_intro),
                             fontSize = 12.sp,
                             color = palette.muted,
                         )
@@ -230,16 +250,16 @@ internal fun NearbyPlacesSheet(
                 }
                 when {
                     center == null -> NearbyEmpty(
-                        world, palette, Icons.Default.Place, "Map area unavailable",
-                        "Move the map to an area, or use your location to explore nearby places.",
+                        world, palette, Icons.Default.Place, stringResource(R.string.nearby_area_unavailable),
+                        stringResource(R.string.nearby_move_map),
                         onAction = onLocate,
                     )
                     loading -> NearbyLoadingRows(world, palette)
-                    error != null && results.isEmpty() -> NearbyEmpty(
+                    results.isEmpty() -> NearbyEmpty(
                         world, palette, if (category == NearbyCategory.ALL) Icons.Default.CloudOff else Icons.Default.Explore,
-                        if (error?.startsWith("No ") == true) "Nothing nearby yet" else "Nearby places are unavailable",
-                        error ?: "Try again.",
-                        onAction = if (error?.startsWith("No ") == true) null else ({ refresh++ }),
+                        stringResource(if (error == null) R.string.nearby_empty_title else R.string.nearby_unavailable),
+                        error ?: stringResource(R.string.nearby_no_results),
+                        onAction = if (error == null) null else ({ refresh++ }),
                     )
                     else -> LazyColumn(
                         Modifier.fillMaxWidth().weight(1f, fill = false),
@@ -261,7 +281,7 @@ internal fun NearbyPlacesSheet(
                     }
                 }
                 Text(
-                    "Places: Overture · AllThePlaces · OpenStreetMap. Optional Wikimedia Commons photos are credited individually when enabled.",
+                    stringResource(R.string.nearby_attribution),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
                     color = palette.muted, fontSize = 11.sp, lineHeight = 15.sp,
                 )
@@ -295,19 +315,20 @@ internal fun NearbyPlacesSheet(
 @Composable
 private fun NearbyHeader(state: NavState, center: Coordinate?, p: HudPalette, onClose: () -> Unit) {
     val locationLabel = when {
-        center == null -> "Map area unavailable"
-        state.fix != null && distance(center, state.fix) <= 6_000.0 && state.city.isNotBlank() -> "Around ${state.city}"
-        state.fix != null && distance(center, state.fix) <= 6_000.0 -> "Around your location"
-        else -> "Around the map view"
+        center == null -> stringResource(R.string.nearby_area_unavailable)
+        state.fix != null && distance(center, state.fix) <= 6_000.0 && state.city.isNotBlank() -> stringResource(R.string.nearby_around_city, state.city)
+        state.fix != null && distance(center, state.fix) <= 6_000.0 -> stringResource(R.string.nearby_around_location)
+        else -> stringResource(R.string.nearby_around_map)
     }
+    val closeDescription = stringResource(R.string.nearby_close)
     Row(Modifier.fillMaxWidth().padding(start = 14.dp, end = 18.dp, top = 10.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Surface(onClick = onClose, modifier = Modifier.size(48.dp).semantics { contentDescription = "Close nearby places" },
+        Surface(onClick = onClose, modifier = Modifier.size(48.dp).semantics { contentDescription = closeDescription },
             color = p.panel.copy(alpha = .5f), contentColor = p.foreground, shape = hudShape(state.world), border = hudBorder(state.world)) {
             Box(contentAlignment = Alignment.Center) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
         }
         Column(Modifier.weight(1f)) {
-            Text("Explore nearby", fontFamily = worldFont(state.world), fontWeight = FontWeight.Bold,
+            Text(stringResource(R.string.nearby_explore), fontFamily = worldFont(state.world), fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.headlineSmall, color = p.foreground)
             Text(locationLabel,
                 fontFamily = hudFont(state.world), color = p.muted, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -322,15 +343,16 @@ private fun PlacePhotoPrivacyRow(
     p: HudPalette,
     onEnabledChange: (Boolean) -> Unit,
 ) {
+    val photoDescription = stringResource(R.string.nearby_commons_accessibility)
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 3.dp).heightIn(min = 60.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("Wikimedia Commons photos", color = p.foreground, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.nearby_commons), color = p.foreground, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             Text(
-                "${if (enabled) "On" else "Off by default"}. Photo searches send place coordinates and your network address to Wikimedia Commons.",
+                stringResource(if (enabled) R.string.nearby_commons_on else R.string.nearby_commons_off),
                 color = p.muted,
                 fontSize = 11.sp,
                 lineHeight = 15.sp,
@@ -340,7 +362,7 @@ private fun PlacePhotoPrivacyRow(
             checked = enabled,
             onCheckedChange = onEnabledChange,
             modifier = Modifier.heightIn(min = 48.dp).semantics {
-                contentDescription = "Allow Wikimedia Commons photo searches; shares place coordinates and network address"
+                contentDescription = photoDescription
             },
         )
     }
@@ -384,7 +406,7 @@ private fun NearbyPlaceRow(
             Text(place.kind, color = p.accent, fontFamily = hudFont(state.world), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (place.address.isNotBlank()) Text(place.address, color = p.muted, fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                Text(center?.let { formatDistance(distance(it, place.point), state.imperial) } ?: "Nearby",
+                Text(center?.let { formatDistance(distance(it, place.point), state.imperial) } ?: stringResource(R.string.nav_nearby),
                     color = p.muted, fontSize = 11.sp)
                 Text("·", color = p.muted)
                 Text(place.origin, color = p.muted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -392,11 +414,11 @@ private fun NearbyPlaceRow(
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = onRoute, modifier = Modifier.heightIn(min = 44.dp), contentPadding = PaddingValues(horizontal = 8.dp)) {
                     Icon(Icons.Default.Directions, null, Modifier.size(16.dp), tint = p.accent)
-                    Spacer(Modifier.width(4.dp)); Text("Route", color = p.accent, fontSize = 12.sp)
+                    Spacer(Modifier.width(4.dp)); Text(stringResource(R.string.nearby_route), color = p.accent, fontSize = 12.sp)
                 }
                 IconButton(onClick = onSave, modifier = Modifier.size(44.dp)) {
                     Icon(if (saved) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
-                        if (saved) "Remove ${place.name} from saved places" else "Save ${place.name}", tint = if (saved) p.accent else p.muted)
+                        stringResource(if (saved) R.string.nearby_unsave else R.string.nearby_save, place.name), tint = if (saved) p.accent else p.muted)
                 }
             }
         }
@@ -427,16 +449,19 @@ private fun NearbyPlaceDetail(
     onOpenUrl: (String) -> Unit,
 ) {
     val p = palette
+    val backDescription = stringResource(R.string.nearby_back)
+    val googleDescription = stringResource(R.string.nearby_google_enable)
+    val locale = LocalConfiguration.current.locales[0]
     val dist = center?.let { formatDistance(distance(it, place.point), state.imperial) }
     LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(bottom = 20.dp)) {
         item {
             Row(Modifier.fillMaxWidth().padding(start = 14.dp, end = 18.dp, top = 7.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Surface(onClick = onBack, modifier = Modifier.size(48.dp).semantics { contentDescription = "Back to nearby places" },
+                Surface(onClick = onBack, modifier = Modifier.size(48.dp).semantics { contentDescription = backDescription },
                     color = p.panel, contentColor = p.foreground, shape = hudShape(state.world), border = hudBorder(state.world)) {
                     Box(contentAlignment = Alignment.Center) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
                 }
                 Spacer(Modifier.width(12.dp))
-                Text("Place details", fontFamily = hudFont(state.world), fontSize = 16.sp, color = p.muted)
+                Text(stringResource(R.string.nearby_details), fontFamily = hudFont(state.world), fontSize = 16.sp, color = p.muted)
             }
         }
         item {
@@ -448,7 +473,7 @@ private fun NearbyPlaceDetail(
             when {
                 displayPhotos.isNotEmpty() -> LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(displayPhotos.take(8), key = { it }) { url ->
-                        RemotePlaceImage(url, "${details?.name ?: place.name} photo", Modifier.width(260.dp).height(178.dp).clip(hudShape(state.world))) {
+                        RemotePlaceImage(url, stringResource(R.string.nearby_photo, details?.name ?: place.name), Modifier.width(260.dp).height(178.dp).clip(hudShape(state.world))) {
                             PlaceImageFallback(state.world, place.group, Modifier.fillMaxSize())
                         }
                     }
@@ -464,7 +489,7 @@ private fun NearbyPlaceDetail(
                 }
             }
             if (details != null && displayPhotos.isNotEmpty()) {
-                Text("Photos · Google Maps", modifier = Modifier.padding(start = 20.dp, top = 5.dp), color = p.muted, fontSize = 11.sp)
+                Text(stringResource(R.string.nearby_google_photos), modifier = Modifier.padding(start = 20.dp, top = 5.dp), color = p.muted, fontSize = 11.sp)
             }
             PlacePhotoPrivacyRow(
                 enabled = commonsPhotosEnabled,
@@ -480,9 +505,9 @@ private fun NearbyPlaceDetail(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                     details?.rating?.let { rating ->
                         Icon(Icons.Default.Star, null, Modifier.size(18.dp), tint = p.accent)
-                        Text(String.format(java.util.Locale.ROOT, "%.1f", rating), color = p.foreground, fontWeight = FontWeight.SemiBold)
+                        Text(String.format(locale, "%.1f", rating), color = p.foreground, fontWeight = FontWeight.SemiBold)
                     }
-                    details?.reviewCount?.let { count -> Text("· ${"%,d".format(count)} reviews", color = p.muted, fontSize = 13.sp) }
+                    details?.reviewCount?.let { count -> Text("· " + pluralStringResource(R.plurals.nearby_reviews, count, count), color = p.muted, fontSize = 13.sp) }
                     details?.price?.let { Text("· $it", color = p.muted, fontSize = 13.sp) }
                     dist?.let { Text("· $it", color = p.muted, fontSize = 13.sp) }
                 }
@@ -492,11 +517,11 @@ private fun NearbyPlaceDetail(
             Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(onClick = onRoute, modifier = Modifier.weight(1f).heightIn(min = 52.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = p.accent, contentColor = p.panel), shape = hudShape(state.world)) {
-                    Icon(Icons.Default.Directions, null, Modifier.size(19.dp)); Spacer(Modifier.width(7.dp)); Text("Directions", fontFamily = hudFont(state.world), fontWeight = FontWeight.Bold)
+                    Icon(Icons.Default.Directions, null, Modifier.size(19.dp)); Spacer(Modifier.width(7.dp)); Text(stringResource(R.string.nearby_directions), fontFamily = hudFont(state.world), fontWeight = FontWeight.Bold)
                 }
                 OutlinedButton(onClick = onSave, modifier = Modifier.heightIn(min = 52.dp), shape = hudShape(state.world),
                     border = androidx.compose.foundation.BorderStroke(1.dp, p.accent), colors = ButtonDefaults.outlinedButtonColors(contentColor = p.accent)) {
-                    Icon(if (saved) Icons.Default.Bookmark else Icons.Default.BookmarkBorder, if (saved) "Saved" else "Save place")
+                    Icon(if (saved) Icons.Default.Bookmark else Icons.Default.BookmarkBorder, stringResource(if (saved) R.string.nav_saved else R.string.nearby_save_place))
                 }
             }
         }
@@ -506,51 +531,51 @@ private fun NearbyPlaceDetail(
                     Text(status, color = if (status.contains("closed", true)) Color(0xFFFF9A86) else p.accent,
                         fontFamily = hudFont(state.world), fontWeight = FontWeight.SemiBold)
                 }
-                Text(details?.address?.ifBlank { null } ?: place.address.ifBlank { "Address not listed" }, color = p.foreground, style = MaterialTheme.typography.bodyMedium)
+                Text(details?.address?.ifBlank { null } ?: place.address.ifBlank { stringResource(R.string.nearby_no_address) }, color = p.foreground, style = MaterialTheme.typography.bodyMedium)
                 details?.hours?.takeIf { it.isNotEmpty() }?.let { hours ->
-                    Text("Hours", color = p.accent, fontFamily = hudFont(state.world), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.nearby_hours), color = p.accent, fontFamily = hudFont(state.world), fontWeight = FontWeight.Bold)
                     hours.forEach { Text(it, color = p.muted, fontSize = 13.sp, lineHeight = 18.sp) }
-                } ?: place.hours?.takeIf(String::isNotBlank)?.let { hours -> Text("OpenStreetMap hours · $hours", color = p.muted, fontSize = 13.sp) }
+                } ?: place.hours?.takeIf(String::isNotBlank)?.let { hours -> Text(stringResource(R.string.nearby_osm_hours, hours), color = p.muted, fontSize = 13.sp) }
                 details?.phone?.let { phone ->
                     TextButton(onClick = { onOpenUrl("tel:${Uri.encode(phone)}") }, modifier = Modifier.heightIn(min = 48.dp), contentPadding = PaddingValues(horizontal = 4.dp)) {
                         Icon(Icons.Default.Call, null, tint = p.accent); Spacer(Modifier.width(8.dp)); Text(phone, color = p.accent)
                     }
-                } ?: place.phone?.let { Text("Phone · $it", color = p.muted, fontSize = 13.sp) }
+                } ?: place.phone?.let { Text(stringResource(R.string.nearby_phone, it), color = p.muted, fontSize = 13.sp) }
                 details?.website?.let { website ->
                     TextButton(onClick = { onOpenUrl(website) }, modifier = Modifier.heightIn(min = 48.dp), contentPadding = PaddingValues(horizontal = 4.dp)) {
-                        Icon(Icons.Default.Language, null, tint = p.accent); Spacer(Modifier.width(8.dp)); Text("Website", color = p.accent)
+                        Icon(Icons.Default.Language, null, tint = p.accent); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.nearby_website), color = p.accent)
                     }
-                } ?: place.website?.let { Text("Website · $it", color = p.muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
-                Text("Place record · ${place.origin}", color = p.muted, fontSize = 11.sp)
+                } ?: place.website?.let { Text(stringResource(R.string.nearby_website_url, it), color = p.muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                Text(stringResource(R.string.nearby_record, place.origin), color = p.muted, fontSize = 11.sp)
             }
         }
         item {
             HorizontalDivider(Modifier.padding(horizontal = 18.dp), color = p.muted.copy(alpha = .25f))
             Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                Text("Google search, details and photos", color = p.foreground, fontFamily = hudFont(state.world), fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.nearby_google_title), color = p.foreground, fontFamily = hudFont(state.world), fontWeight = FontWeight.Bold)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Column(Modifier.weight(1f)) {
-                        Text(if (googleEnabled) "Enabled for places you open" else "Off until you choose to enable it",
+                        Text(stringResource(if (googleEnabled) R.string.nearby_google_enabled else R.string.nearby_google_disabled),
                             color = p.muted, fontSize = 12.sp)
-                        Text("Google receives search text and a location bias while you type, then this place name and coordinates when opened. Google also receives your network address. No Places API key or Places API billing is used.",
+                        Text(stringResource(R.string.nearby_google_privacy),
                             color = p.muted, fontSize = 11.sp, lineHeight = 15.sp)
                     }
                     Switch(checked = googleEnabled, onCheckedChange = onGoogleEnabledChange,
-                        modifier = Modifier.semantics { contentDescription = "Enable Google search, place details and photos" })
+                        modifier = Modifier.semantics { contentDescription = googleDescription })
                 }
                 if (!googleEnabled) {
-                    Text("Turn this on for name suggestions while typing, and to look up ratings, review counts, live status, weekly hours and photos when you open a place. These are undocumented Google web endpoints, not the supported Places API.", color = p.muted, fontSize = 12.sp, lineHeight = 17.sp)
+                    Text(stringResource(R.string.nearby_google_help), color = p.muted, fontSize = 12.sp, lineHeight = 17.sp)
                 } else if (loading) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.heightIn(min = 44.dp)) {
                         CircularProgressIndicator(Modifier.size(18.dp), color = p.accent, strokeWidth = 2.dp)
-                        Text("Looking up this place…", color = p.muted, fontSize = 12.sp)
+                        Text(stringResource(R.string.nearby_google_loading), color = p.muted, fontSize = 12.sp)
                     }
                 } else if (error != null) {
                     Text(error, color = p.muted, fontSize = 12.sp)
                 } else if (details != null) {
-                    Text("Live listing details from Google Maps.", color = p.muted, fontSize = 12.sp)
+                    Text(stringResource(R.string.nearby_google_listing), color = p.muted, fontSize = 12.sp)
                     TextButton(onClick = { onOpenUrl(details.mapUrl) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text("Open in Google Maps", color = p.accent)
+                        Text(stringResource(R.string.nearby_google_open), color = p.accent)
                     }
                 }
             }
@@ -586,7 +611,7 @@ private fun NearbyEmpty(world: World, p: HudPalette, icon: androidx.compose.ui.g
         Text(title, fontFamily = worldFont(world), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge, color = p.foreground)
         Text(message, fontFamily = hudFont(world), color = p.muted, style = MaterialTheme.typography.bodyMedium)
         if (onAction != null) OutlinedButton(onClick = onAction, modifier = Modifier.heightIn(min = 48.dp), shape = hudShape(world)) {
-            Icon(Icons.Default.Refresh, null); Spacer(Modifier.width(7.dp)); Text("Try again")
+            Icon(Icons.Default.Refresh, null); Spacer(Modifier.width(7.dp)); Text(stringResource(R.string.transit_retry))
         }
     }
 }
@@ -601,7 +626,7 @@ private fun NearbyLoadingRows(world: World, p: HudPalette) {
                     Box(Modifier.fillMaxWidth(.7f).height(17.dp).clip(RoundedCornerShape(5.dp)).background(p.foreground.copy(alpha = .1f)))
                     Box(Modifier.fillMaxWidth(.4f).height(13.dp).clip(RoundedCornerShape(5.dp)).background(p.accent.copy(alpha = .18f)))
                     Box(Modifier.fillMaxWidth(.9f).height(13.dp).clip(RoundedCornerShape(5.dp)).background(p.foreground.copy(alpha = .07f)))
-                    Text(if (index == 0) "Reading the regional place archive…" else " ", color = p.muted, fontSize = 11.sp)
+                    Text(if (index == 0) stringResource(R.string.nearby_loading) else " ", color = p.muted, fontSize = 11.sp)
                 }
             }
             if (index < 3) HorizontalDivider(color = p.muted.copy(alpha = .18f))

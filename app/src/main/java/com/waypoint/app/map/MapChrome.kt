@@ -130,9 +130,10 @@ internal fun WorldPill(state: NavState, onClick: () -> Unit, modifier: Modifier 
     val world = state.world
     val p = hudPalette(world)
     val size = state.hudSize
+    val worldDescription = stringResource(R.string.map_change_world, world.title)
     Surface(
         onClick = onClick,
-        modifier = modifier.heightIn(min = hudToolTargetSize(size)).semantics { contentDescription = "Change world, ${world.title}" },
+        modifier = modifier.heightIn(min = hudToolTargetSize(size)).semantics { contentDescription = worldDescription },
         color = p.panel,
         contentColor = p.foreground,
         shape = hudShape(world),
@@ -166,10 +167,18 @@ internal fun WorldPill(state: NavState, onClick: () -> Unit, modifier: Modifier 
 internal fun RoutePreviewHeader(state: NavState, onBack: () -> Unit, onMode: (TravelMode) -> Unit, modifier: Modifier = Modifier) {
     val world = state.world
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        ChromeButton(world, Icons.AutoMirrored.Filled.ArrowBack, "Close route preview", onBack)
+        ChromeButton(world, Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.map_close_preview), onBack)
         ModeSegments(state.mode, onMode, world, Modifier.weight(1f))
     }
 }
+
+@Composable
+internal fun travelModeLabel(mode: TravelMode): String = stringResource(when (mode) {
+    TravelMode.CAR -> R.string.map_mode_car
+    TravelMode.MOTORCYCLE -> R.string.map_mode_motorcycle
+    TravelMode.BICYCLE -> R.string.map_mode_bicycle
+    TravelMode.WALK -> R.string.map_mode_walk
+})
 
 @Composable
 internal fun ModeSegments(selected: TravelMode, onSelect: (TravelMode) -> Unit, world: World, modifier: Modifier = Modifier) {
@@ -178,10 +187,11 @@ internal fun ModeSegments(selected: TravelMode, onSelect: (TravelMode) -> Unit, 
         Row(Modifier.fillMaxSize().selectableGroup()) {
             TravelMode.entries.forEach { mode ->
                 val active = selected == mode
+                val modeDescription = travelModeLabel(mode)
                 androidx.compose.foundation.layout.Box(
                     Modifier.weight(1f).fillMaxHeight()
                         .selectable(selected = active, role = Role.RadioButton, onClick = { onSelect(mode) })
-                        .semantics { contentDescription = mode.label },
+                        .semantics { contentDescription = modeDescription },
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp)) {

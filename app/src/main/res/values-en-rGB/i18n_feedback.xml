@@ -1,0 +1,20 @@
+<resources>
+    <string name="community_discord">Join the Waypoint Discord</string>
+    <string name="community_discord_summary">A channel for each world, release notes and bug reports</string>
+    <string name="community_support">Support Waypoint on Ko-fi</string>
+    <string name="community_support_summary">Optional tip · opens Ko-fi in your browser</string>
+    <string name="feedback_title">Send feedback</string>
+    <string name="feedback_summary">Open a GitHub issue in your words</string>
+    <string name="feedback_back">Back to settings</string>
+    <string name="feedback_intro">Tell us what happened or what you would like to see. Your report opens on GitHub for you to review and submit.</string>
+    <string name="feedback_bug">Bug report</string>
+    <string name="feedback_feature">Feature request</string>
+    <string name="feedback_other">Other</string>
+    <string name="feedback_issue_title">Issue title</string>
+    <string name="feedback_details">Your experience or idea</string>
+    <string name="feedback_privacy">Only your words, the selected world and the app version are added. Your location and routes are not attached.</string>
+    <string name="feedback_too_long">This report is too long for a GitHub link. Shorten it, then try again.</string>
+    <string name="feedback_browser_error">No app can open GitHub. Install a browser and try again.</string>
+    <string name="feedback_review">Review issue on GitHub</string>
+    <string name="feedback_browse">Browse existing issues</string>
+</resources>
