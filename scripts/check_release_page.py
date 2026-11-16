@@ -104,7 +104,12 @@ def validate_release_site(docs_root: Path, version: str | None = None) -> list[s
         errors.extend(validate_document(page, docs_root))
     if versioned.is_file():
         source = versioned.read_text(encoding="utf-8")
-        for required in ("Smoother motion on car displays", "Zoom where you choose", "Credits for the fixes"):
+        required_by_version = {
+            "2.7.0": ("Smoother motion on car displays", "Zoom where you choose", "Credits for the fixes"),
+            "2.7.5": ("Three vehicle models for the phone map", "Keep 2D or 3D tilt in your control", "Credits for the feature"),
+        }
+        required_sections = required_by_version.get(version, (f"Waypoint {version}",))
+        for required in required_sections:
             if required not in source:
                 errors.append(f"{versioned.name} is missing the '{required}' release section")
     if current.is_file():

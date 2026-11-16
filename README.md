@@ -30,18 +30,18 @@
 
 ---
 
-## What's new in 2.7.0
+## What's new in 2.7.5
 
-- **Map symbols are easier to read:** increased place icon size consistently across all 38 worlds.
-- **Navigation pitch stays put:** speed-based zoom no longer changes the selected 2D/3D camera pitch. Landscape guidance keeps speed and the posted speed limit visible, including when the vehicle is stopped.
-- **Optional support:** find a direct Ko-fi link in Settings and on the project pages. Payment details stay with Ko-fi.
+- **Choose your 3D position cursor:** pick Car, Motorcycle or Bicycle for the phone map. Each model follows travel direction while map tilt stays in your control.
+- **Clearer map controls:** Search, Nearby, Map info, Map tilt, Locate and Settings are easier to identify on compact screens.
+- **Android Auto keeps its standard marker:** 3D vehicle models apply to the phone map.
 - **Release journey:** [follow Waypoint from its first public release to the latest](docs/milestones.html), with the first APK download count and the current cumulative APK total. Counts represent download events, not unique users.
 
 [Full release notes →](docs/releases/current.html)
 
-## A 3D cursor is coming to the phone map
+## Choose your 3D cursor
 
-An upcoming update adds three bundled position cursors: **Car**, **Motorcycle** and **Bicycle**. The model follows your travel direction while map tilt stays a separate control. Android Auto keeps its standard marker.
+Choose a bundled **Car**, **Motorcycle** or **Bicycle** for the phone map. The model follows your travel direction while map tilt stays a separate control. Android Auto keeps its standard marker.
 
 <table>
   <thead><tr><th>Car</th><th>Motorcycle</th><th>Bicycle</th></tr></thead>
@@ -52,7 +52,7 @@ An upcoming update adds three bundled position cursors: **Car**, **Motorcycle** 
   </tr></tbody>
 </table>
 
-<p><sub>These are live previews from the app. The feature is being prepared in <a href="https://github.com/the-geeky-couldron/waypoint/pull/65">PR #65</a>; it is not part of the current 2.7.0 APK.</sub></p>
+<p><sub>Live previews from the app. Available in Waypoint 2.7.5.</sub></p>
 
 ## Waypoint’s release journey
 
@@ -64,6 +64,7 @@ Waypoint began with 27 game-inspired map worlds and has grown to 38, alongside n
 | [1.0.0](https://github.com/the-geeky-couldron/waypoint/releases/tag/v1.0.0) | First stable release with search and spoken routes |
 | [2.0.0](https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.0.0) | 38 worlds, personal quests and bicycle routes |
 | [2.7.0](https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.7.0) | Readable map symbols, steady camera pitch and an improved landscape HUD |
+| [2.7.5](https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.7.5) | Three 3D vehicle cursors and clearer phone-map controls |
 
 **[Follow every release and see APK download growth →](docs/milestones.html)** Counts on the journey page are GitHub download events, not unique people or active installs.
 
@@ -196,7 +197,7 @@ Android Auto keeps Google Maps available in the launcher. Open Waypoint there to
 
 Installed versions check for a newer stable GitHub release on foreground entry, at most once every 30 minutes; you can check manually in Settings at any time. If an update is available, an in-app prompt appears when the idle map is visible. Review the release notes, choose **Download update**, and confirm installation in Android.
 
-The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.7.0**; see the [release notes](docs/releases/current.html) and [changelog](CHANGELOG.md).
+The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.7.5**; see the [release notes](docs/releases/current.html) and [changelog](CHANGELOG.md).
 
 ## Build from source
 
