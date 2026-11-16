@@ -3,13 +3,15 @@ name: Android
 on:
   push:
     branches: [dev, main]
-    # A.T.L.A.S. and static release-journey edits do not change the Android package.
+    # A.T.L.A.S. and static website edits do not change the Android package.
     paths-ignore:
       - 'tools/waypoint-discord-bot/**'
       - '.github/workflows/discord-ticket-issue.yml'
       - '.github/workflows/android.yml'
       - '.github/workflows/release.yml'
       - 'docs/milestones.html'
+      - 'docs/index.html'
+      - 'docs/site.css'
   pull_request:
     branches: [dev, main]
 
