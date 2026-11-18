@@ -113,9 +113,10 @@ internal fun androidGuidanceVoice(context: Context, world: () -> World? = { null
         }
     }
     val fxVoice = AndroidFxVoice(context, ::applyTone)
+    val clipVoice = AssetClipVoice(context)
     val speaker = WorldGuidanceSpeaker(delegate, world, tone = { style ->
         delegate.tts?.let { tts -> applyTone(tts, style) }
-    }, fxVoice = fxVoice)
+    }, fxVoice = fxVoice, clips = clipVoice)
     val main = Handler(Looper.getMainLooper())
     return GuidanceVoice(speaker, initialize = { report ->
         // Ferrostar 0.59.0 does not start TTS in its constructor. Release failed
@@ -158,6 +159,7 @@ internal fun androidGuidanceVoice(context: Context, world: () -> World? = { null
         delegate.statusObserver = null
         delegate.shutdown()
         fxVoice.release()
+        clipVoice.release()
     }, onStatus = onStatus)
 }
 

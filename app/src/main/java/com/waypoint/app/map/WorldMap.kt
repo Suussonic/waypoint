@@ -158,6 +158,12 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
     val positionFrames=remember{arrayOfNulls<MapMotionFrames>(1)}
     val globeAnimator=remember(mapView){arrayOfNulls<ValueAnimator>(1)}
     val focusCameraHoldUntil=remember{longArrayOf(0L)}
+    // While navigating, the per-frame loop below is the only thing that moves the camera: it follows the
+    // interpolated position and eases zoom and tilt toward these wanted values [zoom, tilt, last frame ms].
+    // A fix-driven ease() toward each new fix used to fight it, and the 500 ms hold froze the loop, so the
+    // camera leapt ahead once per fix and snapped back (the once-a-second up-and-down).
+    val navZoomTilt=remember{doubleArrayOf(Double.NaN,Double.NaN,0.0)}
+    val effectKeysSeen=remember{arrayOfNulls<Any>(1)}
     val styleEpoch=remember{intArrayOf(0)}
     val renderLifecycle=remember(mapView){MapRenderLifecycle(mapView)}
     var modelBitmap by remember(state.cursorModel) { mutableStateOf<Bitmap?>(null) }
@@ -562,8 +568,21 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
                 }
                 val camera=CameraPosition.Builder(m.cameraPosition).target(cameraTarget).bearing(cameraBearing)
                 if(followsPosition)camera.padding(drivePadding(m,currentState.navigating))
+                var settling=false
+                if(followsPosition && currentState.navigating && navZoomTilt[0].isFinite() && navZoomTilt[1].isFinite()) {
+                    val dt=if(navZoomTilt[2]>0.0)(now-navZoomTilt[2]).coerceIn(1.0,100.0) else 16.0
+                    val alpha=1.0-kotlin.math.exp(-dt/300.0)
+                    val zoom=m.cameraPosition.zoom;val tilt=m.cameraPosition.tilt
+                    val zoomGap=navZoomTilt[0]-zoom;val tiltGap=navZoomTilt[1]-tilt
+                    camera.zoom(if(kotlin.math.abs(zoomGap)<.005)navZoomTilt[0] else zoom+zoomGap*alpha)
+                    camera.tilt(if(kotlin.math.abs(tiltGap)<.05)navZoomTilt[1] else tilt+tiltGap*alpha)
+                    settling=kotlin.math.abs(zoomGap)>=.005 || kotlin.math.abs(tiltGap)>=.05
+                    navZoomTilt[2]=now.toDouble()
+                    cameraMemory.zoom=navZoomTilt[0]
+                } else navZoomTilt[2]=0.0
                 m.moveCamera(CameraUpdateFactory.newCameraPosition(camera.build()))
                 if(followsPosition && point!=null)cameraMemory.fix=point
+                if(settling)return@MapMotionFrames true
             }
             motion.remainingMillis(now)>0
         }.also { it.start() }
@@ -600,10 +619,15 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
         // window has elapsed and let the follow camera correct the bearing without fighting it.
         if(motionRemaining>0)delay(motionRemaining+48L)
         val desiredBearing=navPose?.bearing ?: m.cameraPosition.bearing
+        if(state.navigating) { navZoomTilt[0]=desiredCameraZoom;navZoomTilt[1]=desiredTilt }
         val zoomChanged=state.navigating && (cameraMemory.zoom.isNaN() || kotlin.math.abs(cameraMemory.zoom-desiredCameraZoom)>.2)
         val bearingChanged=state.navigating && kotlin.math.abs(headingDelta(m.cameraPosition.bearing.toFloat(),desiredBearing.toFloat()))>2f
         if(SystemClock.elapsedRealtime()>=focusCameraHoldUntil[0] && following && displayPosition!=null &&
-            (cameraMemory.fix==null || distance(cameraMemory.fix!!,displayPosition)>1.5 ||
+            (if(state.navigating)
+                // The frame loop owns following; only recentre after the camera was moved away (panned, held).
+                cameraMemory.fix==null ||
+                    distance(Coordinate(m.cameraPosition.target!!.latitude,m.cameraPosition.target!!.longitude),displayPosition)>20
+            else cameraMemory.fix==null || distance(cameraMemory.fix!!,displayPosition)>1.5 ||
             distance(Coordinate(m.cameraPosition.target!!.latitude,m.cameraPosition.target!!.longitude),displayPosition)>20 ||
             kotlin.math.abs(m.cameraPosition.tilt-desiredTilt)>1.0 || zoomChanged || bearingChanged)) {
             cameraMemory.fix=displayPosition;cameraMemory.zoom=desiredCameraZoom
@@ -642,6 +666,14 @@ internal fun WorldMap(state: NavState, onPin: (Place)->Unit, onMapError: (String
     LaunchedEffect(active,state.cameraRequest,styleReady,routeInsets,cameraZoomOverride,cameraTiltOverride,cameraCenterOverride,scaleBarInsets,displayPosition) {
         val m=map ?: return@LaunchedEffect
         if(!active || styleReady==0) return@LaunchedEffect
+        // displayPosition is a key so a first fix can complete a "focus me" request, but while guiding it changes
+        // every second. Re-running this effect then started a 700 ms animateCamera toward each new fix and held the
+        // per-frame follow loop for 750 ms, so the camera leapt ahead and snapped back once a second. While
+        // navigating, a position-only change is the frame loop's job; real requests and layout changes still apply.
+        val effectKeys=listOf(state.cameraRequest,routeInsets,cameraZoomOverride,cameraTiltOverride,cameraCenterOverride,scaleBarInsets)
+        val positionOnly=effectKeysSeen[0]==effectKeys
+        effectKeysSeen[0]=effectKeys
+        if(positionOnly && state.navigating) return@LaunchedEffect
         // A style reload or new insets replays this effect; only a fresh request may move a map the user has taken over.
         if(!cameraGate.accept(state.cameraRequest,passive=state.cameraRequest==state.passiveCameraRequest))return@LaunchedEffect
         val focusUser=displayPosition!=null && state.cameraRequest==state.focusUserCameraRequest

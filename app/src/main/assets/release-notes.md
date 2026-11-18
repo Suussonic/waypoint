@@ -1,23 +1,18 @@
-# Waypoint 2.7.5
+# Waypoint 2.8.0
 
-This release brings a selectable 3D vehicle cursor to the phone map, with three bundled models and clearer controls for the map view.
+This update brings Trevor's navigation voice to Los Santos and smooths navigation and cursor rendering.
 
-## Three vehicle models for the phone map
+## Trevor guides your drive through Los Santos
 
-- Choose the Car, Motorcycle or Bicycle model in Settings. Each model is bundled with Waypoint and remains selected after the app restarts.
-- The Settings previews show each model upright from a three-quarter front angle, making the front and side easier to inspect.
+- Los Santos guidance can play pre-recorded Trevor clips for turns, distances, roundabouts, rerouting and arrival. Uncovered instructions and complete playback failures fall back to Android text-to-speech. Trevor's clips are included only for Los Santos.
 
-## Keep 2D or 3D tilt in your control
+## A steady navigation camera
 
-- The position cursor follows travel direction independently of map tilt, and stays visible in both the flat and tilted map views.
-- Search, Nearby, Map info, Map tilt, Locate and Settings have clearer labels and compact spacing on the phone map.
+- Fixed the up-and-down camera shake during navigation. GPS fixes no longer restart camera animations; the follow loop now owns position, bearing, zoom and tilt as the camera settles.
+- Fixed arrival guidance being cancelled when navigation stops, so the arrival line can play.
 
-## Android Auto keeps its standard marker
+## Clearer 3D cursor previews
 
-The selectable 3D cursor is for the phone map. Android Auto continues to use its standard marker.
-
-## Credits for the feature
-
-Thank you to **Suussonic**, who opened [PR #65](https://github.com/the-geeky-couldron/waypoint/pull/65) and contributed the 3D cursor feature.
+- Settings previews now show each vehicle from a three-quarter front angle, and Car, Motorcycle and Bicycle remain visible in flat and tilted map views.
 
 Compatible updates preserve saved places, quests and settings.
