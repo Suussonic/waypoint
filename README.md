@@ -30,12 +30,11 @@
 
 ---
 
-## What's new in 2.7.5
+## What's new in 2.8.0
 
-- **Choose your 3D position cursor:** pick Car, Motorcycle or Bicycle for the phone map. Each model follows travel direction while map tilt stays in your control.
-- **Clearer map controls:** Search, Nearby, Map info, Map tilt, Locate and Settings are easier to identify on compact screens.
-- **Android Auto keeps its standard marker:** 3D vehicle models apply to the phone map.
-- **Release journey:** [follow Waypoint from its first public release to the latest](docs/milestones.html), with the first APK download count and the current cumulative APK total. Counts represent download events, not unique users.
+- **Trevor guides Los Santos:** pre-recorded clips cover turns, distances, roundabouts, rerouting and arrival. Uncovered instructions and playback failures use Android text-to-speech; clips are included only for Los Santos.
+- **Steadier guidance:** the navigation camera no longer shakes on GPS updates, and the arrival line is no longer cut off when guidance ends.
+- **Clearer 3D cursor previews:** Car, Motorcycle and Bicycle remain visible in flat and tilted map views.
 
 [Full release notes →](docs/releases/current.html)
 
@@ -65,6 +64,7 @@ Waypoint began with 27 game-inspired map worlds and has grown to 38, alongside n
 | [2.0.0](https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.0.0) | 38 worlds, personal quests and bicycle routes |
 | [2.7.0](https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.7.0) | Readable map symbols, steady camera pitch and an improved landscape HUD |
 | [2.7.5](https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.7.5) | Three 3D vehicle cursors and clearer phone-map controls |
+| [2.8.0](https://github.com/the-geeky-couldron/waypoint/releases/tag/v2.8.0) | Trevor navigation voice in Los Santos, steadier camera and cursor fixes |
 
 **[Follow every release and see APK download growth →](docs/milestones.html)** Counts on the journey page are GitHub download events, not unique people or active installs.
 
@@ -197,7 +197,7 @@ Android Auto keeps Google Maps available in the launcher. Open Waypoint there to
 
 Installed versions check for a newer stable GitHub release on foreground entry, at most once every 30 minutes; you can check manually in Settings at any time. If an update is available, an in-app prompt appears when the idle map is visible. Review the release notes, choose **Download update**, and confirm installation in Android.
 
-The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.7.5**; see the [release notes](docs/releases/current.html) and [changelog](CHANGELOG.md).
+The APK is checked against its checksum, package, version and installed signing identity. Waypoint shows What’s New once after a compatible update and keeps saved places and settings. This source tree is **Waypoint 2.8.0**; see the [release notes](docs/releases/current.html) and [changelog](CHANGELOG.md).
 
 ## Build from source
 
@@ -233,7 +233,7 @@ The optional Ko-fi link opens Ko-fi in your browser. Waypoint does not process o
 | Terrain | Mapzen |
 | Google Maps link import and destination handoff | Google Maps, only when you choose either action |
 | New-release checks | GitHub Releases, automatically in the background and when checking in Settings; no location data |
-| Voice | Original AI-generated navigation cue packs for all 38 worlds; Android text-to-speech speaks unsupported or route-specific details when a safe recorded cue is unavailable |
+| Voice | Android text-to-speech, with pre-recorded Trevor navigation clips for Los Santos; no voice service receives audio or location data |
 | Guidance progress and rerouting | Ferrostar 0.59.0 using OSRM and Valhalla routes |
 | Live traffic and traffic-adjusted ETA | Not configured; remaining ETA is based on the selected OSRM or Valhalla route through Ferrostar |
 

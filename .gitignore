@@ -40,3 +40,6 @@ docs/images/captures/
 
 # Local assistant tooling stays on this machine
 .claude/
+
+# Generated voice clips stay local unless explicitly selected for a release.
+app/src/main/assets/voice/

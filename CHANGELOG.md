@@ -4,6 +4,13 @@ For the full notes and community acknowledgements, see the [Waypoint release pag
 
 ## Unreleased
 
+## 2.8.0
+
+- Added pre-recorded Trevor navigation clips in Los Santos for turns, distances, roundabouts, rerouting and arrival. Uncovered instructions and complete playback failures fall back to Android text-to-speech; clips are included only for Los Santos.
+- Fixed navigation camera shake by stopping GPS fixes from restarting camera animations; the follow loop now owns position, bearing, zoom and tilt while guiding.
+- Fixed arrival guidance being cancelled when navigation stops.
+- Improved 3D cursor previews and map snapshots so the vehicle remains visible in flat and tilted views.
+
 ## 2.7.5
 
 - Added an optional phone-map 3D position cursor with bundled Car, Motorcycle and Bicycle models. The cursor follows travel direction independently of map tilt; Android Auto keeps its standard marker.
