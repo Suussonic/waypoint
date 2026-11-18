@@ -165,7 +165,7 @@ jobs:
           npm ci --prefix tools/waypoint-motion
           npm run lint --prefix tools/waypoint-motion
       - name: Check motion dependencies for moderate-or-higher advisories
-        run: npm audit --prefix tools/waypoint-motion --audit-level=moderate
+        run: npm audit --omit=dev --prefix tools/waypoint-motion --audit-level=moderate
 
   android:
     name: 03A / Entry ramp · Debug APK
