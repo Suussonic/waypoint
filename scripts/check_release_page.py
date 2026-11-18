@@ -107,7 +107,7 @@ def validate_release_site(docs_root: Path, version: str | None = None) -> list[s
         required_by_version = {
             "2.7.0": ("Smoother motion on car displays", "Zoom where you choose", "Credits for the fixes"),
             "2.7.5": ("Three vehicle models for the phone map", "Keep 2D or 3D tilt in your control", "Credits for the feature"),
-            "2.8.0": ("Trevor guides your drive through Los Santos", "A steady navigation camera", "Clearer 3D cursor previews"),
+            "2.8.0": ("Trevor guides your drive through Los Santos", "A steady navigation camera", "A clearer 3D cursor preview"),
         }
         required_sections = required_by_version.get(version, (f"Waypoint {version}",))
         for required in required_sections:
