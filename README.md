@@ -34,7 +34,7 @@
 
 - **Trevor guides Los Santos:** pre-recorded clips cover turns, distances, roundabouts, rerouting and arrival. Uncovered instructions and playback failures use Android text-to-speech; clips are included only for Los Santos.
 - **Steadier guidance:** the navigation camera no longer shakes on GPS updates, and the arrival line is no longer cut off when guidance ends.
-- **Clearer 3D cursor previews:** Car, Motorcycle and Bicycle remain visible in flat and tilted map views.
+- **Clearer 3D cursor previews:** Settings previews show each vehicle from a three-quarter front angle, and all three models remain visible in flat and tilted map views.
 
 [Full release notes →](docs/releases/current.html)
 

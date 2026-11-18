@@ -168,7 +168,8 @@ class CursorModelRenderingTest {
                     }
                     activity.setContent {
                         CompositionLocalProvider(LocalContext provides context) {
-                            CursorModelView(model,Modifier.size(144.dp),tilt=42f,azimuth=25f,
+                            CursorModelView(model,Modifier.size(144.dp),tilt=42f,
+                                azimuth=CURSOR_MODEL_SETTINGS_PREVIEW_AZIMUTH,
                                 onReady={ready.countDown()},onError={error=it;ready.countDown()})
                         }
                     }

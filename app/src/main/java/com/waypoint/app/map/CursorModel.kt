@@ -45,6 +45,7 @@ import java.util.Locale
 internal const val CURSOR_MODEL_ASSET_DIRECTORY = "cursor-models"
 internal const val MAX_CURSOR_MODEL_BYTES = 10 * 1024 * 1024
 internal const val CURSOR_MODEL_IMAGE = "cursor-model"
+internal const val CURSOR_MODEL_SETTINGS_PREVIEW_AZIMUTH = 205f
 
 /** Map snapshots are re-rendered in 5° steps so small camera drift does not restart Filament. */
 internal fun cursorModelTilt(tilt: Double): Float = (Math.round(tilt.coerceIn(0.0,90.0)/5.0)*5).toFloat()
@@ -114,7 +115,7 @@ internal fun CursorModelSettings(state: NavState, controller: NavigationControll
                     CursorModelView(model,Modifier.size(144.dp).clip(RoundedCornerShape(16.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                         .semantics { contentDescription = "${cursorModelDisplayName(model)} 3D preview" },
-                        tilt=42f,azimuth=25f,onReady={ready=true},onError={error=it;ready=false})
+                        tilt=42f,azimuth=CURSOR_MODEL_SETTINGS_PREVIEW_AZIMUTH,onReady={ready=true},onError={error=it;ready=false})
                 }
             }
         }

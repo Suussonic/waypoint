@@ -13,6 +13,6 @@ This update brings Trevor's navigation voice to Los Santos and smooths navigatio
 
 ## Clearer 3D cursor previews
 
-- Improved cursor model previews and map snapshots so Car, Motorcycle and Bicycle stay visible in flat and tilted map views.
+- Settings previews now show each vehicle from a three-quarter front angle, and Car, Motorcycle and Bicycle remain visible in flat and tilted map views.
 
 Compatible updates preserve saved places, quests and settings.
