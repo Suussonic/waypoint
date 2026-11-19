@@ -92,19 +92,28 @@ internal class WorldGuidanceSpeaker(
     private val tone:(WorldVoiceStyle?)->Unit,
     private val narrator:WorldVoiceNarrator=WorldVoiceNarrator(),
     private val fxVoice:FxVoice?=null,
+    private val clips:WorldClipPlayer?=null,
 ):SpokenInstructionObserver {
     override val muteState:StateFlow<Boolean> get()=delegate.muteState
     override fun setMuted(isMuted:Boolean) {
         delegate.setMuted(isMuted)
-        if(isMuted)fxVoice?.stop()
+        if(isMuted){fxVoice?.stop();clips?.stop()}
     }
-    override fun stopAndClearQueue() { narrator.reset();fxVoice?.stop();delegate.stopAndClearQueue() }
+    override fun stopAndClearQueue() { narrator.reset();fxVoice?.stop();clips?.stop();delegate.stopAndClearQueue() }
     override fun onSpokenInstructionTrigger(spokenInstruction:SpokenInstruction) {
         speakStyled(spokenInstruction,world())
     }
     /** Worded in the world's manner and run through its effects; the plain Android voice is the fallback. */
     private fun speakStyled(spokenInstruction:SpokenInstruction,selected:World?) {
         val style=selected?.voiceStyle()
+        // Trevor's clips are only enabled in Los Santos; every other world keeps its styled TTS voice.
+        if(clips!=null && selected==World.LOS_SANTOS && !muteState.value && spokenInstruction.text.isNotBlank()) {
+            val played=clips.play(selected,spokenInstruction.text,spokenInstruction.triggerDistanceBeforeManeuver) {
+                tone(style)
+                delegate.onSpokenInstructionTrigger(narrator.decorate(spokenInstruction,selected))
+            }
+            if(played)return
+        }
         val decorated=narrator.decorate(spokenInstruction,selected)
         if(fxVoice!=null && selected!=null && !muteState.value) {
             fxVoice.speak(decorated.text,selected.voiceFx(),style) {

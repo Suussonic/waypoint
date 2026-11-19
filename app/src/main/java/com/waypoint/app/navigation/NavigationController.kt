@@ -458,6 +458,8 @@ class NavigationController(private val app: Application, private val repository:
             navigationSessions.end()
             _state.update { it.copy(navigating=false,arrived=true,offRoute=false,routing=false) }
             guidance.stop()
+            // Spoken after stop(): Ferrostar's stopNavigation() clears the voice queue, which cut the arrival line off.
+            if(_state.value.voice) guidance.speak("You have arrived at your destination.")
             app.stopService(Intent(app,NavigationService::class.java))
             updateTracking()
             return
