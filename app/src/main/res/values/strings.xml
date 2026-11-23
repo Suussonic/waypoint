@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="language_title">Language</string>
+    <string name="language_english">English</string>
+    <string name="language_french">Français</string>
     <string name="favorite_game">Favorite Game</string>
     <string name="intro_find_game">Find your favorite game and quickly apply its style to your real life map!</string>
     <string name="intro_real_streets">Make real streets feel like the maps from your favorite games.</string>

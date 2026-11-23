@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
@@ -144,19 +145,20 @@ internal fun formatArrivalTime(context: Context, secondsUntilArrival: Double): S
     return AndroidDateFormat.getTimeFormat(context).format(arrival)
 }
 
+@Composable
 private fun navigationDistanceLabel(state: NavState): String = when {
-    !state.gpsReady -> "Finding GPS"
-    state.routing -> "Rerouting…"
-    state.offRoute -> "Off route"
-    state.progress == null -> "Starting"
+    !state.gpsReady -> stringResource(R.string.route_finding_gps)
+    state.routing -> stringResource(R.string.route_rerouting)
+    state.offRoute -> stringResource(R.string.route_off_route)
+    state.progress == null -> stringResource(R.string.route_starting)
     else -> formatDistance(state.progress.toTurn, state.imperial)
 }
 
+@Composable
 private fun navigationInstructionLabel(state: NavState, guidance: RouteGuidance): String = when {
-    !state.gpsReady -> "Waiting for a fresh, accurate location"
-    state.routing -> "Updating the route from your position"
-    state.offRoute -> if (state.routeError != null) "Route unavailable · check connection and keep moving"
-        else "Checking your position for a new route"
+    !state.gpsReady -> stringResource(R.string.route_waiting_location)
+    state.routing -> stringResource(R.string.route_updating)
+    state.offRoute -> stringResource(if (state.routeError != null) R.string.route_unavailable else R.string.route_checking_position)
     else -> guidance.instruction
 }
 
@@ -167,6 +169,7 @@ internal fun NavBanner(state: NavState, onClick: () -> Unit, modifier: Modifier 
     val guidance = routeGuidance(state.route, state.progress)
     val distanceText = navigationDistanceLabel(state)
     val instructionText = navigationInstructionLabel(state, guidance)
+    val stepsDescription = stringResource(R.string.route_show_steps, distanceText, instructionText)
     val announceStatus = !state.gpsReady || state.routing || state.offRoute
     val steps = state.route?.steps.orEmpty()
     val index = state.progress?.nextStep ?: 0
@@ -176,7 +179,7 @@ internal fun NavBanner(state: NavState, onClick: () -> Unit, modifier: Modifier 
         Surface(
             onClick = onClick, color = p.panel, contentColor = p.foreground, shape = shape, border = hudBorder(state.world),
             modifier = modifier.fillMaxWidth().semantics {
-                contentDescription = "$distanceText. $instructionText. Show route steps"
+                contentDescription = stepsDescription
                 if (announceStatus) liveRegion = LiveRegionMode.Polite
             },
         ) {
@@ -193,11 +196,12 @@ internal fun NavBanner(state: NavState, onClick: () -> Unit, modifier: Modifier 
             }
         }
         if (after != null) {
+            val thenDescription = stringResource(R.string.route_then_instruction, after.instruction)
             Surface(color = p.panel, contentColor = p.foreground, shape = shape, border = hudBorder(state.world),
-                modifier = Modifier.padding(start = 12.dp).semantics { contentDescription = "Then ${after.instruction}" }) {
+                modifier = Modifier.padding(start = 12.dp).semantics { contentDescription = thenDescription }) {
                 Row(Modifier.padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Then", fontFamily = hudFont(state.world), fontSize = 16.sp, color = p.muted)
+                    Text(stringResource(R.string.route_then), fontFamily = hudFont(state.world), fontSize = 16.sp, color = p.muted)
                     ManeuverGlyph(after, Modifier.size(26.dp), p.foreground, blocky = state.world.blockyArrows())
                 }
             }
@@ -220,14 +224,14 @@ internal fun NavBottomBar(state: NavState, onSteps: () -> Unit, onStop: () -> Un
             Box(Modifier.padding(top = 8.dp).width(40.dp).height(4.dp).background(p.muted.copy(alpha = .55f), RoundedCornerShape(2.dp)))
             Row(Modifier.padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                NavRoundButton(Icons.Default.Close, "End navigation", onStop)
+                NavRoundButton(Icons.Default.Close, stringResource(R.string.route_end_description), onStop)
                 Column(Modifier.weight(1f).clickable(role = Role.Button, onClick = onSteps).heightIn(min = 56.dp),
                     horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                     Text(formatTripTime(seconds), fontFamily = hudFont(state.world), fontWeight = FontWeight.Bold, fontSize = 30.sp,
                         lineHeight = 34.sp, color = p.accent, maxLines = 1)
                     Text("${formatDistance(meters, state.imperial)} • $arrival", fontFamily = hudFont(state.world), fontSize = 16.sp, lineHeight = 21.sp, color = p.muted, maxLines = 1)
                 }
-                NavRoundButton(Icons.Default.Route, "Route steps", onSteps)
+                NavRoundButton(Icons.Default.Route, stringResource(R.string.route_steps_description), onSteps)
             }
         }
     }
@@ -245,21 +249,22 @@ internal fun CompactLandscapeNavBanner(
     val guidance = routeGuidance(state.route, state.progress)
     val distanceText = navigationDistanceLabel(state)
     val instructionText = navigationInstructionLabel(state, guidance)
+    val stepsDescription = stringResource(R.string.route_show_steps, distanceText, instructionText)
     val announceStatus = !state.gpsReady || state.routing || state.offRoute
     val largeText = LocalDensity.current.fontScale >= 1.75f
     BoxWithConstraints(modifier) {
         val visibleInstruction = if (largeText && maxWidth < 280.dp) when {
             !state.gpsReady -> "GPS"
-            state.routing -> "Rerouting"
-            state.offRoute -> "Off route"
+            state.routing -> stringResource(R.string.route_rerouting)
+            state.offRoute -> stringResource(R.string.route_off_route)
             else -> compactGuidanceInstruction(guidance)
         } else instructionText
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ChromeButton(state.world, Icons.Default.Layers, "Worlds", onWorlds)
+            ChromeButton(state.world, Icons.Default.Layers, stringResource(R.string.nav_worlds), onWorlds)
             Surface(onClick = onSteps, color = p.panel, contentColor = p.foreground, shape = hudShape(state.world),
                 border = hudBorder(state.world), modifier = Modifier.weight(1f).heightIn(min = 48.dp).semantics {
-                    contentDescription = "$distanceText. $instructionText. Show route steps"
+                    contentDescription = stepsDescription
                 if (announceStatus) liveRegion = LiveRegionMode.Polite
                 }) {
                 Row(Modifier.padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically,
@@ -282,23 +287,26 @@ internal fun CompactLandscapeNavBanner(
     }
 }
 
+@Composable
 private fun compactGuidanceInstruction(guidance: RouteGuidance): String {
-    if (guidance.continuingToArrival) return "Continue"
-    val step = guidance.maneuver ?: return guidance.instruction.substringBefore(" onto ")
-    return when (step.type) {
-        "arrive" -> "Arrive"
-        "roundabout", "rotary", "roundabout turn" -> if (step.exit > 0) "Exit ${step.exit}" else "Roundabout"
-        "exit roundabout", "exit rotary", "off ramp" -> "Exit"
-        "on ramp" -> "Ramp"
-        "merge" -> "Merge"
-        "fork" -> "Fork"
+    if (guidance.continuingToArrival) return stringResource(R.string.route_continue)
+    val step = guidance.maneuver ?: return guidance.instruction
+    if (step.type in setOf("roundabout", "rotary", "roundabout turn") && step.exit > 0)
+        return stringResource(R.string.route_exit_number, step.exit)
+    return stringResource(when (step.type) {
+        "arrive" -> R.string.route_arrive
+        "roundabout", "rotary", "roundabout turn" -> R.string.route_roundabout
+        "exit roundabout", "exit rotary", "off ramp" -> R.string.route_exit
+        "on ramp" -> R.string.route_ramp
+        "merge" -> R.string.route_merge
+        "fork" -> R.string.route_fork
         else -> when (step.modifier) {
-            "uturn" -> "U-turn"
-            "left", "slight left", "sharp left" -> "Left"
-            "right", "slight right", "sharp right" -> "Right"
-            else -> "Straight"
+            "uturn" -> R.string.route_uturn
+            "left", "slight left", "sharp left" -> R.string.route_left
+            "right", "slight right", "sharp right" -> R.string.route_right
+            else -> R.string.route_straight
         }
-    }
+    })
 }
 
 /** Speed and the posted limit stay visible beside the guidance card in phone landscape. */
@@ -311,6 +319,7 @@ internal fun CompactLandscapeSpeedReadout(state: NavState, modifier: Modifier = 
         (state.speed * if (state.imperial) 2.23694 else 3.6).roundToInt().toString()
     else "—"
     val units = if (state.imperial) "mph" else "km/h"
+    val speedDescription = stringResource(R.string.route_speed, speed, units)
     Row(modifier, verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Surface(
@@ -319,7 +328,7 @@ internal fun CompactLandscapeSpeedReadout(state: NavState, modifier: Modifier = 
             shape = hudShape(world),
             border = if (over) androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFFF5A4D)) else hudBorder(world),
             modifier = Modifier.heightIn(min = 52.dp).semantics {
-                contentDescription = "Speed $speed $units"
+                contentDescription = speedDescription
             },
         ) {
             Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -388,9 +397,10 @@ private fun CompactLandscapeTripSummary(
     modifier: Modifier,
 ) {
     val p = hudPalette(world)
+    val tripDescription = stringResource(R.string.route_trip_description, time, remaining, arrival)
     Surface(onClick = onSteps, color = p.panel, contentColor = p.foreground, shape = hudShape(world),
         border = hudBorder(world), modifier = modifier.heightIn(min = 48.dp).semantics {
-            contentDescription = "$time remaining. $remaining to destination. Arrival $arrival. Show route steps"
+            contentDescription = tripDescription
         }) {
         Column(Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             verticalArrangement = Arrangement.Center) {
@@ -428,11 +438,11 @@ private fun CompactLandscapeNavActions(
     twoRows: Boolean,
 ) {
     val controls = listOf(
-        CompactNavAction(Icons.Default.Close, "End navigation", onStop),
-        CompactNavAction(Icons.Default.Route, "Route steps", onSteps),
+        CompactNavAction(Icons.Default.Close, stringResource(R.string.route_end_description), onStop),
+        CompactNavAction(Icons.Default.Route, stringResource(R.string.route_steps_description), onSteps),
         CompactNavAction(if (state.voice) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
-            if (state.voice) "Mute guidance" else "Unmute guidance", onMute),
-        CompactNavAction(Icons.Default.MyLocation, "Use my location", onLocate),
+            stringResource(if (state.voice) R.string.route_mute else R.string.route_unmute), onMute),
+        CompactNavAction(Icons.Default.MyLocation, stringResource(R.string.nav_use_location), onLocate),
         CompactNavAction(Icons.Default.Explore, mapOrientationAction(state.keepMapNorthUp), onToggleMapOrientation,
             highlighted = state.keepMapNorthUp, stateText = mapOrientationState(state.keepMapNorthUp)),
     )
@@ -485,9 +495,10 @@ internal fun NavSideControls(state: NavState, onMute: () -> Unit, onLocate: () -
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             val over = state.overSpeedLimit && state.speedWarning
             val overColor = Color(0xFFFF5A4D)
+            val speedDescription = stringResource(if (over) R.string.route_speed_over else R.string.route_speed_label)
             Surface(color = p.panel, contentColor = if (over) overColor else p.foreground, shape = CircleShape,
                 border = if (over) androidx.compose.foundation.BorderStroke(3.dp, overColor) else hudBorder(world),
-                modifier = Modifier.size(64.dp).semantics { contentDescription = if (over) "Speed, over the limit" else "Speed" }) {
+                modifier = Modifier.size(64.dp).semantics { contentDescription = speedDescription }) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                     Text(if (state.gpsReady) (state.speed * if (state.imperial) 2.23694 else 3.6).roundToInt().toString() else "—",
                         fontFamily = hudFont(world), fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 26.sp)
@@ -496,15 +507,15 @@ internal fun NavSideControls(state: NavState, onMute: () -> Unit, onLocate: () -
             }
             val limit = state.speedLimitKmh
             if (state.speedWarning && limit != null && state.navigating) SpeedLimitSign(speedLimitForDisplay(limit, state.imperial), over)
-            ChromeButton(world, Icons.Default.Layers, "Worlds", onWorlds)
+            ChromeButton(world, Icons.Default.Layers, stringResource(R.string.nav_worlds), onWorlds)
         }
         Spacer(Modifier.weight(1f))
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
             CompassRose(heading, world, onRecenter = onLocate, northUp = state.keepMapNorthUp,
                 onToggleOrientation = onToggleMapOrientation)
             ChromeButton(world, if (state.voice) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
-                if (state.voice) "Mute guidance" else "Unmute guidance", onMute)
-            ChromeButton(world, Icons.Default.MyLocation, "Use my location", onLocate)
+                stringResource(if (state.voice) R.string.route_mute else R.string.route_unmute), onMute)
+            ChromeButton(world, Icons.Default.MyLocation, stringResource(R.string.nav_use_location), onLocate)
         }
     }
 }
@@ -515,10 +526,11 @@ internal fun SpeedLimitSign(limit: Int, over: Boolean, modifier: Modifier = Modi
     val scale = androidx.compose.animation.core.animateFloatAsState(if (over) 1.12f else 1f,
         androidx.compose.animation.core.tween(220), label = "speedLimitScale").value
     val ring = if (over) Color(0xFFFF2D1F) else Color(0xFFD81E14)
+    val limitDescription = stringResource(R.string.route_speed_limit, limit)
     Surface(color = Color.White, contentColor = Color(0xFF111111), shape = CircleShape,
         border = androidx.compose.foundation.BorderStroke(6.dp, ring),
         modifier = modifier.size(56.dp).scale(scale)
-            .semantics { contentDescription = "Speed limit $limit" }) {
+            .semantics { contentDescription = limitDescription }) {
         Box(contentAlignment = Alignment.Center) {
             Text(limit.toString(), fontWeight = FontWeight.ExtraBold, fontSize = if (limit >= 100) 18.sp else 22.sp, lineHeight = 24.sp)
         }
@@ -529,12 +541,13 @@ internal fun SpeedLimitSign(limit: Int, over: Boolean, modifier: Modifier = Modi
 @Composable
 internal fun RecentrePill(world: World, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val p = hudPalette(world)
+    val recentreDescription = stringResource(R.string.route_recentre_description)
     Surface(onClick = onClick, color = p.panel, contentColor = p.foreground, shape = hudShape(world), border = hudBorder(world),
-        modifier = modifier.heightIn(min = 48.dp).semantics { contentDescription = "Re-centre on my position" }) {
+        modifier = modifier.heightIn(min = 48.dp).semantics { contentDescription = recentreDescription }) {
         Row(Modifier.padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(Icons.Default.MyLocation, null, Modifier.size(20.dp))
-            Text("Re-centre", fontFamily = hudFont(world), fontWeight = FontWeight.Bold, fontSize = TypeScale.Label)
+            Text(stringResource(R.string.route_recentre), fontFamily = hudFont(world), fontWeight = FontWeight.Bold, fontSize = TypeScale.Label)
         }
     }
 }

@@ -42,8 +42,12 @@ class CursorModelRenderingTest {
         try {
             val controller=NavigationController(app,preferencesName="cursor-test")
             assertEquals(listOf("Bicycle.glb","Motorcycle.glb","Waypoint.glb"),controller.cursorModels)
+            lateinit var useLabel: String
+            lateinit var selectedLabel: String
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
                 scenario.onActivity { activity ->
+                    useLabel=activity.getString(R.string.cursor_use)
+                    selectedLabel=activity.getString(R.string.cursor_selected)
                     val context=object: ContextWrapper(activity) {
                         override fun getAssets()=productionAssets
                     }
@@ -58,10 +62,10 @@ class CursorModelRenderingTest {
                 assertTrue(device.wait(Until.hasObject(By.text("Car")),5000))
                 assertFalse(device.hasObject(By.text("Waypoint.glb")))
                 device.findObject(By.desc("Car")).click()
-                val use=device.wait(Until.findObject(By.text("Use this model").enabled(true)),20000)
+                val use=device.wait(Until.findObject(By.text(useLabel).enabled(true)),20000)
                 assertNotNull("Bundled preview finishes loading",use)
                 use!!.click()
-                assertTrue(device.wait(Until.hasObject(By.text("Selected")),5000))
+                assertTrue(device.wait(Until.hasObject(By.text(selectedLabel)),5000))
                 assertFalse(device.hasObject(By.text("Choose GLB file")))
             }
             val restored=NavigationController(app,preferencesName="cursor-test")

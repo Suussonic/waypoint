@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -40,57 +41,57 @@ fun UpdatePanel(updater: AppUpdater, navigating: Boolean) {
                             modifier = Modifier.padding(10.dp).size(22.dp))
                     }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("App updates", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                        Text("Installed · ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodySmall, color = Muted)
+                        Text(stringResource(R.string.update_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.update_installed,BuildConfig.VERSION_NAME), style = MaterialTheme.typography.bodySmall, color = Muted)
                     }
                 }
 
                 when (val current = status) {
                     UpdateStatus.Idle -> {
-                        Text("Waypoint checks for stable releases when you open the app. Downloads start only when you choose.",
+                        Text(stringResource(R.string.update_intro),
                             style = MaterialTheme.typography.bodyMedium)
                         OutlinedButton(onClick = updater::check, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                            Text("Check for updates")
+                            Text(stringResource(R.string.update_check))
                         }
                     }
                     UpdateStatus.Checking -> {
-                        Text("Checking for a stable release", style = MaterialTheme.typography.bodyMedium)
-                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Checking for app updates" })
+                        Text(stringResource(R.string.update_checking), style = MaterialTheme.typography.bodyMedium)
+                        val description=stringResource(R.string.update_checking_accessibility)
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth().semantics { contentDescription = description })
                     }
                     UpdateStatus.Current -> {
-                        Text("You're up to date", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                        Text("Waypoint ${BuildConfig.VERSION_NAME} is the latest stable release.", style = MaterialTheme.typography.bodyMedium, color = Muted)
+                        Text(stringResource(R.string.update_current), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.update_latest,BuildConfig.VERSION_NAME), style = MaterialTheme.typography.bodyMedium, color = Muted)
                         OutlinedButton(onClick = updater::check, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                            Text("Check again")
+                            Text(stringResource(R.string.update_check_again))
                         }
                     }
                     is UpdateStatus.Available -> {
-                        Text("Version ${current.release.version} is ready to download", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                        Text("${String.format(locale, "%.1f", current.release.size / 1048576.0)} MB · Android asks before installation.",
+                        Text(stringResource(R.string.update_available,current.release.version), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.update_size_confirm,String.format(locale, "%.1f", current.release.size / 1048576.0)),
                             style = MaterialTheme.typography.bodySmall, color = Muted)
                         ScrollableUpdateNotes(current.release.notes)
                         Button(onClick = { updater.download(current.release) }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
                             shape = RoundedCornerShape(14.dp)) {
                             Icon(Icons.Default.Download, null, Modifier.size(20.dp))
                             Spacer(Modifier.width(9.dp))
-                            Text("Download update")
+                            Text(stringResource(R.string.update_download))
                         }
                     }
                     is UpdateStatus.Downloading -> {
                         UpdateDownloadProgress(
                             percent = current.percent,
-                            phase = if (current.percent >= 100) "Verifying the update" else "Downloading version ${current.release.version}",
+                            phase = if (current.percent >= 100) stringResource(R.string.update_verifying) else stringResource(R.string.update_downloading,current.release.version),
                         )
-                        Text("${String.format(locale, "%.1f", current.release.size / 1048576.0)} MB · SHA-256 and app identity checked before install.",
+                        Text(stringResource(R.string.update_size_verify,String.format(locale, "%.1f", current.release.size / 1048576.0)),
                             style = MaterialTheme.typography.bodySmall, color = Muted)
                         ScrollableUpdateNotes(current.release.notes)
-                        TextButton(onClick = updater::cancel, modifier = Modifier.heightIn(min = 48.dp)) { Text("Cancel download") }
+                        TextButton(onClick = updater::cancel, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.update_cancel)) }
                     }
                     is UpdateStatus.Ready -> {
-                        Text("Version ${current.release.version} is verified", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.update_verified,current.release.version), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                         Text(
-                            if (navigating) "Finish navigation before installing. Your saved places will be kept."
-                            else "The download passed its integrity checks. Android will show its installation confirmation.",
+                            stringResource(if (navigating) R.string.update_finish_navigation else R.string.update_integrity_passed),
                             style = MaterialTheme.typography.bodyMedium,
                             color = Muted,
                         )
@@ -99,7 +100,7 @@ fun UpdatePanel(updater: AppUpdater, navigating: Boolean) {
                             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = RoundedCornerShape(14.dp)) {
                             Icon(Icons.Default.SystemUpdate, null, Modifier.size(20.dp))
                             Spacer(Modifier.width(9.dp))
-                            Text("Install update")
+                            Text(stringResource(R.string.update_install))
                         }
                         installMessage?.let { UpdateInfoMessage(it) }
                     }
@@ -107,10 +108,10 @@ fun UpdatePanel(updater: AppUpdater, navigating: Boolean) {
                         UpdateErrorMessage(current.message)
                         if (current.release != null) {
                             Button(onClick = { updater.download(current.release) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                                shape = RoundedCornerShape(14.dp)) { Text("Retry download") }
+                                shape = RoundedCornerShape(14.dp)) { Text(stringResource(R.string.update_retry)) }
                         } else {
                             OutlinedButton(onClick = updater::check, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                                Text("Check again")
+                                Text(stringResource(R.string.update_check_again))
                             }
                         }
                     }
@@ -119,7 +120,7 @@ fun UpdatePanel(updater: AppUpdater, navigating: Boolean) {
         }
         UpdateAlertStatus((context.applicationContext as WaypointApplication).updateAlerts)
         TextButton(onClick = { uri.openUri(ReleaseUpdate.PAGE) }, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text("Release notes on GitHub")
+            Text(stringResource(R.string.update_release_notes))
         }
     }
 }
@@ -133,8 +134,9 @@ internal fun UpdateDownloadProgress(percent: Int, phase: String, modifier: Modif
         Crossfade(phase, label = "app-update-phase") {
             Text(it, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         }
+        val description=stringResource(R.string.update_progress,phase,percent)
         LinearProgressIndicator(progress = { animated }, modifier = Modifier.fillMaxWidth()
-            .semantics { contentDescription = "$phase, $percent percent" })
+            .semantics { contentDescription = description })
         Text("$percent%", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
     }
 }

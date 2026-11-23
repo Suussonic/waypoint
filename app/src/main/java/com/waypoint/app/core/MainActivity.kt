@@ -19,7 +19,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -128,7 +128,7 @@ private val AppTypography=Typography(
     titleLarge=Typography().titleLarge.copy(fontWeight=FontWeight.SemiBold)
 )
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     companion object {
         private var foregroundEntryCounter=0
         private var configurationRestartPending=false
@@ -434,7 +434,7 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
             Row(Modifier.fillMaxSize()) {
                 if(wide && !state.navigating && !welcomeVisible) NavigationRail(containerColor=Ink,modifier=Modifier.statusBarsPadding()) {
                     if(!compactHeight) { Spacer(Modifier.height(16.dp));Icon(Icons.Default.Navigation,"Waypoint",tint=WaypointColors.accent);Spacer(Modifier.height(32.dp)) }
-                    listOf("Map" to Icons.Default.Map,"Worlds" to Icons.Default.Layers,"Saved" to Icons.Default.BookmarkBorder,"Quests" to Icons.Default.Assignment).forEachIndexed { i,(name,icon)->
+                    listOf(stringResource(R.string.nav_map) to Icons.Default.Map,stringResource(R.string.nav_worlds) to Icons.Default.Layers,stringResource(R.string.nav_saved) to Icons.Default.BookmarkBorder,stringResource(R.string.nav_quests) to Icons.Default.Assignment).forEachIndexed { i,(name,icon)->
                         val artworkIcon=when(i) { 1 -> R.drawable.waypoint_worlds; 2 -> R.drawable.waypoint_bookmark; else -> null }
                         NavigationRailItem(selected=tab==i,onClick={selectTab(i)},icon={
                             if(artworkIcon!=null) Icon(painterResource(artworkIcon),name) else Icon(icon,name)
@@ -660,42 +660,43 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                 )
             } else {
             Column(Modifier.padding(horizontal=24.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(16.dp)) {
-                Text("Make it your own",style=MaterialTheme.typography.headlineLarge)
+                Text(stringResource(R.string.settings_title),style=MaterialTheme.typography.headlineLarge)
+                LanguageSettings()
                 UpdatePanel((context.applicationContext as WaypointApplication).updater, state.navigating)
                 ListItem(
-                    headlineContent={Text("Offline maps")},
-                    supportingContent={Text("Save map areas on this device · ${offlineMapState.regions.size} saved")},
-                    leadingContent={Icon(Icons.Default.Download,"Offline maps",tint=WaypointColors.accent)},
+                    headlineContent={Text(stringResource(R.string.settings_offline_maps))},
+                    supportingContent={Text(stringResource(R.string.settings_offline_maps_summary,offlineMapState.regions.size))},
+                    leadingContent={Icon(Icons.Default.Download,null,tint=WaypointColors.accent)},
                     trailingContent={Icon(Icons.AutoMirrored.Filled.ArrowForward,null,tint=Muted)},
                     modifier=Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable { offlineMapsPage=true },
                     colors=ListItemDefaults.colors(containerColor=Panel,headlineColor=Cream,supportingColor=Muted),
                 )
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
-                SettingRow("Voice guidance","Spoken turn instructions",state.voice,controller::toggleVoice)
-                SettingRow("World voice style","Give each world its own spoken wording and delivery on your device's speech voice. Turn it off for standard instructions.",state.gameVoice,controller::toggleGameVoice)
-                SettingRow("Miles & feet","Use imperial distances",state.imperial,controller::toggleUnits)
-                SettingRow("Speed limit warning","Show the posted limit and warn when you go over it while driving. Looks up the limit on OpenStreetMap through Overpass, sending your position only while guiding by car.",state.speedWarning,controller::toggleSpeedWarning)
-                SettingRow("Google search suggestions, details and photos","Optional keyless Google web lookups. Google receives partial search text and a location bias while you type, then the selected place name and coordinates when you open its details. These undocumented endpoints can change and are subject to Google’s terms; no Places API key or Places API billing is used.",googleWebLookupsEnabled,{setGoogleWebLookupsEnabled(!googleWebLookupsEnabled)})
-                SettingRow("Open place pins","Show Vela open-data pins while browsing. Vela matches archive names on-device; GitHub gets nearby tile ranges, not search text. With Google off, searches start after 700 ms; on a saved-snapshot miss, Photon gets text and location bias, and Android Geocoder may be used for weak matches. Google gets partial text and location bias only when suggestions are on. This switch hides pins only.",mapPlacePinsEnabled,{setMapPlacePinsEnabled(!mapPlacePinsEnabled)})
-                SettingRow("3D perspective","Tilt the map in every world",state.tilted,controller::toggleTilt)
+                SettingRow(stringResource(R.string.settings_voice),stringResource(R.string.settings_voice_summary),state.voice,controller::toggleVoice)
+                SettingRow(stringResource(R.string.settings_world_voice),stringResource(R.string.settings_world_voice_summary),state.gameVoice,controller::toggleGameVoice)
+                SettingRow(stringResource(R.string.settings_imperial),stringResource(R.string.settings_imperial_summary),state.imperial,controller::toggleUnits)
+                SettingRow(stringResource(R.string.settings_speed_warning),stringResource(R.string.settings_speed_warning_summary),state.speedWarning,controller::toggleSpeedWarning)
+                SettingRow(stringResource(R.string.settings_google),stringResource(R.string.settings_google_summary),googleWebLookupsEnabled,{setGoogleWebLookupsEnabled(!googleWebLookupsEnabled)})
+                SettingRow(stringResource(R.string.settings_place_pins),stringResource(R.string.settings_place_pins_summary),mapPlacePinsEnabled,{setMapPlacePinsEnabled(!mapPlacePinsEnabled)})
+                SettingRow(stringResource(R.string.settings_perspective),stringResource(R.string.settings_perspective_summary),state.tilted,controller::toggleTilt)
                 CursorModelSettings(state,controller)
-                SettingRow("North-up map","When off, follow your phone heading while still and travel direction while moving.",state.keepMapNorthUp,controller::toggleMapOrientation)
+                SettingRow(stringResource(R.string.settings_north_up),stringResource(R.string.settings_north_up_summary),state.keepMapNorthUp,controller::toggleMapOrientation)
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
-                Text("Map controls", style=MaterialTheme.typography.titleMedium)
-                Text("These presets affect controls floating over the phone map.",
+                Text(stringResource(R.string.settings_map_controls), style=MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.settings_map_controls_summary),
                     style=MaterialTheme.typography.bodySmall, color=Muted)
-                Text("Size", style=MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.settings_size), style=MaterialTheme.typography.titleSmall)
                 FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),
                     verticalArrangement=Arrangement.spacedBy(4.dp)) {
                     HudSize.entries.forEach { size ->
                         FilterChip(selected=state.hudSize==size,onClick={controller.setHudSize(size)},
-                            label={Text(size.label)},modifier=Modifier.heightIn(min=48.dp))
+                            label={Text(stringResource(when(size) { HudSize.COMPACT->R.string.settings_size_compact; HudSize.STANDARD->R.string.settings_size_standard; HudSize.LARGE->R.string.settings_size_large }))},modifier=Modifier.heightIn(min=48.dp))
                     }
                 }
-                Text("Side", style=MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.settings_side), style=MaterialTheme.typography.titleSmall)
                 FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),
                     verticalArrangement=Arrangement.spacedBy(4.dp)) {
-                    listOf<Pair<HudSide?,String>>(null to "Original", HudSide.LEFT to "Left", HudSide.RIGHT to "Right")
+                    listOf<Pair<HudSide?,String>>(null to stringResource(R.string.settings_side_original), HudSide.LEFT to stringResource(R.string.settings_side_left), HudSide.RIGHT to stringResource(R.string.settings_side_right))
                         .forEach { (side,label) ->
                             FilterChip(selected=state.hudSide==side,onClick={controller.setHudSide(side)},
                                 label={Text(label)},modifier=Modifier.heightIn(min=48.dp))
@@ -706,31 +707,31 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                     onLocation={context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))},
                     onUnavailable={navigationScope.launch { snackbar.showSnackbar(carSettingsUnavailable) }})
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
-                Text("Location & sensors",style=MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.settings_location_sensors),style=MaterialTheme.typography.titleMedium)
                 Text(state.locationProvider,style=MaterialTheme.typography.bodyMedium)
                 Text(state.sensorDescription,style=MaterialTheme.typography.bodySmall,color=Muted)
                 Text(state.headingStatus,style=MaterialTheme.typography.bodySmall,color=if(state.headingReliable)WaypointColors.accent else Color(0xFFFFCF89))
-                if(state.fix!=null)Text("Position accuracy: ±${state.accuracy.roundToInt()} m",style=MaterialTheme.typography.bodySmall,color=Muted)
-                state.satellitesVisible?.let{Text("Satellites: ${state.satellitesUsed ?: 0} used / $it visible",style=MaterialTheme.typography.bodySmall,color=Muted)}
+                if(state.fix!=null)Text(stringResource(R.string.settings_accuracy,state.accuracy.roundToInt()),style=MaterialTheme.typography.bodySmall,color=Muted)
+                state.satellitesVisible?.let{Text(stringResource(R.string.settings_satellites,state.satellitesUsed ?: 0,it),style=MaterialTheme.typography.bodySmall,color=Muted)}
                 Text(state.gpsStatus,style=MaterialTheme.typography.bodyMedium,color=Muted)
-                TextButton(onClick={context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))}) { Text("Open device location settings") }
-                TextButton(onClick={context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))}) { Text("Manage location permissions") }
-                TextButton(onClick={clearConfirm=true}) { Text("Clear saved places and history",color=MaterialTheme.colorScheme.error) }
+                TextButton(onClick={context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))}) { Text(stringResource(R.string.settings_open_location)) }
+                TextButton(onClick={context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${context.packageName}")))}) { Text(stringResource(R.string.settings_location_permissions)) }
+                TextButton(onClick={clearConfirm=true}) { Text(stringResource(R.string.settings_clear_history),color=MaterialTheme.colorScheme.error) }
                 HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant)
                 FeedbackSettingsRow(onClick={feedbackOpen=true})
                 CommunitySettingsRow()
                 KoFiSettingsRow()
                 Text("WAYPOINT",style=MaterialTheme.typography.headlineMedium,color=WaypointColors.accent)
-                Text("Made in India · Open to the world",style=MaterialTheme.typography.bodySmall,color=Muted)
-                Text("Open source. Every world included. No ads or subscriptions.",style=MaterialTheme.typography.bodyMedium)
-                Text("OpenStreetMap with OSRM routes cars; Valhalla routes motorcycles, bicycles and walks. Ferrostar provides navigation guidance, rerouting and remaining ETA. Nearby discovery streams Vela’s Overture, AllThePlaces and OpenStreetMap place archive. Optional Wikimedia Commons photos are off until enabled and shown with source and license credits. Optional Google suggestions, place details and photos use undocumented keyless web endpoints when enabled; Google receives search text and a location bias while you type, then the selected place name and coordinates when you open its details. No Places API key or Places API billing is used. Saved places stay on this phone.",style=MaterialTheme.typography.bodySmall,color=Muted)
-                Text("Satellite imagery in the Elden Ring, Zelda and Hogwarts maps: Esri, Maxar, Earthstar Geographics, and the GIS User Community. Those maps ask Esri for imagery of the area on screen.",style=MaterialTheme.typography.bodySmall,color=Muted)
-                Text("Map data and credits",style=MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.about_made_in),style=MaterialTheme.typography.bodySmall,color=Muted)
+                Text(stringResource(R.string.about_open_source),style=MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.about_services),style=MaterialTheme.typography.bodySmall,color=Muted)
+                Text(stringResource(R.string.about_satellite),style=MaterialTheme.typography.bodySmall,color=Muted)
+                Text(stringResource(R.string.map_data_credits),style=MaterialTheme.typography.titleSmall)
                 val creditsUri=LocalUriHandler.current
-                TextButton(onClick={creditsUri.openUri("https://www.openstreetmap.org/copyright")}){Text("© OpenStreetMap contributors")}
-                TextButton(onClick={creditsUri.openUri("https://openfreemap.org/")}){Text("Map tiles · OpenFreeMap")}
-                TextButton(onClick={creditsUri.openUri("https://github.com/tilezen/joerd/blob/master/docs/attribution.md")}){Text("Terrain · Mapzen and data providers")}
-                Text("Original map styles inspired by games. Not affiliated with their publishers.",style=MaterialTheme.typography.bodySmall,color=Muted)
+                TextButton(onClick={creditsUri.openUri("https://www.openstreetmap.org/copyright")}){Text(stringResource(R.string.map_osm))}
+                TextButton(onClick={creditsUri.openUri("https://openfreemap.org/")}){Text(stringResource(R.string.map_tiles))}
+                TextButton(onClick={creditsUri.openUri("https://github.com/tilezen/joerd/blob/master/docs/attribution.md")}){Text(stringResource(R.string.map_terrain))}
+                Text(stringResource(R.string.about_unaffiliated),style=MaterialTheme.typography.bodySmall,color=Muted)
                 Spacer(Modifier.height(24.dp))
             }
             }
@@ -762,27 +763,28 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
         val sharedDestinationId = state.pendingSharedDestinationId
         if(sharedDestination!=null && !welcomeVisible && !state.navigating) AlertDialog(
             onDismissRequest={controller.dismissPendingNavigationImport(sharedDestinationId)},
-            title={Text("Open shared destination?")},
+            title={Text(stringResource(R.string.route_shared_title))},
             text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
                 Text(sharedDestination.take(100),maxLines=2,overflow=TextOverflow.Ellipsis)
-                state.pendingSharedCoordinates?.let { Text("Coordinates: $it",style=MaterialTheme.typography.bodySmall,color=Muted) }
-                Text("Waypoint will use your location to look up this place and preview a route. Continue?",style=MaterialTheme.typography.bodyMedium)
+                state.pendingSharedCoordinates?.let { Text(stringResource(R.string.route_coordinates,it),style=MaterialTheme.typography.bodySmall,color=Muted) }
+                Text(stringResource(R.string.route_shared_help),style=MaterialTheme.typography.bodyMedium)
             }},
-            confirmButton={TextButton(onClick={search=false;tab=0;controller.acceptPendingNavigationImport(sharedDestinationId)}){Text("Open destination")}},
-            dismissButton={TextButton(onClick={controller.dismissPendingNavigationImport(sharedDestinationId)}){Text("Cancel")}},
+            confirmButton={TextButton(onClick={search=false;tab=0;controller.acceptPendingNavigationImport(sharedDestinationId)}){Text(stringResource(R.string.route_shared_open))}},
+            dismissButton={TextButton(onClick={controller.dismissPendingNavigationImport(sharedDestinationId)}){Text(stringResource(R.string.action_cancel))}},
         )
         transitFor?.let { place -> TransitSheet(place,state.fix,state.world,transitPlanner) { transitFor=null } }
-        externalPlace?.let { place -> AlertDialog(onDismissRequest={externalPlace=null},title={Text("Open in another map app?")},
-            text={Text(if(state.navigating)"Waypoint’s voice guidance will stop. The other app will calculate its own route to ${place.name}." else "Choose an app to open ${place.name}. It will calculate its own route.")},
+        val externalMapError=stringResource(R.string.route_other_error)
+        externalPlace?.let { place -> AlertDialog(onDismissRequest={externalPlace=null},title={Text(stringResource(R.string.route_other_title))},
+            text={Text(stringResource(if(state.navigating)R.string.route_other_navigating else R.string.route_other_preview,place.name))},
             confirmButton={TextButton(onClick={
                 externalPlace=null
                 runCatching { NavigationSharing.open(context,place,state.mode) }.onSuccess { if(state.navigating)controller.stopNavigation() }
-                    .onFailure { uiScope.launch { snackbar.showSnackbar("No map app could open this place. Install a map app or try again.") } }
-            }){Text("Choose app")}},dismissButton={TextButton(onClick={externalPlace=null}){Text("Cancel")}}) }
-        if(clearConfirm) AlertDialog(onDismissRequest={clearConfirm=false},title={Text("Clear your places?")},text={Text("This removes your saved destinations and recent navigation history from this phone.")},confirmButton={TextButton(onClick={controller.clearHistory();clearConfirm=false}){Text("Clear places")}},dismissButton={TextButton(onClick={clearConfirm=false}){Text("Cancel")}})
+                    .onFailure { uiScope.launch { snackbar.showSnackbar(externalMapError) } }
+            }){Text(stringResource(R.string.route_choose_app))}},dismissButton={TextButton(onClick={externalPlace=null}){Text(stringResource(R.string.action_cancel))}}) }
+        if(clearConfirm) AlertDialog(onDismissRequest={clearConfirm=false},title={Text(stringResource(R.string.route_clear_title))},text={Text(stringResource(R.string.route_clear_help))},confirmButton={TextButton(onClick={controller.clearHistory();clearConfirm=false}){Text(stringResource(R.string.route_clear))}},dismissButton={TextButton(onClick={clearConfirm=false}){Text(stringResource(R.string.action_cancel))}})
         if(steps) ModalBottomSheet(onDismissRequest={steps=false},containerColor=Ink) {
-            Text("Your route",style=MaterialTheme.typography.headlineLarge,modifier=Modifier.padding(horizontal=24.dp))
-            state.selected?.let { place -> TextButton(onClick={steps=false;externalPlace=place},modifier=Modifier.padding(horizontal=16.dp).heightIn(min=48.dp)) { Text("Open in another map app") } }
+            Text(stringResource(R.string.route_title),style=MaterialTheme.typography.headlineLarge,modifier=Modifier.padding(horizontal=24.dp))
+            state.selected?.let { place -> TextButton(onClick={steps=false;externalPlace=place},modifier=Modifier.padding(horizontal=16.dp).heightIn(min=48.dp)) { Text(stringResource(R.string.route_open_other)) } }
             LazyColumn(Modifier.fillMaxWidth().padding(vertical=16.dp)) {
                 items(state.route?.steps.orEmpty().drop(if(state.navigating)state.progress?.nextStep ?: 0 else 0)) { step ->
                     ListItem(headlineContent={Text(step.instruction)},supportingContent={Text(formatDistance(step.distance,state.imperial))},leadingContent={ManeuverGlyph(step,Modifier.size(32.dp),WaypointColors.accent,blocky=state.world.blockyArrows())},colors=ListItemDefaults.colors(containerColor=Ink))
@@ -802,12 +804,13 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
     val routeColor=Color(android.graphics.Color.parseColor(
         if(world==World.SAINTS && navigating)"#86D955" else world.routeColor))
     var open by remember { mutableStateOf(false) }
-    TextButton(onClick={open=true},modifier=Modifier.heightIn(min=48.dp).semantics{contentDescription="Map information"}) {
-        Row(Modifier.background(Ink.copy(alpha=.94f),RoundedCornerShape(4.dp)).padding(horizontal=8.dp,vertical=6.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(4.dp)){Icon(Icons.Default.Info,null,Modifier.size(14.dp),tint=Cream);Text("Map info",color=Cream,fontSize=TypeScale.Caption)}
+    val mapDescription=stringResource(R.string.map_information)
+    TextButton(onClick={open=true},modifier=Modifier.heightIn(min=48.dp).semantics{contentDescription=mapDescription}) {
+        Row(Modifier.background(Ink.copy(alpha=.94f),RoundedCornerShape(4.dp)).padding(horizontal=8.dp,vertical=6.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(4.dp)){Icon(Icons.Default.Info,null,Modifier.size(14.dp),tint=Cream);Text(stringResource(R.string.map_info),color=Cream,fontSize=TypeScale.Caption)}
     }
-    if(open) AlertDialog(onDismissRequest={open=false},title={Text("Map information · ${world.title}",color=palette.foreground)},text={
+    if(open) AlertDialog(onDismissRequest={open=false},title={Text(stringResource(R.string.map_information_world,world.title),color=palette.foreground)},text={
         Column(Modifier.heightIn(max=420.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)) {
-            Text("Map key",style=MaterialTheme.typography.titleSmall,color=palette.foreground)
+            Text(stringResource(R.string.map_key),style=MaterialTheme.typography.titleSmall,color=palette.foreground)
             MapLegendRow(world,"route",profile.navigation.route,routeColor=routeColor,textColor=palette.foreground,mode=mode,navigating=navigating)
             MapLegendRow(world,"your-location",profile.navigation.position,textColor=palette.foreground)
             MapLegendRow(world,"destination",profile.navigation.destination,textColor=palette.foreground)
@@ -825,12 +828,12 @@ fun WaypointApp(controller: NavigationController,state: NavState,destinationLaun
                     }
                 }
             }
-            Text("Map data and credits",style=MaterialTheme.typography.titleSmall,color=palette.foreground,modifier=Modifier.padding(top=4.dp))
-            TextButton(onClick={uri.openUri("https://www.openstreetmap.org/copyright")}){Text("© OpenStreetMap contributors",color=palette.accent)}
-            TextButton(onClick={uri.openUri("https://openfreemap.org/")}){Text("Map tiles · OpenFreeMap",color=palette.accent)}
-            if(world.hasTerrain())TextButton(onClick={uri.openUri("https://github.com/tilezen/joerd/blob/master/docs/attribution.md")}){Text("Terrain · Mapzen and data providers",color=palette.accent)}
+            Text(stringResource(R.string.map_data_credits),style=MaterialTheme.typography.titleSmall,color=palette.foreground,modifier=Modifier.padding(top=4.dp))
+            TextButton(onClick={uri.openUri("https://www.openstreetmap.org/copyright")}){Text(stringResource(R.string.map_osm),color=palette.accent)}
+            TextButton(onClick={uri.openUri("https://openfreemap.org/")}){Text(stringResource(R.string.map_tiles),color=palette.accent)}
+            if(world.hasTerrain())TextButton(onClick={uri.openUri("https://github.com/tilezen/joerd/blob/master/docs/attribution.md")}){Text(stringResource(R.string.map_terrain),color=palette.accent)}
         }
-    },confirmButton={TextButton(onClick={open=false}){Text("Close",color=palette.accent)}},
+    },confirmButton={TextButton(onClick={open=false}){Text(stringResource(R.string.map_close),color=palette.accent)}},
         containerColor=palette.panel,titleContentColor=palette.foreground,textContentColor=palette.foreground)
 }
 @Composable private fun MapLegendRow(world:World,kind:String,label:String,modifier:Modifier=Modifier,
@@ -869,26 +872,27 @@ fun maneuverIcon(step: Maneuver?): ImageVector = when { step==null->Icons.Defaul
 
 @Composable fun ManeuverBanner(state: NavState,onClick:()->Unit,modifier:Modifier=Modifier) = NavBanner(state,onClick,modifier)
 @Composable fun NavigationFooter(state: NavState,onSteps:()->Unit,onStop:()->Unit) = NavBottomBar(state,onSteps,onStop)
-private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowercase(Locale.ROOT)) {
-    "restaurant","fast_food","ice_cream","food" -> Icons.Default.Restaurant to "Food"
-    "cafe","coffee_shop" -> Icons.Default.LocalCafe to "Café"
-    "bar","beer","pub" -> Icons.Default.LocalBar to "Drinks & pubs"
-    "lodging","hotel","hostel","guest_house" -> Icons.Default.Hotel to "Stay"
-    "fuel" -> Icons.Default.LocalGasStation to "Fuel"
-    "parking" -> Icons.Default.LocalParking to "Parking"
-    "shop","grocery","alcohol_shop" -> Icons.Default.Store to "Shop"
-    "attraction","art_gallery","castle","museum","library" -> Icons.Default.Explore to "Explore"
-    "hospital","pharmacy" -> Icons.Default.LocalHospital to "Health"
-    "park" -> Icons.Default.Park to "Park"
-    "atm" -> Icons.Default.AttachMoney to "ATM"
-    else -> Icons.Default.Place to "Place"
+private fun placeCategory(kind:String):Pair<ImageVector,Int> = when(kind.lowercase(Locale.ROOT)) {
+    "restaurant","fast_food","ice_cream","food" -> Icons.Default.Restaurant to R.string.place_food
+    "cafe","coffee_shop" -> Icons.Default.LocalCafe to R.string.place_cafe
+    "bar","beer","pub" -> Icons.Default.LocalBar to R.string.place_drinks
+    "lodging","hotel","hostel","guest_house" -> Icons.Default.Hotel to R.string.place_stay
+    "fuel" -> Icons.Default.LocalGasStation to R.string.place_fuel
+    "parking" -> Icons.Default.LocalParking to R.string.place_parking
+    "shop","grocery","alcohol_shop" -> Icons.Default.Store to R.string.place_shop
+    "attraction","art_gallery","castle","museum","library" -> Icons.Default.Explore to R.string.place_explore
+    "hospital","pharmacy" -> Icons.Default.LocalHospital to R.string.place_health
+    "park" -> Icons.Default.Park to R.string.place_park
+    "atm" -> Icons.Default.AttachMoney to R.string.place_atm
+    else -> Icons.Default.Place to R.string.place_generic
 }
 @OptIn(ExperimentalLayoutApi::class)
 @Composable fun DestinationCard(state: NavState,onSave:()->Unit,onClose:()->Unit,onLocate:()->Unit,onRetry:()->Unit,onStart:()->Unit,onSteps:()->Unit,onSelectRoute:(Int)->Unit,compact:Boolean=false,onQuest:(()->Unit)?=null,onShare:(()->Unit)?=null,roomyActions:Boolean=false,onTransit:(()->Unit)?=null,startActionModifier:Modifier=Modifier) {
     val place=state.selected ?: return
     val palette=hudPalette(state.world)
-    val (categoryIcon,categoryLabel)=placeCategory(place.kind)
-    val detail=if(place.address=="Selected on map")"$categoryLabel · Selected on map" else place.address
+    val (categoryIcon,categoryResource)=placeCategory(place.kind)
+    val categoryLabel=stringResource(categoryResource)
+    val detail=if(place.address=="Selected on map")stringResource(R.string.place_selected_map,categoryLabel) else place.address
     val expandedActions=roomyActions || LocalDensity.current.fontScale>1.3f
     Surface(color=palette.panel,contentColor=palette.foreground,shape=hudShape(state.world),border=hudBorder(state.world),
         modifier=Modifier.fillMaxWidth().animateContentSize(animationSpec=tween(280,easing=FastOutSlowInEasing))) {
@@ -896,14 +900,19 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
             Row(verticalAlignment=Alignment.CenterVertically) {
                 Surface(color=palette.accent.copy(alpha=.15f),shape=hudShape(state.world)) {Icon(categoryIcon,categoryLabel,Modifier.padding(10.dp).size(22.dp),tint=palette.accent)}
                 Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) { Text(if(state.arrived)"YOU HAVE ARRIVED" else place.name,style=if(compact)MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,maxLines=2,overflow=TextOverflow.Ellipsis);Text(if(state.arrived)place.name else detail,style=MaterialTheme.typography.bodySmall,color=palette.muted,maxLines=if(compact)1 else 2,overflow=TextOverflow.Ellipsis) }
+                Column(Modifier.weight(1f)) { Text(if(state.arrived)stringResource(R.string.route_arrived) else place.name,style=if(compact)MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,maxLines=2,overflow=TextOverflow.Ellipsis);Text(if(state.arrived)place.name else detail,style=MaterialTheme.typography.bodySmall,color=palette.muted,maxLines=if(compact)1 else 2,overflow=TextOverflow.Ellipsis) }
                 if(!expandedActions) DestinationActions(state,onSave,onQuest,onShare,false,onTransit)
             }
             if(expandedActions) DestinationActions(state,onSave,onQuest,onShare,true,onTransit)
             when {
-                state.arrived -> Button(onClick=onClose,modifier=Modifier.fillMaxWidth()) { Text("Done") }
-                state.routing -> { LinearProgressIndicator(modifier=Modifier.fillMaxWidth());Text("Finding a ${state.mode.routeDescription} route…",style=MaterialTheme.typography.bodySmall,color=palette.muted) }
-                state.routeError!=null -> { Text(state.routeError,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error);Button(onClick=onRetry,modifier=Modifier.fillMaxWidth()){Text("Try route again")} }
+                state.arrived -> Button(onClick=onClose,modifier=Modifier.fillMaxWidth()) { Text(stringResource(R.string.route_done)) }
+                state.routing -> { LinearProgressIndicator(modifier=Modifier.fillMaxWidth());Text(stringResource(when(state.mode){
+                    TravelMode.CAR -> R.string.route_finding_car
+                    TravelMode.MOTORCYCLE -> R.string.route_finding_motorcycle
+                    TravelMode.BICYCLE -> R.string.route_finding_bicycle
+                    TravelMode.WALK -> R.string.route_finding_walk
+                }),style=MaterialTheme.typography.bodySmall,color=palette.muted) }
+                state.routeError!=null -> { Text(state.routeError,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error);Button(onClick=onRetry,modifier=Modifier.fillMaxWidth()){Text(stringResource(R.string.route_retry))} }
                 state.route!=null -> {
                     FlowRow(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
                         Row(Modifier.align(Alignment.CenterVertically),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
@@ -911,8 +920,8 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
                             Text("${ceil(state.route.seconds/60).toInt().coerceAtLeast(1)} min",style=MaterialTheme.typography.titleLarge,color=palette.accent)
                         }
                         Text("· ${formatDistance(state.route.meters,state.imperial)}",color=palette.muted,style=MaterialTheme.typography.bodyMedium,modifier=Modifier.align(Alignment.CenterVertically))
-                        TextButton(onClick=onSteps,modifier=Modifier.align(Alignment.CenterVertically)){Text("Steps",color=palette.accent)}
-                        if(onTransit!=null && !state.navigating) TextButton(onClick=onTransit,modifier=Modifier.align(Alignment.CenterVertically).heightIn(min=48.dp)){Icon(Icons.Default.DirectionsBus,null,Modifier.size(18.dp),tint=palette.accent);Spacer(Modifier.width(6.dp));Text("Bus & transit",color=palette.accent)}
+                        TextButton(onClick=onSteps,modifier=Modifier.align(Alignment.CenterVertically)){Text(stringResource(R.string.route_steps),color=palette.accent)}
+                        if(onTransit!=null && !state.navigating) TextButton(onClick=onTransit,modifier=Modifier.align(Alignment.CenterVertically).heightIn(min=48.dp)){Icon(Icons.Default.DirectionsBus,null,Modifier.size(18.dp),tint=palette.accent);Spacer(Modifier.width(6.dp));Text(stringResource(R.string.transit_title),color=palette.accent)}
                     }
                     if(!state.navigating && state.routeOptions.size>1) {
                         RouteChipRow(state,onSelectRoute)
@@ -923,10 +932,10 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
                         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(12.dp),verticalAlignment=Alignment.CenterVertically) {
                             Icon(Icons.Default.Navigation,null,Modifier.size(22.dp))
                             Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(1.dp)) {
-                                Text(if(state.gpsReady)"Start navigation" else "Waiting for GPS…",
+                                Text(stringResource(if(state.gpsReady)R.string.route_start else R.string.route_waiting_gps),
                                     style=if(compact)MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
                                     fontWeight=FontWeight.Bold,maxLines=2,overflow=TextOverflow.Ellipsis)
-                                if(!compact)Text(if(state.gpsReady)"Turn-by-turn directions ready" else "Waiting for a GPS fix",
+                                if(!compact)Text(stringResource(if(state.gpsReady)R.string.route_ready else R.string.route_waiting_fix),
                                     style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onPrimary.copy(alpha=.84f),
                                     maxLines=2,overflow=TextOverflow.Ellipsis)
                             }
@@ -934,7 +943,12 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
                         }
                     }
                 }
-                else -> { Text("Use your precise location to get ${state.mode.routeDescription} directions.",style=MaterialTheme.typography.bodySmall,color=palette.muted);Button(onClick=onLocate,modifier=Modifier.fillMaxWidth()){Text("Enable GPS for directions")} }
+                else -> { Text(stringResource(when(state.mode){
+                    TravelMode.CAR -> R.string.route_locate_car
+                    TravelMode.MOTORCYCLE -> R.string.route_locate_motorcycle
+                    TravelMode.BICYCLE -> R.string.route_locate_bicycle
+                    TravelMode.WALK -> R.string.route_locate_walk
+                }),style=MaterialTheme.typography.bodySmall,color=palette.muted);Button(onClick=onLocate,modifier=Modifier.fillMaxWidth()){Text(stringResource(R.string.route_gps))} }
             }
         }
     }
@@ -949,19 +963,20 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
         routes.forEachIndexed { index,route ->
             val selected=route===state.route
             val minutes=ceil(route.seconds/60).toInt().coerceAtLeast(1)
-            val label=when { route===fastest->"Fastest"; route===shortest->"Shorter"; else->"Alternative" }
+            val label=stringResource(when { route===fastest->R.string.route_fastest; route===shortest->R.string.route_shorter; else->R.string.route_alternative })
             val extra=if(fastest!=null && route!==fastest) ceil((route.seconds-fastest.seconds)/60).toInt() else 0
             val via=route.steps.filter{it.road.isNotBlank()}.maxByOrNull{it.distance}?.road
             val distance=formatDistance(route.meters,state.imperial)
+            val description=stringResource(R.string.route_option_description,stringResource(R.string.route_option,index+1)+", "+label,stringResource(R.string.transit_minutes,minutes),distance)
             Column(Modifier.heightIn(min=56.dp).clip(shape)
                 .background(if(selected)palette.accent.copy(alpha=.15f) else palette.panel.copy(alpha=.82f))
                 .border(BorderStroke(1.dp,if(selected)palette.accent else palette.muted.copy(alpha=.45f)),shape)
                 .selectable(selected=selected,onClick={onSelect(index)},role=Role.RadioButton)
-                .semantics { contentDescription="Route ${index+1}, $label, $minutes minutes, $distance, ${if(selected)"selected" else "not selected"}" }
+                .semantics { contentDescription=description }
                 .padding(horizontal=12.dp,vertical=8.dp),verticalArrangement=Arrangement.spacedBy(2.dp)) {
                 Text(label,style=MaterialTheme.typography.titleSmall,fontWeight=FontWeight.Bold,color=palette.foreground)
                 Text("$minutes min · $distance"+if(extra>0)" · +$extra min" else "",style=MaterialTheme.typography.bodySmall,color=palette.accent)
-                if(via!=null)Text("via $via",style=MaterialTheme.typography.bodySmall,color=palette.muted,maxLines=1,overflow=TextOverflow.Ellipsis,modifier=Modifier.widthIn(max=180.dp))
+                if(via!=null)Text(stringResource(R.string.route_via,via),style=MaterialTheme.typography.bodySmall,color=palette.muted,maxLines=1,overflow=TextOverflow.Ellipsis,modifier=Modifier.widthIn(max=180.dp))
             }
         }
     }
@@ -971,12 +986,13 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
     val palette=hudPalette(world)
     val shape=hudShape(world)
     val road=route.steps.firstOrNull { it.road.isNotBlank() }?.road
+    val description=stringResource(R.string.route_option_description,stringResource(R.string.route_option,index+1),stringResource(R.string.transit_minutes,ceil(route.seconds/60).toInt().coerceAtLeast(1)),formatDistance(route.meters,imperial))
     Row(
         Modifier.fillMaxWidth().heightIn(min=56.dp).clip(shape)
             .background(if(selected)palette.accent.copy(alpha=.15f) else palette.panel.copy(alpha=.82f))
             .border(BorderStroke(1.dp,if(selected)palette.accent else palette.muted.copy(alpha=.45f)),shape)
             .selectable(selected=selected,onClick=onClick,role=Role.RadioButton)
-            .semantics { contentDescription="Route ${index+1}, ${ceil(route.seconds/60).toInt().coerceAtLeast(1)} minutes, ${formatDistance(route.meters,imperial)}, ${if(selected)"selected" else "not selected"}" }
+            .semantics { contentDescription=description }
             .padding(horizontal=8.dp,vertical=6.dp),
         verticalAlignment=Alignment.CenterVertically,
     ) {
@@ -984,8 +1000,8 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
             selectedColor=palette.accent,unselectedColor=palette.muted,
         ))
         Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
-            Text("Route ${index+1}",style=MaterialTheme.typography.titleSmall,fontWeight=FontWeight.Bold,color=palette.foreground)
-            Text(road ?: "Route overview",style=MaterialTheme.typography.bodySmall,color=palette.muted,maxLines=1,overflow=TextOverflow.Ellipsis)
+            Text(stringResource(R.string.route_option,index+1),style=MaterialTheme.typography.titleSmall,fontWeight=FontWeight.Bold,color=palette.foreground)
+            Text(road ?: stringResource(R.string.route_overview),style=MaterialTheme.typography.bodySmall,color=palette.muted,maxLines=1,overflow=TextOverflow.Ellipsis)
         }
         Spacer(Modifier.width(8.dp))
         Column(horizontalAlignment=Alignment.End) {
@@ -1048,50 +1064,50 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
     }
     Surface(color=palette.panel,contentColor=palette.foreground,modifier=Modifier.fillMaxSize()) { Column(Modifier.fillMaxSize().statusBarsPadding().imePadding()) {
         Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically) {
-            IconButton(onClick=onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Back to map")}
-            OutlinedTextField(value=state.query,onValueChange={onQuery(it.take(NavigationSharing.MAX_INPUT))},label={Text("Place or address")},singleLine=true,keyboardOptions=KeyboardOptions(imeAction=ImeAction.Search),keyboardActions=KeyboardActions(onSearch={submit()}),modifier=Modifier.weight(1f),shape=hudShape(state.world),trailingIcon={if(state.query.isNotEmpty())IconButton(onClick={onQuery("")}){Icon(Icons.Default.Close,"Clear search")}},colors=OutlinedTextFieldDefaults.colors(focusedTextColor=palette.foreground,unfocusedTextColor=palette.foreground,cursorColor=palette.accent,focusedBorderColor=palette.accent,unfocusedBorderColor=palette.muted,focusedLabelColor=palette.accent,unfocusedLabelColor=palette.muted,focusedLeadingIconColor=palette.foreground,focusedTrailingIconColor=palette.foreground,unfocusedTrailingIconColor=palette.foreground))
+            IconButton(onClick=onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,stringResource(R.string.search_back))}
+            OutlinedTextField(value=state.query,onValueChange={onQuery(it.take(NavigationSharing.MAX_INPUT))},label={Text(stringResource(R.string.search_place_address))},singleLine=true,keyboardOptions=KeyboardOptions(imeAction=ImeAction.Search),keyboardActions=KeyboardActions(onSearch={submit()}),modifier=Modifier.weight(1f),shape=hudShape(state.world),trailingIcon={if(state.query.isNotEmpty())IconButton(onClick={onQuery("")}){Icon(Icons.Default.Close,stringResource(R.string.search_clear))}},colors=OutlinedTextFieldDefaults.colors(focusedTextColor=palette.foreground,unfocusedTextColor=palette.foreground,cursorColor=palette.accent,focusedBorderColor=palette.accent,unfocusedBorderColor=palette.muted,focusedLabelColor=palette.accent,unfocusedLabelColor=palette.muted,focusedLeadingIconColor=palette.foreground,focusedTrailingIconColor=palette.foreground,unfocusedTrailingIconColor=palette.foreground))
         }
         Button(onClick={submit()},enabled=state.query.trim().length>=2,shape=hudShape(state.world),modifier=Modifier.fillMaxWidth().padding(horizontal=24.dp)) {
-            Icon(painterResource(R.drawable.waypoint_search),null,Modifier.size(20.dp));Spacer(Modifier.width(8.dp));Text("Search places")
+            Icon(painterResource(R.drawable.waypoint_search),null,Modifier.size(20.dp));Spacer(Modifier.width(8.dp));Text(stringResource(R.string.search_places))
         }
         ModeSegments(state.mode,onMode,state.world,Modifier.padding(horizontal=24.dp).fillMaxWidth())
-        Text(if(state.fix==null)"Downloaded-map names and saved places search offline; live Google suggestions need a connection" else "Downloaded-map names and saved places search offline first; live Google suggestions need a connection",style=MaterialTheme.typography.bodySmall,color=palette.muted,modifier=Modifier.padding(horizontal=24.dp,vertical=12.dp))
+        Text(stringResource(if(state.fix==null)R.string.search_offline_no_fix else R.string.search_offline),style=MaterialTheme.typography.bodySmall,color=palette.muted,modifier=Modifier.padding(horizontal=24.dp,vertical=12.dp))
         if(state.searchNote!=null)Text(state.searchNote,style=MaterialTheme.typography.bodySmall,color=palette.muted,modifier=Modifier.padding(horizontal=24.dp,vertical=8.dp))
         if(state.searching) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal=24.dp))
-        if(state.searchError!=null) { Notice(state.searchError,Icons.Default.CloudOff);TextButton(onClick={submit()}){Text("Retry search")} }
+        if(state.searchError!=null) { Notice(state.searchError,Icons.Default.CloudOff);TextButton(onClick={submit()}){Text(stringResource(R.string.search_retry))} }
         LazyColumn {
             if(state.query.length<2) {
-                item { Text(if(state.recent.isEmpty())"Your next destination starts here." else "Recent destinations",style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(24.dp)) }
+                item { Text(stringResource(if(state.recent.isEmpty())R.string.search_start else R.string.search_recent),style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(24.dp)) }
                 items(state.recent,key={it.id}){PlaceRow(it,state,onSelect)}
-                if(state.recent.isEmpty()) item { Text("Find an address, a landmark, or your next coffee stop. You can also press and hold the map to drop a pin.",color=palette.muted,style=MaterialTheme.typography.bodyMedium,modifier=Modifier.padding(horizontal=24.dp)) }
+                if(state.recent.isEmpty()) item { Text(stringResource(R.string.search_hint),color=palette.muted,style=MaterialTheme.typography.bodyMedium,modifier=Modifier.padding(horizontal=24.dp)) }
             } else {
                 val hasGoogleSuggestions=googleSuggestionsEnabled && (placeSuggestions.isNotEmpty() || liveSuggestions.queries.isNotEmpty())
                 if(googleSuggestionsEnabled) item {
-                    Text("Google Maps suggestions · search text and location bias are sent while you type",style=MaterialTheme.typography.labelSmall,
+                    Text(stringResource(R.string.search_google_privacy),style=MaterialTheme.typography.labelSmall,
                         color=palette.muted,modifier=Modifier.fillMaxWidth().padding(horizontal=24.dp,vertical=8.dp))
                 }
                 if(liveSuggestionsLoading && liveSuggestions.places.isEmpty() && liveSuggestions.queries.isEmpty()) item {
-                    Text("Finding nearby names…",style=MaterialTheme.typography.bodySmall,color=palette.muted,modifier=Modifier.padding(horizontal=24.dp,vertical=8.dp))
+                    Text(stringResource(R.string.search_finding),style=MaterialTheme.typography.bodySmall,color=palette.muted,modifier=Modifier.padding(horizontal=24.dp,vertical=8.dp))
                 }
                 if(offlineSuggestions.isNotEmpty()) {
-                    item { Text("Downloaded map places",style=MaterialTheme.typography.titleSmall,color=palette.accent,modifier=Modifier.padding(start=24.dp,top=8.dp,bottom=4.dp)) }
+                    item { Text(stringResource(R.string.search_downloaded),style=MaterialTheme.typography.titleSmall,color=palette.accent,modifier=Modifier.padding(start=24.dp,top=8.dp,bottom=4.dp)) }
                     items(offlineSuggestions.take(6),key={"offline:${it.id}"}) { PlaceRow(it,state,onSelect) }
                 }
                 if(personalSuggestions.isNotEmpty()) {
-                    item { Text("Your places",style=MaterialTheme.typography.titleSmall,color=palette.accent,modifier=Modifier.padding(start=24.dp,top=8.dp,bottom=4.dp)) }
+                    item { Text(stringResource(R.string.search_your_places),style=MaterialTheme.typography.titleSmall,color=palette.accent,modifier=Modifier.padding(start=24.dp,top=8.dp,bottom=4.dp)) }
                     items(personalSuggestions,key={"local:${it.id}"}) { PlaceRow(it,state,onSelect) }
                 }
                 if(hasGoogleSuggestions) {
-                    item { Text("Suggestions",style=MaterialTheme.typography.titleSmall,color=palette.accent,modifier=Modifier.padding(start=24.dp,top=8.dp,bottom=4.dp)) }
+                    item { Text(stringResource(R.string.search_suggestions),style=MaterialTheme.typography.titleSmall,color=palette.accent,modifier=Modifier.padding(start=24.dp,top=8.dp,bottom=4.dp)) }
                     items(placeSuggestions,key={"google:${it.id}"}) { place ->
                         GoogleSuggestionRow(place,state,onSelect,{ onQuery(place.name) })
                     }
                     items(liveSuggestions.queries,key={"query:$it"}) { suggestion ->
                         ListItem(
                             headlineContent={Text(suggestion,maxLines=1,overflow=TextOverflow.Ellipsis)},
-                            supportingContent={Text("Search for this phrase",style=MaterialTheme.typography.bodySmall)},
+                            supportingContent={Text(stringResource(R.string.search_phrase),style=MaterialTheme.typography.bodySmall)},
                             leadingContent={Icon(Icons.Default.Search,null,tint=palette.accent)},
-                            trailingContent={Icon(Icons.AutoMirrored.Filled.ArrowForward,"Search $suggestion",tint=palette.muted)},
+                            trailingContent={Icon(Icons.AutoMirrored.Filled.ArrowForward,stringResource(R.string.search_for,suggestion),tint=palette.muted)},
                             modifier=Modifier.clickable { onQuery(suggestion);submit() },
                             colors=hudPalette(state.world).let { ListItemDefaults.colors(containerColor=Color.Transparent,headlineColor=it.foreground,supportingColor=it.muted,trailingIconColor=it.muted) },
                         )
@@ -1102,11 +1118,11 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
                         hasGoogleSuggestions && placeSuggestions.any { it.id==fallback.id || it.name.equals(fallback.name,true) && distance(it.point,fallback.point)<120.0 }
                 }
                 if(fallbackResults.isNotEmpty() && hasGoogleSuggestions) item {
-                    Text("More matches",style=MaterialTheme.typography.titleSmall,color=palette.muted,modifier=Modifier.padding(start=24.dp,top=10.dp,bottom=4.dp))
+                    Text(stringResource(R.string.search_more),style=MaterialTheme.typography.titleSmall,color=palette.muted,modifier=Modifier.padding(start=24.dp,top=10.dp,bottom=4.dp))
                 }
                 items(fallbackResults,key={"fallback:${it.id}"}){PlaceRow(it,state,onSelect)}
                 if(!liveSuggestionsLoading && !state.searching && localSuggestions.isEmpty() && placeSuggestions.isEmpty() && liveSuggestions.queries.isEmpty() && state.searchResults.isEmpty() && state.searchError==null && state.searchNote==null)
-                    item{Text("No places found. Try a street, city, or fuller address.",modifier=Modifier.padding(24.dp),color=palette.muted)}
+                    item{Text(stringResource(R.string.search_empty),modifier=Modifier.padding(24.dp),color=palette.muted)}
             }
         }
     } }
@@ -1114,12 +1130,13 @@ private fun placeCategory(kind:String):Pair<ImageVector,String> = when(kind.lowe
 
 @Composable private fun GoogleSuggestionRow(place:Place,state:NavState,onSelect:(Place)->Unit,onFill:()->Unit) {
     val palette=hudPalette(state.world)
+    val fillDescription=stringResource(R.string.search_fill_place,place.name)
     ListItem(
         headlineContent={Text(place.name,maxLines=1,overflow=TextOverflow.Ellipsis)},
-        supportingContent={Text(place.address.ifBlank { "Google Maps place suggestion" },maxLines=1,overflow=TextOverflow.Ellipsis)},
+        supportingContent={Text(place.address.ifBlank { stringResource(R.string.search_google_suggestion) },maxLines=1,overflow=TextOverflow.Ellipsis)},
         leadingContent={Icon(painterResource(R.drawable.waypoint_map_pin),null,Modifier.size(24.dp),tint=palette.accent)},
-        trailingContent={IconButton(onClick=onFill,modifier=Modifier.size(48.dp).semantics { contentDescription="Put ${place.name} in the search field" }) {
-            Icon(Icons.Default.ArrowUpward,"Use ${place.name} as search text",tint=palette.muted)
+        trailingContent={IconButton(onClick=onFill,modifier=Modifier.size(48.dp).semantics { contentDescription=fillDescription }) {
+            Icon(Icons.Default.ArrowUpward,stringResource(R.string.search_use_place,place.name),tint=palette.muted)
         }},
         modifier=Modifier.clickable { onSelect(place) },
         colors=ListItemDefaults.colors(containerColor=Color.Transparent,headlineColor=palette.foreground,supportingColor=palette.muted,trailingIconColor=palette.muted),

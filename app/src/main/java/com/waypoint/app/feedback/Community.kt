@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
@@ -45,8 +46,8 @@ internal fun CommunitySettingsRow() {
     ) {
         Icon(Icons.Default.Forum, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
         Column(Modifier.weight(1f)) {
-            Text("Join the Waypoint Discord", style = MaterialTheme.typography.titleMedium)
-            Text("A channel for each world, release notes and bug reports", style = MaterialTheme.typography.bodySmall, color = Muted)
+            Text(stringResource(R.string.community_discord), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.community_discord_summary), style = MaterialTheme.typography.bodySmall, color = Muted)
         }
         Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(20.dp), tint = Muted)
     }
@@ -69,8 +70,8 @@ internal fun KoFiSettingsRow() {
             modifier = Modifier.size(width = 30.dp, height = 24.dp),
         )
         Column(Modifier.weight(1f)) {
-            Text("Support Waypoint on Ko-fi", style = MaterialTheme.typography.titleMedium)
-            Text("Optional tip · opens Ko-fi in your browser", style = MaterialTheme.typography.bodySmall, color = Muted)
+            Text(stringResource(R.string.community_support), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.community_support_summary), style = MaterialTheme.typography.bodySmall, color = Muted)
         }
         Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(20.dp), tint = Muted)
     }

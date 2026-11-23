@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -40,7 +41,7 @@ internal fun MapLegendControl(state: NavState, modifier: Modifier = Modifier) {
     val toolFootprint = hudToolColumnWidth(state.hudSize) + 8.dp
     val profile = remember(world) { WorldLegendProfiles.forWorld(world) }
     var expanded by remember(world) { mutableStateOf(false) }
-    val keyLabel = if (expanded) "Close ${world.title} map key" else "Open ${world.title} map key"
+    val keyLabel = stringResource(if (expanded) R.string.nav_close_world_key else R.string.nav_open_world_key, world.title)
     val entries = remember(context) { MapPoiCategories.all(context) }
     val sections = remember(entries, profile) {
         profile.groupOrder.mapNotNull { group ->
@@ -121,7 +122,7 @@ internal fun MapLegendControl(state: NavState, modifier: Modifier = Modifier) {
                                 color = palette.muted, fontSize = TypeScale.Caption, maxLines = 1)
                         }
                         IconButton(onClick = { expanded = false }, modifier = Modifier.size(48.dp)) {
-                            Icon(Icons.Default.Close, contentDescription = "Close map key", tint = palette.foreground)
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.nav_close_key), tint = palette.foreground)
                         }
                     }
                     HorizontalDivider(color = palette.accent.copy(alpha = .72f))

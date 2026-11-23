@@ -12,6 +12,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
 internal const val SAVED_PLACE_NAME_LIMIT = 80
@@ -26,28 +27,28 @@ internal fun savedPlaceName(value: String): String? = value.trim().takeIf {
     var error by rememberSaveable { mutableStateOf(false) }
     LazyColumn(Modifier.fillMaxSize().background(Ink).statusBarsPadding(), contentPadding = PaddingValues(vertical = 24.dp)) {
         item {
-            Text("Your places", style = MaterialTheme.typography.displayMedium, modifier = Modifier.padding(horizontal = 24.dp))
-            Text("Your favourite destinations, with names you choose.",
+            Text(stringResource(R.string.search_your_places), style = MaterialTheme.typography.displayMedium, modifier = Modifier.padding(horizontal = 24.dp))
+            Text(stringResource(R.string.saved_intro),
                 style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
         }
         if (state.saved.isEmpty()) item { Column(Modifier.fillMaxWidth().padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(20.dp)) {
             Spacer(Modifier.height(36.dp))
             Icon(painterResource(R.drawable.waypoint_bookmark), null, tint = WaypointColors.accent, modifier = Modifier.size(48.dp))
-            Text("No saved places yet", style = MaterialTheme.typography.titleLarge)
-            Text("Search for a destination and tap the bookmark to keep it here.", color = Muted, style = MaterialTheme.typography.bodyMedium)
-            Button(onClick = onSearch) { Text("Find a place") }
+            Text(stringResource(R.string.saved_empty_title), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.saved_empty), color = Muted, style = MaterialTheme.typography.bodyMedium)
+            Button(onClick = onSearch) { Text(stringResource(R.string.saved_find)) }
         } }
         items(state.saved, key = { it.id }) { place ->
             var menu by remember { mutableStateOf(false) }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.weight(1f)) { PlaceRow(place, state, onSelect) }
                 Box {
-                    IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, "Options for ${place.name}", tint = Cream) }
+                    IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, stringResource(R.string.saved_options, place.name), tint = Cream) }
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                        DropdownMenuItem(text = { Text("Rename") }, leadingIcon = { Icon(Icons.Default.Edit, null) },
+                        DropdownMenuItem(text = { Text(stringResource(R.string.saved_rename)) }, leadingIcon = { Icon(Icons.Default.Edit, null) },
                             onClick = { menu = false; label = place.name; error = false; editingId = place.id })
-                        DropdownMenuItem(text = { Text("Remove from saved") }, leadingIcon = { Icon(Icons.Default.BookmarkRemove, null) },
+                        DropdownMenuItem(text = { Text(stringResource(R.string.saved_remove)) }, leadingIcon = { Icon(Icons.Default.BookmarkRemove, null) },
                             onClick = { menu = false; onDelete(place) })
                     }
                 }
@@ -55,16 +56,16 @@ internal fun savedPlaceName(value: String): String? = value.trim().takeIf {
         }
     }
     state.saved.firstOrNull { it.id == editingId }?.let { place ->
-        AlertDialog(onDismissRequest = { editingId = null }, title = { Text("Name this place") },
+        AlertDialog(onDismissRequest = { editingId = null }, title = { Text(stringResource(R.string.saved_name_title)) },
             text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(place.address, style = MaterialTheme.typography.bodyMedium)
                 OutlinedTextField(label, onValueChange = { label = it.take(SAVED_PLACE_NAME_LIMIT); error = false },
-                    label = { Text("Place name") }, placeholder = { Text("For example, Work") }, singleLine = true,
-                    isError = error, supportingText = { Text(if(error) "Enter a name for this place." else "Only the name changes. The location stays the same.") },
+                    label = { Text(stringResource(R.string.saved_name)) }, placeholder = { Text(stringResource(R.string.saved_name_example)) }, singleLine = true,
+                    isError = error, supportingText = { Text(stringResource(if(error) R.string.saved_name_error else R.string.saved_name_help)) },
                     modifier = Modifier.fillMaxWidth())
             } },
             confirmButton = { TextButton(onClick = { if(onRename(place.id, label)) editingId = null else error = true },
-                enabled = savedPlaceName(label) != null) { Text("Save name") } },
-            dismissButton = { TextButton(onClick = { editingId = null }) { Text("Cancel") } })
+                enabled = savedPlaceName(label) != null) { Text(stringResource(R.string.saved_save_name)) } },
+            dismissButton = { TextButton(onClick = { editingId = null }) { Text(stringResource(R.string.action_cancel)) } })
     }
 }

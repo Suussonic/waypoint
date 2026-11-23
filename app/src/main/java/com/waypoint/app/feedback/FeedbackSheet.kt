@@ -7,6 +7,8 @@ import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.foundation.text.KeyboardOptions
@@ -58,14 +61,15 @@ internal fun FeedbackSettingsRow(onClick: () -> Unit) {
     ) {
         Icon(Icons.Default.RateReview, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
         Column(Modifier.weight(1f)) {
-            Text("Send feedback", style = MaterialTheme.typography.titleMedium)
-            Text("Open a GitHub issue in your words", style = MaterialTheme.typography.bodySmall, color = Muted)
+            Text(stringResource(R.string.feedback_title), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.feedback_summary), style = MaterialTheme.typography.bodySmall, color = Muted)
         }
         Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(20.dp), tint = Muted)
     }
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 internal fun FeedbackSheet(world: World, onBack: () -> Unit, onLeaveApp: () -> Unit) {
     val context = LocalContext.current
     var kindName by rememberSaveable { mutableStateOf(FeedbackKind.BUG.name) }
@@ -83,28 +87,32 @@ internal fun FeedbackSheet(world: World, onBack: () -> Unit, onLeaveApp: () -> U
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to settings")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.feedback_back))
             }
-            Text("Send feedback", style = MaterialTheme.typography.headlineMedium)
+            Text(stringResource(R.string.feedback_title), style = MaterialTheme.typography.headlineMedium)
         }
         Text(
-            "Tell us what happened or what you would like to see. Your report opens on GitHub for you to review and submit.",
+            stringResource(R.string.feedback_intro),
             style = MaterialTheme.typography.bodyMedium,
             color = Muted,
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FeedbackKind.entries.forEach { option ->
                 FilterChip(
                     selected = kind == option,
                     onClick = { kindName = option.name },
-                    label = { Text(option.label) },
+                    label = { Text(stringResource(when (option) {
+                        FeedbackKind.BUG -> R.string.feedback_bug
+                        FeedbackKind.IDEA -> R.string.feedback_feature
+                        FeedbackKind.OTHER -> R.string.feedback_other
+                    })) },
                 )
             }
         }
         OutlinedTextField(
             value = title,
             onValueChange = { title = it.take(MAX_FEEDBACK_TITLE) },
-            label = { Text("Issue title") },
+            label = { Text(stringResource(R.string.feedback_issue_title)) },
             supportingText = { Text("${title.length}/$MAX_FEEDBACK_TITLE") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
@@ -113,7 +121,7 @@ internal fun FeedbackSheet(world: World, onBack: () -> Unit, onLeaveApp: () -> U
         OutlinedTextField(
             value = details,
             onValueChange = { details = it.take(MAX_FEEDBACK_DETAILS) },
-            label = { Text("Your experience or idea") },
+            label = { Text(stringResource(R.string.feedback_details)) },
             supportingText = { Text("${details.length}/$MAX_FEEDBACK_DETAILS") },
             minLines = 5,
             maxLines = 8,
@@ -121,17 +129,17 @@ internal fun FeedbackSheet(world: World, onBack: () -> Unit, onLeaveApp: () -> U
             modifier = Modifier.fillMaxWidth(),
         )
         Text(
-            "Only your words, the selected world and the app version are added. Your location and routes are not attached.",
+            stringResource(R.string.feedback_privacy),
             style = MaterialTheme.typography.bodySmall,
             color = Muted,
         )
         if (tooLong) Text(
-            "This report is too long for a GitHub link. Shorten it, then try again.",
+            stringResource(R.string.feedback_too_long),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.error,
         )
         if (browserError) Text(
-            "No app can open GitHub. Install a browser and try again.",
+            stringResource(R.string.feedback_browser_error),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.error,
         )
@@ -147,7 +155,7 @@ internal fun FeedbackSheet(world: World, onBack: () -> Unit, onLeaveApp: () -> U
         ) {
             Icon(Icons.AutoMirrored.Filled.OpenInNew, null, Modifier.size(18.dp))
             Spacer(Modifier.size(8.dp))
-            Text("Review issue on GitHub")
+            Text(stringResource(R.string.feedback_review))
         }
         TextButton(
             onClick = {
@@ -155,7 +163,7 @@ internal fun FeedbackSheet(world: World, onBack: () -> Unit, onLeaveApp: () -> U
                 if (!browserError) onLeaveApp()
             },
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-        ) { Text("Browse existing issues") }
+        ) { Text(stringResource(R.string.feedback_browse)) }
         Spacer(Modifier.height(16.dp))
     }
 }

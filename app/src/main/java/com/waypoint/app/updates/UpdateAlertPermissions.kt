@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -33,15 +34,11 @@ import androidx.lifecycle.compose.currentStateAsState
         return
     }
     AlertDialog(onDismissRequest=::finish,
-        title={Text(if(batteryStep)"Keep update alerts timely" else "Know when Waypoint is updated", fontWeight=FontWeight.SemiBold)},
+        title={Text(stringResource(if(batteryStep)R.string.update_permission_battery_title else R.string.update_permission_title), fontWeight=FontWeight.SemiBold)},
         text={Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
-            Text(if(batteryStep)
-                "Waypoint checks for new releases about twice a day while the app is closed. Restricted battery access can delay checks."
-                else "Waypoint checks for stable releases automatically. Allow notifications to hear about new versions; alerts wait while you are driving.")
+            Text(stringResource(if(batteryStep)R.string.update_permission_battery_description else R.string.update_permission_description))
             Surface(color=MaterialTheme.colorScheme.surfaceVariant.copy(alpha=.6f), shape=RoundedCornerShape(12.dp)) {
-                Text(if(batteryStep)
-                    "Android's battery setting can reduce delays, but may use more battery. Checks are automatic; downloads and installation are always your choice. You can skip this and keep using the app."
-                    else "An alert opens update details. Nothing is downloaded or installed until you choose.",
+                Text(stringResource(if(batteryStep)R.string.update_permission_battery_detail else R.string.update_permission_detail),
                     style=MaterialTheme.typography.bodySmall, modifier=Modifier.padding(12.dp))
             }
         }},
@@ -50,8 +47,8 @@ import androidx.lifecycle.compose.currentStateAsState
             else if(Build.VERSION.SDK_INT>=33 && ContextCompat.checkSelfPermission(context,Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)
                 permission.launch(Manifest.permission.POST_NOTIFICATIONS)
             else { finish();alerts.openNotificationSettings() }
-        },modifier=Modifier.heightIn(min=48.dp)) { Text(if(batteryStep)"Review battery access" else "Allow notifications") }},
-        dismissButton={TextButton(onClick=::finish,modifier=Modifier.heightIn(min=48.dp)) { Text("Not now") }})
+        },modifier=Modifier.heightIn(min=48.dp)) { Text(stringResource(if(batteryStep)R.string.update_battery_settings else R.string.update_allow_notifications)) }},
+        dismissButton={TextButton(onClick=::finish,modifier=Modifier.heightIn(min=48.dp)) { Text(stringResource(R.string.update_not_now)) }})
 }
 
 @Composable internal fun UpdateAlertStatus(alerts:UpdateAlerts) {
@@ -62,18 +59,17 @@ import androidx.lifecycle.compose.currentStateAsState
         Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment=androidx.compose.ui.Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                 Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
-                    Text("Automatic update alerts",style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold)
-                    Text(if(alerts.scheduled())"Checks run about twice a day" else "Background checks unavailable",
+                    Text(stringResource(R.string.update_alerts_title),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold)
+                    Text(stringResource(if(alerts.scheduled())R.string.update_alerts_scheduled else R.string.update_alerts_unavailable),
                         style=MaterialTheme.typography.labelMedium,color=MaterialTheme.colorScheme.primary)
                 }
             }
-            Text(if(alerts.scheduled())"Waypoint checks when connected and the battery is not low. Android may delay checks. Downloads and installation are always your choice."
-                else "Waypoint still checks for updates when you open the app.",style=MaterialTheme.typography.bodySmall)
-            Text(if(notifications)"Notifications are allowed." else "Notifications are off. Allow App updates in Android to receive new-release alerts.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
-            TextButton(onClick=alerts::openNotificationSettings,modifier=Modifier.heightIn(min=48.dp)) { Text("Notification settings") }
+            Text(stringResource(if(alerts.scheduled())R.string.update_alerts_info else R.string.update_alerts_foreground),style=MaterialTheme.typography.bodySmall)
+            Text(stringResource(if(notifications)R.string.update_notifications_allowed else R.string.update_notifications_off),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            TextButton(onClick=alerts::openNotificationSettings,modifier=Modifier.heightIn(min=48.dp)) { Text(stringResource(R.string.update_notification_settings)) }
             if(!unrestricted) {
-                Text("Battery restrictions may delay alerts. Unrestricted background use can use more battery and is optional.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
-                TextButton(onClick=alerts::openBatterySettings,modifier=Modifier.heightIn(min=48.dp)) { Text("Review battery access") }
+                Text(stringResource(R.string.update_battery_info),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick=alerts::openBatterySettings,modifier=Modifier.heightIn(min=48.dp)) { Text(stringResource(R.string.update_battery_settings)) }
             }
         }
     }

@@ -1,0 +1,31 @@
+<resources>
+    <string name="journey_title">Votre parcours</string>
+    <string name="journey_heading">Un peu de progrès, chaque jour</string>
+    <string name="journey_intro">Vos tâches et récompenses restent sur ce téléphone. Tous les mondes et toutes les fonctions de navigation sont disponibles dès le départ.</string>
+    <string name="journey_show_progress">Afficher les niveaux et les récompenses</string>
+    <string name="journey_sounds">Sons de réussite dans l’application</string>
+    <string name="journey_level_xp">Niveau %1$d · %2$d XP</string>
+    <string name="journey_badges">Vos badges</string>
+    <string name="journey_first_badge">Terminez votre première quête pour obtenir le badge « Premier pas ».</string>
+    <string name="journey_frame">Cadre de l’avatar</string>
+    <string name="journey_frame_unlocks">De nouveaux cadres aux niveaux 2, 5 et 10.</string>
+    <string name="journey_story">Votre histoire</string>
+    <string name="journey_chapter_locked">Disponible après %1$d quêtes terminées. Vous en avez terminé %2$d pour le moment.</string>
+    <string name="journey_rewards_help">Chaque quête rapporte 20 XP. Terminer son minuteur de concentration d’au moins 10 minutes ajoute 10 XP, une seule fois. Aucune série à maintenir, aucun point perdu si vous prenez votre temps.</string>
+    <string name="journey_local_title">Sur ce téléphone</string>
+    <string name="journey_local_help">Les mises à jour conservent vos quêtes. Désinstaller Waypoint les supprime. Il n’y a ni compte ni sauvegarde dans le cloud.</string>
+    <string name="journey_badge_first">Premier pas</string>
+    <string name="journey_badge_rhythm">Trouver son rythme</string>
+    <string name="journey_badge_adventurer">Aventurier aguerri</string>
+    <string name="journey_badge_focus">Du temps bien employé</string>
+    <string name="journey_frame_simple">Simple</string>
+    <string name="journey_frame_scout">Éclaireur</string>
+    <string name="journey_frame_explorer">Explorateur</string>
+    <string name="journey_frame_wayfinder">Guide des chemins</string>
+    <string name="journey_chapter_begin_title">Un point de départ</string>
+    <string name="journey_chapter_begin_text">Cinq petites promesses tenues. La carte n’a pas changé, mais votre place sur celle-ci, oui. Chaque voyage commence par une chose ordinaire que vous décidez d’accomplir.</string>
+    <string name="journey_chapter_way_title">Tracer votre propre chemin</string>
+    <string name="journey_chapter_way_text">Les chemins familiers racontent désormais une autre histoire : vos tâches accomplies, le temps que vous avez pris, les personnes et les lieux que vous avez choisis. Vous tracez votre propre route.</string>
+    <string name="journey_chapter_road_title">La route à venir</string>
+    <string name="journey_chapter_road_text">Cinquante quêtes derrière vous, et aucune destination finale à poursuivre. Prenez un instant pour regarder le chemin parcouru. Le prochain chapitre peut être aussi simple qu’un après-midi tranquille ou aussi vaste qu’un nouvel horizon.</string>
+</resources>

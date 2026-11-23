@@ -290,23 +290,23 @@ private fun IntroStoryPage(
             when (page) {
                 0 -> {
                     IntroHeading("Waypoint", (49 * titleScale).toInt())
-                    IntroHeading("Real streets", (42 * titleScale).toInt())
-                    IntroHeading("new worlds", (36 * titleScale).toInt())
+                    IntroHeading(stringResource(R.string.onboarding_real_streets), (42 * titleScale).toInt())
+                    IntroHeading(stringResource(R.string.onboarding_new_worlds), (36 * titleScale).toInt())
                 }
                 1 -> {
-                    IntroHeading("Map Icons of your", (34 * titleScale).toInt())
+                    IntroHeading(stringResource(R.string.onboarding_map_icons), (34 * titleScale).toInt())
                     IntroHeading(stringResource(R.string.favorite_game), (47 * titleScale).toInt())
                 }
                 2 -> {
-                    IntroHeading("Navigate with", (34 * titleScale).toInt())
-                    IntroHeading("your phone", (49 * titleScale).toInt())
+                    IntroHeading(stringResource(R.string.onboarding_navigate_with), (34 * titleScale).toInt())
+                    IntroHeading(stringResource(R.string.onboarding_your_phone), (49 * titleScale).toInt())
                 }
             }
             Spacer(Modifier.height(18.dp))
             val description = when (page) {
                 0 -> stringResource(R.string.intro_find_game)
                 1 -> stringResource(R.string.intro_real_streets)
-                else -> "Follow real routes on a game-inspired map with clear turn-by-turn voice guidance."
+                else -> stringResource(R.string.onboarding_guidance_help)
             }
             Text(description, color = introMuted, fontFamily = introFont, fontSize = 16.sp,
                 lineHeight = 20.sp, textAlign = TextAlign.Center, maxLines = 3)
@@ -318,10 +318,10 @@ private fun IntroStoryPage(
                     .padding(top = 4.dp, end = 12.dp).heightIn(min = 48.dp),
                 colors = ButtonDefaults.textButtonColors(contentColor = introWhite),
             ) {
-                Text("Choose a world", maxLines = 1)
+                Text(stringResource(R.string.onboarding_choose_world), maxLines = 1)
             }
         }
-        OnboardingAction("Continue", onContinue)
+        OnboardingAction(stringResource(R.string.onboarding_continue), onContinue)
     }
 }
 
@@ -554,7 +554,7 @@ private fun ReferralPage(selected: String, onSelect: (String) -> Unit, onContinu
     Box(Modifier.fillMaxSize().background(introBackground()).statusBarsPadding()) {
         Column(Modifier.fillMaxSize().padding(horizontal = 24.dp).padding(top = 22.dp, bottom = 115.dp),
             horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Where did you hear\nabout us?", color = introWhite, fontFamily = introFont,
+            Text(stringResource(R.string.onboarding_referral), color = introWhite, fontFamily = introFont,
                 fontWeight = FontWeight.ExtraBold, fontSize = 33.sp, lineHeight = 41.sp,
                 textAlign = TextAlign.Center)
             Spacer(Modifier.height(20.dp))
@@ -575,14 +575,14 @@ private fun ReferralPage(selected: String, onSelect: (String) -> Unit, onContinu
                             }
                         }
                         Spacer(Modifier.size(17.dp))
-                        Text(name, color = introWhite, fontFamily = introFont,
+                        Text(if (name == "Friend") stringResource(R.string.onboarding_friend) else name, color = introWhite, fontFamily = introFont,
                             modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 17.sp)
                         if (selected == name) Icon(Icons.Default.Check, null, Modifier.size(20.dp), tint = introWhite)
                     }
                 }
             }
         }
-        OnboardingAction("Continue", onContinue, selected.isNotBlank())
+        OnboardingAction(stringResource(R.string.onboarding_continue), onContinue, selected.isNotBlank())
     }
 }
 
@@ -629,7 +629,7 @@ private fun FavoriteGamesPage(selected: Set<String>, onToggle: (World) -> Unit, 
                 Spacer(Modifier.height(16.dp))
             }
         }
-        OnboardingAction("Continue", onContinue, selected.isNotEmpty())
+        OnboardingAction(stringResource(R.string.onboarding_continue), onContinue, selected.isNotEmpty())
     }
 }
 
@@ -676,14 +676,14 @@ private fun OnboardingMapCarousel(
         )))
         Column(Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 7.dp),
             horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Select Map to", color = Color.White, fontFamily = introFont,
+            Text(stringResource(R.string.onboarding_select_map), color = Color.White, fontFamily = introFont,
                 fontWeight = FontWeight.ExtraBold, fontSize = 30.sp)
-            Text("Start", color = Color.White, fontFamily = introFont,
+            Text(stringResource(R.string.onboarding_start), color = Color.White, fontFamily = introFont,
                 fontWeight = FontWeight.ExtraBold, fontSize = 39.sp)
         }
         Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(horizontal = 23.dp, vertical = 133.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            CarouselArrow(Icons.AutoMirrored.Filled.ArrowBack, "Previous map") { onMove(-1) }
+            CarouselArrow(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.onboarding_previous)) { onMove(-1) }
             val gameIcon = waypointWorldCardArtworkFor(world)
             Row(Modifier.weight(1f).padding(horizontal = 6.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
@@ -695,14 +695,15 @@ private fun OnboardingMapCarousel(
                     fontSize = 22.sp, maxLines = 1, textAlign = TextAlign.Center,
                     overflow = TextOverflow.Ellipsis)
             }
-            CarouselArrow(Icons.AutoMirrored.Filled.ArrowForward, "Next map") { onMove(1) }
+            CarouselArrow(Icons.AutoMirrored.Filled.ArrowForward, stringResource(R.string.onboarding_next)) { onMove(1) }
         }
+        val positionDescription = stringResource(R.string.onboarding_world_position, index + 1, worldCount)
         Text("${index + 1} / $worldCount",
             Modifier.align(Alignment.BottomCenter).padding(bottom = 106.dp)
-                .semantics { contentDescription = "Map ${index + 1} of $worldCount" },
+                .semantics { contentDescription = positionDescription },
             color = Color.White.copy(alpha = .8f), fontFamily = introFont,
             fontWeight = FontWeight.Bold, fontSize = 13.sp)
-        OnboardingAction("Continue", onContinue)
+        OnboardingAction(stringResource(R.string.onboarding_continue), onContinue)
     }
 }
 
@@ -736,24 +737,24 @@ private fun OnboardingLocationPage(
         Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()
             .padding(horizontal = 20.dp).padding(bottom = 120.dp),
             horizontalAlignment = Alignment.CenterHorizontally) {
-            IntroHeading("Allow location for", 33)
+            IntroHeading(stringResource(R.string.onboarding_allow_for), 33)
             IntroHeading("Waypoint", 48)
             Spacer(Modifier.height(18.dp))
-            Text("Waypoint uses your location to show where you are and guide you along real routes.",
+            Text(stringResource(R.string.onboarding_location_brief),
                 color = introMuted, fontFamily = introFont, fontSize = 16.sp,
                 lineHeight = 21.sp, textAlign = TextAlign.Center)
             if (permissionDenied && !hasPermission) {
                 Spacer(Modifier.height(8.dp))
-                Text("Location is off. Enable it in Android settings or explore without it.",
+                Text(stringResource(R.string.onboarding_location_off),
                     color = introWhite, fontFamily = introFont, fontSize = 13.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.clickable(role = Role.Button, onClick = onSettings))
             }
         }
-        OnboardingAction(if (hasPermission) "Open map" else "Allow location",
+        OnboardingAction(stringResource(if (hasPermission) R.string.onboarding_open_map else R.string.onboarding_allow_location),
             if (hasPermission) onContinue else onAllow, bottomPadding = if (hasPermission) 30.dp else 61.dp)
         if (!hasPermission) {
-            Text("Continue without location", Modifier.align(Alignment.BottomCenter)
+            Text(stringResource(R.string.onboarding_without_location), Modifier.align(Alignment.BottomCenter)
                 .padding(bottom = 14.dp).clickable(role = Role.Button, onClick = onContinue)
                 .padding(7.dp), color = introWhite, fontFamily = introFont, fontSize = 13.sp)
         }

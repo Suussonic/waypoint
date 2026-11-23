@@ -345,7 +345,7 @@ fun World.inspiration()=when(this) {
     val p=hudPalette(world)
     Surface(color=p.panel,contentColor=p.foreground) {
         Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal=8.dp,vertical=8.dp),horizontalArrangement=Arrangement.spacedBy(if(world==World.PIXEL)5.dp else 0.dp)) {
-            listOf("Map" to Icons.Default.Map,"Worlds" to Icons.Default.Layers,"Saved" to Icons.Default.BookmarkBorder,"Quests" to Icons.Default.Assignment).forEachIndexed { index,(label,icon)->
+            listOf(stringResource(R.string.nav_map) to Icons.Default.Map,stringResource(R.string.nav_worlds) to Icons.Default.Layers,stringResource(R.string.nav_saved) to Icons.Default.BookmarkBorder,stringResource(R.string.nav_quests) to Icons.Default.Assignment).forEachIndexed { index,(label,icon)->
                 val artworkIcon=when(index) {
                     1 -> R.drawable.waypoint_worlds
                     2 -> R.drawable.waypoint_bookmark

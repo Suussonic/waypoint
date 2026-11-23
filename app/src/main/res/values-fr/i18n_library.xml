@@ -1,0 +1,40 @@
+<resources>
+    <string name="world_preview_title">Aperçu du monde</string>
+    <string name="world_back">Retour aux mondes</string>
+    <string name="world_use">Utiliser ce monde</string>
+    <string name="world_preview_place">Aperçu : %1$s</string>
+    <string name="world_keep_progress">Vos lieux, quêtes et progrès vous accompagnent.</string>
+    <string name="world_find_title">Trouvez votre prochain monde</string>
+    <plurals name="world_count_description">
+        <item quantity="one">%1$d monde inclus. Découvrez-le avant de l’adopter.</item>
+        <item quantity="other">%1$d mondes inclus. Découvrez un monde avant de l’adopter.</item>
+    </plurals>
+    <string name="world_find_hint">Rechercher un monde ou un jeu</string>
+    <string name="world_filter_all">Tous</string>
+    <string name="world_filter_favourites">Favoris</string>
+    <string name="world_filter_new">Nouveaux</string>
+    <string name="world_favourites_empty_title">Gardez vos favoris à portée de main</string>
+    <string name="world_empty_title">Aucun monde trouvé</string>
+    <string name="world_favourites_empty">Touchez le cœur d’un monde pour le retrouver ici.</string>
+    <string name="world_empty">Essayez un autre nom ou parcourez tous les mondes.</string>
+    <string name="world_browse_all">Voir tous les mondes</string>
+    <string name="world_preview_accessibility">Aperçu du thème %1$s</string>
+    <string name="world_current">Monde actuel</string>
+    <string name="world_preview_action">Aperçu du monde</string>
+    <string name="world_remove_favourite">Retirer %1$s des favoris</string>
+    <string name="world_add_favourite">Ajouter %1$s aux favoris</string>
+    <string name="saved_intro">Vos destinations favorites, avec les noms de votre choix.</string>
+    <string name="saved_empty_title">Aucun lieu enregistré</string>
+    <string name="saved_empty">Recherchez une destination et touchez le marque-page pour la conserver ici.</string>
+    <string name="saved_find">Trouver un lieu</string>
+    <string name="saved_options">Options pour %1$s</string>
+    <string name="saved_rename">Renommer</string>
+    <string name="saved_remove">Retirer des lieux enregistrés</string>
+    <string name="saved_name_title">Nommer ce lieu</string>
+    <string name="saved_name">Nom du lieu</string>
+    <string name="saved_name_example">Par exemple, Travail</string>
+    <string name="saved_name_error">Saisissez un nom pour ce lieu.</string>
+    <string name="saved_name_help">Seul le nom change. La position reste identique.</string>
+    <string name="saved_save_name">Enregistrer le nom</string>
+    <string name="action_cancel">Annuler</string>
+</resources>
